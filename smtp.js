@@ -14,7 +14,8 @@ exports.SMTPClient = SMTPClient;
  * - options (Object): optional additional settings
  * 
  * Constructs a wrapper for a SMTP connection as an EventEmitter type object.
- * Parameter options can include following data
+ * 
+ * options can include following data:
  * 
  * - hostname (String): hostname of the sending server, needed for handshake
  *   default is "untitled.server"
@@ -51,9 +52,8 @@ function SMTPClient(host, port, options){
 
     // Not so public properties
     // ------------------------
-    this._connected = false;
-    this._connection = false;
-
+    this._connected = false;   // Indicates if an active connection is available
+    this._connection = false;  // Holds connection info
     this._callbackQueue = [];  // Queues the responses FIFO (needed for pipelining)
     this._data_remainder = []; // Needed to group multi-line messages from server
     
@@ -134,6 +134,8 @@ SMTPClient.prototype.close = function(){
 SMTPClient.prototype._sendCommand = function(data, callback){
     this._callbackQueue.push({callback: callback});
     this._connection.write(data+"\r\n");
+    
+    //DEBUG:
     //console.log("WRITE:\n"+JSON.stringify(data+"\r\n"));
 }
 
@@ -145,6 +147,8 @@ SMTPClient.prototype._sendCommand = function(data, callback){
  **/
 SMTPClient.prototype._sendData = function(data){
     this._connection.write(data);
+    
+    //DEBUG:
     //console.log("WRITE:\n"+JSON.stringify(data));
 }
 
@@ -293,6 +297,7 @@ SMTPClient.prototype._handshake = function(callback){
  **/
 SMTPClient.prototype._onData = function(data){
     
+    //DEBUG:
     //console.log("RECEIVE:\n"+JSON.stringify(data.toString("utf-8")));
     
     var lines = data.toString("utf-8").split("\r\n"), i, length, parts;
@@ -326,6 +331,7 @@ SMTPClient.prototype._createConnection = function(callback){
     }).bind(this));
     
     this._connection.on("close", (function(){
+        this._connected = false;
         this.emit("close");
     }).bind(this));
     
