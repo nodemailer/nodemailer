@@ -1,11 +1,13 @@
 Nodemailer
 ==========
 
-**Nodemailer** is a simple module to send e-mails with Node.JS. 
+**Nodemailer** is an easy to use module to send e-mails with Node.JS. 
 
-You can use two ways to send an email message: the *EmailMessage* constructor or the shortcut function *send_mail()*. 
+You can use two ways to send an e-mail message: the *EmailMessage* constructor or the shortcut function *send_mail()*. 
 The *send_mail()* function takes all the fields of the e-mail message as a function parameter and sends the e-mail immediately. 
 *EmailMessage* allows to compose the message object first and send it later with its method *send()*.
+
+**Nodemailer** is Unicode friendly ✔. You can use any characters you like.
 
 Installation
 ------------
