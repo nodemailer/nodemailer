@@ -3,12 +3,56 @@ var netlib = require("net"),
     utillib = require("util"),
     EventEmitter = require('events').EventEmitter;
 
+/**
+ * smtp
+ * 
+ * This module handles the connection and message passing to a SMTP
+ * server. SMTP is a simple text based protocol. Server is usually listening
+ * on port 25. The client opens up a connection to the server,
+ * server responds with "220 hostname message" thus indicating that
+ * it is up and working. All server messages begin with a status code,
+ * where codes starting with 4 or 5 are errors and 2 and 3 are normal states.
+ * Most commands can't be used before a successful HELO or EHLO response.
+ * E-mail message is ended with a single period on a line of itself. To not
+ * create confusion, all periods in the beginning of ordinary lines should
+ * be replaced with double periods. "\r\n.this" -> "\r\n..this"
+ * 
+ * Actual recipients for the message are not taken from the message source
+ * (To: Cc: and Bcc: fields) but from RCPT TO: commands. If there is more than
+ * one recipient then the command can be entered multiple times.
+ * 
+ *     {client establishes connection to the server}
+ *     S: 220 node.ee
+ *     C: HELO client.hostname
+ *     S: 250 Hello client.hostname
+ *     C: MAIL FROM:<andris@node.ee>
+ *     S: 250 Ok
+ *     C: RCPT TO:<andris@kreata.ee>
+ *     S: 250 Ok
+ *     C: RCPT TO:<andris.reinman@gmail.com>
+ *     S: 250 Ok
+ *     C: DATA
+ *     S: 354 End with <CR><LF>.<CR><LF>
+ *     C: From: Andris Reinman <andris@node.ee>\r\n
+ *        To: Andris Reinman <andris@kreata.ee>\r\n
+ *        Cc: Andris Reinman <andris.reinman@gmail.com>\r\n
+ *        Subject: Test\r\n
+ *        \r\n
+ *        Hello, I'm sending myself a test message\r\n
+ *        .\r\n
+ *     S: 250 Ok: queued as B7AD718D9DFF
+ *     C: QUIT
+ *     S: 221 Good bye
+ *     {the server closes the connection} 
+ * 
+ **/
+
 // expose constructor SMTPClient to the world
 exports.SMTPClient = SMTPClient;
 
 
 /**
- * new SMTPClient(host, port[, options])
+ * new smtp.SMTPClient(host, port[, options])
  * - host (String): SMTP server hostname
  * - port (Number): SMTP server port
  * - options (Object): optional additional settings
@@ -56,13 +100,6 @@ function SMTPClient(host, port, options){
     this._connection = false;  // Holds connection info
     this._callbackQueue = [];  // Queues the responses FIFO (needed for pipelining)
     this._data_remainder = []; // Needed to group multi-line messages from server
-    
-    // check if host exists
-    if(!this.host){
-        var error = new Error("SMTP Host is not set");
-        this.emit("error", error);
-        return;
-    }
 
 }
 // Needed to convert this constructor into EventEmitter
@@ -71,7 +108,7 @@ utillib.inherits(SMTPClient, EventEmitter);
 ///////////// PUBLIC METHODS /////////////
 
 /**
- * SMTPClient#send(data, callback) -> undefined
+ * smtp.SMTPClient#send(data, callback) -> undefined
  * - data (String): text to be sent to the SMTP server
  * - callback (Function): callback to be used, gets params error and message
  * 
@@ -98,6 +135,14 @@ utillib.inherits(SMTPClient, EventEmitter);
  **/
 SMTPClient.prototype.send = function(data, callback){
 
+    // check if host exists
+    if(!this.host){
+        var error = new Error("SMTP Host is not set");
+        this.emit("error", error);
+        this.close();
+        return;
+    }
+    
     if(!this._connected){
         return this._createConnection(this.send.bind(this, data, callback));
     }
@@ -111,7 +156,7 @@ SMTPClient.prototype.send = function(data, callback){
 }
 
 /**
- * SMTPClient#close() -> undefined
+ * smtp.SMTPClient#close() -> undefined
  * 
  * Closes the current connection to the server. For some reason needed after
  * the e-mail is sent (with QUIT) but might be server specific.
@@ -124,7 +169,7 @@ SMTPClient.prototype.close = function(){
 ///////////// PRIVATE METHODS /////////////
 
 /**
- * SMTPClient#_sendCommand(data, callback) -> undefined
+ * smtp.SMTPClient#_sendCommand(data, callback) -> undefined
  * - data (String): string value to be sent to the SMTP server
  * - callback (Function): function to be run after the server has responded
  * 
@@ -140,7 +185,7 @@ SMTPClient.prototype._sendCommand = function(data, callback){
 }
 
 /**
- * SMTPClient#_sendData(data) -> undefined
+ * smtp.SMTPClient#_sendData(data) -> undefined
  * - data (String): Text to be sent to the server
  * 
  * Sends a string to the server. This is meant to send body data and such.
@@ -153,7 +198,7 @@ SMTPClient.prototype._sendData = function(data){
 }
 
 /**
- * SMTPClient#_loginHandler(callback) -> undefined
+ * smtp.SMTPClient#_loginHandler(callback) -> undefined
  * - callback (Function): function to be run after successful login
  * 
  * If authentication is needed, performs AUTH PLAIN and runs the
@@ -186,7 +231,7 @@ SMTPClient.prototype._loginHandler = function(callback){
 }
 
 /**
- * SMTPClient#_currentListener -> Function
+ * smtp.SMTPClient#_currentListener -> Function
  * 
  * Points to the function that is currently needed to handle responses
  * from the SMTP server.
@@ -194,7 +239,7 @@ SMTPClient.prototype._loginHandler = function(callback){
 SMTPClient.prototype._currentListener = function(data){}
 
 /**
- * SMTPClient#_normalListener(data) -> undefined
+ * smtp.SMTPClient#_normalListener(data) -> undefined
  * - data(String): String received from the server
  * 
  * The default listener for incoming server messages. Checks if there's
@@ -222,7 +267,7 @@ SMTPClient.prototype._normalListener = function(data){
 }
 
 /**
- * SMTPClient#_handshakeListener(data) -> undefined
+ * smtp.SMTPClient#_handshakeListener(data) -> undefined
  * - data(String): String received from the server
  * 
  * Server data listener for the handshake - waits for the 220 response
@@ -247,7 +292,7 @@ SMTPClient.prototype._handshakeListener = function(data){
 }
 
 /**
- * SMTPClient#_handshake(callback) -> undefined
+ * smtp.SMTPClient#_handshake(callback) -> undefined
  * - callback (Function): will be forwarded to login after successful connection
  * 
  * Will be run after a TCP connection to the server is established. Makes
@@ -289,7 +334,7 @@ SMTPClient.prototype._handshake = function(callback){
 }
 
 /**
- * SMTPClient#_onData(data) -> function
+ * smtp.SMTPClient#_onData(data) -> function
  * - data (Buffer): binary data from the server
  * 
  * Receives binary data from the server, converts it to string and forwards
@@ -316,7 +361,7 @@ SMTPClient.prototype._onData = function(data){
 }
 
 /**
- * SMTPClient#_createConnection(callback) -> function
+ * smtp.SMTPClient#_createConnection(callback) -> function
  * - callback (Function): function to be run after successful connection,
  *   smtp handshake and login
  * 
