@@ -19,12 +19,19 @@ var message = {
     subject: "Nodemailer is unicode friendly ✔",
     
     body: "Hello to myself!",
-    html:"<p><b>Hello</b> to myself</p>",
+    html:"<p><b>Hello</b> to myself <img src=\"cid:unique-id-of-the-image\"/></p>",
     
     attachments:[
         {
             filename: "notes.txt",
             contents: "Some notes about this e-mail"
+        },
+        {
+            filename: "image.png",
+            contents: new Buffer("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/"+
+                                 "//+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4U"+
+                                 "g9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC", "base64"),
+            cid: "unique-id-of-the-image"
         }
     ]
 }

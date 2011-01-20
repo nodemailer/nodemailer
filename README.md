@@ -77,7 +77,22 @@ The following are the possible fields of an e-mail message:
   - **body** - The plaintext version of the message
   - **html** - The HTML version of the message
   - **attachments** - An array of attachment objects. Attachment object consists of two properties - `filename` and `contents`. Property `contents` can either be a String or a Buffer (for binary data). `filename` is the name of the attachment.
-  
+
+Using Embedded Images
+--------------------
+
+Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property
+of the attachment - `cid` (unique identifier of the file) which is a reference to the attachment file.
+The same `cid` value must be used as the image URL in HTML (using `cid:` as the URL protocol, see example below).
+
+    var cid_value = "unique-image-cid";
+    var html = 'Embedded image: <img src="cid:'+cid_value+'" />';
+    var attachments = [{
+        filename: "image.png",
+        contents: IMAGE_CONTENTS,
+        cid: cid_value
+    }];
+
 Issues
 ------
 
