@@ -10,6 +10,8 @@ The *send_mail()* function takes all the fields of the e-mail message as a funct
 Installation
 ------------
 
+NPM support is future feature.
+
 Usage
 -----
 
