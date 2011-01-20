@@ -64,15 +64,15 @@ Email Message Fields
 
 The following are the possible fields of an e-mail message:
 
-  - **sender** The e-mail address of the sender. Can be *sender@server.com* or formatted *Sender Name <sender@server.com>*
-  - **to** Comma separated list of recipients e-mail addresses that will appear on the *To:* field
-  - **cc** Comma separated list of recipients e-mail addresses that will appear on the *Cc:* field
-  - **bcc** Comma separated list of recipients e-mail addresses that will appear on the *Bcc:* field
-  - **reply_to** An e-mail address that will appear on the *Reply-To:* field
+  - **sender** The e-mail address of the sender. Can be `sender@server.com` or formatted `Sender Name <sender@server.com>`
+  - **to** Comma separated list of recipients e-mail addresses that will appear on the `To:` field
+  - **cc** Comma separated list of recipients e-mail addresses that will appear on the `Cc:` field
+  - **bcc** Comma separated list of recipients e-mail addresses that will appear on the `Bcc:` field
+  - **reply_to** An e-mail address that will appear on the `Reply-To:` field
   - **subject** The subject of the e-mail
   - **body** The plaintext version of the message
   - **html** The HTML version of the message
-  - **attachments** An array of attachment objects. Attachment object consists of two properties - *filename* and *contents*. Property *contents* can either be a String or a Buffer (for binary data).
+  - **attachments** An array of attachment objects. Attachment object consists of two properties - `filename` and `contents`. Property `contents` can either be a String or a Buffer (for binary data). `filename` is the name of the attachment.
   
 Issues
 ------
