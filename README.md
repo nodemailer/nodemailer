@@ -40,8 +40,6 @@ Using *EmailMessage*
                   console.log("Message "+(success?"sent":"failed"));
               });
 
-See examples/example.js for complete example.
-
 The callback function gets two parameters - *error* and *success*. If there's an error, then sending failed and you should check where's the problem.
 If there's no error value but *success* is not *true* then the server wasn't able to process the message correctly. Probably there was timeout while processing
 the message etc - in this case you should re-schedule sending this e-mail. If *success* is *true* then the message was sent successfully. 
@@ -58,6 +56,8 @@ Before sending e-mails you need to set up SMTP server parameters.
         user: "",
         pass: ""
     }
+
+See [examples/example.js](/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
 Email Message Fields
 --------------------
