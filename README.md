@@ -96,4 +96,4 @@ Do not use large attachments as the attachment contents are read into memory and
 License
 -------
 
-**Nodemailer** is licensed under [MIT compatible license]((/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
+**Nodemailer** is licensed under [MIT compatible license](/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
