@@ -92,3 +92,8 @@ Currently the only allowed charset is UTF-8.
 ### Attachments
 
 Do not use large attachments as the attachment contents are read into memory and the final message body is combined into a single string.
+
+License
+-------
+
+**Nodemailer** is licensed under [MIT compatible license]((/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
