@@ -1,0 +1,25 @@
+{
+    "name": "nodemailer",
+    "description": "Easy to use module to send e-mails",
+    "version": "0.1.1",
+    "author" : "Andris Reinman",
+    "maintainers":[
+        {
+            "name":"andris",
+            "email":"andris@node.ee"
+        }
+    ],   
+    "repository" : {
+        "type" : "git",
+        "url" : "http://github.com/andris9/nodemailer"
+    },
+    "main" : "./lib/mail",
+    "licenses" : [
+        {
+            "type": "MIT",
+            "url": "http://github.com/andris9/nodemailer/blob/master/LICENSE"
+        }
+    ],
+    "engine": [ "node >=0.3.0" ],
+    "keywords": ["e-mail", "mime", "email", "sendmail"]
+}

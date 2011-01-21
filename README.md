@@ -7,12 +7,18 @@ You can use two ways to send an e-mail message: the *EmailMessage* constructor o
 The *send_mail()* function takes all the fields of the e-mail message as a function parameter and sends the e-mail immediately. 
 *EmailMessage* allows to compose the message object first and send it later with its method *send()*.
 
-**Nodemailer** is Unicode friendly ✔. You can use any characters you like.
+**Nodemailer is Unicode friendly ✔**. You can use any characters you like.
 
 Installation
 ------------
 
-NPM support is future feature.
+Install through *NPM*
+
+    npm install nodemailer
+    
+or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
+
+If you use *NPM* then the module is available as `var nodemailer = require('nodemailer');` but if you're using the source then `var nodemailer = require('./path_to_nodemailer/lib/mail');`
 
 Usage
 -----
