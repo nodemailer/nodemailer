@@ -1,9 +1,9 @@
 
-var mail = require("../lib/mail");
+var nodemailer = require("../lib/mail");
 
 // Set up SMTP server settings
 // NB! Authentication only works if the server doesn't require auth over TLS
-mail.SMTP = {
+nodemailer.SMTP = {
     host: "smtp.example.com",
     port: 25,
     hostname: "myhost.com",
@@ -51,5 +51,5 @@ var callback = function(error, success){
 }
 
 // Send the e-mail
-mail.send_mail(message, callback);
+nodemailer.send_mail(message, callback);
 
