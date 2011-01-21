@@ -78,6 +78,17 @@ The following are the possible fields of an e-mail message:
   - **html** - The HTML version of the message
   - **attachments** - An array of attachment objects. Attachment object consists of two properties - `filename` and `contents`. Property `contents` can either be a String or a Buffer (for binary data). `filename` is the name of the attachment.
 
+There's an optional extra field **headers** which holds custom header values in the form of `{key: value}`. These values will not overwrite any existing header but will be appended to the list. 
+
+    mail_data = {
+        sender:"me@example.com",
+        ....
+        headers: {
+            'X-My-Custom-Header-Value': 'Visit www.example.com for more info!'
+        }
+    }
+
+
 Using Embedded Images
 --------------------
 
