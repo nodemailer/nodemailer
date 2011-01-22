@@ -18,7 +18,13 @@ Install through *NPM*
     
 or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
-If you use *NPM* then the module is available as `var nodemailer = require('nodemailer');` but if you're using the source then `var nodemailer = require('./path_to_nodemailer/lib/mail');`
+If you use *NPM* then the module is available as 
+
+    var nodemailer = require('nodemailer');
+
+but if you're using the source then 
+
+    var nodemailer = require('./path_to_nodemailer/lib/mail');
 
 Usage
 -----
@@ -69,12 +75,12 @@ Before sending e-mails you need to set up SMTP server parameters.
 
 See [examples/example.js](/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
-Email Message Fields
+E-mail Message Fields
 --------------------
 
 The following are the possible fields of an e-mail message:
 
-  - **sender** - The e-mail address of the sender. All e-mail addresses can be as `sender@server.com` or formatted `Sender Name <sender@server.com>`
+  - **sender** - The e-mail address of the sender. All e-mail addresses can be plain `sender@server.com` or formatted `Sender Name <sender@server.com>`
   - **to** - Comma separated list of recipients e-mail addresses that will appear on the `To:` field
   - **cc** - Comma separated list of recipients e-mail addresses that will appear on the `Cc:` field
   - **bcc** - Comma separated list of recipients e-mail addresses that will appear on the `Bcc:` field
@@ -88,15 +94,70 @@ There's an optional extra field **headers** which holds custom header values in 
 
     mail_data = {
         sender:"me@example.com",
+        to:"you@example.com",
         ....
         headers: {
             'X-My-Custom-Header-Value': 'Visit www.example.com for more info!'
         }
     }
 
+Address Formatting
+------------------
+
+All the e-mail addresses can be plain e-mail address
+
+    username@example.com
+    
+or with formatted name (includes unicode support)
+
+    "Ноде Майлер" <username@example.com>
+    
+To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be mixed.
+
+    username@example.com, "Ноде Майлер" <username@example.com>, User Name <username@example.com>
+
+Currently you can't use comma in a formatted name, even if the name is in quotes.
+
+
+Creating HTML messages
+----------------------
+
+Message body in HTML format can be set with the message field `html`. If `html` is set but plain text alternative `body` is not, then existing text from the html version is used in the plaintext version (without html formatting). 
+
+THe charset for `html` is UTF-8.
+
+    nodemailer.send_mail({
+        ...
+        html: "<p>hello world!</p>"
+    });
+
+Using Attachments
+-----------------
+
+An e-mail message can include one or several attachments. Attachments can be set with the message field `attachments` which accepts a list of attachment objects.
+
+An attachment object primarly consists of two properties - `filename` which is the name of the file (not a filepath to an actual file on disk etc.) and `contents` to hold the data in a String or Buffer format. There's an additional property `cid`  which can be used for embedding images in a HTML message.
+
+Propery `filename` is unicode safe.
+
+    var attachment_list = [
+        {
+            "filename": "attachment1.txt",
+            "contents": "contents for attachment1.txt"
+        },
+        {
+            "filename": "аттачмент2.bin",
+            "contents": new Buffer("binary contents", "binary");
+        }
+    ];
+    
+    nodemailer.send_mail({
+        ...
+        attachments: attachment_list
+    });
 
 Using Embedded Images
---------------------
+---------------------
 
 Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property
 of the attachment - `cid` (unique identifier of the file) which is a reference to the attachment file.
@@ -125,9 +186,9 @@ Currently the only allowed charset is UTF-8.
 
 ### Attachments
 
-Do not use large attachments as the attachment contents are read into memory and the final message body is combined into a single string.
+Do not use large attachments as the attachment contents are read into memory and the final message body is combined into one large string before sending.
 
 License
 -------
 
-**Nodemailer** is licensed under [MIT compatible license](/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
+**Nodemailer** is licensed under [MIT license](/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
