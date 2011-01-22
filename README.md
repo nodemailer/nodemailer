@@ -138,9 +138,10 @@ Using Attachments
 
 An e-mail message can include one or several attachments. Attachments can be set with the message field `attachments` which accepts a list of attachment objects.
 
-An attachment object primarly consists of two properties - `filename` which is the name of the file (not a filepath to an actual file on disk etc.) and `contents` to hold the data in a String or Buffer format. There's an additional property `cid`  which can be used for embedding images in a HTML message.
+An attachment object primarly consists of two properties - `filename` which is the name of the file (not a filepath to an actual file on disk etc.) that will be reported to the receiver as the attachments name; and `contents` to hold the data in a String or Buffer format.
+There's an additional property `cid`  which can be used for embedding images in a HTML message.
 
-Propery `filename` is unicode safe.
+Property `filename` is unicode safe.
 
     var attachment_list = [
         {
