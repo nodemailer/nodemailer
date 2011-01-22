@@ -122,13 +122,13 @@ Currently you can't use comma in a formatted name, even if the name is in quotes
 Creating HTML messages
 ----------------------
 
-Message body in HTML format can be set with the message field `html`. If `html` is set but plain text alternative `body` is not, then existing text from the html version is used in the plaintext version (without html formatting). 
+Message body in HTML format can be set with the message field `html`. If property `html` has contents but plain text alternative `body` has not (is left to empty), then existing text from the html version is also used in the plaintext version (without the html formatting). 
 
-THe charset for `html` is UTF-8.
+The charset for `html` is UTF-8.
 
     nodemailer.send_mail({
         ...
-        html: "<p>hello world!</p>"
+        html: "<p>hello world!<br/>хелло ворлд!</p>"
     });
 
 Using Attachments
