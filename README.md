@@ -9,6 +9,14 @@ The *send_mail()* function takes all the fields of the e-mail message as a funct
 
 **Nodemailer is Unicode friendly ✔**. You can use any characters you like.
 
+Nodemailer supports
+-------------------
+
+  - *Unicode* to use any characters
+  - *HTML contents* as well as plain text alternative
+  - *Attachments*
+  - *Embedded images* in HTML
+
 Installation
 ------------
 
