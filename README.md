@@ -18,6 +18,8 @@ Install through *NPM*
     
 or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
+The source for Nodemailer is available at [GitHub](https://github.com/andris9/Nodemailer).
+
 If you use *NPM* then the module is available as 
 
     var nodemailer = require('nodemailer');
@@ -73,7 +75,7 @@ Before sending e-mails you need to set up SMTP server parameters.
         pass: ""
     }
 
-See [examples/example.js](/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
+See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
 E-mail Message Fields
 --------------------
@@ -176,6 +178,8 @@ The same `cid` value must be used as the image URL in HTML (using `cid:` as the 
 Issues
 ------
 
+Use [Nodemailer Issue tracker](https://github.com/andris9/Nodemailer/issues) to report additional shortcomings, bugs, feature requests etc.
+
 ### TLS
 
 Node.JS v0.3.x doesn't support changing to a secure channel in the middle of a connection (STARTTLS). So when a server requires authentication and this must be done over TLS it's a problem.
@@ -191,4 +195,4 @@ Do not use large attachments as the attachment contents are read into memory and
 License
 -------
 
-**Nodemailer** is licensed under [MIT license](/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
+**Nodemailer** is licensed under [MIT license](https://github.com/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
