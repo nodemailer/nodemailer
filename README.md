@@ -83,6 +83,25 @@ Before sending e-mails you need to set up SMTP server parameters.
         pass: ""
     }
 
+If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl parameter to true.
+
+	nodemailer.SMTP = {
+	    host: "smtp.example.com",
+	    port: 25,
+	    hostname: "myhost.com",
+	    use_authentication: false,
+		ssl: true,
+	    user: "",
+	    pass: ""
+	}
+
+### SSL Support
+
+nodemailer supports SSL support, with two big caveats:
+- You *must* be using nodejs v0.3.x and its tls library. It has really only been tested on v0.3.8.
+- You *must* use SSL from the beginning, not TLS/STARTTLS negotiation.
+
+
 See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
 E-mail Message Fields
