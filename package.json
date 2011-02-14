@@ -1,7 +1,7 @@
 {
     "name": "nodemailer",
     "description": "Easy to use module to send e-mails",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "author" : "Andris Reinman",
     "maintainers":[
         {
