@@ -16,6 +16,7 @@ Nodemailer supports
   - *HTML contents* as well as plain text alternative
   - *Attachments*
   - *Embedded images* in HTML
+  - *SSL* (but not STARTTLS)
 
 Installation
 ------------
@@ -83,24 +84,26 @@ Before sending e-mails you need to set up SMTP server parameters.
         pass: ""
     }
 
+### SSL Support
+
 If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl parameter to true.
 
 	nodemailer.SMTP = {
-	    host: "smtp.example.com",
-	    port: 25,
+	    host: "smtp.gmail.com",
+	    port: 465,
 	    hostname: "myhost.com",
-	    use_authentication: false,
-		ssl: true,
-	    user: "",
-	    pass: ""
+	    ssl: true,
+	    use_authentication: true,
+	    user: "my.username@gmail.com",
+	    pass: "my.password"
 	}
 
-### SSL Support
+Nodemailer supports SSL support, with two big caveats:
 
-nodemailer supports SSL support, with two big caveats:
-- You *must* be using nodejs v0.3.x and its tls library. It has really only been tested on v0.3.8.
-- You *must* use SSL from the beginning, not TLS/STARTTLS negotiation.
+  - You *must* be using nodejs v0.3+ and its TLS library
+  - You *must* use SSL from the beginning, not TLS/STARTTLS negotiation
 
+For example for Gmail use port `465` and server `smtp.gmail.com` (SSL) but not port `587` which is for STARTTLS and thus doesn't work. 
 
 See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
@@ -211,8 +214,6 @@ Use [Nodemailer Issue tracker](https://github.com/andris9/Nodemailer/issues) to 
 ### TLS
 
 Node.JS v0.3.x doesn't support changing to a secure channel in the middle of a connection (STARTTLS). So when a server requires authentication and this must be done over TLS it's a problem.
-
-For example for Gmail use port `465` and server `smtp.gmail.com` (SSL) but not port `587` which is for STARTTLS and thus doesn't work. 
 
 ### Charsets
 
