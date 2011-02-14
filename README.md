@@ -212,6 +212,8 @@ Use [Nodemailer Issue tracker](https://github.com/andris9/Nodemailer/issues) to 
 
 Node.JS v0.3.x doesn't support changing to a secure channel in the middle of a connection (STARTTLS). So when a server requires authentication and this must be done over TLS it's a problem.
 
+For example for Gmail use port `465` and server `smtp.gmail.com` (SSL) but not port `587` which is for STARTTLS and thus doesn't work. 
+
 ### Charsets
 
 Currently the only allowed charset is UTF-8.
