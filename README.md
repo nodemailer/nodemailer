@@ -78,7 +78,7 @@ Before sending e-mails you need to set up SMTP server parameters.
     nodemailer.SMTP = {
         host: "smtp.example.com",
         port: 25,
-        hostname: "myhost.com",
+        hostname: "myhost.com", // needed to identify the client to the server, should be a valid domain
         use_authentication: false,
         user: "",
         pass: ""
