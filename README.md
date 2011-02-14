@@ -84,6 +84,8 @@ Before sending e-mails you need to set up SMTP server parameters.
         pass: ""
     }
 
+See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
+
 ### SSL Support
 
 If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl parameter to true.
@@ -104,8 +106,6 @@ Nodemailer supports SSL support, with two big caveats:
   - You *must* use SSL from the beginning, not TLS/STARTTLS negotiation
 
 For example for Gmail use port `465` and server `smtp.gmail.com` (SSL) but not port `587` which is for STARTTLS and thus doesn't work. 
-
-See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
 E-mail Message Fields
 --------------------
