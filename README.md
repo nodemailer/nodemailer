@@ -76,9 +76,8 @@ the message etc - in this case you should re-schedule sending this e-mail. If *s
 Before sending e-mails you need to set up SMTP server parameters.
 
     nodemailer.SMTP = {
-        host: "smtp.example.com",
-        port: 25,
-        hostname: "myhost.com", // needed to identify the client to the server, should be a valid domain
+        host: "smtp.example.com", // required
+        port: 25, // optional, defaults to 25 or 465
         use_authentication: false,
         user: "",
         pass: ""
@@ -93,7 +92,6 @@ If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl par
 	nodemailer.SMTP = {
 	    host: "smtp.gmail.com",
 	    port: 465,
-	    hostname: "myhost.com",
 	    ssl: true,
 	    use_authentication: true,
 	    user: "my.username@gmail.com",
@@ -132,6 +130,8 @@ There's an optional extra field **headers** which holds custom header values in 
             'X-My-Custom-Header-Value': 'Visit www.example.com for more info!'
         }
     }
+
+For debugging set **debug** to true - then all the data passed between the client and the server will be output to console.
 
 Address Formatting
 ------------------

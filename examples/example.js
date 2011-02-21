@@ -4,12 +4,12 @@ var nodemailer = require("../lib/mail");
 // Set up SMTP server settings
 // NB! Authentication only works if the server doesn't require auth over TLS
 nodemailer.SMTP = {
-    host: "smtp.example.com",
-    port: 25,
-    hostname: "myhost.com",
-    use_authentication: false,
-    user: "",
-    pass: ""
+    host: "smtp.gmail.com",
+    port: 465,
+    use_authentication: true,
+    ssl: true,
+    user: "your.username@gmail.com",
+    pass: "your_gmail_password"
 }
 
 // unique cid value for the embedded image
