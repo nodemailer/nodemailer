@@ -5,7 +5,7 @@ Nodemailer
 
 You can use two ways to send an e-mail message: the *EmailMessage* constructor or the shortcut function *send_mail()*. 
 The *send_mail()* function takes all the fields of the e-mail message as a function parameter and sends the e-mail immediately. 
-*EmailMessage* allows to compose the message object first and send it later with its method *send()*.
+*EmailMessage* allows to compose the message object first and send it later with its method *send()*. Nodemailers API is designed after Google App Engines [Mail Python API](http://code.google.com/intl/et-EE/appengine/docs/python/mail/).
 
 **Nodemailer is Unicode friendly ✔**. You can use any characters you like.
 
