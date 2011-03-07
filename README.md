@@ -1,7 +1,7 @@
 Nodemailer
 ==========
 
-**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP). 
+**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP or sendmail). 
 
 You can use two ways to send an e-mail message: the *EmailMessage* constructor or the shortcut function *send_mail()*. 
 The *send_mail()* function takes all the fields of the e-mail message as a function parameter and sends the e-mail immediately. 
@@ -82,6 +82,17 @@ Before sending e-mails you need to set up SMTP server parameters.
         user: "",
         pass: ""
     }
+
+Or alternatively if you don't want to use SMTP but the `sendmail` command then you could
+set property *sendmail* to true or as the path to *sendmail*.
+
+    nodemailer.sendmail = true;
+
+or
+
+    nodemailer.sendmail = "/path/to/sendmail";
+    
+If *sendmail* is set, then SMTP options are disregarded. 
 
 See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
