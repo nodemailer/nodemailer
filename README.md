@@ -56,7 +56,7 @@ Using *EmailMessage*
 
     var nodemailer = require("nodemailer");
     
-    var mail = new nodemailer.EmailMessage({
+    var mail = nodemailer.EmailMessage({
                           sender: "me@example.com", 
                           to:"you@example.com"
                           });
