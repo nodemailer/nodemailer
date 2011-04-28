@@ -98,7 +98,7 @@ See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/exam
 
 ### SSL Support
 
-If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl parameter to true.
+If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the *ssl* parameter to true.
 
 	nodemailer.SMTP = {
 	    host: "smtp.gmail.com",
@@ -109,10 +109,8 @@ If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl par
 	    pass: "my.password"
 	}
 
-Nodemailer supports SSL support, with one big caveat:
-
-  - You *must* be using nodejs v0.3+ and its TLS library
-
+NB! Set *ssl* to true only with SSL connection (port 465). If you are connecting to a server
+with STARTTLS support (ie. port 25 or 587), leave *ssl* to false.
 
 E-mail Message Fields
 --------------------
