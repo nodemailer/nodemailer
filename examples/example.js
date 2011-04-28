@@ -8,8 +8,8 @@ nodemailer.SMTP = {
     port: 465,
     use_authentication: true,
     ssl: true,
-    user: "your.username@gmail.com",
-    pass: "your_gmail_password"
+    user: undefined,
+    pass: undefined
 }
 
 // unique cid value for the embedded image
@@ -17,13 +17,13 @@ var cid = Date.now()+".image.png";
 
 // Message object
 var message = {
-    sender: 'Example Test <test@example.com>',
-    to: '"My Name" <mymail@example.com>',
+    sender: 'Example Test <bradley.meck@gmail.com>',
+    to: '"My Name" <bradley.meck@gmail.com>',
     subject: "Nodemailer is unicode friendly ✔",
     
     body: "Hello to myself!",
     html:"<p><b>Hello</b> to myself <img src=\"cid:"+cid+"\"/></p>",
-    
+    debug: true,
     attachments:[
         {
             filename: "notes.txt",
@@ -54,5 +54,13 @@ var callback = function(error, success){
 }
 
 // Send the e-mail
-nodemailer.send_mail(message, callback);
-
+process.on("uncaughtException",function(e){console.log("Uncaught Exception",e.stack);})
+var mail;
+try {
+    mail = nodemailer.send_mail(message, callback);
+}
+catch(e) {
+    console.log("Caught Exception",e);
+}
+var oldemit = mail.emit;
+mail.emit = function() {console.log("Mail.emit",arguments);oldemit.apply(mail,arguments)}
