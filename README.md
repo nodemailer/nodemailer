@@ -16,7 +16,7 @@ Nodemailer supports
   - *HTML contents* as well as plain text alternative
   - *Attachments*
   - *Embedded images* in HTML
-  - *SSL* (but not STARTTLS)
+  - *SSL* (and STARTTLS)
 
 Installation
 ------------
@@ -109,12 +109,10 @@ If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the ssl par
 	    pass: "my.password"
 	}
 
-Nodemailer supports SSL support, with two big caveats:
+Nodemailer supports SSL support, with one big caveat:
 
   - You *must* be using nodejs v0.3+ and its TLS library
-  - You *must* use SSL from the beginning, not TLS/STARTTLS negotiation
 
-For example for Gmail use port `465` and server `smtp.gmail.com` (SSL) but not port `587` which is for STARTTLS and thus doesn't work. 
 
 E-mail Message Fields
 --------------------
