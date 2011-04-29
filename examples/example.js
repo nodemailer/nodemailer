@@ -9,9 +9,10 @@ nodemailer.SMTP = {
     use_authentication: true,
     ssl: true,
     user: undefined,
-    pass: undefined
+    pass: undefined,
+    debug: true
 }
-
+console.log("SMTP Configured")
 // unique cid value for the embedded image
 var cid = Date.now()+".image.png";
 
@@ -52,7 +53,7 @@ var callback = function(error, success){
         console.log("Message failed, reschedule!");
     }
 }
-
+console.log("Sending Mail")
 // Send the e-mail
 process.on("uncaughtException",function(e){console.log("Uncaught Exception",e.stack);})
 var mail;
