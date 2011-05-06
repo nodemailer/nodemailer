@@ -1,17 +1,18 @@
 {
     "name": "nodemailer",
-    "description": "Easy to use module to send e-mails",
-    "version": "0.1.10",
+    "description": "Easy to use module to send e-mails, supports unicode and SSL/TLS",
+    "version": "0.1.11",
     "author" : "Andris Reinman",
     "maintainers":[
         {
             "name":"andris",
             "email":"andris@node.ee"
         }
-    ],   
+    ],
+    "homepage": "http://www.nodemailer.org",
     "repository" : {
         "type" : "git",
-        "url" : "http://github.com/andris9/nodemailer"
+        "url" : "http://github.com/andris9/nodemailer.git"
     },
     "main" : "./lib/mail",
     "licenses" : [
@@ -20,6 +21,9 @@
             "url": "http://github.com/andris9/nodemailer/blob/master/LICENSE"
         }
     ],
+    "dependencies": {
+        "mimelib":"*"
+    },
     "engine": [ "node >=0.3.0" ],
     "keywords": ["e-mail", "mime", "email", "sendmail"]
 }
