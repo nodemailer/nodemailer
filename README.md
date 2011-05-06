@@ -29,6 +29,11 @@ or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
 The source for Nodemailer is available at [GitHub](https://github.com/andris9/Nodemailer).
 
+*NB!* If you are using the source and not the automagic of *NPM*, then you also need to install following dependencies:
+
+  * [mimelib](https://github.com/andris9/mimelib)
+  * [node-iconv](https://github.com/bnoordhuis/node-iconv)
+
 If you use *NPM* then the module is available as 
 
     var nodemailer = require('nodemailer');
