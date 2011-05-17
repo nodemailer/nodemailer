@@ -53,15 +53,24 @@ var callback = function(error, success){
         console.log("Message failed, reschedule!");
     }
 }
+
 console.log("Sending Mail")
+
+// Catch uncaught errors
+process.on("uncaughtException",function(e){
+    console.log("Uncaught Exception",e.stack);
+});
+
 // Send the e-mail
-process.on("uncaughtException",function(e){console.log("Uncaught Exception",e.stack);})
 var mail;
-try {
+try{
     mail = nodemailer.send_mail(message, callback);
-}
-catch(e) {
+}catch(e) {
     console.log("Caught Exception",e);
 }
+
 var oldemit = mail.emit;
-mail.emit = function() {console.log("Mail.emit",arguments);oldemit.apply(mail,arguments)}
+mail.emit = function(){
+    console.log("Mail.emit",arguments);
+    oldemit.apply(mail,arguments);
+}
