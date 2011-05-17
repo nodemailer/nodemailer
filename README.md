@@ -13,10 +13,10 @@ Nodemailer supports
 -------------------
 
   - *Unicode* to use any characters
-  - *HTML contents* as well as plain text alternative
+  - *HTML content* as well as plain text alternative
   - *Attachments*
   - *Embedded images* in HTML
-  - *SSL* (and STARTTLS)
+  - *SSL/TLS* for secure e-mail delivery
 
 Installation
 ------------
@@ -101,7 +101,7 @@ If *sendmail* is set, then SMTP options are disregarded.
 
 See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
-### SSL Support
+### SSL Support (port 465)
 
 If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the *ssl* parameter to true.
 
@@ -114,8 +114,18 @@ If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the *ssl* p
 	    pass: "my.password"
 	}
 
-NB! Set *ssl* to true only with SSL connection (port 465). If you are connecting to a server
-with STARTTLS support (ie. port 25 or 587), leave *ssl* to false.
+### TLS Support (port 587)
+
+If you want to use TLS/STARTTLS (port 587), leave *ssl* to false or do not set it, encryption will be started automatically when needed.
+
+    nodemailer.SMTP = {
+        host: "smtp.gmail.com",
+        port: 587,
+        ssl: false,
+        use_authentication: true,
+        user: "my.username@gmail.com",
+        pass: "my.password"
+    }
 
 E-mail Message Fields
 --------------------
