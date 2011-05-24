@@ -1,8 +1,6 @@
-
 var nodemailer = require("../lib/mail");
 
 // Set up SMTP server settings
-// NB! Authentication only works if the server doesn't require auth over TLS
 nodemailer.SMTP = {
     host: "smtp.gmail.com",
     port: 465,
