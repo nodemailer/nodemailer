@@ -241,6 +241,11 @@ Currently the only allowed charset is UTF-8.
 
 Do not use large attachments as the attachment contents are read into memory and the final message body is combined into one large string before sending.
 
+Contributors
+------------
+
+See [Nodemailer/contributors](https://github.com/andris9/Nodemailer/contributors) for a live list
+
 License
 -------
 
