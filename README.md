@@ -64,6 +64,10 @@ Using *send_mail()*
 Using *EmailMessage*
 
     var nodemailer = require("nodemailer");
+
+    nodemailer.SMTP = {
+        host: "smtp.example.com"
+    }
     
     var mail = nodemailer.EmailMessage({
                           sender: "me@example.com", 
