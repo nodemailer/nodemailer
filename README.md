@@ -48,7 +48,11 @@ Usage
 Using *send_mail()*
 
     var nodemailer = require("nodemailer");
-    
+
+    nodemailer.SMTP = {
+        host: "smtp.example.com"
+    }
+
     nodemailer.send_mail({sender: "me@example.com", 
                           to:"you@example.com",
                           subject:"Hello!",
