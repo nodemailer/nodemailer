@@ -16,9 +16,8 @@ var cid = Date.now() + '.image.png';
 
 // Message object
 var message = {
-    sender: 'Example Test <bradley.meck@gmail.com>',
-    //to: '"My Name" <bradley.meck@gmail.com>',
-    to: '"Mauvis" <switchstatement@gmail.com>',
+    sender: 'Sender Name <from@example.com>',
+    to: '"Receiver Name" <to@example.com>',
     subject: 'Nodemailer is unicode friendly ✔',
 
     body: 'Hello to myself!',
