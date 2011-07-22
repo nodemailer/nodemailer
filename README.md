@@ -1,7 +1,7 @@
 Nodemailer
 ==========
 
-**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP or sendmail) and it's Unicode friendly ✔**. You can use any characters you like.
+**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP or sendmail) and it's Unicode friendly - You can use any characters you like ✔
 
 Nodemailer supports
 -------------------
