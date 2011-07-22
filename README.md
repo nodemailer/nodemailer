@@ -1,13 +1,7 @@
 Nodemailer
 ==========
 
-**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP or sendmail).
-
-You can use two ways to send an e-mail message: the *EmailMessage* constructor or the shortcut function *send_mail()*.
-The *send_mail()* function takes all the fields of the e-mail message as a function parameter and sends the e-mail immediately.
-*EmailMessage* allows to compose the message object first and send it later with its method *send()*. Nodemailers API is designed after Google App Engines [Mail Python API](http://code.google.com/intl/et-EE/appengine/docs/python/mail/).
-
-**Nodemailer is Unicode friendly ✔**. You can use any characters you like.
+**Nodemailer** is an easy to use module to send e-mails with Node.JS (using SMTP or sendmail) and it's Unicode friendly ✔**. You can use any characters you like.
 
 Nodemailer supports
 -------------------
@@ -29,77 +23,67 @@ or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
 The source for Nodemailer is available at [GitHub](https://github.com/andris9/Nodemailer).
 
-*NB!* If you are using the source and not the automagic of *NPM*, then you also need to install following dependencies:
-
-  * [mimelib](https://github.com/andris9/mimelib)
-  * [node-iconv](https://github.com/bnoordhuis/node-iconv)
-
-If you use *NPM* then the module is available as
-
-    var nodemailer = require('nodemailer');
-
-but if you're using the source then
-
-    var nodemailer = require('./path_to_nodemailer/lib/mail');
-
 Usage
 -----
 
-Using *send_mail()*
+**nodemailer.send_mail(mail_params, callback)**
+
+Where
+
+  * **mail_params** define the e-mail (set its subject, body text, receivers etc.), see *E-mail Message Fields* for details
+  * **callback** is the callback function that will be run after the e-mail is sent or the sending failed
+
+Simple use case to send a HTML e-mail with plaintext alternative
 
     var nodemailer = require('nodemailer');
 
+    // one time action to set up SMTP information
     nodemailer.SMTP = {
         host: 'smtp.example.com'
     }
 
-    nodemailer.send_mail({
-        sender: 'me@example.com',
-        to:'you@example.com',
-        subject:'Hello!',
-        body:'Hi, how are you doing?'
-    },
-    function(error, success){
-        console.log('Message ' + success ? 'sent' : 'failed');
-    });
+    // send an e-mail
+    nodemailer.send_mail(
+        // e-mail options
+        {
+            sender: 'me@example.com',
+            to:'you@example.com',
+            subject:'Hello!',
+            html: '<p><b>Hi,</b> how are you doing?</p>',
+            body:'Hi, how are you doing?'
+        },
+        // callback function
+        function(error, success){
+            console.log('Message ' + success ? 'sent' : 'failed');
+        }
+    );
 
-Using *EmailMessage*
+The callback function gets two parameters - *error* and *success*. If there's an 
+error, then sending failed and you should check where's the problem. If there's 
+no error value but *success* is not *true* then the server wasn't able to process 
+the message correctly. Probably there was timeout while processing the message 
+etc - in this case you should re-schedule sending this e-mail. If *success* 
+is *true* then the message was sent successfully.
 
-    var nodemailer = require('nodemailer');
+See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
-    nodemailer.SMTP = {
-        host: 'smtp.example.com'
-    }
+SMTP Setup
+----------
 
-    var mail = nodemailer.EmailMessage({
-        sender: 'me@example.com',
-        to:'you@example.com'
-    });
-    mail.subject = 'Hello!';
-    mail.body = 'Hi, how are you doing?';
-
-    mail.send(function(error, success){
-        console.log('Message ' + success ? 'sent' : 'failed');
-    });
-
-The callback function gets two parameters - *error* and *success*. If there's an error, then sending failed and you should check where's the problem.
-If there's no error value but *success* is not *true* then the server wasn't able to process the message correctly. Probably there was timeout while processing
-the message etc - in this case you should re-schedule sending this e-mail. If *success* is *true* then the message was sent successfully.
-
-### NB!
-
-Before sending e-mails you need to set up SMTP server parameters.
+Before sending any e-mails you need to set up SMTP server parameters.
 
     nodemailer.SMTP = {
         host: 'smtp.example.com', // required
         port: 25, // optional, defaults to 25 or 465
-        use_authentication: false,
-        user: '',
-        pass: ''
+        use_authentication: false, // optional, false by default
+        user: '', // used only when use_authentication is true 
+        pass: ''  // used only when use_authentication is true
     }
 
-Or alternatively if you don't want to use SMTP but the `sendmail` command then you could
-set property *sendmail* to true or as the path to *sendmail*.
+### 'sendmail' alternative
+
+Alternatively if you don't want to use SMTP but the `sendmail` command then
+set property *sendmail* to true (or as the path to *sendmail* if the command is not in default path).
 
     nodemailer.sendmail = true;
 
@@ -107,9 +91,7 @@ or
 
     nodemailer.sendmail = '/path/to/sendmail';
 
-If *sendmail* is set, then SMTP options are disregarded.
-
-See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
+If *sendmail* is set, then SMTP options are discarded.
 
 ### SSL Support (port 465)
 
