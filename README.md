@@ -30,7 +30,7 @@ Usage
 
 Where
 
-  * **mail_params** define the e-mail (set its subject, body text, receivers etc.), see *E-mail Message Fields* for details
+  * **mail_params** defines the e-mail (set its subject, body text, receivers etc.), see *E-mail Message Fields* for details
   * **callback** is the callback function that will be run after the e-mail is sent or the sending failed
 
 Simple use case to send a HTML e-mail with plaintext alternative
