@@ -23,6 +23,10 @@ or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
 The source for Nodemailer is available at [GitHub](https://github.com/andris9/Nodemailer).
 
+### Compatibility
+
+Nodemailer is fully compatible with Node.js versions 0.3.x, 0.4.x and 0.5.x on *nix and 0.5.3+ on Windows
+
 Usage
 -----
 
