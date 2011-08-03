@@ -25,7 +25,7 @@ The source for Nodemailer is available at [GitHub](https://github.com/andris9/No
 
 ### Compatibility
 
-Nodemailer is fully compatible with Node.js versions 0.3.x, 0.4.x and 0.5.x on *nix and 0.5.3+ on Windows
+Nodemailer is fully compatible with Node.js versions 0.3.x, 0.4.x and 0.5.x on *nix and 0.5.x on Windows
 
 Usage
 -----
