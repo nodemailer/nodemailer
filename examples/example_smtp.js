@@ -21,7 +21,7 @@ var message = {
     subject: 'Nodemailer is unicode friendly ✔',
 
     body: 'Hello to myself!',
-    html:'<p><b>Hello</b> to myself <img src="cid:"' + cid + '"/></p>',
+    html:'<p><b>Hello</b> to myself <img src="cid:' + cid + '"/></p>',
     debug: true,
     attachments:[
         {
