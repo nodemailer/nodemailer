@@ -1,27 +1,23 @@
 var nodemailer = require('../lib/mail');
 
-// Set up SMTP server settings
-nodemailer.SMTP = {
-    host: 'smtp.gmail.com',
-    port: 465,
-    use_authentication: true,
-    ssl: true,
-    user: undefined,
-    pass: undefined,
-    debug: true
-}
-console.log('SMTP Configured')
+// Set up SES settings
+nodemailer.SES = {
+	AWSAccessKeyID: "AKIAEXAMPLE",
+	AWSSecretKey: "ZEXAMPLE"
+};
+console.log('SES Configured');
+
 // unique cid value for the embedded image
 var cid = Date.now() + '.image.png';
 
 // Message object
 var message = {
-    sender: 'Sender Name <from@example.com>',
-    to: '"Receiver Name" <to@example.com>',
+    sender: '"Sender Name" <test@example.com>',
+    to: '"Receiver Name" <test@example.com>',
     subject: 'Nodemailer is unicode friendly ✔',
 
     body: 'Hello to myself!',
-    html:'<p><b>Hello</b> to myself <img src="cid:"' + cid + '"/></p>',
+    html:'<p><b>Hello</b> to myself <img src="cid:' + cid + '"/></p>',
     debug: true,
     attachments:[
         {
