@@ -71,10 +71,16 @@ is *true* then the message was sent successfully.
 
 See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
 
-SMTP Setup
+Transfer method setup
 ----------
 
-Before sending any e-mails you need to set up SMTP server parameters.
+Before sending any e-mails you need to set up a transfer method for delivering the messages.
+
+To do this you need to define a properties object for a specific transfer method. Setup only one of these methods since only the first one defined will be used.
+
+### SMTP
+
+Use SMTP as the transfer method with the following setup
 
     nodemailer.SMTP = {
         host: 'smtp.example.com', // required
@@ -84,10 +90,19 @@ Before sending any e-mails you need to set up SMTP server parameters.
         pass: ''  // used only when use_authentication is true
     }
 
-### 'sendmail' alternative
+### Amazon SES
 
-Alternatively if you don't want to use SMTP but the `sendmail` command then
-set property *sendmail* to true (or as the path to *sendmail* if the command is not in default path).
+Use Amazon SES as the transfer method with the following setup
+
+    nodemailer.SES = {
+        AWSAccessKeyID: 'ACCESSKEY', // required
+        AWSSecretKey: 'SECRETKEY', // required
+        ServiceUrl: 'https://email.us-east-1.amazonaws.com', // optional
+    }
+
+### sendmail
+
+Use `sendmail` as the transfer method with the following setup
 
     nodemailer.sendmail = true;
 
@@ -95,9 +110,10 @@ or
 
     nodemailer.sendmail = '/path/to/sendmail';
 
-If *sendmail* is set, then SMTP options are discarded.
+Aditional setup
+----------------
 
-### SSL Support (port 465)
+### SSL Support with SMTP (port 465)
 
 If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the *ssl* parameter to true.
 
@@ -110,7 +126,7 @@ If you want to use SSL (not TLS/STARTTLS, just SSL), you need to set the *ssl* p
 	    pass: 'my.password'
 	}
 
-### TLS Support (port 587)
+### TLS Support with SMTP (port 587)
 
 If you want to use TLS/STARTTLS (port 587), leave *ssl* to false or do not set it, encryption will be started automatically when needed.
 
