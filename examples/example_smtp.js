@@ -9,8 +9,9 @@ nodemailer.SMTP = {
     user: undefined,
     pass: undefined,
     debug: true
-}
-console.log('SMTP Configured')
+};
+
+console.log('SMTP Configured');
 // unique cid value for the embedded image
 var cid = Date.now() + '.image.png';
 
@@ -36,7 +37,7 @@ var message = {
             cid: cid
         }
     ]
-}
+};
 
 // Callback to be run after the sending is completed
 var callback = function(error, success){
@@ -50,9 +51,9 @@ var callback = function(error, success){
     }else{
         console.log('Message failed, reschedule!');
     }
-}
+};
 
-console.log('Sending Mail')
+console.log('Sending Mail');
 
 // Catch uncaught errors
 process.on('uncaughtException', function(e){
@@ -71,4 +72,4 @@ var oldemit = mail.emit;
 mail.emit = function(){
     console.log('Mail.emit', arguments);
     oldemit.apply(mail, arguments);
-}
+};
