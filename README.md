@@ -11,7 +11,7 @@ Nodemailer supports
   - **Attachments**
   - **Embedded images** in HTML
   - **SSL/TLS** for secure e-mail delivery
-  - **SMP**, **sendmail** and **Amazon SES**
+  - **SMTP**, **sendmail** and **Amazon SES**
 
 Installation
 ------------
