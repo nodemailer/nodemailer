@@ -6,11 +6,12 @@ Nodemailer
 Nodemailer supports
 -------------------
 
-  - *Unicode* to use any characters
-  - *HTML content* as well as plain text alternative
-  - *Attachments*
-  - *Embedded images* in HTML
-  - *SSL/TLS* for secure e-mail delivery
+  - **Unicode** to use any characters
+  - **HTML content** as well as plain text alternative
+  - **Attachments**
+  - **Embedded images** in HTML
+  - **SSL/TLS** for secure e-mail delivery
+  - **SMP**, **sendmail** and **Amazon SES**
 
 Installation
 ------------
