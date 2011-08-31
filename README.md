@@ -181,10 +181,7 @@ or with formatted name (includes unicode support)
 
 To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be mixed.
 
-    username@example.com, 'Ноде Майлер' <username@example.com>, User Name <username@example.com>
-
-Currently you can't use comma in a formatted name, even if the name is in quotes.
-
+    username@example.com, 'Ноде Майлер' <username@example.com>, "Name, User" <username@example.com>
 
 Creating HTML messages
 ----------------------
