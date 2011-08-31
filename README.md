@@ -245,7 +245,11 @@ Use [Nodemailer Issue tracker](https://github.com/andris9/Nodemailer/issues) to 
 
 ### Charsets
 
-Currently the only allowed charset is UTF-8.
+Currently the only allowed charset is UTF-8. This is probably not going to change.
+
+### Slow
+
+SMTP connections are not shared - if you want to send several e-mails to the same domain in a row, then for every mail a new connection is created and closed afterwards. Together with TLS negotiation this can turn out to be pretty slow. Nodemailer is not the best choice for spamming!
 
 ### Attachments
 
