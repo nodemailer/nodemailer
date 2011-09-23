@@ -70,7 +70,7 @@ the message correctly. Probably there was timeout while processing the message
 etc - in this case you should re-schedule sending this e-mail. If *success* 
 is *true* then the message was sent successfully.
 
-See [examples/example.js](https://github.com/andris9/Nodemailer/blob/master/examples/example.js) for a complete example.
+See [examples/example_smtp.js](https://github.com/andris9/Nodemailer/blob/master/examples/example_smtp.js) for a complete example.
 
 Transfer method setup
 ----------
