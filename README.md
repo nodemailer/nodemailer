@@ -24,6 +24,11 @@ or download [ZIP archive](https://github.com/andris9/Nodemailer/zipball/master).
 
 The source for Nodemailer is available at [GitHub](https://github.com/andris9/Nodemailer).
 
+### Windows Users
+
+Nodemailer requires `mimelib-noiconv` to run which can be downloaded [here](https://github.com/andris9/mimelib/zipball/noiconv). Rename the directory to `mimelib-noiconv` and copy it to `node_modules` directory in nodemailer package (you need to create `node_modules` directory probably yourself to the root of nodemailer directory).
+
+
 ### Compatibility
 
 Nodemailer is fully compatible with Node.js versions 0.3.x, 0.4.x and 0.5.x on *nix and 0.5.x on Windows
