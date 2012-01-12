@@ -13,6 +13,8 @@ Nodemailer supports
   - **SSL/TLS** for secure e-mail delivery
   - **SMTP**, **sendmail** and **Amazon SES**
 
+If you want to parse generated or received e-mail instead of sending it, check out my other module [MailParser](/andris9/mailparser).
+
 Installation
 ------------
 
