@@ -9,7 +9,7 @@
             "email":"andris@node.ee"
         }
     ],
-    "homepage": "http://github.com/andris9/nodemailer,
+    "homepage": "http://github.com/andris9/nodemailer",
     "repository" : {
         "type" : "git",
         "url" : "http://github.com/andris9/nodemailer.git"
