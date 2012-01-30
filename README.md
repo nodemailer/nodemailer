@@ -66,7 +66,7 @@ Simple use case to send a HTML e-mail with plaintext alternative
         },
         // callback function
         function(error, success){
-            console.log('Message ' + success ? 'sent' : 'failed');
+            console.log('Message', success ? 'sent' : 'failed');
         }
     );
 
