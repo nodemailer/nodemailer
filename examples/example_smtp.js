@@ -40,17 +40,14 @@ var message = {
 };
 
 // Callback to be run after the sending is completed
-var callback = function(error, success){
+var callback = function(error){
     if(error){
         console.log('Error occured');
         console.log(error.message);
         return;
     }
-    if(success){
-        console.log('Message sent successfully!');
-    }else{
-        console.log('Message failed, reschedule!');
-    }
+
+  console.log('Message sent successfully!');
 };
 
 console.log('Sending Mail');
