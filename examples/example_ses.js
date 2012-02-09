@@ -1,70 +1,71 @@
 var nodemailer = require('../lib/mail');
 
-// Set up SES settings
-nodemailer.SES = {
-	AWSAccessKeyID: "AKIAEXAMPLE",
-	AWSSecretKey: "ZEXAMPLE"
-};
-console.log('SES Configured');
+// Create an Amazon SES transport object
+var transport = new nodemailer.Transport("SMTP", {
+        AWSAccessKeyID: "AKIAEXAMPLE",
+        AWSSecretKey: "ZEXAMPLE"
+    });
 
-// unique cid value for the embedded image
-var cid = Date.now() + '.image.png';
+console.log('SES Configured');
 
 // Message object
 var message = {
-    sender: '"Sender Name" <test@example.com>',
-    to: '"Receiver Name" <test@example.com>',
-    subject: 'Nodemailer is unicode friendly ✔',
+    
+    // define transport to deliver this message
+    transport: transport, 
+    
+    // sender info
+    from: 'Sender Name <andris@node.ee>',
+    
+    // Comma separated list of recipients
+    to: '"Receiver Name" <andris.reinman@gmail.com>',
+    
+    // Subject of the message
+    subject: 'Nodemailer is unicode friendly ✔', //
 
-    body: 'Hello to myself!',
-    html:'<p><b>Hello</b> to myself <img src="cid:' + cid + '"/></p>',
-    debug: true,
+    // plaintext body
+    text: 'Hello to myself!',
+    
+    // HTML body
+    html:'<p><b>Hello</b> to myself <img src="cid:note@node"/></p>'+
+         '<p>Here\'s a nyan cat for you as an embedded attachment:<br/><img src="cid:nyan@node"/></p>',
+    
+    // An array of attachments
     attachments:[
+        
+        // String attachment
         {
-            filename: 'notes.txt',
-            contents: 'Some notes about this e-mail'
+            fileName: 'notes.txt',
+            contents: 'Some notes about this e-mail',
+            contentType: 'text/plain' // optional, would be detected from the filename
         },
+        
+        // Binary Buffer attachment
         {
-            filename: 'image.png',
+            fileName: 'image.png',
             contents: new Buffer('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/' +
                                  '//+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4U' +
                                  'g9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC', 'base64'),
-            cid: cid
+            
+            cid: 'note@node' // should be as unique as possible
+        },
+        
+        // File Stream attachment
+        {
+            fileName: 'nyan cat ✔.gif',
+            filePath: __dirname+"/nyan.gif",
+            cid: 'nyan@node' // should be as unique as possible
         }
     ]
 };
 
-// Callback to be run after the sending is completed
-var callback = function(error, success){
+console.log('Sending Mail');
+
+nodemailer.send_mail(message, function(error){
     if(error){
         console.log('Error occured');
         console.log(error.message);
         return;
     }
-    if(success){
-        console.log('Message sent successfully!');
-    }else{
-        console.log('Message failed, reschedule!');
-    }
-};
-
-console.log('Sending Mail');
-
-// Catch uncaught errors
-process.on('uncaughtException', function(e){
-    console.log('Uncaught Exception', e.stack);
+    console.log('Message sent successfully!');
 });
-
-// Send the e-mail
-var mail;
-try{
-    mail = nodemailer.send_mail(message, callback);
-}catch(e) {
-    console.log('Caught Exception',e);
-}
-
-var oldemit = mail.emit;
-mail.emit = function(){
-    console.log('Mail.emit', arguments);
-    oldemit.apply(mail, arguments);
-};

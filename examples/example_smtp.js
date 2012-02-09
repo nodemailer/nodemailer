@@ -1,7 +1,5 @@
 var nodemailer = require('../lib/mail');
 
-//
-
 // Create a SMTP transport object
 var transport = new nodemailer.Transport("SMTP", {
         service: 'gmail', // use well known service
@@ -33,8 +31,7 @@ var message = {
     
     // HTML body
     html:'<p><b>Hello</b> to myself <img src="cid:note@node"/></p>'+
-         '<p>Here\'s a nyan cat for you from <a href="http://nyanc'+
-         'at.cat/">nyancat.cat</a>:<br/><img src="cid:nyan@node"/></p>',
+         '<p>Here\'s a nyan cat for you as an embedded attachment:<br/><img src="cid:nyan@node"/></p>',
     
     // An array of attachments
     attachments:[
@@ -58,8 +55,8 @@ var message = {
         
         // File Stream attachment
         {
-            fileName: 'nyancat.png',
-            filePath: __dirname+"/nyancat.png",
+            fileName: 'nyan cat ✔.gif',
+            filePath: __dirname+"/nyan.gif",
             cid: 'nyan@node' // should be as unique as possible
         }
     ]
@@ -73,5 +70,5 @@ nodemailer.sendMail(message, function(error){
         return;
     }
     console.log('Message sent successfully!');
-    transport.close();
+    transport.close(); // close the connection pool
 });
