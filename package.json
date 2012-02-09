@@ -22,7 +22,11 @@
         }
     ],
     "dependencies": {
-        "mimelib-noiconv":"*"
+        "mailcomposer": "*",
+        "simplesmtp": "*"
+    },
+    "devDependencies": {
+        "nodeunit": "*"
     },
     "engine": {
         "node": ">=0.5"
