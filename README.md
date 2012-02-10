@@ -68,7 +68,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
     });
 
 See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples) 
-for full feature examples
+for full featured examples
 
 ## Installation
 
@@ -349,6 +349,8 @@ Return callback gets two parameters
 
   * **error** - an error object if the message failed
   * **responseStatus** - an object with some information about the status on success
+
+Example:
 
     nodemailer.sendMail(mailOptions, function(error, responseStatus){
         if(!error){
