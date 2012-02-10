@@ -2,7 +2,7 @@ Nodemailer
 ==========
 
 **Nodemailer** is an easy to use module to send e-mails with Node.JS (using 
-SMTP or sendmail) and it's unicode friendly - You can use any characters you like ✔
+SMTP or sendmail) and is unicode friendly - You can use any characters you like ✔
 
 This version of Nodemailer is built from scratch and might break some existing scripts, so beware while upgrading.
 
@@ -73,7 +73,7 @@ Where
 
 ## Setting up a transport method
 
-Before you can send any e-mail you need to set up a transport method. This can
+Before you can send any e-mails you need to set up a transport method. This can
 be done with `new nodemailer.Transport(type, options)` where `type` indicates
 the transport protocol and `options` defines how it used.
 
@@ -94,7 +94,7 @@ object as `transport`
 
 ### Possible transport methods
 
-`type` parameter can be one of the following:
+Needed `type` parameter can be one of the following:
 
   * **SMTP** for using SMTP
   * **SES** for using Amazon SES
