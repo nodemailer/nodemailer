@@ -35,6 +35,38 @@ If you only want to generate the raw e-mail stream, check out
 If you only want to communicate with the SMTP (both as client and the server),
 check out [simplesmtp](https://github.com/andris9/simplesmtp).
 
+## Example
+
+This is a complete example to send an e-mail with plaintext and HTMl body
+
+    var nodemailer = require("nodemailer");
+    
+    var transport = new nodemailer.Transport("SMTP",{
+        service: "Gmail",
+        auth: {
+            user: "gmail.user@gmail.com",
+            pass: "userpass"
+        }
+    });
+    
+    var mailOptions = {
+        transport: transport, // transport method to use
+        from: "Sender Name <sender@example.com>", // sender address
+        to: "receiver1@example.com, receiver2@example.com", // list of receivers
+        subject: "Hello!", // Subject line
+        text: "Hello world!", // plaintext body
+        html: "<b>Hello world!</b>" // html body
+    }
+
+    nodemailer.sendMail(mailOptions, function(error){
+        if(error){
+            console.log(error);
+        }else{
+            console.log("Message sent!");
+        }
+        transport.close(); // let's shut down the connection pool
+    });
+
 ## Installation
 
 Install through NPM
