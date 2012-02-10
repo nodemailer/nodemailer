@@ -87,14 +87,15 @@ object as `transport`
     var transport = new nodemailer.Transport("SMTP", {smtp_options});
 
     var mailOptions = {
+        transport: transport,
         from: "sender@tr.ee",
-        to: "receiver@tr.ee",
-        transport: transport
+        to: "receiver@tr.ee"
+        ...
     };
 
 ### Possible transport methods
 
-Needed `type` parameter can be one of the following:
+Required `type` parameter can be one of the following:
 
   * **SMTP** for using SMTP
   * **SES** for using Amazon SES
@@ -104,7 +105,7 @@ Needed `type` parameter can be one of the following:
 
 SMTP is different from the other transport mechanisms, as in its case a connection
 pool is created. All the connections try to stay alive as long as possible and 
-are reusable to minimize the protocol overhead delay (for example setting up
+are reusable to minimize the protocol overhead delay - for example setting up
 TLS for authenticating is relatively lengthy process (in CPU terms, not by human
 terms), you do not want to do it several times.
 
