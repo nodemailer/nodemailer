@@ -1,9 +1,9 @@
 var nodemailer = require('../lib/mail');
 
 // Create an Amazon SES transport object
-var transport = new nodemailer.Transport("SMTP", {
-        AWSAccessKeyID: "AKIAEXAMPLE",
-        AWSSecretKey: "ZEXAMPLE"
+var transport = new nodemailer.Transport("SES", {
+        AWSAccessKeyID: "AWSACCESSKEY",
+        AWSSecretKey: "/AWS/SECRET"
     });
 
 console.log('SES Configured');
@@ -52,7 +52,7 @@ var message = {
         
         // File Stream attachment
         {
-            fileName: 'nyan cat ✔.gif',
+            fileName: 'nyancat.gif',
             filePath: __dirname+"/nyan.gif",
             cid: 'nyan@node' // should be as unique as possible
         }
