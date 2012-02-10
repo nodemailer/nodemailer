@@ -64,8 +64,11 @@ This is a complete example to send an e-mail with plaintext and HTML body
         }else{
             console.log("Message sent!");
         }
-        transport.close(); // let's shut down the connection pool
+        transport.close(); // lets shut down the connection pool
     });
+
+See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples) 
+for full feature examples
 
 ## Installation
 
@@ -157,6 +160,18 @@ Example:
 
     var transport = new nodemailer.Transport("SMTP", {
         service: "Gmail",
+        auth: {
+            user: "gmail.user@gmail.com",
+            pass: "userpass"
+        }
+    });
+
+or the same without `service` parameter
+
+    var transport = new nodemailer.Transport("SMTP", {
+        host: "smtp.gmail.com", // hostname
+        secureConnection: true, // use SSL
+        port: 465, // port for secure SMTP
         auth: {
             user: "gmail.user@gmail.com",
             pass: "userpass"
@@ -266,6 +281,29 @@ will be discarded. Other fields are optional.
 
 Attachments can be added as many as you want.
 
+    var mailOptions = {
+        ...
+        attachments: [
+            {
+                fileName: "text1.txt",
+                contents: "hello world!
+            },
+            {
+                fileName: "text2.txt",
+                contents: new Buffer("hello world!,"utf-8")
+            },
+            {
+                fileName: "text3.txt",
+                filePath: "/path/to/file.txt" // stream this file
+            },
+            {
+                fileName: "text",
+                contents: "hello world!,
+                contentType: "text/plain"
+            }
+        ]
+    }
+
 ### Address Formatting
 
 All the e-mail addresses can be plain e-mail address
@@ -281,7 +319,7 @@ To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be 
     username@example.com, "Ноде Майлер" <username@example.com>, "Name, User" <username@example.com>
 
 You can even use unicode domain and user names, these are automatically converted
-to the required form
+to the supported form
 
     "Uncode Domain" <info@müriaad-polüteism.info>
 
@@ -295,12 +333,15 @@ protocol, see example below).
 
 **NB!** the cid value should be as unique as possible!
 
-    var html = "Embedded image: <img src='cid:unique@node.ee' />";
-    var attachments = [{
-        filename: "image.png",
-        filePath: "/path/to/file",
-        cid: "unique@node.ee"
-    }];
+    var mailOptions = {
+        ...
+        html: "Embedded image: <img src='cid:unique@node.ee' />",
+        attachments: [{
+            filename: "image.png",
+            filePath: "/path/to/file",
+            cid: "unique@node.ee" //same cid value as in the html img src
+        }]
+    }
 
 ## Return callback
 
@@ -308,6 +349,12 @@ Return callback gets two parameters
 
   * **error** - an error object if the message failed
   * **responseStatus** - an object with some information about the status on success
+
+    nodemailer.sendMail(mailOptions, function(error, responseStatus){
+        if(!error){
+            console.log(responseStatus.message); // response from the server
+        }
+    });
 
 ## Tests
 
