@@ -1,7 +1,7 @@
 var nodemailer = require('../lib/mail');
 
 // Create a Sendmail transport object
-var transport = new nodemailer.Transport("Sendmail", "/usr/sbin/sendmail");
+var transport = nodemailer.createTransport("Sendmail", "/usr/sbin/sendmail");
 
 console.log('Sendmail Configured');
 

@@ -1,7 +1,7 @@
 var nodemailer = require('../lib/mail');
 
 // Create an Amazon SES transport object
-var transport = new nodemailer.Transport("SES", {
+var transport = nodemailer.createTransport("SES", {
         AWSAccessKeyID: "AWSACCESSKEY",
         AWSSecretKey: "/AWS/SECRET",
         ServiceUrl: "https://email.us-east-1.amazonaws.com" // optional

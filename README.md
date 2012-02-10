@@ -41,7 +41,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
 
     var nodemailer = require("nodemailer");
     
-    var transport = new nodemailer.Transport("SMTP",{
+    var transport = nodemailer.createTransport("SMTP",{
         service: "Gmail",
         auth: {
             user: "gmail.user@gmail.com",
@@ -94,17 +94,17 @@ Where
 ## Setting up a transport method
 
 Before you can send any e-mails you need to set up a transport method. This can
-be done with `new nodemailer.Transport(type, options)` where `type` indicates
+be done with `nodemailer.createTransport(type, options)` where `type` indicates
 the transport protocol and `options` defines how it used.
 
-    var transport = new nodemailer.Transport("SMTP", {smtp_options});
+    var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
 The same transport object can and should be reused several times.
 
 When the transport method is defined, it should be attached to the message
 object as `transport`
 
-    var transport = new nodemailer.Transport("SMTP", {smtp_options});
+    var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
     var mailOptions = {
         transport: transport,
@@ -143,7 +143,7 @@ Possible SMTP options are the following:
 
 Example:
 
-    var transport = new nodemailer.Transport("SMTP", {
+    var transport = nodemailer.createTransport("SMTP", {
         service: "Gmail",
         auth: {
             user: "gmail.user@gmail.com",
@@ -153,7 +153,7 @@ Example:
 
 or the same without `service` parameter
 
-    var transport = new nodemailer.Transport("SMTP", {
+    var transport = nodemailer.createTransport("SMTP", {
         host: "smtp.gmail.com", // hostname
         secureConnection: true, // use SSL
         port: 465, // port for secure SMTP
@@ -166,7 +166,7 @@ or the same without `service` parameter
 **NB!** if you want to close the pool (cancel all open connections) you can use
 `transport.close()`
 
-    var transport = new nodemailer.Transport("SMTP",{});
+    var transport = nodemailer.createTransport("SMTP",{});
     ...
     transport.close(); // close the pool 
 
@@ -183,7 +183,7 @@ Possible SES options are the following:
 
 Example:
 
-    var transport = new nodemailer.Transport("SES", {
+    var transport = nodemailer.createTransport("SES", {
         AWSAccessKeyID: "AWSACCESSKEY",
         AWSSecretKey: "AWS/Secret/key"
     });
@@ -196,7 +196,7 @@ command.
 Configuration is really easy, the options parameter is optional but you can
 use it to define the path to the *sendmail* command
 
-    var transport = new nodemailer.Transport("Sendmail", "/usr/bin/sendmail");
+    var transport = nodemailer.createTransport("Sendmail", "/usr/bin/sendmail");
 
 ### Well known services for SMTP
 
@@ -239,7 +239,7 @@ Attachments are streamed as binary.
 
 Example:
 
-    var transport = new nodemailer.Transport("Sendmail");
+    var transport = nodemailer.createTransport("Sendmail");
 
     var mailOptions = {
         transport: transport,
