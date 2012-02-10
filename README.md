@@ -84,7 +84,7 @@ Include the module
 
 An e-mail can be sent with `sendMail(mailOptions, callback)` command
 
-    nodemailer.send_mail(mailOptions, callback);
+    nodemailer.sendMail(mailOptions, callback);
 
 Where
 
