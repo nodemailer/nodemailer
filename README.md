@@ -41,6 +41,21 @@ Install through NPM
 
     npm install nodemailer
 
+Currently v0.3 is not published on NPM so you should install it manually
+
+Use the easy way
+
+    npm install https://github.com/andris9/Nodemailer/tarball/v0.3
+
+Or the more complicated way
+
+    cd ~/node_modules
+    git clone git@github.com:andris9/Nodemailer.git nodemailer
+    cd nodemailer
+    git fetch origin v0.3:v0.3
+    git checkout v0.3
+    npm install
+
 ## Usage
 
 Include the module
