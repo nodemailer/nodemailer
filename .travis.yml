@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - 0.6
+  - 0.7
+
+notifications:
+  email:
+    recipients:
+      - andris@node.ee
+    on_success: change
+    on_failure: change

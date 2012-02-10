@@ -14,7 +14,10 @@
         "type" : "git",
         "url" : "http://github.com/andris9/nodemailer.git"
     },
-    "main" : "./lib/mail",
+    "scripts":{
+        "test": "node ./run_tests.js"
+    },
+    "main" : "./lib/nodemailer",
     "licenses" : [
         {
             "type": "MIT",

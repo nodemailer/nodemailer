@@ -12,10 +12,10 @@ var message = {
     transport: transport, 
     
     // sender info
-    from: 'Sender Name <andris@node.ee>',
+    from: 'Sender Name <sender@example.com>',
     
     // Comma separated list of recipients
-    to: '"Receiver Name" <andris.reinman@gmail.com>',
+    to: '"Receiver Name" <receiver@example.com>',
     
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
