@@ -147,7 +147,7 @@ Possible SES options are the following:
 
  * **AWSAccessKeyID** - AWS access key (required)
  * **AWSSecretKey** - AWS secret (required)
- * **ServiceUrl** - optional API endpoint URL (defaults to *"https://email.us-east-1.amazonaws.com"*)
+ * **ServiceUrl** - optional API end point URL (defaults to *"https://email.us-east-1.amazonaws.com"*)
 
 Example:
 
@@ -158,7 +158,7 @@ Example:
 
 ### Setting up Sendmail
 
-Sendmail transport method streams the compiled message to the stdin of *sendmail*
+Sendmail transport method streams the compiled message to the *stdin* of *sendmail*
 command.
 
 Configuration is really easy, the options parameter is optional but you can
@@ -210,18 +210,18 @@ Example:
     var transport = new nodemailer.Transport("Sendmail");
 
     var mailOptions = {
+        transport: transport,
         from: "me@tr.ee",
         to: "me@tr.ee",
         subject: "Hello world!",
-        text: "Plaintext body",
-        transport: transport
+        text: "Plaintext body"
     }
     
     nodemailer.sendMail(mailOptions, function(){});
 
 ### Attachment fields
 
-Attahcment object cosists of the following properties:
+Attahcment object consists of the following properties:
 
   * **fileName** - filename to be reported as the name of the attached file, use of unicode is allowed (except when using Amazon SES which doesn't like it)
   * **cid** - optional content id for using inline images in HTML message source
