@@ -95,7 +95,7 @@ Where
 
 Before you can send any e-mails you need to set up a transport method. This can
 be done with `nodemailer.createTransport(type, options)` where `type` indicates
-the transport protocol and `options` defines how it used.
+the transport protocol and `options` defines how it is used.
 
     var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
