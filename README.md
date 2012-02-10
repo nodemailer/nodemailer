@@ -37,7 +37,7 @@ check out [simplesmtp](https://github.com/andris9/simplesmtp).
 
 ## Example
 
-This is a complete example to send an e-mail with plaintext and HTMl body
+This is a complete example to send an e-mail with plaintext and HTML body
 
     var nodemailer = require("nodemailer");
     
