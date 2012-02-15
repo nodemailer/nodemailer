@@ -91,19 +91,22 @@
 <span class='line'> 84</span>  * @param {Function} callback Callback function to run when the sending is completed
 <span class='line'> 85</span>  */</span><span class="WHIT">
 <span class='line'> 86</span> </span><span class="NAME">SMTPTransport.prototype.sendMail</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">emailMessage</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 87</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="PUNC">(</span><span class="NAME">this.options.requiresAuth</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> 
-<span class='line'> 88</span>       </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.options.auth</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">this.options.auth.user</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">this.options.auth.pass</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 89</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">callback</span><span class="PUNC">(</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="STRN">"Authentication required, invalid details provided"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 90</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 91</span> </span><span class="WHIT">    
-<span class='line'> 92</span>     </span><span class="NAME">this.pool.sendMail</span><span class="PUNC">(</span><span class="NAME">emailMessage</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 93</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 94</span> 
-<span class='line'> 95</span> </span><span class="COMM">/**
-<span class='line'> 96</span>  * &lt;p>Closes the client pool&lt;/p>
-<span class='line'> 97</span>  * 
-<span class='line'> 98</span>  * @param {Function} callback Callback function to run once the pool is closed
-<span class='line'> 99</span>  */</span><span class="WHIT">
-<span class='line'>100</span> </span><span class="NAME">SMTPTransport.prototype.close</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>101</span> </span><span class="WHIT">    </span><span class="NAME">this.pool.close</span><span class="PUNC">(</span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>102</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>
+<span class='line'> 87</span> </span><span class="WHIT">    </span><span class="COMM">// force SMTP encoding</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">    </span><span class="NAME">emailMessage.options.escapeSMTP</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">    
+<span class='line'> 90</span>     </span><span class="KEYW">if</span><span class="PUNC">(</span><span class="NAME">this.options.requiresAuth</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> 
+<span class='line'> 91</span>       </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.options.auth</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">this.options.auth.user</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">this.options.auth.pass</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">callback</span><span class="PUNC">(</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="STRN">"Authentication required, invalid details provided"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">    
+<span class='line'> 95</span>     </span><span class="NAME">this.pool.sendMail</span><span class="PUNC">(</span><span class="NAME">emailMessage</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 97</span> 
+<span class='line'> 98</span> </span><span class="COMM">/**
+<span class='line'> 99</span>  * &lt;p>Closes the client pool&lt;/p>
+<span class='line'>100</span>  * 
+<span class='line'>101</span>  * @param {Function} callback Callback function to run once the pool is closed
+<span class='line'>102</span>  */</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="NAME">SMTPTransport.prototype.close</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="WHIT">    </span><span class="NAME">this.pool.close</span><span class="PUNC">(</span><span class="NAME">callback</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>
