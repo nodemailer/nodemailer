@@ -134,7 +134,7 @@ Possible SMTP options are the following:
  * **service** - an optional well known service identifier ("Gmail", "Hotmail" etc., see **Well known Services** for a list of supported services) to auto-configure host, port and secure connection settings
  * **host** - hostname of the SMTP server (defaults to "localhost", not needed with `service`)
  * **port** - port of the SMTP server (defaults to 25, not needed with `service`)
- * **secureConnection** - use SSL (default is `false`, not needed with `service`)
+ * **secureConnection** - use SSL (default is `false`, not needed with `service`). If you're using port 587 then keep `secureConnection` false, since the connection is started in insecure plain text mode and only later upgraded with STARTTLS  
  * **name** - the name of the client server (defaults to machine name)
  * **auth** - authentication object as `{user:"...", pass:"..."}`
  * **ignoreTLS** - ignore server support for STARTTLS (defaults to `false`)
