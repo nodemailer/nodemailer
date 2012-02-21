@@ -15,7 +15,7 @@
         "url" : "http://github.com/andris9/nodemailer.git"
     },
     "scripts":{
-        "test": "node ./run_tests.js"
+        "test": "nodeunit test/"
     },
     "main" : "./lib/nodemailer",
     "licenses" : [
