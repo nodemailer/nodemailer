@@ -1,4 +1,4 @@
-var nodemailer = require('../lib/mail');
+var nodemailer = require('../lib/nodemailer');
 
 // Create an Amazon SES transport object
 var transport = nodemailer.createTransport("SES", {

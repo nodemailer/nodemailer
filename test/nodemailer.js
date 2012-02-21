@@ -8,7 +8,7 @@ exports["General tests"] = {
         var mail = new nodemailer.Nodemailer();
         test.done();
     }
-}
+};
 
 exports["Transport close"] = {
     "SMTP - Callback in transport.close": function(test){
@@ -59,4 +59,4 @@ exports["Transport close"] = {
             test.done();
         });
     }
-}
+};
