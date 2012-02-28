@@ -262,10 +262,11 @@ Attahcment object consists of the following properties:
   * **cid** - optional content id for using inline images in HTML message source
   * **contents** - String or a Buffer contents for the attachment
   * **filePath** - path to a file if you want to stream the file instead of including it (better for larger attachments)
+  * **streamSource** - Stream object for arbitrary binary streams if you want to stream the contents (needs to support *pause*/*resume*)
   * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property 
 
-One of `contents` or `filePath` must be specified, if both are missing, the attachment
-will be discarded. Other fields are optional.
+One of `contents`, `filePath` or `streamSource` must be specified, if none is 
+present, the attachment will be discarded. Other fields are optional.
 
 Attachments can be added as many as you want.
 
@@ -283,6 +284,10 @@ Attachments can be added as many as you want.
             {
                 fileName: "text3.txt",
                 filePath: "/path/to/file.txt" // stream this file
+            },
+            {
+                fileName: "text4.txt",
+                streamSource: fs.createReadStream("file.txt")
             },
             {
                 fileName: "text",
