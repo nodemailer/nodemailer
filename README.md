@@ -254,6 +254,23 @@ Example:
     
     nodemailer.sendMail(mailOptions, function(){});
 
+### SendGrid support
+
+Nodemailer supports SendGrid [SMTP API](http://docs.sendgrid.com/documentation/api/smtp-api/) out of the box - you can
+use objects as header values and these are automatically JSONized (and mime encoded if needed).
+
+    var mailOptions = {
+        ...,
+        headers: {
+            'X-SMTPAPI': {
+                category : "newuser",
+                sub:{
+                    "%name%": ["Žiguli Õllepruul"]
+                }
+            }
+        }
+    }
+
 ### Attachment fields
 
 Attahcment object consists of the following properties:
