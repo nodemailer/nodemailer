@@ -1,11 +1,21 @@
 var testCase = require('nodeunit').testCase,
-    nodemailer = require("../lib/nodemailer");
+    nodemailer = require("../lib/nodemailer"),
+    stripHTML = require("../lib/helpers").stripHTML;
 
 exports["General tests"] = {
     
     "Create a new Nodemailer object": function(test){
         // this is more like a stub here
         var mail = new nodemailer.Nodemailer();
+        test.done();
+    },
+    
+    "stripHTML": function(test){
+        
+        var html = "<h1>Tere &raquo;</h1><ul><li>Test</li></ul>",
+            output = "Tere »\n======\n\n  * Test";
+        
+        test.equal(stripHTML(html).trim(), output);
         test.done();
     }
 };
