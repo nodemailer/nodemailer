@@ -268,8 +268,11 @@ use objects as header values and these are automatically JSONized (and mime enco
                     "%name%": ["Žiguli Õllepruul"]
                 }
             }
-        }
+        },
+        subject: "Hello, %name%"
     }
+
+This also applies to any other service that expects a JSON string as a header value for specified key.
 
 ### Attachment fields
 
