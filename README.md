@@ -204,7 +204,7 @@ use it to define the path to the *sendmail* command
 ### Well known services for SMTP
 
 If you want to use a well known service as the SMTP host, you do not need
-to enter the hostname or port number, just use the `service` parameter (**nb** case sensitive).
+to enter the hostname or port number, just use the `service` parameter (**NB!** case sensitive).
 
 Currently cupported services are: 
 
