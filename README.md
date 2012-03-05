@@ -2,7 +2,7 @@ Nodemailer
 ==========
 
 **Nodemailer** is an easy to use module to send e-mails with Node.JS (using 
-SMTP or sendmail) and is unicode friendly - You can use any characters you like ✔
+SMTP or sendmail or Amazon SES) and is unicode friendly - You can use any characters you like ✔
 
 Nodemailer is Windows friendly, you can install it with *npm* on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
 
@@ -25,6 +25,7 @@ in a more structured way (with TOC).
   * Different transport methods - **SMTP**, **sendmail** and **Amazon SES**
   * SMTP **Connection pool** and connection reuse for rapid delivery
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
+  * Use objects as header values for **SendGrid** SMTP API
 
 ## Check out my other mail related modules
 
@@ -203,7 +204,7 @@ use it to define the path to the *sendmail* command
 ### Well known services for SMTP
 
 If you want to use a well known service as the SMTP host, you do not need
-to enter the hostname or port number, just use the `service` parameter.
+to enter the hostname or port number, just use the `service` parameter (**nb** case sensitive).
 
 Currently cupported services are: 
 
