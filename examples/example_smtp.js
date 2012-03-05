@@ -12,10 +12,7 @@ var transport = nodemailer.createTransport("SMTP", {
 console.log('SMTP Configured');
 
 // Message object
-var message = {
-    
-    // define transport to deliver this message
-    transport: transport, 
+var message = { 
     
     // sender info
     from: 'Sender Name <sender@example.com>',
@@ -67,7 +64,7 @@ var message = {
 };
 
 console.log('Sending Mail');
-nodemailer.sendMail(message, function(error){
+transport.sendMail(message, function(error){
     if(error){
         console.log('Error occured');
         console.log(error.message);

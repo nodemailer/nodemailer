@@ -43,7 +43,8 @@ This is a complete example to send an e-mail with plaintext and HTML body
 
     var nodemailer = require("nodemailer");
     
-    var transport = nodemailer.createTransport("SMTP",{
+    // create transport method
+    var smtpTransport = nodemailer.createTransport("SMTP",{
         service: "Gmail",
         auth: {
             user: "gmail.user@gmail.com",
@@ -52,7 +53,6 @@ This is a complete example to send an e-mail with plaintext and HTML body
     });
     
     var mailOptions = {
-        transport: transport, // transport method to use
         from: "Sender Name <sender@example.com>", // sender address
         to: "receiver1@example.com, receiver2@example.com", // list of receivers
         subject: "Hello!", // Subject line
@@ -60,7 +60,8 @@ This is a complete example to send an e-mail with plaintext and HTML body
         html: "<b>Hello world!</b>" // html body
     }
 
-    nodemailer.sendMail(mailOptions, function(error){
+    // send mail with defined transport object
+    smtpTransport.sendMail(mailOptions, function(error){
         if(error){
             console.log(error);
         }else{
@@ -84,9 +85,9 @@ Include the module
 
     var nodemailer = require("nodemailer");
 
-An e-mail can be sent with `sendMail(mailOptions, callback)` command
+An e-mail can be sent with `sendMail(mailOptions[, callback])` command
 
-    nodemailer.sendMail(mailOptions, callback);
+    transport.sendMail(mailOptions, callback);
 
 Where
 
@@ -109,7 +110,6 @@ object as `transport`
     var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
     var mailOptions = {
-        transport: transport,
         from: "sender@tr.ee",
         to: "receiver@tr.ee"
         ...
@@ -245,14 +245,13 @@ Example:
     var transport = nodemailer.createTransport("Sendmail");
 
     var mailOptions = {
-        transport: transport,
         from: "me@tr.ee",
         to: "me@tr.ee",
         subject: "Hello world!",
         text: "Plaintext body"
     }
     
-    nodemailer.sendMail(mailOptions, function(){});
+    transport.sendMail(mailOptions);
 
 ### SendGrid support
 

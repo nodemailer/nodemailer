@@ -8,9 +8,6 @@ console.log('Sendmail Configured');
 // Message object
 var message = {
     
-    // define transport to deliver this message
-    transport: transport, 
-    
     // sender info
     from: 'Sender Name <sender@example.com>',
     
@@ -58,7 +55,7 @@ var message = {
 
 console.log('Sending Mail');
 
-nodemailer.send_mail(message, function(error){
+transport.send_mail(message, function(error){
     if(error){
         console.log('Error occured');
         console.log(error.message);
