@@ -93,6 +93,7 @@ An e-mail can be sent with `sendMail(mailOptions[, callback])` command
 
 Where
 
+  * `transport` is a transport method defined with `nodemailer.createTransport`
   * **mailOptions** defines the e-mail (set its subject, body text, receivers etc.), see **E-mail Message Fields** for details
   * **callback** is the callback function that will be run after the e-mail is sent or the sending failed (see **Return callback** for details)
 
@@ -106,16 +107,15 @@ the transport protocol and `options` defines how it is used.
 
 The same transport object can and should be reused several times.
 
-When the transport method is defined, it should be attached to the message
-object as `transport`
+When the transport method is defined, it can be used to send e-mail with `sendMail`
 
     var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
-    var mailOptions = {
+    transport.sendMail({
         from: "sender@tr.ee",
         to: "receiver@tr.ee"
         ...
-    };
+    });
 
 ### Possible transport methods
 
