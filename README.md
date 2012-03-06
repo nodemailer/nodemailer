@@ -44,7 +44,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
 
     var nodemailer = require("nodemailer");
     
-    // create transport method
+    // create reusable transport method (opens pool of SMTP connections)
     var smtpTransport = nodemailer.createTransport("SMTP",{
         service: "Gmail",
         auth: {
@@ -53,22 +53,23 @@ This is a complete example to send an e-mail with plaintext and HTML body
         }
     });
     
+    // setup e-mail data
     var mailOptions = {
-        from: "Sender Name <sender@example.com>", // sender address
+        from: "Sender Name ✔ <sender@example.com>", // sender address
         to: "receiver1@example.com, receiver2@example.com", // list of receivers
-        subject: "Hello!", // Subject line
-        text: "Hello world!", // plaintext body
-        html: "<b>Hello world!</b>" // html body
+        subject: "Hello ✔", // Subject line
+        text: "Hello world ✔", // plaintext body
+        html: "<b>Hello world ✔</b>" // html body
     }
 
     // send mail with defined transport object
-    smtpTransport.sendMail(mailOptions, function(error){
+    smtpTransport.sendMail(mailOptions, function(error, response){
         if(error){
             console.log(error);
         }else{
-            console.log("Message sent!");
+            console.log("Message sent: " + response.message);
         }
-        transport.close(); // lets shut down the connection pool
+        transport.close(); // shut down the connection pool, no more messages
     });
 
 See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples) 
