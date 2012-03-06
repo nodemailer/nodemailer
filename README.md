@@ -69,7 +69,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
         }else{
             console.log("Message sent: " + response.message);
         }
-        transport.close(); // shut down the connection pool, no more messages
+        smtpTransport.close(); // shut down the connection pool, no more messages
     });
 
 See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples) 
