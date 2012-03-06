@@ -53,7 +53,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
         }
     });
     
-    // setup e-mail data
+    // setup e-mail data with unicode symbols
     var mailOptions = {
         from: "Sender Name ✔ <sender@example.com>", // sender address
         to: "receiver1@example.com, receiver2@example.com", // list of receivers
