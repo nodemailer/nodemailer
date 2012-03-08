@@ -275,6 +275,37 @@ use objects as header values and these are automatically JSONized (and mime enco
 
 This also applies to any other service that expects a JSON string as a header value for specified key.
 
+### Generate Text from HTML
+
+If `generateTextFromHTML` option is set to true, then HTML contents of the mail is automatically converted
+to plaintext format when plaintext content is empty or missing.
+
+For example
+
+    mailOptions = {
+        ...,
+        generateTextFromHTML: true,
+        html: '<h1>Hello world</h1><p><b>How</b> are you?',
+        // text: '' // no text part
+    }
+    
+is automatically converted in the backround by Nodemailer to:
+
+    mailOptions = {
+        ...,
+        // source html:
+        html: '<h1>Hello world</h1><p><b>How</b> are you?',
+        // automatically generated plaintext message:
+        text: "Hello world\n"+
+              "===========\n"+
+              "\n"+
+              "**How** are you?"
+    }
+
+As you can see the output syntax for `generateTextFromHTML` looks similar to markdown, and that
+is exactly the case here - Nodemailer includes a simple HTML to markdown converter. But don't
+expect too much from it, it's not full featured or perfect, just some regexes here and there.
+
 ### Attachment fields
 
 Attahcment object consists of the following properties:
