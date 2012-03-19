@@ -238,6 +238,7 @@ The following are the possible fields of an e-mail message:
   - **generateTextFromHTML** - if set to true uses HTML to generate plain text body part from the HTML if the text is not defined
   - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values as passed as is, you should do your own encoding to 7bit if needed)
   - **attachments** - An array of attachment objects.
+  - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
 
 All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
 Attachments are streamed as binary.
@@ -367,6 +368,24 @@ You can even use unicode domain and user names, these are automatically converte
 to the supported form
 
     "Uncode Domain" <info@müriaad-polüteism.info>
+
+### SMTP envelope
+
+SMTP envelope is usually auto generated from `from`, `to`, `cc` and `bcc` fields but
+if for some reason you want to specify it yourself, you can do it with `envelope` property.
+
+`envelope` is an object with the following params: `from`, `to`, `cc` and `bcc` just like
+with regular mail options. You can also use the regular address format.
+
+    mailOptions = {
+        ...,
+        from: "mailer@node.ee",
+        to: "daemon@node.ee",
+        envelope: {
+            from: "Daemon <deamon@node.ee>",
+            to: "mailer@node.ee, Mailer <mailer2@node.ee>"
+        }
+    }
 
 ### Using Embedded Images
 
