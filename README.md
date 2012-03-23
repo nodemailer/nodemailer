@@ -24,7 +24,7 @@ in a more structured way (with TOC).
   * SMTP **Connection pool** and connection reuse for rapid delivery
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
   * Use objects as header values for **SendGrid** SMTP API
-  * **XOAUTH** authentication support and token generation
+  * **XOAUTH** authentication support and token generation (3-legged OAuth)
 
 ## Check out my other mail related modules
 
