@@ -179,7 +179,7 @@ or the same without `service` parameter
 **nodemailer** supports XOAUTH authentication for SMTP. To use this, include
 `XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
 
-    var mailOptions = {
+    var transportOptions = {
         ...,
         auth: {
             XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...."
@@ -202,8 +202,8 @@ Gmail, so in this case only mandatory options are `user`, `token` and `tokenSecr
 One of `user` or `requestUrl` is mandatory. `consumerKey` and `consumerSecret` both
 default to `"anonymous"`.
 
-    var mailOptions = {
-        ...,
+    var transportOptions = {
+        service: "Gmail",
         auth: {
             XOAuthToken: nodemailer.createXOAuthGenerator({
                 user: "test.nodemailer@gmail.com",
