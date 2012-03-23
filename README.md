@@ -172,6 +172,46 @@ or the same without `service` parameter
     ...
     transport.close(); // close the pool 
 
+
+#### SMTP XOAUTH and token generation
+
+**nodemailer** supports XOAUTH authentication for SMTP. To use this, include
+`XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
+
+    var mailOptions = {
+        ...,
+        auth: {
+            XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...."
+        }
+    }
+
+**nodemailer** includes also built in XOAUTH token generator which can be used 
+with `nodemailer.createXOAuthGenerator()`. The function is preconfigured for
+Gmail, so in this case only mandatory options are `user`, `token` and `tokenSecret`.
+
+    var XOAuthTokenGenerator = nodemailer.createXOAuthGenerator({
+            user: "test.nodemailer@gmail.com",
+            // requestUrl: "https://oauth.access.point",
+            // consumerKey: "anonymous",
+            // consumerSecret: "anonymous",
+            token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+            tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
+        });
+
+One of `user` or `requestUrl` is mandatory. `consumerKey` and `consumerSecret` both
+default to `"anonymous"`.
+
+    var mailOptions = {
+        ...,
+        auth: {
+            XOAuthToken: nodemailer.createXOAuthGenerator({
+                user: "test.nodemailer@gmail.com",
+                token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+                tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
+            });
+        }
+    }
+
 ### Setting up SES
 
 SES is actually a HTTP based protocol, the compiled e-mail and related info 
