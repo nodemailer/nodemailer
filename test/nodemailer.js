@@ -17,6 +17,22 @@ exports["General tests"] = {
         
         test.equal(stripHTML(html).trim(), output);
         test.done();
+    },
+    
+    "generate XOAuthToken": function(test){
+    	nodemailer.createXOAuthGenerator({
+        	user: "test.nodemailer@gmail.com",
+    		consumerKey: "anonymous", // optional
+    		consumerSecret: "anonymous", // optional
+    		token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+    		tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c",
+    		timestamp: "1332499914",
+    		nonce: "3595015741981970681"
+        }).generate(function(err, token){
+        	test.equal(token, "R0VUIGh0dHBzOi8vbWFpbC5nb29nbGUuY29tL21haWwvYi90ZXN0Lm5vZGVtYWlsZXJAZ21haWwuY29tL3NtdHAvIG9hdXRoX2NvbnN1bWVyX2tleT0iYW5vbnltb3VzIixvYXV0aF9ub25jZT0iMzU5NTAxNTc0MTk4MTk3MDY4MSIsb2F1dGhfc2lnbmF0dXJlPSJZZkt4QlJHZnRkMUx0bk5LMXM5d25QUjM5UnclM0QiLG9hdXRoX3NpZ25hdHVyZV9tZXRob2Q9IkhNQUMtU0hBMSIsb2F1dGhfdGltZXN0YW1wPSIxMzMyNDk5OTE0IixvYXV0aF90b2tlbj0iMSUyRk9fSGdvTzRoMnVPVWZwdXMwVi0tN215Z0lDWHJRUTBaYWpCM1pINTJLcU0iLG9hdXRoX3ZlcnNpb249IjEuMCI=");
+        	test.done();
+        });
+    	
     }
 };
 
