@@ -47,6 +47,34 @@ exports["General tests"] = {
         	test.done();
         });
     	
+    },
+    
+    "Use default Message-Id value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {};
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            var regex = "Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">";
+            test.ok(response.message.match(new RegExp(regex)));
+            test.done();
+        })
+    },
+    
+    "Use custom Message-Id value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                messageId: "ABCDEF"
+            };
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/Message\-Id:\s*<ABCDEF>/));
+            // default not present
+            var regex = "Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">";
+            test.ok(!response.message.match(new RegExp(regex)));
+            test.done();
+        })
     }
 };
 

@@ -278,6 +278,7 @@ The following are the possible fields of an e-mail message:
   - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values as passed as is, you should do your own encoding to 7bit if needed)
   - **attachments** - An array of attachment objects.
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
+  - **messageId** - optional Message-Id value, random value will be generated if not set
 
 All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
 Attachments are streamed as binary.
@@ -355,7 +356,8 @@ Attahcment object consists of the following properties:
   * **contents** - String or a Buffer contents for the attachment
   * **filePath** - path to a file if you want to stream the file instead of including it (better for larger attachments)
   * **streamSource** - Stream object for arbitrary binary streams if you want to stream the contents (needs to support *pause*/*resume*)
-  * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property 
+  * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property
+  * **contentDisposition** - optional content disposition type for the attachment, defaults to "attachment" 
 
 One of `contents`, `filePath` or `streamSource` must be specified, if none is 
 present, the attachment will be discarded. Other fields are optional.
