@@ -75,6 +75,38 @@ exports["General tests"] = {
             test.ok(!response.message.match(new RegExp(regex)));
             test.done();
         })
+    },
+    
+    "Use custom envelope": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                from: "sender1@tr.ee",
+                to: "receiver1@tr.ee",
+                envelope: {
+                	from: "sender2@tr.ee",
+                    to: "receiver2@tr.ee",
+                }
+            };
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.deepEqual(response.envelope, {from:'sender2@tr.ee',to: [ 'receiver2@tr.ee' ],stamp: 'Postage paid, Par Avion'})
+            test.done();
+        })
+    },
+    
+    "Use default envelope": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                from: "sender1@tr.ee",
+                to: "receiver1@tr.ee"
+            };
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.deepEqual(response.envelope, {from:'sender1@tr.ee',to: [ 'receiver1@tr.ee' ],stamp: 'Postage paid, Par Avion'})
+            test.done();
+        })
     }
 };
 
