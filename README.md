@@ -25,6 +25,7 @@ in a more structured way (with TOC).
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
   * Use objects as header values for **SendGrid** SMTP API
   * **XOAUTH** authentication support and token generation (3-legged OAuth) - useful with Gmail
+  * **DKIM** signing
 
 ## Check out my other mail related modules
 
@@ -240,6 +241,43 @@ Configuration is really easy, the options parameter is optional but you can
 use it to define the path to the *sendmail* command
 
     var transport = nodemailer.createTransport("Sendmail", "/usr/bin/sendmail");
+
+### DKIM Signing
+
+**Nodemailer** supports DKIM signing with very simple setup. Use this with caution 
+though since the generated message needs to be buffered entirely before it can be
+signed - in this case the streaming capability offered by mailcomposer is illusionary,
+there will only be one `'data'` event with the entire message. Not a big deal with
+small messages but might consume a lot of RAM when using larger attachments.
+
+Set up the DKIM signing with `useDKIM` method for a transport object:
+
+    transport.useDKIM(dkimOptions)
+
+Where `dkimOptions` includes necessary options for signing
+
+  * **domainName** - the domainname that is being used for signing
+  * **keySelector** - key selector. If you have set up a TXT record with DKIM public key at *zzz._domainkey.example.com* then `zzz` is the selector
+  * **privateKey** - DKIM private key that is used for signing as a string
+  * **headerFieldNames** - optional colon separated list of header fields to sign, by default all fields suggested by RFC4871 #5.5 are used
+
+All messages transmitted through this transport objects are from now on DKIM signed.
+
+**NB!** Currently if several header fields with the same name exists, only the last one (the one in the bottom) is signed.
+
+Example:
+
+    var transport = nodemailer.createTransport("Sendmail");
+    
+    transport.useDKIM({
+        domainName: "node.ee",
+        keySelector: "dkim",
+        privateKey: fs.readFileSync("private_key.pem")
+    });
+
+    transport.sendMail(mailOptions);
+
+See examples/example_dkim.js for a complete example.
 
 ### Well known services for SMTP
 
