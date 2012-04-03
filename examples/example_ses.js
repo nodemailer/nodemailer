@@ -1,4 +1,6 @@
-var nodemailer = require('../lib/nodemailer');
+var nodemailer = require('../lib/nodemailer'),
+    fs = require("fs"),
+    pathlib = require("path");
 
 // Create an Amazon SES transport object
 var transport = nodemailer.createTransport("SES", {
@@ -8,6 +10,15 @@ var transport = nodemailer.createTransport("SES", {
     });
 
 console.log('SES Configured');
+
+// optional DKIM signing
+/*
+transport.useDKIM({
+    domainName: "do-not-trust.node.ee", // signing domain
+    keySelector: "dkim", // selector name (in this case there's a dkim._domainkey.do-not-trust.node.ee TXT record set up)
+    privateKey: fs.readFileSync(pathlib.join(__dirname,"test_private.pem"))
+});
+*/
 
 // Message object
 var message = {

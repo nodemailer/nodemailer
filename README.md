@@ -279,20 +279,6 @@ Example:
 
 See examples/example_dkim.js for a complete example.
 
-#### DKIM Signing with Amazon SES
-
-Amazon SES modifies Message-Id and Date fields of the message, so in order to use
-DKIM signing you need to define appropriate `headerFieldNames` property where
-Message-Id and Date fields are not listed (by default Message-Id and Date are 
-included as signed fields).
-
-    mailcomposer.useDKIM({
-        domainName: "node.ee",
-        keySelector: "dkim",
-        privateKey: fs.readFileSync("private_key.pem"),
-        headerFieldNames: "from:to:cc:bcc:subject:..." // but no Message-Id or Date!
-    });
-
 ### Well known services for SMTP
 
 If you want to use a well known service as the SMTP host, you do not need
