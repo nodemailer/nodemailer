@@ -55,7 +55,7 @@ var message = {
 
 console.log('Sending Mail');
 
-transport.send_mail(message, function(error){
+transport.sendMail(message, function(error){
     if(error){
         console.log('Error occured');
         console.log(error.message);

@@ -4,15 +4,15 @@ var nodemailer = require('../lib/nodemailer');
 var transport = nodemailer.createTransport("SMTP", {
         service: 'Gmail', // use well known service
         auth: {
-        	// Option one - provide pregenerated token
-        	//     XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...." 
-        	// or alternatively, use built in generator
-        	XOAuthToken: nodemailer.createXOAuthGenerator({
-            	user: "test.nodemailer@gmail.com",
-        		consumerKey: "anonymous", // optional
-        		consumerSecret: "anonymous", // optional
-        		token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
-        		tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
+            // Option one - provide pregenerated token
+            //     XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...." 
+            // or alternatively, use built in generator
+            XOAuthToken: nodemailer.createXOAuthGenerator({
+                user: "test.nodemailer@gmail.com",
+                consumerKey: "anonymous", // optional
+                consumerSecret: "anonymous", // optional
+                token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+                tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
             })
         },
         debug: true
@@ -24,16 +24,16 @@ console.log('SMTP Configured');
 var message = { 
     
     // sender info
-	from: 'Sender Name <sender@example.com>',
-	    
-	    // Comma separated list of recipients
-	to: '"Receiver Name" <receiver@example.com>',
+    from: 'Sender Name <sender@example.com>',
+        
+        // Comma separated list of recipients
+    to: '"Receiver Name" <receiver@example.com>',
     
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
 
     headers: {
-        'X-Laziness-level': 1000,
+        'X-Laziness-level': 1000
     },
 
     // plaintext body

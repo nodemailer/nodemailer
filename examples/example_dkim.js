@@ -25,7 +25,7 @@ var message = {
     subject: 'Nodemailer is unicode friendly ✔', //
 
     headers: {
-        'X-Laziness-level': 1000,
+        'X-Laziness-level': 1000
     },
 
     // plaintext body
