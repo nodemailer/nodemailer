@@ -263,7 +263,7 @@ Where `dkimOptions` includes necessary options for signing
 
 All messages transmitted through this transport objects are from now on DKIM signed.
 
-**NB!** Currently if several header fields with the same name exists, only the last one (the one in the bottom) is signed.
+Currently if several header fields with the same name exists, only the last one (the one in the bottom) is signed.
 
 Example:
 
@@ -278,6 +278,12 @@ Example:
     transport.sendMail(mailOptions);
 
 See examples/example_dkim.js for a complete example.
+
+**NB!** Be careful when using services like Gmail, SES etc. through SMTP 
+(SES API is handled by Nodemailer automatically) - these tend to modify some 
+headers like Message-Id or Date which invalidates the signature. In this case use
+`headerFieldNames` property to define only fields that won't be changed and leave
+out `Date` or any other unsupported field.
 
 ### Well known services for SMTP
 
