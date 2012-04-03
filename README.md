@@ -246,9 +246,8 @@ use it to define the path to the *sendmail* command
 
 **Nodemailer** supports DKIM signing with very simple setup. Use this with caution 
 though since the generated message needs to be buffered entirely before it can be
-signed - in this case the streaming capability offered by mailcomposer is illusionary,
-there will only be one `'data'` event with the entire message. Not a big deal with
-small messages but might consume a lot of RAM when using larger attachments.
+signed. Not a big deal with small messages but might consume a lot of RAM when 
+using larger attachments.
 
 Set up the DKIM signing with `useDKIM` method for a transport object:
 
