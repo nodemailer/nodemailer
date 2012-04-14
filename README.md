@@ -27,6 +27,10 @@ in a more structured way (with TOC).
   * **XOAUTH** authentication support and token generation (3-legged OAuth) - useful with Gmail
   * **DKIM** signing
 
+## Support Nodemailer development
+
+[![Donate to author](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DB26KWR2BQX5W)
+
 ## Check out my other mail related modules
 
 If you want to parse generated or received e-mail instead of sending it, check 
