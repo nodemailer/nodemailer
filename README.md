@@ -401,7 +401,7 @@ Attahcment object consists of the following properties:
   * **fileName** - filename to be reported as the name of the attached file, use of unicode is allowed (except when using Amazon SES which doesn't like it)
   * **cid** - optional content id for using inline images in HTML message source
   * **contents** - String or a Buffer contents for the attachment
-  * **filePath** - path to a file if you want to stream the file instead of including it (better for larger attachments)
+  * **filePath** - path to a file or an URL if you want to stream the file instead of including it (better for larger attachments)
   * **streamSource** - Stream object for arbitrary binary streams if you want to stream the contents (needs to support *pause*/*resume*)
   * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property
   * **contentDisposition** - optional content disposition type for the attachment, defaults to "attachment" 
@@ -414,26 +414,33 @@ Attachments can be added as many as you want.
     var mailOptions = {
         ...
         attachments: [
-            {
+            {   // utf-8 string as an attachment
                 fileName: "text1.txt",
                 contents: "hello world!
             },
-            {
+            {   // binary buffer as an attachment
                 fileName: "text2.txt",
                 contents: new Buffer("hello world!,"utf-8")
             },
-            {
+            {   // file on disk as an attachment
                 fileName: "text3.txt",
                 filePath: "/path/to/file.txt" // stream this file
             },
-            {
+            {   // fileName and content type is derived from filePath
+                filePath: "/path/to/file.txt"
+            },
+            {   // stream as an attachment
                 fileName: "text4.txt",
                 streamSource: fs.createReadStream("file.txt")
             },
-            {
-                fileName: "text",
+            {   // define custom content type for the attachment
+                fileName: "text.bin",
                 contents: "hello world!,
                 contentType: "text/plain"
+            },
+            {   // use URL as an attachment
+                fileName: "license.txt",
+                contents: "https://raw.github.com/andris9/Nodemailer/master/LICENSE"
             }
         ]
     }
