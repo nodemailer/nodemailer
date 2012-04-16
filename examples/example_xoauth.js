@@ -80,5 +80,7 @@ transport.sendMail(message, function(error){
         return;
     }
     console.log('Message sent successfully!');
-    transport.close(); // close the connection pool
+    
+    // if you don't want to use this transport object anymore, uncomment following line
+    //transport.close(); // close the connection pool
 });
