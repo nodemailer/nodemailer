@@ -440,7 +440,7 @@ Attachments can be added as many as you want.
             },
             {   // use URL as an attachment
                 fileName: "license.txt",
-                contents: "https://raw.github.com/andris9/Nodemailer/master/LICENSE"
+                filePath: "https://raw.github.com/andris9/Nodemailer/master/LICENSE"
             }
         ]
     }
