@@ -327,7 +327,7 @@ The following are the possible fields of an e-mail message:
   - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values as passed as is, you should do your own encoding to 7bit if needed)
   - **attachments** - An array of attachment objects.
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
-  - **messageId** - optional Message-Id value, random value will be generated if not set
+  - **messageId** - optional Message-Id value, random value will be generated if not set. Set to false to omit the Message-Id header
 
 All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
 Attachments are streamed as binary.
