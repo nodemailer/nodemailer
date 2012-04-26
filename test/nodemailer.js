@@ -76,7 +76,20 @@ exports["General tests"] = {
             test.done();
         })
     },
-    
+
+    "Skip Message-Id value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                messageId: false
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(!response.message.match(/Message\-Id:/i));
+            test.done();
+        });
+    },
+
     "Use custom envelope": function(test){
         var transport = nodemailer.createTransport("Stub"),
             mailOptions = {
