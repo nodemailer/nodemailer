@@ -216,7 +216,7 @@ default to `"anonymous"`.
                 user: "test.nodemailer@gmail.com",
                 token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
                 tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
-            });
+            })
         }
     }
 
