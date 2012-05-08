@@ -324,7 +324,7 @@ The following are the possible fields of an e-mail message:
   - **text** - The plaintext version of the message
   - **html** - The HTML version of the message
   - **generateTextFromHTML** - if set to true uses HTML to generate plain text body part from the HTML if the text is not defined
-  - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values as passed as is, you should do your own encoding to 7bit if needed)
+  - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values are passed as is, you should do your own encoding to 7bit if needed)
   - **attachments** - An array of attachment objects.
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
   - **messageId** - optional Message-Id value, random value will be generated if not set. Set to false to omit the Message-Id header
