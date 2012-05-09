@@ -243,10 +243,10 @@ Example:
 Sendmail transport method streams the compiled message to the *stdin* of *sendmail*
 command.
 
-Configuration is really easy, the options parameter is optional but you can
-use it to define the path to the *sendmail* command
+Possible sendmail options are the following:
 
-    var transport = nodemailer.createTransport("Sendmail", "/usr/bin/sendmail");
+  * **path** - path to the `sendmail` command (defaults to *"sendmail"*)
+  * **args** - an array of extra command line options to pass to the `sendmail` command (ie. `["-f sender@example.com"]`)
 
 ### DKIM Signing
 
