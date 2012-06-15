@@ -1,7 +1,7 @@
 Nodemailer
 ==========
 
-**Nodemailer** is an easy to use module to send e-mails with Node.JS (using 
+**Nodemailer** is an easy to use module to send e-mails with Node.JS (using
 SMTP or sendmail or Amazon SES) and is unicode friendly - You can use any characters you like ✔
 
 Nodemailer is Windows friendly, you can install it with *npm* on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
@@ -33,21 +33,25 @@ in a more structured way (with TOC).
 
 ## Check out my other mail related modules
 
-If you want to parse generated or received e-mail instead of sending it, check 
+If you want to parse generated or received e-mail instead of sending it, check
 out [MailParser](https://github.com/andris9/mailparser).
 
-If you only want to generate the raw e-mail stream, check out 
+If you only want to generate the raw e-mail stream, check out
 [MailComposer](https://github.com/andris9/mailcomposer).
 
 If you only want to communicate with the SMTP (both as client and the server),
 check out [simplesmtp](https://github.com/andris9/simplesmtp).
+
+## Templates
+
+To use Nodemailer with templates, please see documentation for [node-email-templates](https://github.com/niftylettuce/node-email-templates).
 
 ## Example
 
 This is a complete example to send an e-mail with plaintext and HTML body
 
     var nodemailer = require("nodemailer");
-    
+
     // create reusable transport method (opens pool of SMTP connections)
     var smtpTransport = nodemailer.createTransport("SMTP",{
         service: "Gmail",
@@ -56,7 +60,7 @@ This is a complete example to send an e-mail with plaintext and HTML body
             pass: "userpass"
         }
     });
-    
+
     // setup e-mail data with unicode symbols
     var mailOptions = {
         from: "Sender Name ✔ <sender@example.com>", // sender address
@@ -73,12 +77,12 @@ This is a complete example to send an e-mail with plaintext and HTML body
         }else{
             console.log("Message sent: " + response.message);
         }
-        
+
         // if you don't want to use this transport object anymore, uncomment following line
         //smtpTransport.close(); // shut down the connection pool, no more messages
     });
 
-See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples) 
+See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples)
 for full featured examples
 
 ## Installation
@@ -134,7 +138,7 @@ Required `type` parameter can be one of the following:
 ### Setting up SMTP
 
 SMTP is different from the other transport mechanisms, as in its case a connection
-pool is created. All the connections try to stay alive as long as possible and 
+pool is created. All the connections try to stay alive as long as possible and
 are reusable to minimize the protocol overhead delay - for example setting up
 TLS for authenticating is relatively lengthy process (in CPU terms, not by human
 terms), you do not want to do it several times.
@@ -144,7 +148,7 @@ Possible SMTP options are the following:
  * **service** - an optional well known service identifier ("Gmail", "Hotmail" etc., see **Well known Services** for a list of supported services) to auto-configure host, port and secure connection settings
  * **host** - hostname of the SMTP server (defaults to "localhost", not needed with `service`)
  * **port** - port of the SMTP server (defaults to 25, not needed with `service`)
- * **secureConnection** - use SSL (default is `false`, not needed with `service`). If you're using port 587 then keep `secureConnection` false, since the connection is started in insecure plain text mode and only later upgraded with STARTTLS  
+ * **secureConnection** - use SSL (default is `false`, not needed with `service`). If you're using port 587 then keep `secureConnection` false, since the connection is started in insecure plain text mode and only later upgraded with STARTTLS
  * **name** - the name of the client server (defaults to machine name)
  * **auth** - authentication object as `{user:"...", pass:"..."}` or  `{XOAuthToken: "base64data"}`
  * **ignoreTLS** - ignore server support for STARTTLS (defaults to `false`)
@@ -178,7 +182,7 @@ or the same without `service` parameter
 
     var transport = nodemailer.createTransport("SMTP",{});
     ...
-    transport.close(); // close the pool 
+    transport.close(); // close the pool
 
 
 #### SMTP XOAUTH and token generation
@@ -193,7 +197,7 @@ or the same without `service` parameter
         }
     }
 
-**nodemailer** includes also built in XOAUTH token generator which can be used 
+**nodemailer** includes also built in XOAUTH token generator which can be used
 with `nodemailer.createXOAuthGenerator()`. The function is preconfigured for
 Gmail, so in this case only mandatory options are `user`, `token` and `tokenSecret`.
 
@@ -222,7 +226,7 @@ default to `"anonymous"`.
 
 ### Setting up SES
 
-SES is actually a HTTP based protocol, the compiled e-mail and related info 
+SES is actually a HTTP based protocol, the compiled e-mail and related info
 (signatures and such) are sent as a HTTP request to SES servers.
 
 Possible SES options are the following:
@@ -261,9 +265,9 @@ or
 
 ### DKIM Signing
 
-**Nodemailer** supports DKIM signing with very simple setup. Use this with caution 
+**Nodemailer** supports DKIM signing with very simple setup. Use this with caution
 though since the generated message needs to be buffered entirely before it can be
-signed. Not a big deal with small messages but might consume a lot of RAM when 
+signed. Not a big deal with small messages but might consume a lot of RAM when
 using larger attachments.
 
 Set up the DKIM signing with `useDKIM` method for a transport object:
@@ -284,7 +288,7 @@ Currently if several header fields with the same name exists, only the last one 
 Example:
 
     var transport = nodemailer.createTransport("Sendmail");
-    
+
     transport.useDKIM({
         domainName: "node.ee",
         keySelector: "dkim",
@@ -295,8 +299,8 @@ Example:
 
 See examples/example_dkim.js for a complete example.
 
-**NB!** Be careful when using services like Gmail, SES etc. through SMTP 
-(SES API is handled by Nodemailer automatically) - these tend to modify some 
+**NB!** Be careful when using services like Gmail, SES etc. through SMTP
+(SES API is handled by Nodemailer automatically) - these tend to modify some
 headers like Message-Id or Date which invalidates the signature. In this case use
 `headerFieldNames` property to define only fields that won't be changed and leave
 out `Date` or any other unsupported field.
@@ -306,7 +310,7 @@ out `Date` or any other unsupported field.
 If you want to use a well known service as the SMTP host, you do not need
 to enter the hostname or port number, just use the `service` parameter (**NB!** case sensitive).
 
-Currently cupported services are: 
+Currently cupported services are:
 
   * **"Gmail"** for Google Mail
   * **"hot.ee"** for www.hot.ee
@@ -319,7 +323,7 @@ Currently cupported services are:
   * **"Yahoo"** for Yahoo Mail
   * **"Zoho"** for Zoho Mail
 
-Predefined service data covers `host`, `port` and secure connection settings, 
+Predefined service data covers `host`, `port` and secure connection settings,
 any other parameters (ie. `auth`) need to be set separately.
 
 ## E-mail message fields
@@ -354,7 +358,7 @@ Example:
         subject: "Hello world!",
         text: "Plaintext body"
     }
-    
+
     transport.sendMail(mailOptions);
 
 ### SendGrid support
@@ -390,7 +394,7 @@ For example
         html: '<h1>Hello world</h1><p><b>How</b> are you?',
         // text: '' // no text part
     }
-    
+
 is automatically converted in the backround by Nodemailer to:
 
     mailOptions = {
@@ -418,9 +422,9 @@ Attahcment object consists of the following properties:
   * **filePath** - path to a file or an URL if you want to stream the file instead of including it (better for larger attachments)
   * **streamSource** - Stream object for arbitrary binary streams if you want to stream the contents (needs to support *pause*/*resume*)
   * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property
-  * **contentDisposition** - optional content disposition type for the attachment, defaults to "attachment" 
+  * **contentDisposition** - optional content disposition type for the attachment, defaults to "attachment"
 
-One of `contents`, `filePath` or `streamSource` must be specified, if none is 
+One of `contents`, `filePath` or `streamSource` must be specified, if none is
 present, the attachment will be discarded. Other fields are optional.
 
 Attachments can be added as many as you want.
@@ -538,15 +542,15 @@ Run the tests with npm in Nodemailer's directory
     npm test
 
 There aren't currently many tests for Nodemailer but there are a lot of tests
-in the modules that are used to generate the raw e-mail body and to use the 
+in the modules that are used to generate the raw e-mail body and to use the
 SMTP client connection.
 
-## Tweaking 
+## Tweaking
 
 Nodemailer in itself is actually more like a wrapper for my other modules
 [mailcomposer](https://github.com/andris9/mailcomposer) for composing the raw message stream
-and [simplesmtp](https://github.com/andris9/simplesmtp) for delivering it, by providing an 
-unified API. If there's some problems with particular parts of the 
+and [simplesmtp](https://github.com/andris9/simplesmtp) for delivering it, by providing an
+unified API. If there's some problems with particular parts of the
 message composing/sending process you should look at the  appropriate module.
 
 ## License
