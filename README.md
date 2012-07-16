@@ -50,37 +50,39 @@ To use Nodemailer with templates, please see documentation for [node-email-templ
 
 This is a complete example to send an e-mail with plaintext and HTML body
 
-    var nodemailer = require("nodemailer");
+```javascript
+var nodemailer = require("nodemailer");
 
-    // create reusable transport method (opens pool of SMTP connections)
-    var smtpTransport = nodemailer.createTransport("SMTP",{
-        service: "Gmail",
-        auth: {
-            user: "gmail.user@gmail.com",
-            pass: "userpass"
-        }
-    });
+// create reusable transport method (opens pool of SMTP connections)
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    service: "Gmail",
+    auth: {
+        user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
 
-    // setup e-mail data with unicode symbols
-    var mailOptions = {
-        from: "Sender Name ✔ <sender@example.com>", // sender address
-        to: "receiver1@example.com, receiver2@example.com", // list of receivers
-        subject: "Hello ✔", // Subject line
-        text: "Hello world ✔", // plaintext body
-        html: "<b>Hello world ✔</b>" // html body
+// setup e-mail data with unicode symbols
+var mailOptions = {
+    from: "Sender Name ✔ <sender@example.com>", // sender address
+    to: "receiver1@example.com, receiver2@example.com", // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: "Hello world ✔", // plaintext body
+    html: "<b>Hello world ✔</b>" // html body
+}
+
+// send mail with defined transport object
+smtpTransport.sendMail(mailOptions, function(error, response){
+    if(error){
+        console.log(error);
+    }else{
+        console.log("Message sent: " + response.message);
     }
 
-    // send mail with defined transport object
-    smtpTransport.sendMail(mailOptions, function(error, response){
-        if(error){
-            console.log(error);
-        }else{
-            console.log("Message sent: " + response.message);
-        }
-
-        // if you don't want to use this transport object anymore, uncomment following line
-        //smtpTransport.close(); // shut down the connection pool, no more messages
-    });
+    // if you don't want to use this transport object anymore, uncomment following line
+    //smtpTransport.close(); // shut down the connection pool, no more messages
+});
+```
 
 See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples)
 for full featured examples
@@ -89,17 +91,23 @@ for full featured examples
 
 Install through NPM
 
-    npm install nodemailer
+```
+npm install nodemailer
+```
 
 ## Usage
 
 Include the module
 
-    var nodemailer = require("nodemailer");
+```javascript
+var nodemailer = require("nodemailer");
+```
 
 An e-mail can be sent with `sendMail(mailOptions[, callback])` command
 
-    transport.sendMail(mailOptions, callback);
+```javascript
+transport.sendMail(mailOptions, callback);
+```
 
 Where
 
@@ -113,19 +121,23 @@ Before you can send any e-mails you need to set up a transport method. This can
 be done with `nodemailer.createTransport(type, options)` where `type` indicates
 the transport protocol and `options` defines how it is used.
 
-    var transport = nodemailer.createTransport("SMTP", {smtp_options});
+```javascript
+var transport = nodemailer.createTransport("SMTP", {smtp_options});
+```
 
 The same transport object can and should be reused several times.
 
 When the transport method is defined, it can be used to send e-mail with `sendMail`
 
-    var transport = nodemailer.createTransport("SMTP", {smtp_options});
+```javascript
+var transport = nodemailer.createTransport("SMTP", {smtp_options});
 
-    transport.sendMail({
-        from: "sender@tr.ee",
-        to: "receiver@tr.ee"
-        ...
-    });
+transport.sendMail({
+    from: "sender@tr.ee",
+    to: "receiver@tr.ee"
+    ...
+});
+```
 
 ### Possible transport methods
 
@@ -157,72 +169,83 @@ Possible SMTP options are the following:
 
 Example:
 
-    var transport = nodemailer.createTransport("SMTP", {
-        service: "Gmail",
-        auth: {
-            user: "gmail.user@gmail.com",
-            pass: "userpass"
-        }
-    });
+```javascript
+var transport = nodemailer.createTransport("SMTP", {
+    service: "Gmail",
+    auth: {
+        user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
+```
 
 or the same without `service` parameter
 
-    var transport = nodemailer.createTransport("SMTP", {
-        host: "smtp.gmail.com", // hostname
-        secureConnection: true, // use SSL
-        port: 465, // port for secure SMTP
-        auth: {
-            user: "gmail.user@gmail.com",
-            pass: "userpass"
-        }
-    });
+```javascript
+var transport = nodemailer.createTransport("SMTP", {
+    host: "smtp.gmail.com", // hostname
+    secureConnection: true, // use SSL
+    port: 465, // port for secure SMTP
+    auth: {
+        user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
+```
 
-**NB!** if you want to close the pool (cancel all open connections) you can use
-`transport.close()`
+**NB!** if you want to close the pool (cancel all open connections) you can use `transport.close()`
 
-    var transport = nodemailer.createTransport("SMTP",{});
-    ...
-    transport.close(); // close the pool
+```javascript
+
+var transport = nodemailer.createTransport("SMTP",{});
+...
+transport.close(); // close the pool
+```
 
 
 #### SMTP XOAUTH and token generation
 
-**nodemailer** supports XOAUTH authentication for SMTP. To use this, include
-`XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
+**nodemailer** supports XOAUTH authentication for SMTP. To use this, include `XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
 
-    var transportOptions = {
-        ...,
-        auth: {
-            XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...."
-        }
+```javascript
+var transportOptions = {
+    ...,
+    auth: {
+        XOAuthToken: "R0VUIGh0dHBzOi8vbWFpbC5nb29...."
     }
+}
+```
 
 **nodemailer** includes also built in XOAUTH token generator which can be used
 with `nodemailer.createXOAuthGenerator()`. The function is preconfigured for
 Gmail, so in this case only mandatory options are `user`, `token` and `tokenSecret`.
 
-    var XOAuthTokenGenerator = nodemailer.createXOAuthGenerator({
-            user: "test.nodemailer@gmail.com",
-            // requestUrl: "https://oauth.access.point",
-            // consumerKey: "anonymous",
-            // consumerSecret: "anonymous",
-            token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
-            tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
-        });
+```javascript
+var XOAuthTokenGenerator = nodemailer.createXOAuthGenerator({
+        user: "test.nodemailer@gmail.com",
+        // requestUrl: "https://oauth.access.point",
+        // consumerKey: "anonymous",
+        // consumerSecret: "anonymous",
+        token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+        tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
+    });
+```
 
 One of `user` or `requestUrl` is mandatory. `consumerKey` and `consumerSecret` both
 default to `"anonymous"`.
 
-    var transportOptions = {
-        service: "Gmail",
-        auth: {
-            XOAuthToken: nodemailer.createXOAuthGenerator({
-                user: "test.nodemailer@gmail.com",
-                token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
-                tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
-            })
-        }
+```javascript
+var transportOptions = {
+    service: "Gmail",
+    auth: {
+        XOAuthToken: nodemailer.createXOAuthGenerator({
+            user: "test.nodemailer@gmail.com",
+            token: "1/O_HgoO4h2uOUfpus0V--7mygICXrQQ0ZajB3ZH52KqM",
+            tokenSecret: "_mUBkIwNPnfQBUIWrJrpXJ0c"
+        })
     }
+}
+```
 
 ### Setting up SES
 
@@ -237,10 +260,12 @@ Possible SES options are the following:
 
 Example:
 
-    var transport = nodemailer.createTransport("SES", {
-        AWSAccessKeyID: "AWSACCESSKEY",
-        AWSSecretKey: "AWS/Secret/key"
-    });
+```javascript
+var transport = nodemailer.createTransport("SES", {
+    AWSAccessKeyID: "AWSACCESSKEY",
+    AWSSecretKey: "AWS/Secret/key"
+});
+```
 
 ### Setting up Sendmail
 
@@ -254,14 +279,18 @@ Options object is optional, possible sendmail options are the following:
 
 Example:
 
-    var transport = nodemailer.createTransport("sendmail");
+```javascript
+var transport = nodemailer.createTransport("sendmail");
+```
 
 or
 
-    var transport = nodemailer.createTransport("sendmail", {
-        path: "/usr/local/bin/sendmail",
-        args: ["-f sender@example.com"]
-    });
+```javascript
+var transport = nodemailer.createTransport("sendmail", {
+    path: "/usr/local/bin/sendmail",
+    args: ["-f sender@example.com"]
+});
+```
 
 ### DKIM Signing
 
@@ -272,7 +301,9 @@ using larger attachments.
 
 Set up the DKIM signing with `useDKIM` method for a transport object:
 
-    transport.useDKIM(dkimOptions)
+```javascript
+transport.useDKIM(dkimOptions)
+```
 
 Where `dkimOptions` includes necessary options for signing
 
@@ -287,15 +318,17 @@ Currently if several header fields with the same name exists, only the last one 
 
 Example:
 
-    var transport = nodemailer.createTransport("Sendmail");
+```javascript
+var transport = nodemailer.createTransport("Sendmail");
 
-    transport.useDKIM({
-        domainName: "node.ee",
-        keySelector: "dkim",
-        privateKey: fs.readFileSync("private_key.pem")
-    });
+transport.useDKIM({
+    domainName: "node.ee",
+    keySelector: "dkim",
+    privateKey: fs.readFileSync("private_key.pem")
+});
 
-    transport.sendMail(mailOptions);
+transport.sendMail(mailOptions);
+```
 
 See examples/example_dkim.js for a complete example.
 
@@ -350,34 +383,38 @@ Attachments are streamed as binary.
 
 Example:
 
-    var transport = nodemailer.createTransport("Sendmail");
+```javascript
+var transport = nodemailer.createTransport("Sendmail");
 
-    var mailOptions = {
-        from: "me@tr.ee",
-        to: "me@tr.ee",
-        subject: "Hello world!",
-        text: "Plaintext body"
-    }
+var mailOptions = {
+    from: "me@tr.ee",
+    to: "me@tr.ee",
+    subject: "Hello world!",
+    text: "Plaintext body"
+}
 
-    transport.sendMail(mailOptions);
+transport.sendMail(mailOptions);
+```
 
 ### SendGrid support
 
 Nodemailer supports SendGrid [SMTP API](http://docs.sendgrid.com/documentation/api/smtp-api/) out of the box - you can
 use objects as header values and these are automatically JSONized (and mime encoded if needed).
 
-    var mailOptions = {
-        ...,
-        headers: {
-            'X-SMTPAPI': {
-                category : "newuser",
-                sub:{
-                    "%name%": ["Žiguli Õllepruul"]
-                }
+```javascript
+var mailOptions = {
+    ...,
+    headers: {
+        'X-SMTPAPI': {
+            category : "newuser",
+            sub:{
+                "%name%": ["Žiguli Õllepruul"]
             }
-        },
-        subject: "Hello, %name%"
-    }
+        }
+    },
+    subject: "Hello, %name%"
+}
+```
 
 This also applies to any other service that expects a JSON string as a header value for specified key.
 
@@ -388,25 +425,29 @@ to plaintext format when plaintext content is empty or missing.
 
 For example
 
-    mailOptions = {
-        ...,
-        generateTextFromHTML: true,
-        html: '<h1>Hello world</h1><p><b>How</b> are you?',
-        // text: '' // no text part
-    }
+```javascript
+mailOptions = {
+    ...,
+    generateTextFromHTML: true,
+    html: '<h1>Hello world</h1><p><b>How</b> are you?',
+    // text: '' // no text part
+}
+```
 
 is automatically converted in the backround by Nodemailer to:
 
-    mailOptions = {
-        ...,
-        // source html:
-        html: '<h1>Hello world</h1><p><b>How</b> are you?',
-        // automatically generated plaintext message:
-        text: "Hello world\n"+
-              "===========\n"+
-              "\n"+
-              "**How** are you?"
-    }
+```javascript
+mailOptions = {
+    ...,
+    // source html:
+    html: '<h1>Hello world</h1><p><b>How</b> are you?',
+    // automatically generated plaintext message:
+    text: "Hello world\n"+
+          "===========\n"+
+          "\n"+
+          "**How** are you?"
+}
+```
 
 As you can see the output syntax for `generateTextFromHTML` looks similar to markdown, and that
 is exactly the case here - Nodemailer includes a simple HTML to markdown converter. But don't
@@ -429,58 +470,68 @@ present, the attachment will be discarded. Other fields are optional.
 
 Attachments can be added as many as you want.
 
-    var mailOptions = {
-        ...
-        attachments: [
-            {   // utf-8 string as an attachment
-                fileName: "text1.txt",
-                contents: "hello world!
-            },
-            {   // binary buffer as an attachment
-                fileName: "text2.txt",
-                contents: new Buffer("hello world!,"utf-8")
-            },
-            {   // file on disk as an attachment
-                fileName: "text3.txt",
-                filePath: "/path/to/file.txt" // stream this file
-            },
-            {   // fileName and content type is derived from filePath
-                filePath: "/path/to/file.txt"
-            },
-            {   // stream as an attachment
-                fileName: "text4.txt",
-                streamSource: fs.createReadStream("file.txt")
-            },
-            {   // define custom content type for the attachment
-                fileName: "text.bin",
-                contents: "hello world!,
-                contentType: "text/plain"
-            },
-            {   // use URL as an attachment
-                fileName: "license.txt",
-                filePath: "https://raw.github.com/andris9/Nodemailer/master/LICENSE"
-            }
-        ]
-    }
+```javascript
+var mailOptions = {
+    ...
+    attachments: [
+        {   // utf-8 string as an attachment
+            fileName: "text1.txt",
+            contents: "hello world!
+        },
+        {   // binary buffer as an attachment
+            fileName: "text2.txt",
+            contents: new Buffer("hello world!,"utf-8")
+        },
+        {   // file on disk as an attachment
+            fileName: "text3.txt",
+            filePath: "/path/to/file.txt" // stream this file
+        },
+        {   // fileName and content type is derived from filePath
+            filePath: "/path/to/file.txt"
+        },
+        {   // stream as an attachment
+            fileName: "text4.txt",
+            streamSource: fs.createReadStream("file.txt")
+        },
+        {   // define custom content type for the attachment
+            fileName: "text.bin",
+            contents: "hello world!,
+            contentType: "text/plain"
+        },
+        {   // use URL as an attachment
+            fileName: "license.txt",
+            filePath: "https://raw.github.com/andris9/Nodemailer/master/LICENSE"
+        }
+    ]
+}
+```
 
 ### Address Formatting
 
 All the e-mail addresses can be plain e-mail address
 
-    username@example.com
+```
+username@example.com
+```
 
 or with formatted name (includes unicode support)
 
-    "Ноде Майлер" <username@example.com>
+```
+"Ноде Майлер" <username@example.com>
+```
 
 To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be mixed.
 
-    username@example.com, "Ноде Майлер" <username@example.com>, "Name, User" <username@example.com>
+```
+username@example.com, "Ноде Майлер" <username@example.com>, "Name, User" <username@example.com>
+```
 
 You can even use unicode domain and user names, these are automatically converted
 to the supported form
 
-    "Uncode Domain" <info@müriaad-polüteism.info>
+```
+"Uncode Domain" <info@müriaad-polüteism.info>
+```
 
 ### SMTP envelope
 
@@ -490,15 +541,17 @@ if for some reason you want to specify it yourself, you can do it with `envelope
 `envelope` is an object with the following params: `from`, `to`, `cc` and `bcc` just like
 with regular mail options. You can also use the regular address format.
 
-    mailOptions = {
-        ...,
-        from: "mailer@node.ee",
-        to: "daemon@node.ee",
-        envelope: {
-            from: "Daemon <deamon@node.ee>",
-            to: "mailer@node.ee, Mailer <mailer2@node.ee>"
-        }
+```javascript
+mailOptions = {
+    ...,
+    from: "mailer@node.ee",
+    to: "daemon@node.ee",
+    envelope: {
+        from: "Daemon <deamon@node.ee>",
+        to: "mailer@node.ee, Mailer <mailer2@node.ee>"
     }
+}
+```
 
 ### Using Embedded Images
 
@@ -510,15 +563,17 @@ protocol, see example below).
 
 **NB!** the cid value should be as unique as possible!
 
-    var mailOptions = {
-        ...
-        html: "Embedded image: <img src='cid:unique@node.ee' />",
-        attachments: [{
-            filename: "image.png",
-            filePath: "/path/to/file",
-            cid: "unique@node.ee" //same cid value as in the html img src
-        }]
-    }
+```javascript
+var mailOptions = {
+    ...
+    html: "Embedded image: <img src='cid:unique@node.ee' />",
+    attachments: [{
+        filename: "image.png",
+        filePath: "/path/to/file",
+        cid: "unique@node.ee" //same cid value as in the html img src
+    }]
+}
+```
 
 ## Return callback
 
@@ -529,17 +584,21 @@ Return callback gets two parameters
 
 Example:
 
-    nodemailer.sendMail(mailOptions, function(error, responseStatus){
-        if(!error){
-            console.log(responseStatus.message); // response from the server
-        }
-    });
+```javascript
+nodemailer.sendMail(mailOptions, function(error, responseStatus){
+    if(!error){
+        console.log(responseStatus.message); // response from the server
+    }
+});
+```
 
 ## Tests
 
 Run the tests with npm in Nodemailer's directory
 
-    npm test
+```
+npm test
+```
 
 There aren't currently many tests for Nodemailer but there are a lot of tests
 in the modules that are used to generate the raw e-mail body and to use the
