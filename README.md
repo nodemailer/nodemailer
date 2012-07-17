@@ -368,6 +368,8 @@ The following are the possible fields of an e-mail message:
   - **cc** - Comma separated list of recipients e-mail addresses that will appear on the `Cc:` field
   - **bcc** - Comma separated list of recipients e-mail addresses that will appear on the `Bcc:` field
   - **replyTo** - An e-mail address that will appear on the `Reply-To:` field
+  - **inReplyTo** - The message-id this message is replying
+  - **references** - Message-id list
   - **subject** - The subject of the e-mail
   - **text** - The plaintext version of the message
   - **html** - The HTML version of the message

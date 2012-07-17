@@ -55,8 +55,8 @@ exports["General tests"] = {
         
         transport.sendMail(mailOptions, function(error, response){
             test.ifError(error);
-            var regex = "Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">";
-            test.ok(response.message.match(new RegExp(regex)));
+            var regex = "^Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">$";
+            test.ok(response.message.match(new RegExp(regex, "m")));
             test.done();
         })
     },
@@ -71,8 +71,34 @@ exports["General tests"] = {
             test.ifError(error);
             test.ok(response.message.match(/Message\-Id:\s*<ABCDEF>/));
             // default not present
-            var regex = "Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">";
-            test.ok(!response.message.match(new RegExp(regex)));
+            var regex = "^Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">$";
+            test.ok(!response.message.match(new RegExp(regex, "m")));
+            test.done();
+        })
+    },
+    
+    "Use In-Reply-To": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                inReplyTo: "abc"
+            };
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/^In\-Reply\-To:\s*<abc>$/m));
+            test.done();
+        })
+    },
+    
+    "Use References": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                references: ["abc def <ghi>", "jkl"]
+            };
+        
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/^References:\s*<abc> <def> <ghi> <jkl>$/m));
             test.done();
         })
     },
