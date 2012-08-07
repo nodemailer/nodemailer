@@ -111,7 +111,7 @@ transport.sendMail(mailOptions, callback);
 
 Where
 
-  * `transport` is a transport method defined with `nodemailer.createTransport`
+  * `transport` is a transport object created from the `nodemailer.createTransport` method
   * **mailOptions** defines the e-mail (set its subject, body text, receivers etc.), see **E-mail Message Fields** for details
   * **callback** is the callback function that will be run after the e-mail is sent or the sending failed (see **Return callback** for details)
 
