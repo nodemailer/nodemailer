@@ -479,11 +479,11 @@ var mailOptions = {
     attachments: [
         {   // utf-8 string as an attachment
             fileName: "text1.txt",
-            contents: "hello world!
+            contents: "hello world!"
         },
         {   // binary buffer as an attachment
             fileName: "text2.txt",
-            contents: new Buffer("hello world!,"utf-8")
+            contents: new Buffer("hello world!","utf-8")
         },
         {   // file on disk as an attachment
             fileName: "text3.txt",
@@ -498,7 +498,7 @@ var mailOptions = {
         },
         {   // define custom content type for the attachment
             fileName: "text.bin",
-            contents: "hello world!,
+            contents: "hello world!",
             contentType: "text/plain"
         },
         {   // use URL as an attachment
@@ -637,7 +637,7 @@ Mail options
  --textFile=[path]        Plain text mail body from a file
  --htmlFile=[path]        HTML mail body from a file
  --stdin=[target]         Read "text" or "html" from stdin
- --attachments=[pathlist]  Comma separated list of file paths
+ --attachments=[pathlist] Comma separated list of file paths
 ```
 
 Example
