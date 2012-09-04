@@ -637,8 +637,7 @@ Mail options
  --textFile=[path]        Plain text mail body from a file
  --htmlFile=[path]        HTML mail body from a file
  --stdin=[target]         Read "text" or "html" from stdin
- --textFile=[path]        Plain text mail body from a file
- --attachments=[patlist]  Comma separated list of file paths
+ --attachments=[pathlist]  Comma separated list of file paths
 ```
 
 Example

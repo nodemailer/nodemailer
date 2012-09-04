@@ -18,6 +18,8 @@ if(argv.help){
     console.log(" --host=[hostname]        SMTP server hostname");
     console.log(" --port=[port]            SMTP server port");
     console.log(" --secure=[true:false]    Use SSL when connecting");
+    console.log(" --user=[username]        SMTP username");
+    console.log(" --pass=[password]        SMTP password");
     console.log("");
     console.log("Amazon SES options");
     console.log(" --key=[AWSKey]           Amazon SES key");
