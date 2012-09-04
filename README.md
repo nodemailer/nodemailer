@@ -641,7 +641,9 @@ Mail options
 
 Example
 
-`nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@example.com" --subject="test" --text="hello world!"`
+```
+nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@example.com" --subject="test" --text="hello world!"
+```
 
 
 ## Tests
