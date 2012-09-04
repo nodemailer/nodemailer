@@ -26,6 +26,7 @@ in a more structured way (with TOC).
   * Use objects as header values for **SendGrid** SMTP API
   * **XOAUTH** authentication support and token generation (3-legged OAuth) - useful with Gmail
   * **DKIM** signing
+  * Send e-mail from **command line**
 
 ## Support Nodemailer development
 
@@ -593,6 +594,13 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
     }
 });
 ```
+
+## Command line usage
+
+If installed globally with -g, ndoemailer command enables to send mail from the command line. Run nodemailer --help for usage instructions.
+
+    npm install -g nodemailer
+    nodemailer --help
 
 ## Tests
 
