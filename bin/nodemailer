@@ -36,7 +36,7 @@ if(argv.help){
     console.log(" --textFile=[path]        Plain text mail body from a file");
     console.log(" --htmlFile=[path]        HTML mail body from a file");
     console.log(" --stdin=[target]         Read \"text\" or \"html\" from stdin");
-    console.log(" --attachments=[pathlist]  Comma separated list of file paths");
+    console.log(" --attachments=[pathlist] Comma separated list of file paths");
     console.log("");
     console.log("Example:")
     console.log("nodemailer --host=smtp.gmail.com --port=465 --secure=true --user=\"myuser@gmail.com\" --pass=\"mypass\" --from=\"myuser@gmail.com\" --to=\"target@example.com\" --subject=\"test\" --text=\"hello world!\"");
@@ -62,7 +62,7 @@ var transportType = (argv.transport || configFile.transport || process.env.NODE
     secret = argv.secret || configFile.secret || process.env.NODEMAILER_SECRET;
 
 if(!transportType){
-    transportType = host?"smtp":"sendmail";
+    transportType = host?"smtp": (key?"ses":"sendmail");
 }
 
 secure = ["false", "null", "0", "undefined"].indexOf(secure)>=0 ? false : !!secure;
@@ -112,11 +112,11 @@ if(attachments.length){
 }
 
 if(argv.textFile){
-    argv.text = require("fs").readFileSync(argv.textFile, "utf-8");
+    text = require("fs").readFileSync(argv.textFile, "utf-8");
 }
 
 if(argv.htmlFile){
-    argv.html = require("fs").readFileSync(argv.htmlFile, "utf-8");
+    html = require("fs").readFileSync(argv.htmlFile, "utf-8");
 }
 
 if(argv.stdin){
