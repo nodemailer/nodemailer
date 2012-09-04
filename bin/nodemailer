@@ -34,8 +34,7 @@ if(argv.help){
     console.log(" --textFile=[path]        Plain text mail body from a file");
     console.log(" --htmlFile=[path]        HTML mail body from a file");
     console.log(" --stdin=[target]         Read \"text\" or \"html\" from stdin");
-    console.log(" --textFile=[path]        Plain text mail body from a file");
-    console.log(" --attachments=[patlist]  Comma separated list of file paths");
+    console.log(" --attachments=[pathlist]  Comma separated list of file paths");
     console.log("");
     console.log("Example:")
     console.log("nodemailer --host=smtp.gmail.com --port=465 --secure=true --user=\"myuser@gmail.com\" --pass=\"mypass\" --from=\"myuser@gmail.com\" --to=\"target@example.com\" --subject=\"test\" --text=\"hello world!\"");

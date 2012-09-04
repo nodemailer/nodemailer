@@ -602,6 +602,48 @@ If installed globally with -g, ndoemailer command enables to send mail from the 
     npm install -g nodemailer
     nodemailer --help
 
+And the response should be
+
+```
+Send mail with Nodemailer
+http://github.com/andris9/Nodemailer
+
+Syntax:
+nodemailer [options]
+
+ --help                   show this message
+ --transport=[transport]  "smtp", "ses", "sendmail"
+ --debug=true             show debug log
+
+SMTP options
+ --host=[hostname]        SMTP server hostname
+ --port=[port]            SMTP server port
+ --secure=[true:false]    Use SSL when connecting
+
+Amazon SES options
+ --key=[AWSKey]           Amazon SES key
+ --secret=[AWSSecret]     Amazon SES secret
+
+Mail options
+ --from=[address]         Sender of the mail
+ --to=[addresslist]       Comma separated list of To: addresses
+ --cc=[addresslist]       Comma separated list of Cc: addresses
+ --bcc=[addresslist]      Comma separated list of Bcc: addresses
+ --subject=[subject]      Message subject
+ --text=[plaintext]       Plain text mail body
+ --html=[html]            HTML mail body
+ --textFile=[path]        Plain text mail body from a file
+ --htmlFile=[path]        HTML mail body from a file
+ --stdin=[target]         Read "text" or "html" from stdin
+ --textFile=[path]        Plain text mail body from a file
+ --attachments=[patlist]  Comma separated list of file paths
+```
+
+Example
+
+`nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@example.com" --subject="test" --text="hello world!"`
+
+
 ## Tests
 
 Run the tests with npm in Nodemailer's directory
