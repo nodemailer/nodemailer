@@ -619,6 +619,8 @@ SMTP options
  --host=[hostname]        SMTP server hostname
  --port=[port]            SMTP server port
  --secure=[true:false]    Use SSL when connecting
+ --user=[username]        SMTP username
+ --pass=[password]        SMTP password
 
 Amazon SES options
  --key=[AWSKey]           Amazon SES key
