@@ -24,7 +24,7 @@ in a more structured way (with TOC).
   * SMTP **Connection pool** and connection reuse for rapid delivery
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
   * Use objects as header values for **SendGrid** SMTP API
-  * **XOAUTH** authentication support and token generation (3-legged OAuth) - useful with Gmail
+  * **XOAUTH2** authentication and token generation support - useful with Gmail
   * **DKIM** signing
   * Send e-mail from **command line**
 
@@ -163,7 +163,7 @@ Possible SMTP options are the following:
  * **port** - port of the SMTP server (defaults to 25, not needed with `service`)
  * **secureConnection** - use SSL (default is `false`, not needed with `service`). If you're using port 587 then keep `secureConnection` false, since the connection is started in insecure plain text mode and only later upgraded with STARTTLS
  * **name** - the name of the client server (defaults to machine name)
- * **auth** - authentication object as `{user:"...", pass:"..."}` or  `{XOAuthToken: "base64data"}`
+ * **auth** - authentication object as `{user:"...", pass:"..."}` or  `{XOAuth2: {xoauth2_options}}` or  `{XOAuthToken: "base64data"}`
  * **ignoreTLS** - ignore server support for STARTTLS (defaults to `false`)
  * **debug** - output client and server messages to console
  * **maxConnections** - how many connections to keep in the pool (defaults to 5)
@@ -206,7 +206,31 @@ transport.close(); // close the pool
 
 #### SMTP XOAUTH and token generation
 
-**nodemailer** supports XOAUTH authentication for SMTP. To use this, include `XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
+##### XOAUTH2
+
+**nodemailer** supports XOAUTH2 authentication protocol. To use this you need to obtain a Client ID and a Client Secret from [Google API Console](https://code.google.com/apis/console) (Open "API Access" and create "Client ID for web applications") and then request a refresh token for an user. See [Google OAuth 2.0 Offline Access](https://developers.google.com/accounts/docs/OAuth2WebServer#offline) for more information.
+
+Once you have obtained the Client ID, Client Secret and a Refresh Token for an user, you can use these values to send mail on behalf of the user.
+
+```javascript
+var transportOptions = {
+    ...,
+    auth: {
+        XOAuth2: {
+            user: "example.user@gmail.com",
+            clientId: "8819981768.apps.googleusercontent.comom",
+            clientSecret: "{client_secret}",
+            refreshToken: "1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI"
+        }
+    }
+}
+```
+
+##### XOAUTH
+
+Older XOAUTH is also supporteb by **nodemailer** for SMTP. XOAUTH is based on OAuth protocol 1.0 and is considered deprecated.
+
+To use this, include `XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
 
 ```javascript
 var transportOptions = {
