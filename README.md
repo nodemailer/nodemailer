@@ -220,11 +220,15 @@ var transportOptions = {
             user: "example.user@gmail.com",
             clientId: "8819981768.apps.googleusercontent.com",
             clientSecret: "{client_secret}",
-            refreshToken: "1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI"
+            refreshToken: "1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI",
+            accessToken: "vF9dft4qmTc2Nvb3RlckBhdHRhdmlzdGEuY29tCg==",
+            timeout: 3600
         }
     }
 }
 ```
+
+`accessToken` and `timeout` values are both optional. If XOAUTH2 login fails a new access token is generated automatically and the login is retried.
 
 ##### XOAUTH
 
