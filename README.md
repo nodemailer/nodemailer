@@ -218,7 +218,7 @@ var transportOptions = {
     auth: {
         XOAuth2: {
             user: "example.user@gmail.com",
-            clientId: "8819981768.apps.googleusercontent.comom",
+            clientId: "8819981768.apps.googleusercontent.com",
             clientSecret: "{client_secret}",
             refreshToken: "1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI"
         }
