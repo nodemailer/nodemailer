@@ -12,7 +12,7 @@ exports["General tests"] = {
     
     "stripHTML": function(test){
         
-        var html = "<h1>Tere &raquo;</h1><ul><li>Test</li></ul>",
+        var html = "<html><head><title>Title</title><style>h1{color:#fe57a1}</style></head><body><h1>Tere &raquo;</h1><ul><li>Test</li></ul></body></html>",
             output = "Tere »\n======\n\n  * Test";
         
         test.equal(stripHTML(html).trim(), output);
