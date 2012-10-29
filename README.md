@@ -372,8 +372,9 @@ out `Date` or any other unsupported field.
 If you want to use a well known service as the SMTP host, you do not need
 to enter the hostname or port number, just use the `service` parameter (**NB!** case sensitive).
 
-Currently cupported services are:
+Currently supported services are:
 
+  * **"DynectEmail"** for DynECT Email Delivery
   * **"Gmail"** for Google Mail
   * **"hot.ee"** for www.hot.ee
   * **"Hotmail"** for Microsoft Live Hotmail
