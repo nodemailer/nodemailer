@@ -76,6 +76,21 @@ exports["General tests"] = {
             test.done();
         })
     },
+
+    "Use custom Date value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {
+                date: "Fri, 5 Nov 2012 09:41:00 -0800"
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/Date:\s*Fri, 5 Nov 2012 09:41:00 -0800/));
+            // default not present
+            test.ok(!response.message.match(/^Date:\s*[0-9\s:a-yA-Y]+\s+GMT$/m));
+            test.done();
+        })
+    },
     
     "Use In-Reply-To": function(test){
         var transport = nodemailer.createTransport("Stub"),
