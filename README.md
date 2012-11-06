@@ -408,6 +408,7 @@ The following are the possible fields of an e-mail message:
   - **attachments** - An array of attachment objects.
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
   - **messageId** - optional Message-Id value, random value will be generated if not set. Set to false to omit the Message-Id header
+  - **date** - optional Date value, current UTC string will be used if not set
   - **encoding** - optional transfer encoding for the textual parts (defaults to "quoted-printable")
   - **charset** - optional output character set for the textual parts (defaults to "utf-8")
 
