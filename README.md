@@ -8,8 +8,7 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
 
 Version v0.3 of Nodemailer is built from scratch and might break some existing scripts, so beware while upgrading. Nodemailer should be backwards compatible - if your script worked before, then it should work now, even if Nodemailer documentation differs from your code (method names, properties etc.).
 
-Use [DocumentUp](http://documentup.com/andris9/nodemailer/) to read this README
-in a more structured way (with TOC).
+**[Nodemailer tutorial in Node Knockout blog](http://blog.nodeknockout.com/post/34641712180/sending-email-from-node-js)**
 
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.png)](http://travis-ci.org/andris9/Nodemailer)
 
@@ -564,7 +563,7 @@ You can even use unicode domain and user names, these are automatically converte
 to the supported form
 
 ```
-"Uncode Domain" <info@müriaad-polüteism.info>
+"Unicode Domain" <info@müriaad-polüteism.info>
 ```
 
 ### SMTP envelope
