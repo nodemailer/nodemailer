@@ -6,9 +6,7 @@ SMTP or sendmail or Amazon SES) and is unicode friendly - You can use any charac
 
 Nodemailer is Windows friendly, you can install it with *npm* on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
 
-Version v0.3 of Nodemailer is built from scratch and might break some existing scripts, so beware while upgrading. Nodemailer should be backwards compatible - if your script worked before, then it should work now, even if Nodemailer documentation differs from your code (method names, properties etc.).
-
-**[Nodemailer tutorial in Node Knockout blog](http://blog.nodeknockout.com/post/34641712180/sending-email-from-node-js)**
+**[Read about using Nodemailer from the Node Knockout blog](http://blog.nodeknockout.com/post/34641712180/sending-email-from-node-js)**
 
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.png)](http://travis-ci.org/andris9/Nodemailer)
 
