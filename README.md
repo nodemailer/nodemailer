@@ -62,8 +62,8 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
 
 // setup e-mail data with unicode symbols
 var mailOptions = {
-    from: "Sender Name ✔ <sender@example.com>", // sender address
-    to: "receiver1@example.com, receiver2@example.com", // list of receivers
+    from: "Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+    to: "bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
     subject: "Hello ✔", // Subject line
     text: "Hello world ✔", // plaintext body
     html: "<b>Hello world ✔</b>" // html body
@@ -301,7 +301,7 @@ command.
 Options object is optional, possible sendmail options are the following:
 
   * **path** - path to the `sendmail` command (defaults to *"sendmail"*)
-  * **args** - an array of extra command line options to pass to the `sendmail` command (ie. `["-f sender@example.com"]`)
+  * **args** - an array of extra command line options to pass to the `sendmail` command (ie. `["-f foo@blurdybloop.com"]`)
 
 Example:
 
@@ -314,7 +314,7 @@ or
 ```javascript
 var transport = nodemailer.createTransport("sendmail", {
     path: "/usr/local/bin/sendmail",
-    args: ["-f sender@example.com"]
+    args: ["-f foo@blurdybloop.com"]
 });
 ```
 
@@ -334,7 +334,7 @@ transport.useDKIM(dkimOptions)
 Where `dkimOptions` includes necessary options for signing
 
   * **domainName** - the domainname that is being used for signing
-  * **keySelector** - key selector. If you have set up a TXT record with DKIM public key at *zzz._domainkey.example.com* then `zzz` is the selector
+  * **keySelector** - key selector. If you have set up a TXT record with DKIM public key at *zzz._domainkey.blurdybloop.com* then `zzz` is the selector
   * **privateKey** - DKIM private key that is used for signing as a string
   * **headerFieldNames** - optional colon separated list of header fields to sign, by default all fields suggested by RFC4871 #5.5 are used
 
@@ -542,19 +542,19 @@ var mailOptions = {
 All the e-mail addresses can be plain e-mail address
 
 ```
-username@example.com
+foobar@blurdybloop.com
 ```
 
 or with formatted name (includes unicode support)
 
 ```
-"Ноде Майлер" <username@example.com>
+"Ноде Майлер" <foobar@blurdybloop.com>
 ```
 
 To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be mixed.
 
 ```
-username@example.com, "Ноде Майлер" <username@example.com>, "Name, User" <username@example.com>
+foobar@blurdybloop.com, "Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>
 ```
 
 You can even use unicode domain and user names, these are automatically converted
@@ -671,7 +671,7 @@ Mail options
 Example
 
 ```
-nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@example.com" --subject="test" --text="hello world!"
+nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@blurdybloop.com" --subject="test" --text="hello world!"
 ```
 
 
