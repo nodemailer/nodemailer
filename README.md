@@ -348,7 +348,7 @@ Example:
 var transport = nodemailer.createTransport("Sendmail");
 
 transport.useDKIM({
-    domainName: "node.ee",
+    domainName: "kreata.ee",
     keySelector: "dkim",
     privateKey: fs.readFileSync("private_key.pem")
 });
@@ -575,11 +575,11 @@ with regular mail options. You can also use the regular address format.
 ```javascript
 mailOptions = {
     ...,
-    from: "mailer@node.ee",
-    to: "daemon@node.ee",
+    from: "mailer@kreata.ee",
+    to: "daemon@kreata.ee",
     envelope: {
-        from: "Daemon <deamon@node.ee>",
-        to: "mailer@node.ee, Mailer <mailer2@node.ee>"
+        from: "Daemon <deamon@kreata.ee>",
+        to: "mailer@kreata.ee, Mailer <mailer2@kreata.ee>"
     }
 }
 ```
@@ -597,11 +597,11 @@ protocol, see example below).
 ```javascript
 var mailOptions = {
     ...
-    html: "Embedded image: <img src='cid:unique@node.ee' />",
+    html: "Embedded image: <img src='cid:unique@kreata.ee' />",
     attachments: [{
         filename: "image.png",
         filePath: "/path/to/file",
-        cid: "unique@node.ee" //same cid value as in the html img src
+        cid: "unique@kreata.ee" //same cid value as in the html img src
     }]
 }
 ```
