@@ -367,24 +367,40 @@ out `Date` or any other unsupported field.
 ### Well known services for SMTP
 
 If you want to use a well known service as the SMTP host, you do not need
-to enter the hostname or port number, just use the `service` parameter (**NB!** case sensitive).
+to enter the hostname or port number, just use the `service` parameter
 
 Currently supported services are:
 
-  * **"DynectEmail"** for DynECT Email Delivery
-  * **"Gmail"** for Google Mail
-  * **"hot.ee"** for www.hot.ee
-  * **"Hotmail"** for Microsoft Live Hotmail
-  * **"iCloud"** for Apple iCloud
-  * **"mail.ee"** for www.mail.ee
-  * **"Postmark"** for Postmark App
-  * **"SendGrid"** for SendGrid
-  * **"SES"** for Amazon SES
-  * **"Yahoo"** for Yahoo Mail
-  * **"Zoho"** for Zoho Mail
+  * **DynectEmail**
+  * **Gmail**
+  * **hot.ee**
+  * **Hotmail**
+  * **iCloud**
+  * **mail.ee**
+  * **Mail.Ru**
+  * **Mailgun**
+  * **Postmark**
+  * **SendGrid**
+  * **SES**
+  * **Yahoo**
+  * **yandex**
+  * **Zoho**
 
 Predefined service data covers `host`, `port` and secure connection settings,
-any other parameters (ie. `auth`) need to be set separately.
+any other parameters (ie. `auth`) need to be set separately. Service names are
+case insensitive, so using "gmail" instead of "Gmail" is totally fine.
+
+Example:
+
+```javascript
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    service: "Gmail", // sets automatically host, port and connection security settings
+    auth: {
+        user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
+```
 
 ## E-mail message fields
 
