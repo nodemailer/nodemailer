@@ -407,9 +407,9 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
 The following are the possible fields of an e-mail message:
 
   - **from** - The e-mail address of the sender. All e-mail addresses can be plain `sender@server.com` or formatted `Sender Name <sender@server.com>`
-  - **to** - Comma separated list of recipients e-mail addresses that will appear on the `To:` field
-  - **cc** - Comma separated list of recipients e-mail addresses that will appear on the `Cc:` field
-  - **bcc** - Comma separated list of recipients e-mail addresses that will appear on the `Bcc:` field
+  - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the `To:` field
+  - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the `Cc:` field
+  - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the `Bcc:` field
   - **replyTo** - An e-mail address that will appear on the `Reply-To:` field
   - **inReplyTo** - The message-id this message is replying
   - **references** - Message-id list
