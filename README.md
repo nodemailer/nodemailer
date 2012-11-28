@@ -622,6 +622,25 @@ var mailOptions = {
 }
 ```
 
+**Automatic embedding images**
+
+If you want to convert images in the HTML to embedded images automatically, you can
+set mail option `forceEmbeddedImages` to true. In this case all images in
+the HTML that are either using an absolute URL (http://...) or absolute file path
+(/path/to/file) are replaced with embedded attachments.
+
+For example when using this code
+
+```javascript
+var mailOptions = {
+    forceEmbeddedImages: true
+    html: 'Embedded image: <img src="http://example.com/image.png">'
+};
+```
+
+The image linked is fetched and added automatically as an attachment and the url 
+in the HTML is replaced automatically with a proper `cid:` string.
+
 ## Return callback
 
 Return callback gets two parameters
