@@ -567,10 +567,15 @@ or with formatted name (includes unicode support)
 "Ноде Майлер" <foobar@blurdybloop.com>
 ```
 
-To, Cc and Bcc fields accept comma separated list of e-mails. Formatting can be mixed.
+To, Cc and Bcc fields accept comma separated list of e-mails or an array of 
+emails or an array of comma separated list of e-mails - use it as you like. 
+Formatting can be mixed.
 
 ```
-foobar@blurdybloop.com, "Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>
+...,
+to: 'foobar@blurdybloop.com, "Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>',
+cc: ['foobar@blurdybloop.com', '"Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>']
+...
 ```
 
 You can even use unicode domain and user names, these are automatically converted
@@ -586,7 +591,7 @@ SMTP envelope is usually auto generated from `from`, `to`, `cc` and `bcc` fields
 if for some reason you want to specify it yourself, you can do it with `envelope` property.
 
 `envelope` is an object with the following params: `from`, `to`, `cc` and `bcc` just like
-with regular mail options. You can also use the regular address format.
+with regular mail options. You can also use the regular address format, unicode domains etc.
 
 ```javascript
 mailOptions = {
@@ -599,6 +604,8 @@ mailOptions = {
     }
 }
 ```
+
+The envelope only applies when using SMTP or sendmail, setting envelope has no effect with SES.
 
 ### Using Embedded Images
 
