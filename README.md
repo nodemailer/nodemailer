@@ -10,7 +10,9 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
 
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.png)](http://travis-ci.org/andris9/Nodemailer)
 
-## Nodemailer supports
+## Notes and information
+
+### Nodemailer supports
 
   * **Unicode** to use any characters
   * **HTML content** as well as **plain text** alternative
@@ -25,11 +27,20 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
   * **DKIM** signing
   * Send e-mail from **command line**
 
-## Support Nodemailer development
+### Support Nodemailer development
 
 [![Donate to author](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DB26KWR2BQX5W)
 
-## Check out my other mail related modules
+### Nodemailer PaaS support
+
+Nodemailer has been tested successfully on the following PaaS platforms
+
+  * [heroku](http://www.heroku.com/)
+  * [AppFog](http://www.appfog.com/)
+  * [OpenShift](https://openshift.redhat.com/app/)
+  * [Nodejitsu](http://nodejitsu.com/)
+
+### Check out my other mail related modules
 
 If you want to parse generated or received e-mail instead of sending it, check
 out [MailParser](https://github.com/andris9/mailparser).
@@ -40,11 +51,11 @@ If you only want to generate the raw e-mail stream, check out
 If you only want to communicate with the SMTP (both as client and the server),
 check out [simplesmtp](https://github.com/andris9/simplesmtp).
 
-## Templates
+### Templates
 
 To use Nodemailer with templates, please see documentation for [node-email-templates](https://github.com/niftylettuce/node-email-templates).
 
-## Example
+## TL;DR Usage Example
 
 This is a complete example to send an e-mail with plaintext and HTML body
 
