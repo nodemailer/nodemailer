@@ -33,12 +33,13 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
 
 ### Nodemailer PaaS support
 
-Nodemailer has been tested successfully on the following PaaS platforms
+Nodemailer has been tested successfully on the following PaaS platforms (using free/trial accounts):
 
   * [heroku](http://www.heroku.com/)
   * [AppFog](http://www.appfog.com/)
   * [OpenShift](https://openshift.redhat.com/app/)
   * [Nodejitsu](http://nodejitsu.com/)
+  * [Windows Azure](http://www.windowsazure.com/)
 
 ### Check out my other mail related modules
 
