@@ -680,6 +680,8 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 });
 ```
 
+**NB!** Some SMTP providers (like **SES**) overwrite Nodemailer defined Message-ID value.
+
 ## Command line usage
 
 If installed globally with -g, ndoemailer command enables to send mail from the command line. Run nodemailer --help for usage instructions.
