@@ -667,6 +667,7 @@ Return callback gets two parameters
 
   * **error** - an error object if the message failed
   * **responseStatus** - an object with some information about the status on success
+    * **responseStatus.messageId** - message ID used with the message
 
 Example:
 
@@ -674,6 +675,7 @@ Example:
 nodemailer.sendMail(mailOptions, function(error, responseStatus){
     if(!error){
         console.log(responseStatus.message); // response from the server
+        console.log(responseStatus.messageId); // Message-ID value used
     }
 });
 ```
