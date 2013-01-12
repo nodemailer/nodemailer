@@ -515,7 +515,7 @@ expect too much from it, it's not full featured or perfect, just some regexes he
 
 ### Attachment fields
 
-Attahcment object consists of the following properties:
+Attachment object consists of the following properties:
 
   * **fileName** - filename to be reported as the name of the attached file, use of unicode is allowed (except when using Amazon SES which doesn't like it)
   * **cid** - optional content id for using inline images in HTML message source
