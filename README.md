@@ -54,7 +54,10 @@ check out [simplesmtp](https://github.com/andris9/simplesmtp).
 
 ### Templates
 
-To use Nodemailer with templates, please see documentation for [node-email-templates](https://github.com/niftylettuce/node-email-templates).
+To use Nodemailer with templates, please see documentation for these projects.
+
+ * [swig-email-templates](https://github.com/superjoe30/swig-email-templates) - swig, template inheritance, dummy context
+ * [node-email-templates](https://github.com/niftylettuce/node-email-templates) - ejs
 
 ## TL;DR Usage Example
 
