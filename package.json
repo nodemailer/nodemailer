@@ -25,7 +25,7 @@
         }
     ],
     "dependencies": {
-        "mailcomposer": ">= 0.1.27",
+        "mailcomposer": "git://github.com/chris-rock/mailcomposer.git",
         "simplesmtp": ">= 0.1.28",
         "optimist": "*"
     },
