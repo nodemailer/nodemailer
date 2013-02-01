@@ -54,7 +54,10 @@ check out [simplesmtp](https://github.com/andris9/simplesmtp).
 
 ### Templates
 
-To use Nodemailer with templates, please see documentation for [node-email-templates](https://github.com/niftylettuce/node-email-templates).
+To use Nodemailer with templates, please see documentation for these projects.
+
+ * [swig-email-templates](https://github.com/superjoe30/swig-email-templates) - swig, template inheritance, dummy context
+ * [node-email-templates](https://github.com/niftylettuce/node-email-templates) - ejs
 
 ## TL;DR Usage Example
 
@@ -122,8 +125,8 @@ transport.sendMail(mailOptions, callback);
 Where
 
   * `transport` is a transport object created from the `nodemailer.createTransport` method
-  * **mailOptions** defines the e-mail (set its subject, body text, receivers etc.), see **E-mail Message Fields** for details
-  * **callback** is the callback function that will be run after the e-mail is sent or the sending failed (see **Return callback** for details)
+  * **mailOptions** defines the e-mail (set its subject, body text, receivers etc.), see [E-mail Message Fields](#e-mail-message-fields) for details
+  * **callback** is the callback function that will be run after the e-mail is sent or the sending failed (see [Return callback](#return-callback) for details)
 
 ## Setting up a transport method
 
@@ -167,7 +170,7 @@ terms), you do not want to do it several times.
 
 Possible SMTP options are the following:
 
- * **service** - an optional well known service identifier ("Gmail", "Hotmail" etc., see **Well known Services** for a list of supported services) to auto-configure host, port and secure connection settings
+ * **service** - an optional well known service identifier ("Gmail", "Hotmail" etc., see [Well known Services](#well-known-services-for-smtp) for a list of supported services) to auto-configure host, port and secure connection settings
  * **host** - hostname of the SMTP server (defaults to "localhost", not needed with `service`)
  * **port** - port of the SMTP server (defaults to 25, not needed with `service`)
  * **secureConnection** - use SSL (default is `false`, not needed with `service`). If you're using port 587 then keep `secureConnection` false, since the connection is started in insecure plain text mode and only later upgraded with STARTTLS
@@ -368,7 +371,7 @@ transport.useDKIM({
 transport.sendMail(mailOptions);
 ```
 
-See examples/example_dkim.js for a complete example.
+See [examples/example_dkim.js](https://github.com/andris9/Nodemailer/blob/master/examples/example_dkim.js) for a complete example.
 
 **NB!** Be careful when using services like Gmail, SES etc. through SMTP
 (SES API is handled by Nodemailer automatically) - these tend to modify some
@@ -516,7 +519,7 @@ expect too much from it, it's not full featured or perfect, just some regexes he
 
 ### Attachment fields
 
-Attahcment object consists of the following properties:
+Attachment object consists of the following properties:
 
   * **fileName** - filename to be reported as the name of the attached file, use of unicode is allowed (except when using Amazon SES which doesn't like it)
   * **cid** - optional content id for using inline images in HTML message source
