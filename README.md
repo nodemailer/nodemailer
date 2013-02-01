@@ -432,6 +432,7 @@ The following are the possible fields of an e-mail message:
   - **generateTextFromHTML** - if set to true uses HTML to generate plain text body part from the HTML if the text is not defined
   - **headers** - An object of additional header fields `{"X-Key-Name": "key value"}` (NB! values are passed as is, you should do your own encoding to 7bit if needed)
   - **attachments** - An array of attachment objects.
+  - **alternatives** - An array of alternative text contents (in addition to text and html parts)
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable
   - **messageId** - optional Message-Id value, random value will be generated if not set. Set to false to omit the Message-Id header
   - **date** - optional Date value, current UTC string will be used if not set
@@ -565,6 +566,37 @@ var mailOptions = {
     ]
 }
 ```
+
+### Alternative fields
+
+In addition to text and HTML, any kind of data can be inserted as an alternative content of the main body - for example a word processing document with the same text as in the HTML field. It is the job of the e-mail client to select and show the best fitting alternative to the reader. 
+
+Attahcment object consists of the following properties:
+
+  * **contents** - String or a Buffer contents for the attachment
+  * **contentType** - optional content type for the attachment, if not set will be derived from the `fileName` property
+  * **contentEncoding** - optional value of how the data is encoded, defaults to "base64" 
+
+If `contents` is empty, the alternative will be discarded. Other fields are optional.
+
+**Usage example:**
+
+```javascript
+var mailOptions = {
+    ...
+    html: "<b>Hello world!</b>",
+    alternatives: [
+        {
+            contentType: "text/x-web-markdown",
+            contents: "**Hello world!**"
+        }
+    ]
+}
+```
+If the receiving e-mail client can render messages in Markdown syntax as well, it could prefer
+to display this alternative as the main content of the message instead of the html part.
+
+Alternatives can be added as many as you want.
 
 ### Address Formatting
 
