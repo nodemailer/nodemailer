@@ -18,7 +18,7 @@ var message = {
     from: 'Sender Name <sender@example.com>',
     
     // Comma separated list of recipients
-    to: '"Receiver Name" <receiver@example.com>',
+    to: '"Receiver Name" <nodemailer@disposebox.com>',
     
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
