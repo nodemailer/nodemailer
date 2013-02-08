@@ -2,7 +2,9 @@ var nodemailer = require('../lib/nodemailer');
 
 // Create a SMTP transport object
 var transport = nodemailer.createTransport("SMTP", {
-        service: 'Gmail', // use well known service
+        //service: 'Gmail', // use well known service.
+                            // If you are using @gmail.com address, then you don't
+                            // even have to define the service name
         auth: {
             user: "test.nodemailer@gmail.com",
             pass: "Nodemailer123"
