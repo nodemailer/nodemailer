@@ -373,12 +373,6 @@ transport.sendMail(mailOptions);
 
 See [examples/example_dkim.js](https://github.com/andris9/Nodemailer/blob/master/examples/example_dkim.js) for a complete example.
 
-**NB!** Be careful when using services like Gmail, SES etc. through SMTP
-(SES API is handled by Nodemailer automatically) - these tend to modify some
-headers like Message-Id or Date which invalidates the signature. In this case use
-`headerFieldNames` property to define only fields that won't be changed and leave
-out `Date` or any other unsupported field.
-
 ### Well known services for SMTP
 
 If you want to use a well known service as the SMTP host, you do not need
@@ -413,6 +407,19 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
     service: "Gmail", // sets automatically host, port and connection security settings
     auth: {
         user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
+```
+
+Actually, if you are authenticatinw with an e-mail address that has a domain name
+like @gmail.com or @yahoo.com etc., then you don't even need to provide the service name, 
+it is detected automatically.
+
+```javascript
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    auth: {
+        user: "gmail.user@gmail.com", // service is detected from the username
         pass: "userpass"
     }
 });
