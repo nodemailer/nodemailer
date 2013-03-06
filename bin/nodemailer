@@ -24,6 +24,7 @@ if(argv.help){
     console.log("Amazon SES options");
     console.log(" --key=[AWSKey]           Amazon SES key");
     console.log(" --secret=[AWSSecret]     Amazon SES secret");
+    console.log(" --token=[STS Token]      Amazon SES security token if using STS");
     console.log("");
     console.log("Mail options");
     console.log(" --from=[address]         Sender of the mail");
@@ -59,7 +60,8 @@ var transportType = (argv.transport || configFile.transport || process.env.NODE
     port = argv.port || configFile.port || process.env.NODEMAILER_PORT,
     secure = (argv.secure || configFile.secure || process.env.NODEMAILER_SECURE || "").toString().toLowerCase().trim(),
     key = argv.key || argv.k || configFile.key || process.env.NODEMAILER_KEY,
-    secret = argv.secret || configFile.secret || process.env.NODEMAILER_SECRET;
+    secret = argv.secret || configFile.secret || process.env.NODEMAILER_SECRET
+    token = argv.token || configFile.token || process.env.NODEMAILER_TOKEN;
 
 if(!transportType){
     transportType = host?"smtp": (key?"ses":"sendmail");
@@ -86,10 +88,9 @@ switch(transportType.toUpperCase().trim()){
         }
         break;
     case "SES":
-        transportOptions.auth = {
-            AWSAccessKeyID: key,
-            AWSSecretKey: secret
-        }
+        transportOptions.AWSAccessKeyID = key;
+        transportOptions.AWSSecretKey = secret;
+        transportOptions.AWSSecurityToken = token;
 }
 
 var transport = nodemailer.createTransport(transportType, transportOptions);
