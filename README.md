@@ -722,7 +722,7 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 });
 ```
 
-**NB!** Some SMTP providers (like **SES**) overwrite Nodemailer defined Message-ID value.
+**NB!** Message-ID used might not be the same that reaches recipients inbox since some providers (like **SES**) may change the value.
 
 ## Command line usage
 
