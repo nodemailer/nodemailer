@@ -36,7 +36,7 @@
         "node": ">=0.6"
     },
     "bin": {
-        "nodemailer" : "./bin/nodemailer" 
+        "nodemailer" : "./bin/nodemailer"
     },
     "keywords": ["e-mail", "mime", "email", "mail", "sendmail", "ses"]
 }

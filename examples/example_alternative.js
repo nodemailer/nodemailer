@@ -12,14 +12,14 @@ var transport = nodemailer.createTransport("SMTP", {
 console.log('SMTP Configured');
 
 // Message object
-var message = { 
-    
+var message = {
+
     // sender info
     from: 'Sender Name <sender@example.com>',
-    
+
     // Comma separated list of recipients
     to: '"Receiver Name" <nodemailer@disposebox.com>',
-    
+
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
 
@@ -47,7 +47,7 @@ transport.sendMail(message, function(error){
         return;
     }
     console.log('Message sent successfully!');
-    
+
     // if you don't want to use this transport object anymore, uncomment following line
     //transport.close(); // close the connection pool
 });

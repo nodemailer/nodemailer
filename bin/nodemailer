@@ -52,16 +52,16 @@ if(configFile){
     configFile = {}
 }
 
-var transportType = (argv.transport || configFile.transport || process.env.NODEMAILER_TRANSPORT || "").trim(),
-    service = argv.service || configFile.service || process.env.NODEMAILER_SERVICE,
-    user = argv.user || argv.u || configFile.user || process.env.NODEMAILER_USER,
-    pass = argv.pass || argv.p || configFile.pass || process.env.NODEMAILER_PASS,
-    host = argv.host || argv.h || configFile.host || process.env.NODEMAILER_HOST,
-    port = argv.port || configFile.port || process.env.NODEMAILER_PORT,
-    secure = (argv.secure || configFile.secure || process.env.NODEMAILER_SECURE || "").toString().toLowerCase().trim(),
-    key = argv.key || argv.k || configFile.key || process.env.NODEMAILER_KEY,
-    secret = argv.secret || configFile.secret || process.env.NODEMAILER_SECRET
-    token = argv.token || configFile.token || process.env.NODEMAILER_TOKEN;
+var transportType = (argv.transport || configFile.transport || process.env.NODEMAILER_TRANSPORT || "").trim(),
+    service = argv.service || configFile.service || process.env.NODEMAILER_SERVICE,
+    user = argv.user || argv.u || configFile.user || process.env.NODEMAILER_USER,
+    pass = argv.pass || argv.p || configFile.pass || process.env.NODEMAILER_PASS,
+    host = argv.host || argv.h || configFile.host || process.env.NODEMAILER_HOST,
+    port = argv.port || configFile.port || process.env.NODEMAILER_PORT,
+    secure = (argv.secure || configFile.secure || process.env.NODEMAILER_SECURE || "").toString().toLowerCase().trim(),
+    key = argv.key || argv.k || configFile.key || process.env.NODEMAILER_KEY,
+    secret = argv.secret || configFile.secret || process.env.NODEMAILER_SECRET,
+    token = argv.token || configFile.token || process.env.NODEMAILER_TOKEN;
 
 if(!transportType){
     transportType = host?"smtp": (key?"ses":"sendmail");
@@ -69,7 +69,7 @@ if(!transportType){
 
 secure = ["false", "null", "0", "undefined"].indexOf(secure)>=0 ? false : !!secure;
 
-var transportOptions = {debug: !!argv.debug || !!argv.d};
+var transportOptions = {debug: !!argv.debug || !!argv.d};
 
 switch(transportType.toUpperCase().trim()){
     case "SMTP":
@@ -104,7 +104,7 @@ var from = argv.from || argv.f || configFile.from || process.env.NODEMAILER_FROM
     text = argv.text,
     html = argv.html,
     headers = argv.headers,
-    attachments = (argv.attachment || argv.a || "").toString().trim();
+    attachments = (argv.attachment || argv.a || "").toString().trim();
 
 if(attachments.length){
     attachments = attachments.split(",").map(function(a){return {filePath: a.trim()}})
@@ -136,7 +136,7 @@ if(argv.stdin){
         }else{
             html = stdin;
         }
-    });    
+    });
 }else{
     sendMessage();
 }

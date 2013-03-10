@@ -12,20 +12,20 @@ var transport = nodemailer.createTransport("SMTP", {
 console.log('SMTP Configured');
 
 // Message object
-var message = { 
-    
+var message = {
+
     // sender info
     from: 'Sender Name <sender@example.com>',
-    
+
     // Comma separated list of recipients
     to: '"Receiver Name" <receiver@example.com>',
-    
+
     // Subject of the message
     subject: 'Automatically embedded image', //
-    
+
     // HTML body with image that will be converted to embedded attachment
     html:'<p>Embedded image: <img src="'+__dirname+'/nyan.gif"/></p>',
-    
+
     forceEmbeddedImages: true
 };
 
@@ -37,7 +37,7 @@ transport.sendMail(message, function(error){
         return;
     }
     console.log('Message sent successfully!');
-    
+
     // if you don't want to use this transport object anymore, uncomment following line
     //transport.close(); // close the connection pool
 });
