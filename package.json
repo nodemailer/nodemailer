@@ -1,38 +1,45 @@
 {
-    "name": "nodemailer",
-    "description": "Easy to use module to send e-mails, supports unicode and SSL/TLS",
-    "version": "0.4.0",
-    "author" : "Andris Reinman",
-    "maintainers":[
-        {
-            "name":"andris",
-            "email":"andris@kreata.ee"
-        }
-    ],
-    "homepage": "http://github.com/andris9/nodemailer",
-    "repository" : {
-        "type" : "git",
-        "url" : "http://github.com/andris9/nodemailer.git"
-    },
-    "scripts":{
-        "test": "nodeunit test/"
-    },
-    "main" : "./lib/nodemailer",
-    "licenses" : [
-        {
-            "type": "MIT",
-            "url": "http://github.com/andris9/nodemailer/blob/master/LICENSE"
-        }
-    ],
-    "dependencies": {
-        "mailcomposer": "~0.1",
-        "simplesmtp": "~0.2"
-    },
-    "devDependencies": {
-        "nodeunit": "*"
-    },
-    "engine": {
-        "node": ">=0.6"
-    },
-    "keywords": ["e-mail", "mime", "email", "mail", "sendmail", "ses"]
+  "name": "nodemailer",
+  "description": "Easy to use module to send e-mails, supports unicode and SSL/TLS",
+  "version": "0.4.1",
+  "author": "Andris Reinman",
+  "maintainers": [
+    {
+      "name": "andris",
+      "email": "andris@kreata.ee"
+    }
+  ],
+  "homepage": "http://github.com/andris9/nodemailer",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/andris9/nodemailer.git"
+  },
+  "scripts": {
+    "test": "nodeunit test/"
+  },
+  "main": "./lib/nodemailer",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/andris9/nodemailer/blob/master/LICENSE"
+    }
+  ],
+  "dependencies": {
+    "mailcomposer": "~0.1",
+    "simplesmtp": "~0.2"
+  },
+  "devDependencies": {
+    "nodeunit": "*"
+  },
+  "engine": {
+    "node": ">=0.6"
+  },
+  "keywords": [
+    "e-mail",
+    "mime",
+    "email",
+    "mail",
+    "sendmail",
+    "ses"
+  ]
 }
