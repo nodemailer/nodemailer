@@ -1,0 +1,172 @@
+{
+  "name": "nodemailer",
+  "version": "0.3.44",
+  "dependencies": {
+    "mailcomposer": {
+      "version": "0.1.31",
+      "from": "mailcomposer@~0.1",
+      "dependencies": {
+        "mimelib": {
+          "version": "0.2.12",
+          "from": "mimelib@~0.2",
+          "dependencies": {
+            "encoding": {
+              "version": "0.1.6",
+              "from": "encoding@~0.1",
+              "dependencies": {
+                "iconv-lite": {
+                  "version": "0.2.7",
+                  "from": "iconv-lite@0.2.7"
+                }
+              }
+            },
+            "addressparser": {
+              "version": "0.1.3",
+              "from": "addressparser@~0.1"
+            }
+          }
+        },
+        "mime": {
+          "version": "1.2.9",
+          "from": "mime@1.2.9"
+        }
+      }
+    },
+    "simplesmtp": {
+      "version": "0.2.4",
+      "from": "simplesmtp@~0.2",
+      "dependencies": {
+        "rai": {
+          "version": "0.1.7",
+          "from": "rai@~0.1"
+        },
+        "xoauth2": {
+          "version": "0.1.7",
+          "from": "xoauth2@~0.1"
+        }
+      }
+    },
+    "optimist": {
+      "version": "0.3.5",
+      "from": "optimist@0.3.5",
+      "dependencies": {
+        "wordwrap": {
+          "version": "0.0.2",
+          "from": "wordwrap@~0.0.2"
+        }
+      }
+    },
+    "nodeunit": {
+      "version": "0.7.4",
+      "from": "nodeunit@*",
+      "dependencies": {
+        "tap": {
+          "version": "0.4.0",
+          "from": "tap@>=0.2.3",
+          "dependencies": {
+            "inherits": {
+              "version": "1.0.0"
+            },
+            "yamlish": {
+              "version": "0.0.5"
+            },
+            "slide": {
+              "version": "1.1.3",
+              "from": "slide@*"
+            },
+            "runforcover": {
+              "version": "0.0.2",
+              "from": "runforcover@~0.0.2",
+              "dependencies": {
+                "bunker": {
+                  "version": "0.1.2",
+                  "from": "bunker@0.1.X",
+                  "dependencies": {
+                    "burrito": {
+                      "version": "0.2.12",
+                      "from": "burrito@>=0.2.5 <0.3",
+                      "dependencies": {
+                        "traverse": {
+                          "version": "0.5.2",
+                          "from": "traverse@~0.5.1"
+                        },
+                        "uglify-js": {
+                          "version": "1.1.1",
+                          "from": "uglify-js@~1.1.1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "nopt": {
+              "version": "2.1.1",
+              "from": "nopt@~2",
+              "dependencies": {
+                "abbrev": {
+                  "version": "1.0.4",
+                  "from": "abbrev@1"
+                }
+              }
+            },
+            "mkdirp": {
+              "version": "0.3.5",
+              "from": "mkdirp@~0.3"
+            },
+            "difflet": {
+              "version": "0.2.3",
+              "from": "difflet@~0.2.0",
+              "dependencies": {
+                "traverse": {
+                  "version": "0.6.3",
+                  "from": "traverse@0.6.x"
+                },
+                "charm": {
+                  "version": "0.0.8",
+                  "from": "charm@0.0.x"
+                }
+              }
+            },
+            "deep-equal": {
+              "version": "0.0.0",
+              "from": "deep-equal@~0.0.0"
+            },
+            "buffer-equal": {
+              "version": "0.0.0",
+              "from": "buffer-equal@~0.0.0"
+            },
+            "glob": {
+              "version": "3.1.21",
+              "from": "glob@~3.1.14",
+              "dependencies": {
+                "minimatch": {
+                  "version": "0.2.11",
+                  "from": "minimatch@~0.2.11",
+                  "dependencies": {
+                    "lru-cache": {
+                      "version": "2.2.2",
+                      "from": "lru-cache@2"
+                    },
+                    "sigmund": {
+                      "version": "1.0.0",
+                      "from": "sigmund@~1.0.0"
+                    }
+                  }
+                },
+                "graceful-fs": {
+                  "version": "1.2.0",
+                  "from": "graceful-fs@~1.2.0"
+                },
+                "inherits": {
+                  "version": "1.0.0",
+                  "from": "inherits@1"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
