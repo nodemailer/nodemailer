@@ -25,7 +25,6 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
   * Use objects as header values for **SendGrid** SMTP API
   * **XOAUTH2** authentication and token generation support - useful with Gmail
   * **DKIM** signing
-  * Send e-mail from **command line**
 
 ### Support Nodemailer development
 
@@ -726,55 +725,7 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 
 ## Command line usage
 
-If installed globally with -g, nodemailer command enables to send mail from the command line. Run nodemailer --help for usage instructions.
-
-    npm install -g nodemailer
-    nodemailer --help
-
-And the response should be
-
-```
-Send mail with Nodemailer
-http://github.com/andris9/Nodemailer
-
-Syntax:
-nodemailer [options]
-
- --help                   show this message
- --transport=[transport]  "smtp", "ses", "sendmail"
- --debug=true             show debug log
-
-SMTP options
- --host=[hostname]        SMTP server hostname
- --port=[port]            SMTP server port
- --secure=[true:false]    Use SSL when connecting
- --user=[username]        SMTP username
- --pass=[password]        SMTP password
-
-Amazon SES options
- --key=[AWSKey]           Amazon SES key
- --secret=[AWSSecret]     Amazon SES secret
-
-Mail options
- --from=[address]         Sender of the mail
- --to=[addresslist]       Comma separated list of To: addresses
- --cc=[addresslist]       Comma separated list of Cc: addresses
- --bcc=[addresslist]      Comma separated list of Bcc: addresses
- --subject=[subject]      Message subject
- --text=[plaintext]       Plain text mail body
- --html=[html]            HTML mail body
- --textFile=[path]        Plain text mail body from a file
- --htmlFile=[path]        HTML mail body from a file
- --stdin=[target]         Read "text" or "html" from stdin
- --attachments=[pathlist] Comma separated list of file paths
-```
-
-Example
-
-```
-nodemailer --host=smtp.gmail.com --port=465 --secure=true --user="myuser@gmail.com" --pass="mypass" --from="myuser@gmail.com" --to="target@blurdybloop.com" --subject="test" --text="hello world!"
-```
-
+**NB!** Command line usage was removed from v0.4
 
 ## Tests
 
