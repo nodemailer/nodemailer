@@ -9,6 +9,7 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
 **[Read about using Nodemailer from the Node Knockout blog](http://blog.nodeknockout.com/post/34641712180/sending-email-from-node-js)**
 
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.png)](http://travis-ci.org/andris9/Nodemailer)
+[![NPM version](https://badge.fury.io/js/nodemailer.png)](http://badge.fury.io/js/nodemailer)
 
 ## Notes and information
 
