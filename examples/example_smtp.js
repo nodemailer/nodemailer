@@ -1,15 +1,8 @@
 var nodemailer = require('../lib/nodemailer');
 
 // Create a SMTP transport object
-var transport = nodemailer.createTransport("SMTP", {
-        //service: 'Gmail', // use well known service.
-                            // If you are using @gmail.com address, then you don't
-                            // even have to define the service name
-        auth: {
-            user: "test.nodemailer@gmail.com",
-            pass: "Nodemailer123"
-        }
-    });
+var transport = nodemailer.createTransport("SMTP", { service: 'QQ'});
+// use well known service. If you are using @gmail.com address, then you don't even have to define the service name auth: { user: "604733992@qq.com", pass: "lx860506" }
 
 console.log('SMTP Configured');
 
@@ -17,10 +10,10 @@ console.log('SMTP Configured');
 var message = {
 
     // sender info
-    from: 'Sender Name <sender@example.com>',
+    from: 'Meteor <604733992@qq.com>',
 
     // Comma separated list of recipients
-    to: '"Receiver Name" <nodemailer@disposebox.com>',
+    to: '"Meteor" <604733992@qq.com>',
 
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
