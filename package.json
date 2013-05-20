@@ -26,14 +26,12 @@
   ],
   "dependencies": {
     "mailcomposer": "~0.1",
-    "simplesmtp": "~0.2"
+    "simplesmtp": "~0.2 || ~0.3"
   },
   "devDependencies": {
     "nodeunit": "*"
   },
-  "engine": {
-    "node": ">=0.6"
-  },
+  "engines" : { "node" : ">=0.6.0" },
   "keywords": [
     "e-mail",
     "mime",
