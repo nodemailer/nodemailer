@@ -3,17 +3,16 @@ var nodemailer = require('../lib/nodemailer');
 // Create a Sendmail transport object
 var transport = nodemailer.createTransport("Sendmail", "/usr/sbin/sendmail");
 
-/**/
 console.log('Sendmail Configured');
 
 // Message object
 var message = {
 
     // sender info
-    from: 'Meteor  <604733992@qq.com>',
+    from: 'Sender Name <sender@example.com>',
 
     // Comma separated list of recipients
-    to: '"Meteor" <nodemailer@disposebox.com>',
+    to: '"Receiver Name" <nodemailer@disposebox.com>',
 
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
