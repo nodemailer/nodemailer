@@ -397,6 +397,7 @@ Currently supported services are:
   * **Yahoo**
   * **yandex**
   * **Zoho**
+  * **QQ**
 
 Predefined service data covers `host`, `port` and secure connection settings,
 any other parameters (ie. `auth`) need to be set separately. Service names are
