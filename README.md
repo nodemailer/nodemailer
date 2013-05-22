@@ -392,18 +392,29 @@ Currently supported services are:
   * **Mailgun**
   * **Mandrill**
   * **Postmark**
+  * **QQ**
   * **SendGrid**
   * **SES**
   * **Yahoo**
   * **yandex**
   * **Zoho**
-  * **QQ**
 
 Predefined service data covers `host`, `port` and secure connection settings,
 any other parameters (ie. `auth`) need to be set separately. Service names are
 case insensitive, so using "gmail" instead of "Gmail" is totally fine.
 
 Example:
+
+```javascript
+var smtpTransport = nodemailer.createTransport("Gmail",{
+    auth: {
+        user: "gmail.user@gmail.com",
+        pass: "userpass"
+    }
+});
+```
+
+or alternatively
 
 ```javascript
 var smtpTransport = nodemailer.createTransport("SMTP",{
