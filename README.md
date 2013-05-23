@@ -390,6 +390,7 @@ Currently supported services are:
   * **mail.ee**
   * **Mail.Ru**
   * **Mailgun**
+  * **Mailjet**
   * **Mandrill**
   * **Postmark**
   * **QQ**
