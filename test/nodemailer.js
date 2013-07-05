@@ -92,6 +92,24 @@ exports["General tests"] = {
         })
     },
 
+    "Use custom header value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            value = "a\r\n b\r\nc",
+            mailOptions = {
+                messageId: value,
+                headers: {'test-key': value}
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            // should not be modified
+            test.ok(response.message.match(/Test\-Key:\s*a\r\n b\r\nc/));
+            // newlines should be removed
+            test.ok(response.message.match(/Message\-Id:\s*<abc>/));
+            test.done();
+        })
+    },
+
     "Use In-Reply-To": function(test){
         var transport = nodemailer.createTransport("Stub"),
             mailOptions = {
