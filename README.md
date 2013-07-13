@@ -318,7 +318,7 @@ command.
 Options object is optional, possible sendmail options are the following:
 
   * **path** - path to the `sendmail` command (defaults to *"sendmail"*)
-  * **args** - an array of extra command line options to pass to the `sendmail` command (ie. `["-f foo@blurdybloop.com"]`)
+  * **args** - an array of extra command line options to pass to the `sendmail` command (ie. `["-f", "foo@blurdybloop.com"]`).
 
 Currently the command to be spawned is built up like this: the command is either using `sendmail -i -f from_addr to_addr[]` (by default) or `sendmail -i list_of_args[]` (if `args` property was given). `-i` is ensured to be present on either case. 
 
@@ -337,7 +337,7 @@ or
 ```javascript
 var transport = nodemailer.createTransport("sendmail", {
     path: "/usr/local/bin/sendmail",
-    args: ["-t", "-f foo@blurdybloop.com"]
+    args: ["-t", "-f", "foo@blurdybloop.com"]
 });
 ```
 
