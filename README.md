@@ -343,7 +343,7 @@ var transport = nodemailer.createTransport("sendmail", {
 
 **Compatibility notice**
 
-Some sendmail implementations require all line endings to be &lf;LF&gt; while Nodemailer uses &lf;CR&gt;&lf;LF&gt; - in this case you can not use the sendmail option.
+Some sendmail implementations require all line endings to be &lt;LF&gt; while Nodemailer uses &lt;CR&gt;&lt;LF&gt; - in this case you can not use the sendmail option.
 
 ### DKIM Signing
 
