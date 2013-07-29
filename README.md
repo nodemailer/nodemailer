@@ -341,6 +341,10 @@ var transport = nodemailer.createTransport("sendmail", {
 });
 ```
 
+**Compatibility notice**
+
+Some sendmail implementations require all line endings to be &lf;LF&gt; while Nodemailer uses &lf;CR&gt;&lf;LF&gt; - in this case you can not use the sendmail option.
+
 ### DKIM Signing
 
 **Nodemailer** supports DKIM signing with very simple setup. Use this with caution
