@@ -246,7 +246,7 @@ var transportOptions = {
 
 ##### XOAUTH
 
-Older XOAUTH is also supporteb by **nodemailer** for SMTP. XOAUTH is based on OAuth protocol 1.0 and is considered deprecated.
+Older XOAUTH is also supported by **nodemailer** for SMTP. XOAUTH is based on OAuth protocol 1.0 and is considered deprecated.
 
 To use this, include `XOAuthToken` option in `auth` instead of the regular `user` and `pass`.
 
@@ -437,7 +437,7 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
 });
 ```
 
-Actually, if you are authenticatinw with an e-mail address that has a domain name
+Actually, if you are authenticating with an e-mail address that has a domain name
 like @gmail.com or @yahoo.com etc., then you don't even need to provide the service name,
 it is detected automatically.
 
