@@ -42,6 +42,7 @@ Nodemailer has been tested successfully on the following PaaS platforms (using f
   * [OpenShift](https://openshift.redhat.com/app/)
   * [Nodejitsu](http://nodejitsu.com/)
   * [Windows Azure](http://www.windowsazure.com/)
+  * [Modulus](https://modulus.io/)
 
 ### Check out my other mail related modules
 
