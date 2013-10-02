@@ -237,16 +237,18 @@ exports["Options"] = {
     "Sendmail - when noCR is set to 'true', sendMail should set 'noCR:true'":function(test){
         var transport = nodemailer.createTransport("sendmail", {noCR:true});
         var options = {};
-        transport.sendMail(options, function(){});
-        test.ok(options.noCR);
-        test.done();
+        transport.sendMail(options, function(){
+            test.ok(options.noCR);
+            test.done();
+        });
     },
     "SMTP - when noCR is set to 'true', sendMail should not set 'noCR:true'":function(test){
         var transport = nodemailer.createTransport("smtp", {noCR:true});
         var options = {};
-        transport.sendMail(options, function(){});
-        test.ok(!options.noCR);
-        test.done();
+        transport.sendMail(options, function(){
+            test.ok(!options.noCR);
+            test.done();
+        });
     }
 
 };
