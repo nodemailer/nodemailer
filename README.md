@@ -408,6 +408,7 @@ Currently supported services are:
   * **Mandrill**
   * **Postmark**
   * **QQ**
+  * **QQex** (Tencent Business Email)
   * **SendGrid**
   * **SES**
   * **Yahoo**
