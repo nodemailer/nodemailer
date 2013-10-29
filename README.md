@@ -182,6 +182,7 @@ Possible SMTP options are the following:
  * **ignoreTLS** - ignore server support for STARTTLS (defaults to `false`)
  * **debug** - output client and server messages to console
  * **maxConnections** - how many connections to keep in the pool (defaults to 5)
+ * **maxMessages** - limit the count of messages to send through a single connection (no limit by default)
 
 Example:
 
