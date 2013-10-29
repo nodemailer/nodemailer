@@ -478,6 +478,7 @@ The following are the possible fields of an e-mail message:
   - **date** - optional Date value, current UTC string will be used if not set
   - **encoding** - optional transfer encoding for the textual parts (defaults to "quoted-printable")
   - **charset** - optional output character set for the textual parts (defaults to "utf-8")
+  - **dsn** - An object with methods `success`, `failure` and `delay`. If any of these are set to true, DSN will be used
 
 All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
 Attachments are streamed as binary.
