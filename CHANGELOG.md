@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.4 2013-10-29
+
+  * bumped version to v0.5.4
+  * added "use strict" statements
+  * Added DSN info to README
+  * add support for QQ enterprise email (coderhaoxin)
+  * Add a Bitdeli Badge to README
+  * DSN options Passthrought into simplesmtp. (irvinzz)
+
 ## v0.5.3 2013-10-03
 
   * bumped version v0.5.3
