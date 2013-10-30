@@ -52,11 +52,13 @@ exports["General tests"] = {
 
     "Use default Message-Id value": function(test){
         var transport = nodemailer.createTransport("Stub"),
-            mailOptions = {};
+            mailOptions = {
+                name: "test.host"
+            };
 
         transport.sendMail(mailOptions, function(error, response){
             test.ifError(error);
-            var regex = "^Message\\-Id:\\s*<[0-9\.a-fA-F]+@"+nodemailer.X_MAILER_NAME.replace(/([\(\)\\\.\[\]\-\?\:\!\{\}])/g, "\\$1")+">$";
+            var regex = "^Message\\-Id:\\s*<[0-9\.a-fA-F]+@test\.host>$";
             test.ok(response.message.match(new RegExp(regex, "m")));
             test.done();
         })
