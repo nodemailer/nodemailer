@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.5 2013-10-30
+
+  * bumped version to v0.5.5
+  * Updated mailcomposer dependnecy version to 0.2.3
+  * Remove legacy code - node v0.4 is not supported anymore anyway
+  * Use hostname (autodetected or from the options.name property) for Message-Id instead of "Nodemailer" (helps a bit when messages are identified as spam)
+  * Added maxMessages info to README
+
 ## v0.5.4 2013-10-29
 
   * bumped version to v0.5.4
