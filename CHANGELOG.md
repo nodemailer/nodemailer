@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.5 2013-11-15
+## v0.5.6 2013-11-15
 
   * bumped version to v0.5.6
   * Upgraded mailcomposer dependency to 0.2.4 [e5ff9c40]
