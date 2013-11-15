@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.5 2013-11-15
+
+  * bumped version to v0.5.6
+  * Upgraded mailcomposer dependency to 0.2.4 [e5ff9c40]
+  * Removed noCR option [e810d1b8]
+  * Update wellknown.js, added FastMail (k-j-kleist) [cf930f6d]
+
 ## v0.5.5 2013-10-30
 
   * bumped version to v0.5.5
