@@ -31,6 +31,9 @@
   "devDependencies": {
     "nodeunit": "*"
   },
+  "optionalDependencies": {
+    "readable-stream": "*"
+  },
   "engines" : { "node" : ">=0.6.0" },
   "keywords": [
     "e-mail",
