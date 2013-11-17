@@ -1,7 +1,8 @@
 var testCase = require('nodeunit').testCase,
     nodemailer = require("../lib/nodemailer"),
     Transport = nodemailer.Transport,
-    stripHTML = require("../lib/helpers").stripHTML;
+    stripHTML = require("../lib/helpers").stripHTML,
+    fs = require("fs");
 
 exports["General tests"] = {
 
@@ -232,6 +233,23 @@ exports["Transport close"] = {
         process.nextTick(function(){
             test.ok(true);
             test.done();
+        });
+    }
+};
+
+exports["Sendmail transport"] = {
+    "Transform line endings": function(test){
+        var transport = nodemailer.createTransport("Sendmail", {path: "test/mock/sendmail"}),
+            mailOptions = {
+                html: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."+
+                      "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s."
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            fs.readFile("/tmp/nodemailer-sendmail-test", function(error, mail) {
+                test.ok(!/\r\n/.test(mail.toString()))
+                test.done();
+            })
         });
     }
 };
