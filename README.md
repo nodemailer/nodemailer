@@ -343,6 +343,10 @@ var transport = nodemailer.createTransport("sendmail", {
 });
 ```
 
+Sendmail uses a Transform stream, which is available in NodeJS >= 0.10. For
+previous versions you can include [`readable-stream`](https://github.com/isaacs/readable-stream)
+in your depencies, which provides a polyfill.
+
 ### DKIM Signing
 
 **Nodemailer** supports DKIM signing with very simple setup. Use this with caution
