@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.7 2013-11-18
+
+  * bumped version to v0.5.7
+  * Replace \r\n by \n in Sendmail transport (rolftimmermans) [fed2089e..616ec90c]
+    A lot of sendmail implementations choke on \r\n newlines and require \n
+    This commit addresses this by transforming all \r\n sequences passed to
+    the sendmail command with \n
+
 ## v0.5.6 2013-11-15
 
   * bumped version to v0.5.6
