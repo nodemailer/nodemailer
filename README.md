@@ -162,6 +162,7 @@ Required `type` parameter can be one of the following:
   * **SMTP** for using SMTP
   * **SES** for using Amazon SES
   * **Sendmail** for utilizing systems *sendmail* command
+  * **Direct** for sending e-mails directly to recipients MTA servers
 
 ### Setting up SMTP
 
@@ -346,6 +347,26 @@ var transport = nodemailer.createTransport("sendmail", {
 Sendmail uses a Transform stream, which is available in NodeJS >= 0.10. For
 previous versions you can include [`readable-stream`](https://github.com/isaacs/readable-stream)
 in your depencies, which provides a polyfill.
+
+### Setting up Direct transport
+
+*Direct* transport is useful when you can not or want not to use a relaying service or the sendmail command.
+
+To set it up, you do not need to provide anything, just run the following to create a transport object:
+
+```
+var transport = nodemailer.createTransport();
+```
+
+If you want to use debug logging, use the following form:
+
+```
+var transport = nodemailer.createTransport("direct", {debug: true});
+```
+
+*Directmail* can be quite inefficient as it queues all e-mails to be sent into memory. Additionally, if a message is not yet sent and the process is closed, all data about queued messages are lost. Thus *directmail* is only suitable for low throughput systems, like password remainders and such, where the message can be processed immediatelly.
+
+*Directmail* is able to handle sending errors, graylisting and such. If a message can not be sent, it is requeued and retried later.
 
 ### DKIM Signing
 
