@@ -26,7 +26,8 @@
   ],
   "dependencies": {
     "mailcomposer": "~0.2.4",
-    "simplesmtp": "~0.2 || ~0.3"
+    "simplesmtp": "~0.2 || ~0.3",
+    "directmail": "~0.1.0"
   },
   "devDependencies": {
     "nodeunit": "*"
@@ -34,7 +35,9 @@
   "optionalDependencies": {
     "readable-stream": "*"
   },
-  "engines" : { "node" : ">=0.6.0" },
+  "engines": {
+    "node": ">=0.6.0"
+  },
   "keywords": [
     "e-mail",
     "mime",
