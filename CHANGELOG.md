@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.8 2013-11-22
+
+  * bumped version to v0.5.8
+  * Added support for 'direct' transport [826f226d..0dbbcbbc]
+
 ## v0.5.7 2013-11-18
 
   * bumped version to v0.5.7
