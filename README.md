@@ -100,6 +100,22 @@ smtpTransport.sendMail(mailOptions, function(error, response){
 });
 ```
 
+Or if you want to go the really easy (but not the best) route, you can try to send e-mails directly to
+the recipients MX server without a relaying service:
+
+```javascript
+var nodemailer = require("nodemailer"),
+    transport = nodemailer.createTransport();
+
+transport.sendMail({
+    from: "Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+    to: "bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: "Hello world ✔", // plaintext body
+    html: "<b>Hello world ✔</b>" // html body
+});
+```
+
 See also the [examples folder](https://github.com/andris9/Nodemailer/tree/master/examples)
 for full featured examples
 
