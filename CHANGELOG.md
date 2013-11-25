@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.9 2013-11-25
+
+  * bumped version to v0.5.9
+  * Update for 'direct' handling [77b84e2f]
+  * do not require callback to be provided for 'direct' type [ec51c79f]
+
+
 ## v0.5.8 2013-11-22
 
   * bumped version to v0.5.8
