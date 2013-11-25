@@ -386,6 +386,12 @@ var transport = nodemailer.createTransport("direct", {debug: true});
 
 To raise odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
+**When would you use Direct transport?**
+
+  * When prototyping your application
+  * If you do not have or do not want to use a relaying service account
+  * When running under Windows as a Sendmail replacement (by default Sendmail is not available in Windows)
+
 ### DKIM Signing
 
 **Nodemailer** supports DKIM signing with very simple setup. Use this with caution
