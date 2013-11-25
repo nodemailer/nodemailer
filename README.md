@@ -20,7 +20,7 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
   * **Attachments** (including attachment **streaming** for sending larger files)
   * **Embedded images** in HTML
   * **SSL/STARTTLS** for secure e-mail delivery
-  * Different transport methods - **SMTP**, **sendmail** and **Amazon SES**
+  * Different transport methods - **SMTP**, **sendmail**, **Amazon SES** or **directly** to recipients MX server
   * SMTP **Connection pool** and connection reuse for rapid delivery
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
   * Use objects as header values for **SendGrid** SMTP API
@@ -364,9 +364,11 @@ If you want to use debug logging, use the following form:
 var transport = nodemailer.createTransport("direct", {debug: true});
 ```
 
-*Directmail* can be quite inefficient as it queues all e-mails to be sent into memory. Additionally, if a message is not yet sent and the process is closed, all data about queued messages are lost. Thus *directmail* is only suitable for low throughput systems, like password remainders and such, where the message can be processed immediatelly.
+*Direct* can be quite inefficient as it queues all e-mails to be sent into memory. Additionally, if a message is not yet sent and the process is closed, all data about queued messages are lost. Thus *direct* is only suitable for low throughput systems, like password remainders and such, where the message can be processed immediatelly.
 
-*Directmail* is able to handle sending errors, graylisting and such. If a message can not be sent, it is requeued and retried later.
+*Direct* is able to handle sending errors, graylisting and such. If a message can not be sent, it is requeued and retried later.
+
+To raise odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
 ### DKIM Signing
 
