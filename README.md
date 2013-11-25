@@ -804,7 +804,4 @@ message composing/sending process you should look at the  appropriate module.
 
 **Nodemailer** is licensed under [MIT license](https://github.com/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
 
-
-
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/andris9/nodemailer/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
