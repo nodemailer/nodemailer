@@ -104,10 +104,9 @@ Or if you want to go the really easy (but not the best) route, you can try to se
 the recipients MX server without a relaying service:
 
 ```javascript
-var nodemailer = require("nodemailer"),
-    transport = nodemailer.createTransport();
+var mail = require("nodemailer").mail;
 
-transport.sendMail({
+mail({
     from: "Fred Foo ✔ <foo@blurdybloop.com>", // sender address
     to: "bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
     subject: "Hello ✔", // Subject line
@@ -173,12 +172,14 @@ transport.sendMail({
 
 ### Possible transport methods
 
-Required `type` parameter can be one of the following:
+`type` parameter can be one of the following:
 
   * **SMTP** for using SMTP
   * **SES** for using Amazon SES
   * **Sendmail** for utilizing systems *sendmail* command
   * **Direct** for sending e-mails directly to recipients MTA servers
+
+If `type` is not set, "direct" will be used
 
 ### Setting up SMTP
 
