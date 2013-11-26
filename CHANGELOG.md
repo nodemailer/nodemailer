@@ -1,11 +1,16 @@
 # Changelog
 
+## v0.5.10 2013-11-26
+
+  * bumped version to v0.5.10
+  * added shorthand function mail() for direct transport type [88129bd7]
+  * minor tweaks and typo fixes [f797409e..ceac0ca4]
+
 ## v0.5.9 2013-11-25
 
   * bumped version to v0.5.9
   * Update for 'direct' handling [77b84e2f]
   * do not require callback to be provided for 'direct' type [ec51c79f]
-
 
 ## v0.5.8 2013-11-22
 
