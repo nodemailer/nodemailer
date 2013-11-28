@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.11 2013-11-28
+
+  * bumped version to v0.5.11
+  * Updated mailcomposer version. Replaces ent with he [6a45b790e]
+
 ## v0.5.10 2013-11-26
 
   * bumped version to v0.5.10
