@@ -385,7 +385,6 @@ There is also a shorthand method `mail` if you do not like to set up a transport
 
 ```javascript
 var mail = require("nodemailer").mail;
-
 mail(mailOptions);
 ```
 
