@@ -4,6 +4,8 @@ var testCase = require('nodeunit').testCase,
     stripHTML = require("../lib/helpers").stripHTML,
     fs = require("fs");
 
+var SENDMAIL_OUTPUT = "/tmp/nodemailer-sendmail-test";
+
 exports["General tests"] = {
 
     "Create a new Nodemailer object": function(test){
@@ -137,7 +139,7 @@ exports["General tests"] = {
             test.ifError(error);
             test.ok(response.message.match(/^References:\s*<abc> <def> <ghi> <jkl>$/m));
             test.done();
-        })
+        });
     },
 
     "Skip Message-Id value": function(test){
@@ -183,6 +185,30 @@ exports["General tests"] = {
             test.deepEqual(response.envelope, {from:'sender1@tr.ee',to: [ 'receiver1@tr.ee' ],stamp: 'Postage paid, Par Avion'})
             test.done();
         })
+    },
+
+    "Default X-Mailer value": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {};
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/^X\-Mailer: Nodemailer/im));
+            test.done();
+        });
+    },
+
+    "Custom X-Mailer value": function(test){
+        var transport = nodemailer.createTransport("Stub",{
+                xMailer: "TEST"
+            }),
+            mailOptions = {};
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.match(/^X\-Mailer: TEST$/im));
+            test.done();
+        });
     }
 };
 
@@ -238,6 +264,26 @@ exports["Transport close"] = {
 };
 
 exports["Sendmail transport"] = {
+    "Path as string parameter": function(test){
+        var transport = nodemailer.createTransport("Sendmail", "test/mock/sendmail"),
+            mailOptions = {};
+
+        try{
+            fs.unlinkSync(SENDMAIL_OUTPUT);
+        }catch(E){};
+        transport.sendMail(mailOptions, function(error, response){
+            fs.readFile(SENDMAIL_OUTPUT, function(error, mail) {
+                try{
+                    fs.unlinkSync(SENDMAIL_OUTPUT);
+                }catch(E){
+                    test.ifError(E);
+                };
+                test.ok(mail.toString());
+                test.done();
+            })
+        })
+    },
+
     "Transform line endings": function(test){
         var transport = nodemailer.createTransport("Sendmail", {path: "test/mock/sendmail"}),
             mailOptions = {
@@ -245,8 +291,18 @@ exports["Sendmail transport"] = {
                       "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s."
             };
 
+        try{
+            fs.unlinkSync(SENDMAIL_OUTPUT);
+        }catch(E){};
         transport.sendMail(mailOptions, function(error, response){
-            fs.readFile("/tmp/nodemailer-sendmail-test", function(error, mail) {
+            fs.readFile(SENDMAIL_OUTPUT, function(error, mail) {
+                
+                try{
+                    fs.unlinkSync(SENDMAIL_OUTPUT);
+                }catch(E){
+                    test.ifError(E);
+                };
+
                 test.ok(!/\r\n/.test(mail.toString()))
                 test.done();
             })
