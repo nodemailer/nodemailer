@@ -62,7 +62,7 @@ transport.sendMail(message, function(error, response){
         return;
     }else{
         console.log(response);
-        console.log('Message sent successfully!');    
+        console.log('Message sent successfully!');
     }
-    
+
 });

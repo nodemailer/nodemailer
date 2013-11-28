@@ -296,7 +296,7 @@ exports["Sendmail transport"] = {
         }catch(E){};
         transport.sendMail(mailOptions, function(error, response){
             fs.readFile(SENDMAIL_OUTPUT, function(error, mail) {
-                
+
                 try{
                     fs.unlinkSync(SENDMAIL_OUTPUT);
                 }catch(E){
