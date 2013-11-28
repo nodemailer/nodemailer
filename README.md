@@ -381,11 +381,19 @@ If you want to use debug logging, use the following form:
 var transport = nodemailer.createTransport("direct", {debug: true});
 ```
 
+There is also a shorthand method `mail` if you do not like to set up a transport object (see [E-mail message fields](#e-mail-message-fields) for options for the `mailOptions` object).
+
+```javascript
+var mail = require("nodemailer").mail;
+
+mail(mailOptions);
+```
+
 *Direct* can be quite inefficient as it queues all e-mails to be sent into memory. Additionally, if a message is not yet sent and the process is closed, all data about queued messages are lost. Thus *direct* is only suitable for low throughput systems, like password remainders and such, where the message can be processed immediatelly.
 
 *Direct* is able to handle sending errors, graylisting and such. If a message can not be sent, it is requeued and retried later.
 
-To raise odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
+To raise the odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
 **When would you use Direct transport?**
 
