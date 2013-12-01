@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.12 2013-12-02
+
+  * bumped version to v0.5.12
+  * Expose transport method and transport module version if available [a495106e]
+  * Added 'he' module instead of using custom html entity decoding [c197d102]
+  * Added xMailer property for transport configuration object to override X-Mailer value [e8733a61]
+  * Updated README, added description for 'mail' method [e1f5f3a6]
+
 ## v0.5.11 2013-11-28
 
   * bumped version to v0.5.11
