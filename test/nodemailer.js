@@ -209,6 +209,19 @@ exports["General tests"] = {
             test.ok(response.message.match(/^X\-Mailer: TEST$/im));
             test.done();
         });
+    },
+
+    "Missing X-Mailer value": function(test){
+        var transport = nodemailer.createTransport("Stub",{
+                xMailer: false
+            }),
+            mailOptions = {};
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(!response.message.match(/^X\-Mailer:/im));
+            test.done();
+        });
     }
 };
 
