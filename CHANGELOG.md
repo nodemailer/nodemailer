@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.13 2013-12-03
+
+  * bumped version to v0.5.13
+  * Use the name property from the transport object to use for the domain part of message-id values (1598eee9)
+
 ## v0.5.12 2013-12-02
 
   * bumped version to v0.5.12
