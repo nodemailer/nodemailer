@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.14 2013-12-05
+
+  * bumped version to v0.5.14
+  * Expose status for direct messages [f0312df6]
+  * Allow to skip the X-Mailer header if xMailer value is set to 'false' [f2c20a68]
+
 ## v0.5.13 2013-12-03
 
   * bumped version to v0.5.13
