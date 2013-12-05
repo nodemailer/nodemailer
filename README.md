@@ -422,15 +422,17 @@ transport.sendMail(messageOptions, function(error, response){
 
     // response.statusHandler only applies to 'direct' transport
     response.statusHandler.once("failed", function(data){
-        console.log("Failed: " + data.response);
+        console.log(
+          "Permanently failed delivering message to %s with the following response: %s", 
+          data.domain, data.response);
     });
 
     response.statusHandler.once("requeue", function(data){
-        console.log("Message failed but is tried again later");
+        console.log("Temporarily failed delivering message to %s", data.domain);
     });
 
     response.statusHandler.once("sent", function(data){
-        console.log("Message was accepted by the recipients server");
+        console.log("Message was accepted by %s", data.domain);
     });
 });
 ```
