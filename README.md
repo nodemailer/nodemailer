@@ -394,7 +394,7 @@ mail(mailOptions);
 
 To raise the odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
-#### Handling responses**
+#### Handling responses
 
 *Direct* exposes an event emitter for receiving status updates. If the message includes several recipients, the message
 is not sent to everyone at once but is sharded in chunks based on the domain name of the addresses. For example
@@ -434,7 +434,7 @@ transport.sendMail(messageOptions, function(error, response){
 
 > This example uses `.once` for listening to the events which is ok if you have just one recipient. For severals recipients with different domains, the events get called several times and thus would need a more complex handling.
 
-#### When would you use Direct transport?**
+#### When would you use Direct transport?
 
   * When prototyping your application
   * If you do not have or do not want to use a relaying service account
