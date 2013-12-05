@@ -437,7 +437,9 @@ transport.sendMail(messageOptions, function(error, response){
 });
 ```
 
-> This example uses `.once` for listening to the events which is ok if you have just one recipient. For severals recipients with different domains, the events get called several times and thus would need a more complex handling.
+**NB!** If you want to provide instant feedback to the user, listen for the first `'sent'`, `'failed'`, or `'requeued'` event only. The first event should arrive quickly but once the message gets requeued, the delay until the next event for this particular domain is fired is at least 15 minutes.
+
+> This example uses `.once` for listening to the events which is ok if you have just one recipient. For several recipients with different domains, the events get called several times and thus would need a more complex handling.
 
 #### When would you use Direct transport?
 
