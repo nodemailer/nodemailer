@@ -394,7 +394,47 @@ mail(mailOptions);
 
 To raise the odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
-**When would you use Direct transport?**
+#### Handling responses**
+
+*Direct* exposes an event emitter for receiving status updates. If the message includes several recipients, the message
+is not sent to everyone at once but is sharded in chunks based on the domain name of the addresses. For example
+if your message includes the following recipients: *user1@example.com*, *user2@example.com* and *user3@blurdybloop.com*, then 2 separate messages are sent out - one for *user1@example.com* and *user2@example.com* and one for *user3@blurdybloop.com*. This means that sending to different recipients may succeed or fail independently. All information about messages being delivered, failed or requeued is emitted by the status emitter `statusHandler`.
+
+*Direct* exposes the following events:
+
+  * **'sent'** - message was sent successfully
+  * **'failed'** - message was failed permanently
+  * **'requeue'** - message failed but the error might not be permanent, so the message is requeued for later (once the message is retried an event is fired again).
+
+All events get the same argument which is an object with the following properties:
+
+  * **domain** - is the domain part of the e-mail addresses
+  * **response** - is the last line form the SMTP transmission
+
+```javascript
+transport.sendMail(messageOptions, function(error, response){
+    if(error){
+        console.log(error);
+        return;
+    }
+
+    response.statusHandler.once("failed", function(data){
+        console.log("Failed: " + data.response);
+    });
+
+    response.statusHandler.once("requeue", function(data){
+        console.log("Message failed but is tried again later");
+    });
+
+    response.statusHandler.once("sent", function(data){
+        console.log("Message was accepted by the recipients server");
+    });
+});
+```
+
+> This example uses `.once` for listening to the events which is ok if you have just one recipient. For severals recipients with different domains, the events get called several times and thus would need a more complex handling.
+
+#### When would you use Direct transport?**
 
   * When prototyping your application
   * If you do not have or do not want to use a relaying service account
