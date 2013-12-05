@@ -411,6 +411,8 @@ All events get the same argument which is an object with the following propertie
   * **domain** - is the domain part of the e-mail addresses
   * **response** - is the last line form the SMTP transmission
 
+**Usage example**
+
 ```javascript
 transport.sendMail(messageOptions, function(error, response){
     if(error){
@@ -418,6 +420,7 @@ transport.sendMail(messageOptions, function(error, response){
         return;
     }
 
+    // response.statusHandler only applies to 'direct' transport
     response.statusHandler.once("failed", function(data){
         console.log("Failed: " + data.response);
     });
