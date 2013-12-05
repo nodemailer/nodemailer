@@ -840,6 +840,8 @@ Return callback gets two parameters
   * **responseStatus** - an object with some information about the status on success
     * **responseStatus.messageId** - message ID used with the message
 
+> Different transport methods may expose additional properties to the `responseStatus` object, eg. *direct* transport exposes `statusHandler`, see the docs for the particular transport type for more info.
+
 Example:
 
 ```javascript
@@ -852,6 +854,21 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 ```
 
 **NB!** Message-ID used might not be the same that reaches recipients inbox since some providers (like **SES**) may change the value.
+
+## Changing or removing X-Mailer header field
+
+If for some reason you do not like the default `X-Mailer` header field you can either change it, or turn it off completely with the `xMailer` option when creating the transport object.
+
+```javascript
+// Define custom X-Mailer value
+var transport = nodemailer.createTransport("...",{
+    xMailer: "My Awseome Mailer ver 1.0"
+});
+// Disable X-Mailer value
+var transport = nodemailer.createTransport("...",{
+    xMailer: false
+});
+```
 
 ## Command line usage
 
