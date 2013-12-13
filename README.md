@@ -181,6 +181,14 @@ transport.sendMail({
 
 If `type` is not set, "direct" will be used
 
+### Global transport options
+
+In addition to any specific configuration for a selected transport type, a few global
+ones exist.
+
+  * **resolveHostname** - if set to true, resolves the public hostname for the current machine (makes an external HTTP request to resolve it). The value is used when generating `Message-ID` values (as the domain part) and when identifying itself to a SMTP server
+  * **xMailer** - if the value is a string it replaces the default `X-Mailer` header value. If the value is `false` then `X-Mailer` is stripped from the header
+
 ### Setting up SMTP
 
 SMTP is different from the other transport mechanisms, as in its case a connection
@@ -423,7 +431,7 @@ transport.sendMail(messageOptions, function(error, response){
     // response.statusHandler only applies to 'direct' transport
     response.statusHandler.once("failed", function(data){
         console.log(
-          "Permanently failed delivering message to %s with the following response: %s", 
+          "Permanently failed delivering message to %s with the following response: %s",
           data.domain, data.response);
     });
 
@@ -854,21 +862,6 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 ```
 
 **NB!** Message-ID used might not be the same that reaches recipients inbox since some providers (like **SES**) may change the value.
-
-## Changing or removing X-Mailer header field
-
-If for some reason you do not like the default `X-Mailer` header field you can either change it, or turn it off completely with the `xMailer` option when creating the transport object.
-
-```javascript
-// Define custom X-Mailer value
-var transport = nodemailer.createTransport("...",{
-    xMailer: "My Awseome Mailer ver 1.0"
-});
-// Disable X-Mailer value
-var transport = nodemailer.createTransport("...",{
-    xMailer: false
-});
-```
 
 ## Command line usage
 
