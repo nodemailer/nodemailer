@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.15 2013-12-13
+
+  * bumped version to v0.5.15
+  * Updated README, added global options info for setting uo transports [554bb0e5]
+  * Resolve public hostname, if resolveHostname property for a transport object is set to `true` [9023a6e1..4c66b819]
+
 ## v0.5.14 2013-12-05
 
   * bumped version to v0.5.14
