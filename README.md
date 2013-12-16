@@ -186,7 +186,7 @@ If `type` is not set, "direct" will be used
 In addition to any specific configuration for a selected transport type, a few global
 ones exist.
 
-  * **resolveHostname** - if set to true, resolves the public hostname for the current machine (makes an external HTTP request to resolve it). The value is used when generating `Message-ID` values (as the domain part) and when identifying itself to a SMTP server
+  * **resolveHostname** - if set to true, resolves the public hostname for the current machine (makes an external HTTP request to [remoteAddress.net](http://www.remoteaddress.net/) for resolving it). The value is used when generating `Message-ID` values (as the domain part) and when identifying itself to a SMTP server
   * **xMailer** - if the value is a string it replaces the default `X-Mailer` header value. If the value is `false` then `X-Mailer` is stripped from the header
 
 ### Setting up SMTP
