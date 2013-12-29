@@ -4,7 +4,8 @@ var testCase = require('nodeunit').testCase,
     stripHTML = require("../lib/helpers").stripHTML,
     fs = require("fs");
 
-var SENDMAIL_OUTPUT = "/tmp/nodemailer-sendmail-test";
+var TMP_DIR = "/tmp",
+    SENDMAIL_OUTPUT = TMP_DIR + "/nodemailer-sendmail-test";
 
 exports["General tests"] = {
 
@@ -340,3 +341,47 @@ exports["Sendmail transport"] = {
         });
     }
 };
+
+exports["Pickup transport"] = {
+    Pickup: function(test){
+        var mailOptions = {
+                subject: "pickup test",
+                text: "pickup body",
+                messageId: "test-id"
+            },
+            transport = nodemailer.createTransport("Pickup", {
+                directory: TMP_DIR
+            });
+
+        transport.sendMail(mailOptions, function(err, response){
+            test.ifError(err);
+            try{
+                fs.unlinkSync(TMP_DIR + "/" + mailOptions.messageId + ".eml");
+            }catch(E){
+                test.ifError(E);
+            }
+            test.equal(response.messageId, mailOptions.messageId);
+            test.done();
+        });
+    },
+
+    "Shorthand config": function(test){
+        var mailOptions = {
+                subject: "pickup test",
+                text: "pickup body",
+                messageId: "test-id"
+            },
+            transport = nodemailer.createTransport("Pickup", TMP_DIR);
+
+        transport.sendMail(mailOptions, function(err, response){
+            test.ifError(err);
+            try{
+                fs.unlinkSync(TMP_DIR + "/" + mailOptions.messageId + ".eml");
+            }catch(E){
+                test.ifError(E);
+            }
+            test.equal(response.messageId, mailOptions.messageId);
+            test.done();
+        });
+    }
+}

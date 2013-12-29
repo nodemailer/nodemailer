@@ -380,14 +380,20 @@ When choosing `Pickup` all e-mails will be stored in a directory so that they ca
 
 Possible options are the following:
 
- * **pickupDirectoryLocation** - The directory where applications save e-mail for later processing by the SMTP server (required)
+ * **directory** - The directory where applications save e-mail for later processing by the SMTP server (required)
 
 Example:
 
 ```javascript
 var transport = nodemailer.createTransport("PICKUP", {
-    pickupDirectoryLocation: "C:\\inetpub\\mailroot\\Pickup"
+    directory: "C:\\inetpub\\mailroot\\Pickup"
 });
+```
+
+or the shorthand version:
+
+```javascript
+var transport = nodemailer.createTransport("PICKUP", "C:\\inetpub\\mailroot\\Pickup");
 ```
 
 ### Setting up Direct transport
