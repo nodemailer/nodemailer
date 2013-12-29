@@ -273,6 +273,22 @@ exports["Transport close"] = {
             test.ok(true);
             test.done();
         });
+    },
+    "Pickup - Callback in transport.close": function(test){
+        var transport = nodemailer.createTransport("Pickup", { pickupDirectoryLocation: '' });
+        transport.close(function(){
+            test.ok(true);
+            test.done();
+        });
+    },
+
+    "Pickup - No callback in transport.close": function(test){
+        var transport = nodemailer.createTransport("Pickup", { pickupDirectoryLocation: '' });
+        transport.close();
+        process.nextTick(function(){
+            test.ok(true);
+            test.done();
+        });
     }
 };
 
