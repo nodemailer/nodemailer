@@ -177,6 +177,7 @@ transport.sendMail({
   * **SMTP** for using SMTP
   * **SES** for using Amazon SES
   * **Sendmail** for utilizing systems *sendmail* command
+  * **Pickup** for storing the e-mail in a directory on your machine
   * **Direct** for sending e-mails directly to recipients MTA servers
 
 If `type` is not set, "direct" will be used
@@ -372,6 +373,22 @@ var transport = nodemailer.createTransport("sendmail", {
 Sendmail uses a Transform stream, which is available in NodeJS >= 0.10. For
 previous versions you can include [`readable-stream`](https://github.com/isaacs/readable-stream)
 in your depencies, which provides a polyfill.
+
+### Setting up Pickup
+
+When choosing `Pickup` all e-mails will be stored in a directory so that they can be picked up by your SMTP server.
+
+Possible options are the following:
+
+ * **pickupDirectoryLocation** - The directory where applications save e-mail for later processing by the SMTP server (required)
+
+Example:
+
+```javascript
+var transport = nodemailer.createTransport("PICKUP", {
+    pickupDirectoryLocation: "C:\\inetpub\\mailroot\\Pickup"
+});
+```
 
 ### Setting up Direct transport
 
