@@ -273,7 +273,8 @@ exports["Transport close"] = {
             test.ok(true);
             test.done();
         });
-    },
+    }
+    /*
     "Pickup - Callback in transport.close": function(test){
         var transport = nodemailer.createTransport("Pickup", { pickupDirectoryLocation: '' });
         transport.close(function(){
@@ -290,6 +291,7 @@ exports["Transport close"] = {
             test.done();
         });
     }
+    */
 };
 
 exports["Sendmail transport"] = {
