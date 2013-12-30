@@ -20,7 +20,7 @@ Nodemailer is Windows friendly, you can install it with *npm* on Windows just li
   * **Attachments** (including attachment **streaming** for sending larger files)
   * **Embedded images** in HTML
   * **SSL/STARTTLS** for secure e-mail delivery
-  * Different transport methods - **SMTP**, **sendmail**, **Amazon SES** or **directly** to recipients MX server
+  * Different transport methods - **SMTP**, **sendmail**, **Amazon SES** or **directly** to recipients MX server or even a **custom** method
   * SMTP **Connection pool** and connection reuse for rapid delivery
   * **Preconfigured** services for using SMTP with Gmail, Hotmail etc.
   * Use objects as header values for **SendGrid** SMTP API
@@ -181,6 +181,8 @@ transport.sendMail({
   * **Direct** for sending e-mails directly to recipients MTA servers
 
 If `type` is not set, "direct" will be used
+
+If you want to use custom transport method, you need to provide the transport handler constructor as the `type` parameter. See [Custom Transport Methods](#custom-transport-methods) for details
 
 ### Global transport options
 
@@ -885,6 +887,62 @@ nodemailer.sendMail(mailOptions, function(error, responseStatus){
 ```
 
 **NB!** Message-ID used might not be the same that reaches recipients inbox since some providers (like **SES**) may change the value.
+
+
+## Custom Transport Methods
+
+If you want to use a custom transport method you need to define a constructor function with the following API
+
+```javascript
+function MyCustomHandler(options){}
+MyCustomHandler.prototype.sendMail = function(emailMessage, callback){};
+MyCustomHandler.prototype.close = function(closeCallback){};
+```
+
+Where
+
+  * `options` is the optional options object passed to `createTransport`
+  * `sendMail()` is the function that is going to deliver the message
+  * `emailMessage` is a paused [MailComposer](https://github.com/andris9/mailcomposer#create-a-new-mailcomposer-instance) object. You should call `emailMessage.streamMessage()` once you have everything set up for streaming the message
+  * `callback` is the function to run once the message has been sent or an error occurred. The response object *should* include `messageId` property (you can get the value from `emailMessage._messageId`)
+  * `close()` is an optional method (no need to define it) to close the transport method
+  * `closeCallback` is the function to run once the transport method is closed
+
+### Example usage
+
+```javascript
+var nodemailer = require("nodemailer");
+// Pipes all messages to stdout
+function MyTransport(options){
+    this.options = options;
+}
+MyTransport.prototype.sendMail = function(emailMessage, callback) {
+    console.log("Envelope: ", emailMessage.getEnvelope());
+    emailMessage.pipe(process.stdout);
+    emailMessage.on("error", function(err){
+        callback(err);
+    });
+    emailMessage.on("end", function(){
+        callback(null, {
+            messageId: emailMessage._messageId
+        });
+    });
+    // everything set up, start streaming
+    emailMessage.streamMessage();
+};
+// Use MyTransport as the transport method
+var transport = nodemailer.createTransport(MyTransport, {
+    name: "my.host" // hostname for generating Message-ID values
+});
+transport.sendMail({
+    from: "sender@example.com",
+    to: "receiver@example.com",
+    subject: "hello",
+    text: "world"
+}, function(err, response){
+    console.log(err || response);
+});
+```
 
 ## Command line usage
 

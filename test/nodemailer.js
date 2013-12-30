@@ -408,3 +408,57 @@ exports["Pickup transport"] = {
         });
     }
 }
+
+module.exports["Custom transport type"] = {
+    "Define transport": function(test){
+        test.expect(3);
+
+        function MyTransport(options){
+            this.options = options;
+            test.ok(true);
+        }
+
+        MyTransport.prototype.sendMail = function(emailMessage, callback){
+            test.ok(true);
+            emailMessage.streamMessage();
+            emailMessage.on("end", function(){
+                callback(null, true);
+            });
+        }
+
+        var transport = nodemailer.createTransport(MyTransport);
+        transport.sendMail({text: "hello world!"}, function(err, response){
+            test.equal(transport.transportType, "MYTRANSPORT");
+
+            transport.close(function(){
+                test.done();
+            });
+        });
+    },
+
+    "Close transport": function(test){
+        test.expect(2);
+
+        function MyTransport(options){
+            this.options = options;
+        }
+
+        MyTransport.prototype.sendMail = function(emailMessage, callback){
+            test.ok(true);
+            callback();
+        }
+
+        MyTransport.prototype.close = function(callback){
+            test.ok(true);
+            callback();
+        }
+
+        var transport = nodemailer.createTransport(MyTransport);
+        transport.sendMail({text: "hello world!"}, function(err, response){
+            transport.close(function(){
+                test.done();
+            });
+        });
+    }
+};
+
