@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.0 2013-12-30
+
+  * Pumped version to v0.6.0
+  * Allow defining custom transport methods [ec5b48ce]
+  * Return messageId with responseObject for all built in transport methods [74445cec]
+  * Bumped dependency versions for mailcomposer and readable-stream [9a034c34]
+  * Changed pickup argument name to 'directory' [01c3ea53]
+  * Added support for IIS pickup directory with PICKUP transport (philipproplesch) [36940b59..360a2878]
+  * Applied common styles [9e93a409]
+  * Updated readme [c78075e7]
+
 ## v0.5.15 2013-12-13
 
   * bumped version to v0.5.15
