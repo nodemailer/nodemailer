@@ -296,6 +296,27 @@ exports["Transport close"] = {
 };
 
 exports["Sendmail transport"] = {
+    "MessageId value in response": function(test){
+        var transport = nodemailer.createTransport("Sendmail", {
+                path: "test/mock/sendmail"
+            }),
+            mailOptions = {};
+
+        try{
+            fs.unlinkSync(SENDMAIL_OUTPUT);
+        }catch(E){};
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            try{
+                fs.unlinkSync(SENDMAIL_OUTPUT);
+            }catch(E){
+                test.ifError(E);
+            };
+            test.ok(response.messageId);
+            test.done();
+        })
+    },
+
     "Path as string parameter": function(test){
         var transport = nodemailer.createTransport("Sendmail", "test/mock/sendmail"),
             mailOptions = {};
@@ -304,12 +325,14 @@ exports["Sendmail transport"] = {
             fs.unlinkSync(SENDMAIL_OUTPUT);
         }catch(E){};
         transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
             fs.readFile(SENDMAIL_OUTPUT, function(error, mail) {
                 try{
                     fs.unlinkSync(SENDMAIL_OUTPUT);
                 }catch(E){
                     test.ifError(E);
                 };
+                test.ifError(error);
                 test.ok(mail.toString());
                 test.done();
             })
