@@ -1,3 +1,5 @@
+![Nodemailer](https://github.com/andris9/Nodemailer/blob/master/assets/nm_logo_200x136.png)
+
 Nodemailer
 ==========
 
@@ -971,5 +973,9 @@ message composing/sending process you should look at the  appropriate module.
 ## License
 
 **Nodemailer** is licensed under [MIT license](https://github.com/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it.
+
+----
+
+The Nodemailer logo was designed by [Sven Kristjansen](https://www.behance.net/kristjansen).
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/andris9/nodemailer/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
