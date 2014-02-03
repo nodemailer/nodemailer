@@ -1,8 +1,5 @@
 ![Nodemailer](https://raw2.github.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
 
-Nodemailer
-==========
-
 **Nodemailer** is an easy to use module to send e-mails with Node.JS (using
 SMTP or sendmail or Amazon SES) and is unicode friendly - You can use any characters you like ✔
 
