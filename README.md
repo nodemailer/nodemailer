@@ -1,4 +1,4 @@
-![Nodemailer](https://github.com/andris9/Nodemailer/blob/master/assets/nm_logo_200x136.png)
+![Nodemailer](https://raw2.github.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
 
 Nodemailer
 ==========
