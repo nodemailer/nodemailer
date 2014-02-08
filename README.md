@@ -329,7 +329,8 @@ Possible SES options are the following:
 
  * **AWSAccessKeyID** - AWS access key (required)
  * **AWSSecretKey** - AWS secret (required)
- * **ServiceUrl** - optional API end point URL (defaults to *"https://email.us-east-1.amazonaws.com"*)
+ * **ServiceUrl** - *optional* API end point URL (defaults to *"https://email.us-east-1.amazonaws.com"*)
+ * **AWSSecurityToken** - *optional* security token
 
 Example:
 
