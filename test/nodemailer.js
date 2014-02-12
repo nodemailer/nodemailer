@@ -275,24 +275,6 @@ exports["Transport close"] = {
             test.done();
         });
     }
-    /*
-    "Pickup - Callback in transport.close": function(test){
-        var transport = nodemailer.createTransport("Pickup", { pickupDirectoryLocation: '' });
-        transport.close(function(){
-            test.ok(true);
-            test.done();
-        });
-    },
-
-    "Pickup - No callback in transport.close": function(test){
-        var transport = nodemailer.createTransport("Pickup", { pickupDirectoryLocation: '' });
-        transport.close();
-        process.nextTick(function(){
-            test.ok(true);
-            test.done();
-        });
-    }
-    */
 };
 
 exports["Sendmail transport"] = {
@@ -406,6 +388,22 @@ exports["Pickup transport"] = {
             test.equal(response.messageId, mailOptions.messageId);
             test.done();
         });
+    },
+
+    "No callback": function(test){
+        var mailOptions = {
+                subject: "pickup test",
+                text: "pickup body",
+                messageId: "test-id"
+            },
+            transport = nodemailer.createTransport("Pickup", TMP_DIR);
+
+        transport.sendMail(mailOptions);
+
+        setTimeout(function(){
+            test.ok(1);
+            test.done();
+        }, 2000);
     }
 }
 
