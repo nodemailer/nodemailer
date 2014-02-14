@@ -1,0 +1,9 @@
+image: node0.10
+script:
+  - npm install
+  - npm test
+notify:
+  email:
+    recipients:
+      - andris.reinman@gmail.com
+
