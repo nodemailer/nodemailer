@@ -1,8 +1,16 @@
 # Changelog
 
+## v0.6.1 2014-01-26
+
+  * Bumped version to v0.6.1
+  * Do not throw on multiple errors from sendmail command (c6e2cd12)
+  * Do not require callback for pickup, fixes #238 (93eb3214)
+  * Added AWSSecurityToken information to README, fixes #235 (58e921d1)
+  * Added Nodemailer logo [06b7d1a8]
+
 ## v0.6.0 2013-12-30
 
-  * Pumped version to v0.6.0
+  * Bumped version to v0.6.0
   * Allow defining custom transport methods [ec5b48ce]
   * Return messageId with responseObject for all built in transport methods [74445cec]
   * Bumped dependency versions for mailcomposer and readable-stream [9a034c34]
