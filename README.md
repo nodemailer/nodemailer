@@ -541,6 +541,7 @@ Currently supported services are:
   * **QQ**
   * **QQex** (Tencent Business Email)
   * **SendGrid**
+  * **SendCloud**
   * **SES**
   * **Yahoo**
   * **yandex**
