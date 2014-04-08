@@ -427,6 +427,40 @@ mail(mailOptions);
 
 To raise the odds of getting your emails into recipients inboxes, you should setup [SPF records](http://en.wikipedia.org/wiki/Sender_Policy_Framework) for your domain. Using [DKIM](#dkim-signing) wouldn't hurt either. Dynamic IP addresses are frequently treated as spam sources, so using static IPs is advised.
 
+### Setting up Stub transport
+
+*Stub* transport is useful for testing, it compiles the message and returns it with the callback.
+
+```
+var transport = nodemailer.createTransport('stub', {error: false});
+```
+
+Set `error` to a string or an error object if you want the callback to always return an error for this transport.
+Otherwise the callback should always succeed.
+
+```javascript
+var transport = nodemailer.createTransport("Stub"),
+    mailOptions = {
+        from: "sender@example.com",
+        to: "receiver@example.com",
+        text: "hello world!"
+    };
+
+transport.sendMail(mailOptions, function(error, response){
+    console.log(response.message);
+});
+```
+
+Or if you want to ensure the sending fails, use the `error` option.
+
+```javascript
+var transport = nodemailer.createTransport("Stub", {error: "Sending failed"});
+
+transport.sendMail({}, function(error, response){
+    console.log(error.message); // Sending failed
+});
+```
+
 #### Handling responses
 
 *Direct* exposes an event emitter for receiving status updates. If the message includes several recipients, the message

@@ -460,3 +460,24 @@ module.exports["Custom transport type"] = {
     }
 };
 
+module.exports["Stub transport"] = {
+    "Send Success": function(test){
+        var transport = nodemailer.createTransport("Stub"),
+            mailOptions = {};
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.done();
+        })
+    },
+
+    "Send Failure": function(test){
+        var transport = nodemailer.createTransport("Stub", {error: "can not do"}),
+            mailOptions = {};
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.equal(error.message, "can not do");
+            test.done();
+        });
+    }
+}
