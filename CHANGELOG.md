@@ -1,11 +1,19 @@
 # Changelog
 
+## v0.6.2 2014-04-09
+
+  * Bumped version to v0.6.2
+  * Added error option to Stub transport [c423acad]
+  * Use SVG npm badge (t3chnoboy) [677117b7]
+  * add SendCloud to well known services (haio) [43c358e0]
+  * High-res build-passing and NPM module badges (sahat) [9fdc37cd]
+
 ## v0.6.1 2014-01-26
 
   * Bumped version to v0.6.1
-  * Do not throw on multiple errors from sendmail command (c6e2cd12)
-  * Do not require callback for pickup, fixes #238 (93eb3214)
-  * Added AWSSecurityToken information to README, fixes #235 (58e921d1)
+  * Do not throw on multiple errors from sendmail command [c6e2cd12]
+  * Do not require callback for pickup, fixes #238 [93eb3214]
+  * Added AWSSecurityToken information to README, fixes #235 [58e921d1]
   * Added Nodemailer logo [06b7d1a8]
 
 ## v0.6.0 2013-12-30
