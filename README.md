@@ -211,6 +211,9 @@ Possible SMTP options are the following:
  * **debug** - output client and server messages to console
  * **maxConnections** - how many connections to keep in the pool (defaults to 5)
  * **maxMessages** - limit the count of messages to send through a single connection (no limit by default)
+ * **greetingTimeout** (defaults to 10000) - Time to wait in ms until greeting message is received from the server
+ * **connectionTimeout** (system default if not set) - Time to wait in ms until the socket is opened to the server
+ * **socketTimeout** (defaults to 1 hour) - Time of inactivity until the connection is closed
 
 Example:
 
