@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.3 2014-04-16
+
+  * Bumped version to v0.6.3
+  * Upgraded simplesmtp dependency [dd367f59]
+
 ## v0.6.2 2014-04-09
 
   * Bumped version to v0.6.2
