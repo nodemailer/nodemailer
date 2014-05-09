@@ -564,6 +564,7 @@ to enter the hostname or port number, just use the `service` parameter
 
 Currently supported services are:
 
+  * **AOL**
   * **DynectEmail**
   * **Gmail**
   * **hot.ee**
