@@ -1,0 +1,5 @@
+examples/
+assets/
+test/
+
+.travis.yml
