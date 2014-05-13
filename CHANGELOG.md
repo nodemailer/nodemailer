@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.4 2014-05-13
+
+  * Bumped version to v0.6.4
+  * added npmignore, bumped dependencies [21bddcd9]
+  * Add AOL to well-known services (msouce) [da7dd3b7]
+
 ## v0.6.3 2014-04-16
 
   * Bumped version to v0.6.3
