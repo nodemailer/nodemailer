@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.0 2014-06-17
+
+  * Bumped version to v0.7.0
+  * Fix AWS-SES usage [5b6bc144]
+  * Replace current SES with new SES using AWS-SDK (Elanorr) [c79d797a]
+  * Updated README.md about Node Email Templates (niftylettuce) [e52bef81]
+
 ## v0.6.5 2014-05-15
 
   * Bumped version to v0.6.5
