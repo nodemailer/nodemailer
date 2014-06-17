@@ -4,9 +4,9 @@ var nodemailer = require('../lib/nodemailer'),
 
 // Create an Amazon SES transport object
 var transport = nodemailer.createTransport("SES", {
-        AWSAccessKeyID: "AWSACCESSKEY",
-        AWSSecretKey: "/AWS/SECRET",
-        ServiceUrl: "https://email.us-east-1.amazonaws.com" // optional
+        accessKeyId: "AWSACCESSKEY", // optional
+        secretAccessKey: "/AWS/SECRET", // optional
+        region: "us-east-1" // optional
     });
 
 console.log('SES Configured');
