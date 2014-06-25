@@ -1,45 +1,14 @@
 {
   "name": "nodemailer",
-  "description": "Easy to use module to send e-mails, supports unicode and SSL/TLS",
-  "version": "0.7.0",
-  "author": "Andris Reinman",
-  "maintainers": [
-    {
-      "name": "andris",
-      "email": "andris@kreata.ee"
-    }
-  ],
-  "homepage": "http://github.com/andris9/nodemailer",
+  "version": "1.0.0",
+  "description": "Easy as cake e-mail sending from your Node.js applications",
+  "main": "lib/nodemailer.js",
+  "scripts": {
+    "test": "grunt"
+  },
   "repository": {
     "type": "git",
-    "url": "http://github.com/andris9/nodemailer.git"
-  },
-  "scripts": {
-    "test": "nodeunit test/"
-  },
-  "main": "./lib/nodemailer",
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://github.com/andris9/nodemailer/blob/master/LICENSE"
-    }
-  ],
-  "dependencies": {
-    "mailcomposer": "~0.2.10",
-    "simplesmtp": "~0.2 || ~0.3.30",
-    "directmail": "~0.1.7",
-    "he": "~0.3.6",
-    "public-address": "~0.1.1",
-    "aws-sdk": "2.0.0-rc.20"
-  },
-  "devDependencies": {
-    "nodeunit": "*"
-  },
-  "optionalDependencies": {
-    "readable-stream": "~1.1.9"
-  },
-  "engines": {
-    "node": ">=0.6.0"
+    "url": "git://github.com/andris9/Nodemailer.git"
   },
   "keywords": [
     "e-mail",
@@ -49,5 +18,18 @@
     "sendmail",
     "ses",
     "smtp"
-  ]
+  ],
+  "author": "Andris Reinman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andris9/Nodemailer/issues"
+  },
+  "homepage": "https://github.com/andris9/Nodemailer",
+  "devDependencies": {
+    "chai": "~1.8.1",
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-mocha-test": "~0.10.0",
+    "sinon": "^1.9.0"
+  }
 }
