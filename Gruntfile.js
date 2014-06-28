@@ -5,7 +5,7 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
         jshint: {
-            all: ['src/*.js', 'test/*.js'],
+            all: ['src/*.js', 'test/*.js', 'examples/*.js'],
             options: {
                 jshintrc: '.jshintrc'
             }
@@ -16,7 +16,7 @@ module.exports = function(grunt) {
                 options: {
                     reporter: 'spec'
                 },
-                src: ['test/*-unit.js']
+                src: ['test/*-test.js']
             }
         }
     });

@@ -2,13 +2,8 @@ language: node_js
 node_js:
   - "0.10"
   - "0.11"
-
 before_install:
-  - npm update -g grunt-cli
-
+  - npm install -g grunt-cli
 notifications:
   email:
-    recipients:
-      - andris@kreata.ee
-    on_success: change
-    on_failure: change
+    - andris@kreata.ee
