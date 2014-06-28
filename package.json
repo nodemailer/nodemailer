@@ -30,7 +30,8 @@
     "directmail": "~0.1.7",
     "he": "~0.3.6",
     "public-address": "~0.1.1",
-    "aws-sdk": "2.0.0-rc.20"
+    "aws-sdk": "2.0.0-rc.20",
+    "email-date-header": "~1.0.0"
   },
   "devDependencies": {
     "nodeunit": "*"
