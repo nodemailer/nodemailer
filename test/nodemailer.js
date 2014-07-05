@@ -1,4 +1,5 @@
 var testCase = require('nodeunit').testCase,
+    emailDateHeader = require('email-date-header'),
     nodemailer = require("../lib/nodemailer"),
     Transport = nodemailer.Transport,
     stripHTML = require("../lib/helpers").stripHTML,
@@ -95,6 +96,40 @@ exports["General tests"] = {
             test.ok(response.message.match(/Date:\s*Fri, 5 Nov 2012 09:41:00 -0800/));
             // default not present
             test.ok(!response.message.match(/^Date:\s*[0-9\s:a-yA-Y]+\s+GMT$/m));
+            test.done();
+        })
+    },
+
+    "Use an RFC compliant date when date is omitted in options": function(test){
+        var rfcCompliantDate = emailDateHeader().value;
+        var transport = nodemailer.createTransport("Stub"),
+            value = "a\r\n b\r\nc",
+            mailOptions = {
+                messageId: value,
+                headers: {'test-key': value}
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.indexOf(rfcCompliantDate) > -1);
+            test.done();
+        })
+    },
+
+    "Use an RFC compliant date when Date instance is given in options": function(test){
+        var someDate = new Date(Date.now() + 90000000);
+        var rfcCompliantDate = emailDateHeader(someDate).value;
+        var transport = nodemailer.createTransport("Stub"),
+            value = "a\r\n b\r\nc",
+            mailOptions = {
+                messageId: value,
+                headers: {'test-key': value},
+                date: someDate
+            };
+
+        transport.sendMail(mailOptions, function(error, response){
+            test.ifError(error);
+            test.ok(response.message.indexOf(rfcCompliantDate) > -1);
             test.done();
         })
     },
