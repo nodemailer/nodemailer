@@ -1,7 +1,7 @@
 {
   "name": "nodemailer",
   "description": "Easy to use module to send e-mails, supports unicode and SSL/TLS",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "author": "Andris Reinman",
   "maintainers": [
     {
@@ -30,7 +30,7 @@
     "directmail": "~0.1.7",
     "he": "~0.3.6",
     "public-address": "~0.1.1",
-    "aws-sdk": "2.0.0-rc.20"
+    "aws-sdk": "2.0.5"
   },
   "devDependencies": {
     "nodeunit": "*"

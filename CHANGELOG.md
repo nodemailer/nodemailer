@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.1 2014-07-09
+
+  * Upgraded aws-sdk to 2.0.5
+
 ## v0.7.0 2014-06-17
 
   * Bumped version to v0.7.0
