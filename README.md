@@ -83,6 +83,10 @@ send messages with gigabyte attachments even through a slow network connection w
 
 ## Setting up
 
+Install with npm
+
+    npm install nodemailer
+
 To send e-mails you need a transporter object
 
 ```javascript
