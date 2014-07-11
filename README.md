@@ -9,7 +9,7 @@ Send emails from Node.js – easy as cake!
 
 Do not upgrade Nodemailer from 0.7 or lower to 1.0 as there are breaking changes. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
 
-You can read about the changes from this [blog post](http://www.andrisreinman.com/nodemailer-v1-0/).
+See the migration guide from 0.7 to 1.0 [here](http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide).
 
 ## Notes and information
 
@@ -20,7 +20,7 @@ You can read about the changes from this [blog post](http://www.andrisreinman.co
   * **Attachments** (including attachment **streaming** for sending larger files)
   * **Embedded images** in HTML
   * Secure e-mail delivery using **SSL/STARTTLS**
-  * Different **transport methods**, either using built in or transports from plugins
+  * Different **transport methods**, either using built in transports or from external plugins
   * Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   * Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
 
@@ -45,6 +45,9 @@ var transporter = nodemailer.createTransport({
         pass: 'userpass'
     }
 });
+
+// NB! No need to recreate the transporter object. You can use
+// the same transporter object for all e-mails
 
 // setup e-mail data with unicode symbols
 var mailOptions = {
@@ -83,9 +86,9 @@ send messages with gigabyte attachments even through a slow network connection w
 
 ## Setting up
 
-Install with npm
+Install with npm (version 1.0 can be installed from the beta channel)
 
-    npm install nodemailer
+    npm install nodemailer@beta
 
 To send e-mails you need a transporter object
 
