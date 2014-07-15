@@ -9,7 +9,9 @@ Send emails from Node.js – easy as cake!
 
 Do not upgrade Nodemailer from 0.7 or lower to 1.0 as there are breaking changes. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
 
-See the migration guide from 0.7 to 1.0 [here](http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide).
+### Migration guide
+
+See the migration guide from 0.7 to 1.0 [in the 1.0 release blog post](http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide).
 
 ## Notes and information
 
@@ -203,6 +205,7 @@ Where
     * **err** is the error object if message failed
     * **info** includes the result, the exact format depends on the transport mechanism used
       * **info.messageId** most transports *should* return the final Message-Id value used with this property
+      * **info.envelope** includes the envelope object for the message
       * **info.accepted** is an array returend by SMTP transports (includes recipient addresses that were accepted by the server)
       * **info.rejected** is an array returend by SMTP transports (includes recipient addresses that were rejected by the server)
       * **info.pending** is an array returend by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
