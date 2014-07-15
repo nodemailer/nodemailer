@@ -518,6 +518,12 @@ transport.send = function(mail, callback){
 };
 ```
 
+**`transport.close(args*)`**
+
+If your transport needs to be closed explicitly, you can implement a `close` method.
+
+This is purely optional feature and only makes sense in special contexts (eg. closing a SMTP pool).
+
 Once you have a transport object, you can create a mail transporter out of it.
 
 ```

@@ -60,6 +60,16 @@ Nodemailer.prototype.use = function(step, plugin) {
 };
 
 /**
+ * Optional close method, passed to the underlying transport object
+ */
+Nodemailer.prototype.close = function( /* possible arguments */ ) {
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof this.transporter.close === 'function') {
+        this.transporter.close.apply(this.transporter, args);
+    }
+};
+
+/**
  * Sends an email using the preselected transport object
  *
  * @param {Object} data E-data description

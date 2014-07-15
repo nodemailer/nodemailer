@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1 2014-07-15
+
+Implemented missing #close method that is passed to the underlying transport object. Required by the smtp pool.
+
 ## v1.0.0 2014-07-15
 
 Total rewrite. See migration guide here: http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide
