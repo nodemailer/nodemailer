@@ -1,2 +1,0 @@
-#!/bin/sh
-exec cat > /tmp/nodemailer-sendmail-test
