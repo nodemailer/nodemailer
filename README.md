@@ -1,6 +1,6 @@
 ![Nodemailer](https://raw2.github.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
 
-Send emails from Node.js – easy as cake!
+Send e-mails from Node.js – easy as cake!
 
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.svg)](http://travis-ci.org/andris9/Nodemailer)
 <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
@@ -18,6 +18,7 @@ See the migration guide from 0.7 to 1.0 [in the 1.0 release blog post](http://ww
 ### Nodemailer supports
 
   * **Unicode** to use any characters
+  * **Windows** – you can install it with *npm* on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
   * **HTML content** as well as **plain text** alternative
   * **Attachments** (including attachment **streaming** for sending larger files)
   * **Embedded images** in HTML
@@ -145,7 +146,7 @@ transporter.sendMail({
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails as a new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of emails.
+> Default SMTP transport is not suitable for large volume of e-mails as a new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of e-mails.
 
 #### Use a transport plugin
 
@@ -334,7 +335,7 @@ or as an address object
 ```
 
 To, Cc and Bcc fields accept comma separated list of e-mails or an array of
-emails or an array of comma separated list of e-mails - use it as you like.
+e-mails or an array of comma separated list of e-mails - use it as you like.
 Formatting can be mixed.
 
 ```
@@ -395,7 +396,7 @@ var mailOptions = {
 There are 3 stages a plugin can hook to
 
   1. **'compile'** is the step where e-mail data is set but nothing has been done with it yet. At this step you can modify mail options, for example modify `html` content, add new headers etc. Example: [nodemailer-markdown](https://github.com/andris9/nodemailer-markdown) that allows you to use `markdown` source instead of `text` and `html`.
-  2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw email will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
+  2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw e-mail will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
   3. **Transport** step where the raw e-mail is streamed to destination. Example: [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport) that streams the message to a SMTP server.
 
 ### Including plugins
