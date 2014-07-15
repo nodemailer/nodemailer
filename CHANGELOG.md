@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0 2014-07-15
+
+Total rewrite. See migration guide here: http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide
+
 ## v0.7.1 2014-07-09
 
   * Upgraded aws-sdk to 2.0.5
