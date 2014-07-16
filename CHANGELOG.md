@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 2014-07-16
+
+Upgraded nodemailer-smtp-transport to 0.1.11. The docs state that for SSL you should use 'secure' option but the underlying smtp-connection module used 'secureConnection' for this purpose. Fixed smpt-connection to match the docs.
+
 ## v1.0.1 2014-07-15
 
 Implemented missing #close method that is passed to the underlying transport object. Required by the smtp pool.

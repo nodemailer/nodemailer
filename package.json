@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "src/nodemailer.js",
   "scripts": {
@@ -40,7 +40,7 @@
     "buildmail": "^0.1.11",
     "libmime": "^0.1.2",
     "nodemailer-direct-transport": "^0.1.1",
-    "nodemailer-smtp-transport": "^0.1.8"
+    "nodemailer-smtp-transport": "^0.1.11"
   },
   "engines": {
     "node": ">=0.10.0"
