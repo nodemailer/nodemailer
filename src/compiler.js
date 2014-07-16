@@ -154,6 +154,8 @@ Compiler.prototype._createRelated = function(parentNode) {
     this._attachments.related.forEach(function(alternative) {
         this._createContentNode(node, alternative);
     }.bind(this));
+
+    return node;
 };
 
 /**

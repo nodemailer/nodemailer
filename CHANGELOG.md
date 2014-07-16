@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 2014-07-16
+
+Fixed a bug where Nodemailer crashed if the message content tpe was multipart/related
+
 ## v1.0.2 2014-07-16
 
 Upgraded nodemailer-smtp-transport to 0.1.11. The docs state that for SSL you should use 'secure' option but the underlying smtp-connection module used 'secureConnection' for this purpose. Fixed smpt-connection to match the docs.
