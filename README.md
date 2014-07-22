@@ -146,7 +146,7 @@ transporter.sendMail({
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails as a new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of e-mails.
+> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of e-mails.
 >
 > For sending bulk mail using Nodemailer see the [recommendations below](#delivering-bulk-mail)
 
@@ -539,7 +539,7 @@ See [minimal-transport.js](examples/minimal-transport.js) for a working example.
 
 ## Delivering Bulk Mail
 
-Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blogipost](delivering-bulk-mail-with-nodemailer)).
+Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
 
   1. **Use a dedicated SMTP provider.** Do not use services that offer SMTP as a sideline or for free (thats Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
   2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
