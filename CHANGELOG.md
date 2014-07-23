@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.4 2014-07-23
+
+Bugfix release. HTML node was instered twice if the message consisted of a HTML
+content (but no text content) + at least one attachment with CID + at least
+one attachment without CID. In this case the HTML node was inserted both to
+the root level multipart/mixed section and to the multipart/related sub section
+
 ## v1.0.3 2014-07-16
 
 Fixed a bug where Nodemailer crashed if the message content tpe was multipart/related
