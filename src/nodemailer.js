@@ -37,15 +37,8 @@ function Nodemailer(transporter) {
     this.transporter = transporter;
 
     if (typeof transporter.on === 'function') {
-        this.transporter.on('log', function() {
-            var args = Array.prototype.slice.call(arguments);
-            args.unshift('log');
-            this.emit.apply(this, args);
-        }.bind(this));
-
-        this.transporter.on('error', function(err) {
-            this.emit('error', err);
-        }.bind(this));
+        this.transporter.on('log', this.emit.bind(this, 'log'));
+        this.transporter.on('error', this.emit.bind(this, 'error'));
     }
 }
 util.inherits(Nodemailer, EventEmitter);
