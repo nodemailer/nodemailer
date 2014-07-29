@@ -3,6 +3,8 @@
 var chai = require('chai');
 var nodemailer = require('../src/nodemailer');
 var sinon = require('sinon');
+var http = require('http');
+var fs = require('fs');
 var expect = chai.expect;
 var simplesmtp = require('simplesmtp');
 var crypto = require('crypto');
@@ -103,6 +105,114 @@ describe('Nodemailer unit tests', function() {
             }, function() {
                 expect(transport.send.callCount).to.equal(1);
                 transport.send.restore();
+                done();
+            });
+        });
+    });
+
+    describe('Resolver tests', function() {
+        var port = 10337;
+        var server;
+
+        beforeEach(function(done) {
+            server = http.createServer(function(req, res) {
+                res.writeHead(200, {
+                    'Content-Type': 'text/plain'
+                });
+                res.end('<p>Tere, tere</p><p>vana kere!</p>');
+            });
+
+            server.listen(port, done);
+        });
+
+        afterEach(function(done) {
+            server.close(done);
+        });
+
+        it('should set text from html string', function(done) {
+            var mail = {
+                data: {
+                    html: '<p>Tere, tere</p><p>vana kere!</p>'
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.equal('<p>Tere, tere</p><p>vana kere!</p>');
+                done();
+            });
+        });
+
+        it('should set text from html buffer', function(done) {
+            var mail = {
+                data: {
+                    html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>')
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(mail.data.html);
+                done();
+            });
+        });
+
+        it('should set text from a html file', function(done) {
+            var mail = {
+                data: {
+                    html: {
+                        path: __dirname + '/fixtures/message.html'
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                done();
+            });
+        });
+
+        it('should set text from an html url', function(done) {
+            var mail = {
+                data: {
+                    html: {
+                        path: 'http://localhost:' + port + '/message.html'
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                done();
+            });
+        });
+
+        it('should set text from a html stream', function(done) {
+            var mail = {
+                data: {
+                    html: fs.createReadStream(__dirname + '/fixtures/message.html')
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(mail).to.deep.equal({
+                    data: {
+                        html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>')
+                    }
+                });
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                done();
+            });
+        });
+
+        it('should return an error', function(done) {
+            var mail = {
+                data: {
+                    html: {
+                        path: 'http://localhost:' + (port + 1000) + '/message.html'
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err) {
+                expect(err).to.exist;
                 done();
             });
         });

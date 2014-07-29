@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.0 2014-07-29
+
+Added new method `resolveContent()` to get the html/text/attachment content as a String or Buffer.
+
 ## v1.0.4 2014-07-23
 
 Bugfix release. HTML node was instered twice if the message consisted of a HTML
@@ -9,7 +13,7 @@ the root level multipart/mixed section and to the multipart/related sub section
 
 ## v1.0.3 2014-07-16
 
-Fixed a bug where Nodemailer crashed if the message content tpe was multipart/related
+Fixed a bug where Nodemailer crashed if the message content type was multipart/related
 
 ## v1.0.2 2014-07-16
 

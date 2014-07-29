@@ -423,6 +423,37 @@ Mail object that is passed to the plugin function as the first argument is an ob
 
   * **data** is the mail data object that is passed to the `sendMail` method
   * **message** is the [BuildMail](https://github.com/andris9/buildmail) object of the message. This is available for the 'stream' step and for the transport but not for 'compile'.
+  * **resolveContent** is a helper function for converting Nodemailer compatible stream objects into Strings or Buffers
+
+### resolveContent()
+
+If your plugin needs to get the full value of a param, for example the String value for the `html` content, you can use `resolveContent()` to convert Nodemailer
+compatible content objects to Strings or Buffers.
+
+```javascript
+data.resolveContent(obj, key, callback)
+```
+
+Where
+
+  * **obj** is an object that has a property you want to convert to a String or a Buffer
+  * **key** is the name of the property you want to convert
+  * **callback** is the callback function with (err, value) where `value` is either a String or Buffer, depending on the input
+
+**Example**
+
+```javascript
+function plugin(mail, callback){
+    // if mail.data.html is a file or an url, it is returned as a Buffer
+    mail.resolveContent(mail.data, 'html', function(err, html){
+        if(err){
+            return callback(err);
+        }
+        console.log('HTML contents: %s', html.toString());
+        callback();
+    });
+};
+```
 
 ### 'compile'
 
@@ -478,6 +509,23 @@ transporter.use('stream', function(mail, callback){
 ```
 
 See [plugin-stream.js](examples/plugin-stream.js) for a working example.
+
+Additionally you might be interested in the [message.getAddresses()](https://github.com/andris9/buildmail#getaddresses) method that returns the contents for all address fields as structured objects.
+
+**Example**
+
+The following plugin prints address information to console.
+
+```javascript
+transporter.use('stream', function(mail, callback){
+    var addresses = mail.message.getAddresses();
+    console.log('From: %s', JSON.stringify(addresses.from));
+    console.log('To: %s', JSON.stringify(addresses.to));
+    console.log('Cc: %s', JSON.stringify(addresses.cc));
+    console.log('Bcc: %s', JSON.stringify(addresses.bcc));
+    callback();
+});
+```
 
 ### Transports
 

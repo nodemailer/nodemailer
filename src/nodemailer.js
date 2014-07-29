@@ -6,6 +6,8 @@ var util = require('util');
 var directTransport = require('nodemailer-direct-transport');
 var smtpTransport = require('nodemailer-smtp-transport');
 var packageData = require('../package.json');
+var fs = require('fs');
+var hyperquest = require('hyperquest');
 
 // Export createTransport method
 module.exports.createTransport = function(transporter) {
@@ -82,7 +84,8 @@ Nodemailer.prototype.sendMail = function(data, callback) {
 
     var mail = {
         data: data,
-        message: null
+        message: null,
+        resolveContent: this.resolveContent.bind(this)
     };
 
     this._processPlugins('compile', mail, function(err) {
@@ -103,6 +106,92 @@ Nodemailer.prototype.sendMail = function(data, callback) {
             this.transporter.send(mail, callback);
         }.bind(this));
     }.bind(this));
+};
+
+/**
+ * Resolves a String or a Buffer value for content value. Useful if the value
+ * is a Stream or a file or an URL. If the value is a Stream, overwrites
+ * the stream object with the resolved value (you can't stream a value twice).
+ *
+ * This is useful when you want to create a plugin that needs a content value,
+ * for example the `html` or `text` value as a String or a Buffer but not as
+ * a file path or an URL.
+ *
+ * @param {Object} data An object or an Array you want to resolve an element for
+ * @param {String|Number} key Property name or an Array index
+ * @param {Function} callback Callback function with (err, value)
+ */
+Nodemailer.prototype.resolveContent = function(data, key, callback) {
+    var content = data && data[key] && data[key].content || data[key];
+
+    if (!content) {
+        return callback(null, content);
+    }
+
+    if (typeof content === 'object') {
+        if (typeof content.pipe === 'function') {
+            return this._resolveStream(content, function(err, value) {
+                if (err) {
+                    return callback(err);
+                }
+                // we can't stream twice the same content, so we need
+                // to replace the stream object with the streaming result
+                data[key] = value;
+                callback(null, value);
+            }.bind(this));
+        } else if (/^https?:\/\//i.test(content.path)) {
+            return this._resolveStream(hyperquest(content.path), callback);
+        } else if (content.path) {
+            return this._resolveStream(fs.createReadStream(content.path), callback);
+        }
+    }
+
+    // default action, return as is
+    callback(null, content);
+};
+
+/**
+ * Streams a stream value into a Buffer
+ *
+ * @param {Object} stream Readable stream
+ * @param {Function} callback Callback function with (err, value)
+ */
+Nodemailer.prototype._resolveStream = function(stream, callback) {
+    var responded = false;
+    var chunks = [];
+    var chunklen = 0;
+
+    stream.on('error', function(err) {
+        if (responded) {
+            return;
+        }
+
+        responded = true;
+        callback(err);
+    });
+
+    stream.on('data', function(chunk) {
+        if (chunk && chunk.length) {
+            chunks.push(chunk);
+            chunklen += chunk.length;
+        }
+    });
+
+    stream.on('end', function() {
+        if (responded) {
+            return;
+        }
+        responded = true;
+
+        var value;
+
+        try {
+            value = Buffer.concat(chunks, chunklen);
+        } catch (E) {
+            return callback(E);
+        }
+        callback(null, value);
+    });
 };
 
 Nodemailer.prototype._getVersionString = function() {
