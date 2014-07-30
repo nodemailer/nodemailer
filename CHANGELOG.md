@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1 2014-07-30
+
+Bumped nodemailer-direct-transport dependency. Updated version includes a bugfix for Stream nodes handling. Important only if use direct-transport with Streams (not file paths or urls) as attachment content.
+
 ## v1.1.0 2014-07-29
 
 Added new method `resolveContent()` to get the html/text/attachment content as a String or Buffer.
