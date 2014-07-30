@@ -211,7 +211,8 @@ Compiler.prototype._getAttachments = function(findRelated) {
     var attachments = [].concat(this.mail.attachments || []).map(function(attachment, i) {
         var data = {
             contentType: attachment.contentType ||
-                libmime.detectMimeType(attachment.filename || attachment.path || attachment.href || 'bin')
+                libmime.detectMimeType(attachment.filename || attachment.path || attachment.href || 'bin'),
+            contentDisposition: attachment.contentDisposition || 'attachment'
         };
 
         if (attachment.filename) {
