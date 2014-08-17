@@ -116,6 +116,10 @@ Nodemailer.prototype.sendMail = function(data, callback) {
  */
 Nodemailer.prototype.resolveContent = function(data, key, callback) {
     var content = data && data[key] && data[key].content || data[key];
+    var encoding = (typeof data[key] === 'object' && data[key].encoding || 'utf8')
+        .toString()
+        .toLowerCase()
+        .replace(/[-_\s]/g, '');
 
     if (!content) {
         return callback(null, content);
@@ -137,6 +141,10 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
         } else if (content.path) {
             return this._resolveStream(fs.createReadStream(content.path), callback);
         }
+    }
+
+    if (typeof data[key].content === 'string' && ['utf8', 'usascii', 'ascii'].indexOf(encoding) < 0) {
+        content = new Buffer(data[key].content, encoding);
     }
 
     // default action, return as is

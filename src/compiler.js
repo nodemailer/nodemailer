@@ -102,7 +102,7 @@ Compiler.prototype._createMixed = function(parentNode) {
 
     [].concat(!this._useAlternative && this._alternatives || []).concat(this._attachments.attached || []).forEach(function(element) {
         // if the element is a html node from related subpart then ignore it
-        if (!this._useRelated ||  element !== this._htmlNode) {
+        if (!this._useRelated || element !== this._htmlNode) {
             this._createContentNode(node, element);
         }
     }.bind(this));

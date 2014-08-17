@@ -216,6 +216,23 @@ describe('Nodemailer unit tests', function() {
                 done();
             });
         });
+
+        it('should return encoded string as buffer', function(done) {
+            var str = '<p>Tere, tere</p><p>vana kere!</p>';
+            var mail = {
+                data: {
+                    html: {
+                        encoding: 'base64',
+                        content: new Buffer(str).toString('base64')
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(new Buffer(str));
+                done();
+            });
+        });
     });
 });
 
