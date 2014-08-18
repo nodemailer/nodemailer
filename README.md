@@ -287,6 +287,11 @@ var mailOptions = {
         {   // use URL as an attachment
             filename: 'license.txt',
             path: 'https://raw.github.com/andris9/Nodemailer/master/LICENSE'
+        },
+        {   // encoded string as an attachment
+            filename: 'text1.txt',
+            content: 'aGVsbG8gd29ybGQh',
+            encoding: 'base64'
         }
     ]
 }
