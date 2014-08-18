@@ -173,6 +173,10 @@ Compiler.prototype._createContentNode = function(parentNode, element) {
     element.content = element.content || '';
 
     var node;
+    var encoding = (element.encoding || 'utf8')
+        .toString()
+        .toLowerCase()
+        .replace(/[-_\s]/g, '');
 
     if (!parentNode) {
         node = new BuildMail(element.contentType, {
@@ -194,6 +198,10 @@ Compiler.prototype._createContentNode = function(parentNode, element) {
 
     if (!/^text\//i.test(element.contentType) || element.contentDisposition) {
         node.setHeader('Content-Disposition', element.contentDisposition || 'attachment');
+    }
+
+    if (typeof element.content === 'string' && ['utf8', 'usascii', 'ascii'].indexOf(encoding) < 0) {
+        element.content = new Buffer(element.content, encoding);
     }
 
     node.setContent(element.content);
@@ -245,6 +253,10 @@ Compiler.prototype._getAttachments = function(findRelated) {
             data.content = attachment.content || '';
         }
 
+        if (attachment.encoding) {
+            data.encoding = attachment.encoding;
+        }
+
         return data;
     }.bind(this));
 
@@ -282,7 +294,7 @@ Compiler.prototype._getAlternatives = function() {
                 content: this.mail.text
             };
         }
-        text.contentType = 'text/plain' + (libmime.isPlainText(this.mail.text) ? '' : '; charset=utf-8');
+        text.contentType = 'text/plain' + (!text.encoding && libmime.isPlainText(text.content) ? '' : '; charset=utf-8');
     }
 
     if (this.mail.html) {
@@ -293,7 +305,7 @@ Compiler.prototype._getAlternatives = function() {
                 content: this.mail.html
             };
         }
-        html.contentType = 'text/html' + (libmime.isPlainText(this.mail.html) ? '' : '; charset=utf-8');
+        html.contentType = 'text/html' + (!html.encoding && libmime.isPlainText(html.content) ? '' : '; charset=utf-8');
     }
 
     [].concat(text || []).concat(html || []).concat(this.mail.alternatives || []).forEach(function(alternative) {
@@ -321,6 +333,10 @@ Compiler.prototype._getAlternatives = function() {
             };
         } else {
             data.content = alternative.content || '';
+        }
+
+        if (alternative.encoding) {
+            data.encoding = alternative.encoding;
         }
 
         alternatives.push(data);

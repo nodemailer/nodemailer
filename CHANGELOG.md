@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.1.2 2014-07-30
+## v1.2.0 2014-08-18
+
+Allow using encoded strings as attachments. Added new property `encoding` which defines the encoding used for a `content` string. If encoding is set, the content value is converted to a Buffer value using the defined encoding before usage. Useful for including binary attachemnts in JSON formatted email objects.
+
+## v1.1.2 2014-08-18
 
 Return deprecatin error for v0.x style configuration
 

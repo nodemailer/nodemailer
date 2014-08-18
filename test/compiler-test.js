@@ -122,5 +122,19 @@ describe('Compiler unit tests', function() {
             expect(compiler._createContentNode.callCount).to.equal(1);
             compiler._createContentNode.restore();
         });
+
+        it('should create content node with encoded buffer', function() {
+            var str = 'tere tere';
+            var data = {
+                text: {
+                    content: new Buffer(str).toString('base64'),
+                    encoding: 'base64'
+                }
+            };
+
+            var compiler = new Compiler(data);
+            compiler.compile();
+            expect(compiler.message.content).to.deep.equal(new Buffer(str));
+        });
     });
 });
