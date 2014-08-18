@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.2 2014-07-30
+
+Return deprecatin error for v0.x style configuration
+
 ## v1.1.1 2014-07-30
 
 Bumped nodemailer-direct-transport dependency. Updated version includes a bugfix for Stream nodes handling. Important only if use direct-transport with Streams (not file paths or urls) as attachment content.

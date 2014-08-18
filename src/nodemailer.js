@@ -15,7 +15,7 @@ module.exports.createTransport = function(transporter) {
         debug: true
     });
 
-    if (typeof transporter.send !== 'function') {
+    if (typeof transporter === 'object' && typeof transporter.send !== 'function') {
         transporter = smtpTransport(transporter);
     }
 
@@ -80,6 +80,10 @@ Nodemailer.prototype.sendMail = function(data, callback) {
         message: null,
         resolveContent: this.resolveContent.bind(this)
     };
+
+    if (typeof this.transporter === 'string') {
+        return callback(new Error('Unsupported configuration, downgrade Nodemailer to v0.7.1 or see the migration guide https://github.com/andris9/Nodemailer#migration-guide'));
+    }
 
     this._processPlugins('compile', mail, function(err) {
         if (err) {

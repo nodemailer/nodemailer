@@ -108,6 +108,17 @@ describe('Nodemailer unit tests', function() {
                 done();
             });
         });
+
+        it('return invalid configuration error', function(done) {
+            nm = nodemailer.createTransport('SMTP', {});
+            nm.sendMail({
+                subject: 'test',
+                xMailer: 'yyyy'
+            }, function(err) {
+                expect(err).to.exist;
+                done();
+            });
+        });
     });
 
     describe('Resolver tests', function() {
