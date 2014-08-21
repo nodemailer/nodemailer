@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.1 2014-08-21
+
+Bumped libmime and mailbuild versions to properly handle filenames with spaces (short ascii only filenames with spaces were left unquoted).
+
 ## v1.2.0 2014-08-18
 
 Allow using encoded strings as attachments. Added new property `encoding` which defines the encoding used for a `content` string. If encoding is set, the content value is converted to a Buffer value using the defined encoding before usage. Useful for including binary attachemnts in JSON formatted email objects.
