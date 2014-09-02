@@ -152,7 +152,7 @@ transporter.sendMail({
 
 #### Use a transport plugin
 
-See [Available Transports](#available-transports) for known transport plugins but there might be non listed polugins as well.
+See [Available Transports](#available-transports) for known transport plugins but there might be non listed plugins as well.
 
 The following example uses [nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport) (Amazon SES).
 
