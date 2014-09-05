@@ -136,5 +136,19 @@ describe('Compiler unit tests', function() {
             compiler.compile();
             expect(compiler.message.content).to.deep.equal(new Buffer(str));
         });
+
+        it('should create content node from data url', function() {
+            var str = 'tere tere';
+            var data = {
+                attachments: [{
+                    href: 'data:image/png,tere%20tere'
+                }]
+            };
+
+            var compiler = new Compiler(data);
+            compiler.compile();
+            expect(compiler.mail.attachments[0].content).to.deep.equal(new Buffer(str));
+            expect(compiler.mail.attachments[0].contentType).to.equal('image/png');
+        });
     });
 });

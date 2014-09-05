@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.2 2014-09-05
+
+Proper handling of data uris as attachments. Attachment `path` property can also be defined as a data uri, not just regular url or file path.
+
 ## v1.2.1 2014-08-21
 
 Bumped libmime and mailbuild versions to properly handle filenames with spaces (short ascii only filenames with spaces were left unquoted).

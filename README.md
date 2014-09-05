@@ -250,7 +250,7 @@ Attachment object consists of the following properties:
   * **cid** - optional content id for using inline images in HTML message source
   * **content** - String, Buffer or a Stream contents for the attachment
   * **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, 'binary' etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
-  * **path** - path to a file or an URL if you want to stream the file instead of including it (better for larger attachments)
+  * **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
   * **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
   * **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
 
@@ -292,6 +292,9 @@ var mailOptions = {
             filename: 'text1.txt',
             content: 'aGVsbG8gd29ybGQh',
             encoding: 'base64'
+        },
+        {   // data uri as an attachment
+            path: 'data:text/plain;base64,aGVsbG8gd29ybGQ='
         }
     ]
 }

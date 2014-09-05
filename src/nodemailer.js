@@ -140,8 +140,14 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
                 data[key] = value;
                 callback(null, value);
             }.bind(this));
-        } else if (/^https?:\/\//i.test(content.path)) {
-            return this._resolveStream(hyperquest(content.path), callback);
+        } else if (/^https?:\/\//i.test(content.path || content.href)) {
+            return this._resolveStream(hyperquest(content.path || content.href), callback);
+        } else if (/^data:/i.test(content.path || content.href)) {
+            var parts = (content.path || content.href).match(/^data:((?:[^;]*;)*(?:[^,]*)),(.*)$/i);
+            if (!parts) {
+                return callback(null, new Buffer(0));
+            }
+            return callback(null, /\bbase64$/i.test(parts[1]) ? new Buffer(parts[2], 'base64') : new Buffer(decodeURIComponent(parts[2])));
         } else if (content.path) {
             return this._resolveStream(fs.createReadStream(content.path), callback);
         }

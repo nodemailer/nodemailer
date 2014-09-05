@@ -217,7 +217,13 @@ Compiler.prototype._createContentNode = function(parentNode, element) {
  */
 Compiler.prototype._getAttachments = function(findRelated) {
     var attachments = [].concat(this.mail.attachments || []).map(function(attachment, i) {
-        var data = {
+        var data;
+
+        if (/^data:/i.test(attachment.path || attachment.href)) {
+            attachment = this._processDataUrl(attachment);
+        }
+
+        data = {
             contentType: attachment.contentType ||
                 libmime.detectMimeType(attachment.filename || attachment.path || attachment.href || 'bin'),
             contentDisposition: attachment.contentDisposition || 'attachment'
@@ -309,7 +315,13 @@ Compiler.prototype._getAlternatives = function() {
     }
 
     [].concat(text || []).concat(html || []).concat(this.mail.alternatives || []).forEach(function(alternative) {
-        var data = {
+        var data;
+
+        if (/^data:/i.test(alternative.path || alternative.href)) {
+            alternative = this._processDataUrl(alternative);
+        }
+
+        data = {
             contentType: alternative.contentType ||
                 libmime.detectMimeType(alternative.filename || alternative.path || alternative.href || 'txt')
         };
@@ -343,4 +355,35 @@ Compiler.prototype._getAlternatives = function() {
     }.bind(this));
 
     return alternatives;
+};
+
+/**
+ * Parses data uri and converts it to a Buffer
+ *
+ * @param {Object} element Content element
+ * @return {Object} Parsed element
+ */
+Compiler.prototype._processDataUrl = function(element) {
+    var parts = (element.path || element.href).match(/^data:((?:[^;]*;)*(?:[^,]*)),(.*)$/i);
+    if (!parts) {
+        return element;
+    }
+
+    element.content = /\bbase64$/i.test(parts[1]) ? new Buffer(parts[2], 'base64') : new Buffer(decodeURIComponent(parts[2]));
+
+    if ('path' in element) {
+        element.path = false;
+    }
+
+    if ('href' in element) {
+        element.href = false;
+    }
+
+    parts[1].split(';').forEach(function(item) {
+        if (/^\w+\/[^\/]+$/i.test(item)) {
+            element.contentType = element.contentType || item.toLowerCase();
+        }
+    });
+
+    return element;
 };

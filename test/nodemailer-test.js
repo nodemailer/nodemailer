@@ -244,6 +244,69 @@ describe('Nodemailer unit tests', function() {
                 done();
             });
         });
+
+        describe('data uri tests', function() {
+
+            it('should resolve with mime type and base64', function(done) {
+                var mail = {
+                    data: {
+                        attachment: {
+                            path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='
+                        }
+                    }
+                };
+                nm.resolveContent(mail.data, 'attachment', function(err, value) {
+                    expect(err).to.not.exist;
+                    expect(value).to.deep.equal(new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==', 'base64'));
+                    done();
+                });
+            });
+
+            it('should resolve with mime type and plaintext', function(done) {
+                var mail = {
+                    data: {
+                        attachment: {
+                            path: 'data:image/png,tere%20tere'
+                        }
+                    }
+                };
+                nm.resolveContent(mail.data, 'attachment', function(err, value) {
+                    expect(err).to.not.exist;
+                    expect(value).to.deep.equal(new Buffer('tere tere'));
+                    done();
+                });
+            });
+
+            it('should resolve with plaintext', function(done) {
+                var mail = {
+                    data: {
+                        attachment: {
+                            path: 'data:,tere%20tere'
+                        }
+                    }
+                };
+                nm.resolveContent(mail.data, 'attachment', function(err, value) {
+                    expect(err).to.not.exist;
+                    expect(value).to.deep.equal(new Buffer('tere tere'));
+                    done();
+                });
+            });
+
+            it('should resolve with mime type, charset and base64', function(done) {
+                var mail = {
+                    data: {
+                        attachment: {
+                            path: 'data:image/png;charset=iso-8859-1;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='
+                        }
+                    }
+                };
+                nm.resolveContent(mail.data, 'attachment', function(err, value) {
+                    expect(err).to.not.exist;
+                    expect(value).to.deep.equal(new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==', 'base64'));
+                    done();
+                });
+            });
+        });
     });
 });
 
