@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0 2014-09-12
+
+Maintenance release, upgrades buildmail and libmime. Allows using functions as transform plugins and fixes issue with unicode filenames in Gmail.
+
 ## v1.2.2 2014-09-05
 
 Proper handling of data uris as attachments. Attachment `path` property can also be defined as a data uri, not just regular url or file path.
