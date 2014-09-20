@@ -231,7 +231,7 @@ The following are the possible fields of an e-mail message:
   - **subject** - The subject of the e-mail
   - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
   - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
-  - **headers** - An object of additional header fields *{"X-Key-Name": "key value"}*
+  - **headers** - An object or array of additional header fields (e.g. *{"X-Key-Name": "key value"}* or *[{"X-Key-Name": "val1"}, {"X-Key-Name": "val2"}]*)
   - **attachments** - An array of attachment objects  (see [below](#attachments) for details)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
