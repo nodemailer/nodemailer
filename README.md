@@ -595,6 +595,14 @@ transporter.sendMail({mail data});
 
 See [minimal-transport.js](examples/minimal-transport.js) for a working example.
 
+## Using Gmail
+
+Even though Gmail is the fastest way to get started with sending emails, it is by no means a preferable solution unless you are using OAuth2 authentication. Gmail expects the user to be an actual user not a robot so it runs a lot of heuristics for every login attempt and blocks anything that looks suspicious to defend the user from account hijacking attempts. For example you might run into trouble if your server is in another geographical location – everything works in your dev machine but messages are blocked in production.
+
+Additionally Gmail has came up with the concept of ['less secure'](https://support.google.com/accounts/answer/6010255?hl=en) apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send (support for 'less secure' apps is enabled) but other is blocked (support for 'less secure' apps is disabled).
+
+To prevent having login issues you should either use XOAUTH2 (see details [here](https://github.com/andris9/nodemailer-smtp-transport#authentication)) or use another provider and preferably a dedicated one like [Mailgun](http://www.mailgun.com/) or [SendGrid](http://www.sendgrid.com/) or any other. Usually these providers have free plans available that are compareable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one *To* and one *Cc* address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
+
 ## Delivering Bulk Mail
 
 Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
