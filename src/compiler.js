@@ -47,13 +47,13 @@ Compiler.prototype.compile = function() {
     // Add headers to the root node
     [
         'from',
+        'sender',
         'to',
         'cc',
         'bcc',
         'reply-to',
         'in-reply-to',
         'references',
-        'sender',
         'subject',
         'message-id',
         'date'
