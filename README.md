@@ -228,6 +228,7 @@ The following are the possible fields of an e-mail message:
   - **replyTo** - An e-mail address that will appear on the *Reply-To:* field
   - **inReplyTo** - The message-id this message is replying
   - **references** - Message-id list (an array or space separated string)
+  - **sender** - An e-mail address that will appear on the *Sender:* field
   - **subject** - The subject of the e-mail
   - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
   - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*

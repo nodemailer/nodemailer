@@ -53,6 +53,7 @@ Compiler.prototype.compile = function() {
         'reply-to',
         'in-reply-to',
         'references',
+        'sender',
         'subject',
         'message-id',
         'date'
