@@ -222,6 +222,7 @@ Where
 The following are the possible fields of an e-mail message:
 
   - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [here](#address-formatting) for details
+  - **sender** - An e-mail address that will appear on the *Sender:* field
   - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the *To:* field
   - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the *Cc:* field
   - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the *Bcc:* field

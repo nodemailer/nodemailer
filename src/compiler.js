@@ -47,6 +47,7 @@ Compiler.prototype.compile = function() {
     // Add headers to the root node
     [
         'from',
+        'sender',
         'to',
         'cc',
         'bcc',

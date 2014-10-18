@@ -367,6 +367,7 @@ describe('Nodemailer integration tests', function() {
 
         var mailData = {
             from: 'from@valid.sender',
+            sender: 'sender@valid.sender',
             to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
             subject: 'test',
             date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
@@ -385,7 +386,7 @@ describe('Nodemailer integration tests', function() {
                 'to@invalid.recipient'
             ]);
             expect(info.messageId).to.equal('abc@def');
-            expect(/eaa13435e1401328be32bc7a4c629f9f/i.test(info.response)).to.be.true;
+            expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
             done();
         });
     });
