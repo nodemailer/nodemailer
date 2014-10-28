@@ -271,10 +271,10 @@ var mailOptions = {
         },
         {   // file on disk as an attachment
             filename: 'text3.txt',
-            path: '/path/to/file.txt' // stream this file
+            filePath: '/path/to/file.txt' // stream this file
         },
         {   // filename and content type is derived from path
-            path: '/path/to/file.txt'
+            filePath: '/path/to/file.txt'
         },
         {   // stream as an attachment
             filename: 'text4.txt',
@@ -287,7 +287,7 @@ var mailOptions = {
         },
         {   // use URL as an attachment
             filename: 'license.txt',
-            path: 'https://raw.github.com/andris9/Nodemailer/master/LICENSE'
+            filePath: 'https://raw.github.com/andris9/Nodemailer/master/LICENSE'
         },
         {   // encoded string as an attachment
             filename: 'text1.txt',
@@ -295,7 +295,7 @@ var mailOptions = {
             encoding: 'base64'
         },
         {   // data uri as an attachment
-            path: 'data:text/plain;base64,aGVsbG8gd29ybGQ='
+            filePath: 'data:text/plain;base64,aGVsbG8gd29ybGQ='
         }
     ]
 }
@@ -398,7 +398,7 @@ var mailOptions = {
     html: 'Embedded image: <img src="cid:unique@kreata.ee"/>',
     attachments: [{
         filename: 'image.png',
-        path: '/path/to/file',
+        filePath: '/path/to/file',
         cid: 'unique@kreata.ee' //same cid value as in the html img src
     }]
 }
