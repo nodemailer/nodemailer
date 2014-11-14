@@ -193,6 +193,7 @@ transporter.sendMail({
   * **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
   * **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
   * **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
+  * **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handelbars/mustache templates
   * *add yours* (see plugin api documentation [here](#plugin-api))
 
 ## Sending mail
