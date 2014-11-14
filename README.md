@@ -1,4 +1,4 @@
-![Nodemailer](https://raw2.github.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
+![Nodemailer](https://raw.githubusercontent.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
 
 Send e-mails from Node.js – easy as cake!
 
