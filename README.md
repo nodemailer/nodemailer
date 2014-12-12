@@ -2,6 +2,7 @@
 
 Send e-mails from Node.js – easy as cake!
 
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/andris9/Nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.svg)](http://travis-ci.org/andris9/Nodemailer)
 <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
 
