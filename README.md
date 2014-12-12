@@ -7,6 +7,8 @@ Send e-mails from Node.js – easy as cake!
 
 ## Upgrade warning
 
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/andris9/Nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Do not upgrade Nodemailer from 0.7 or lower to 1.0 as there are breaking changes. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
 
 ### Migration guide
