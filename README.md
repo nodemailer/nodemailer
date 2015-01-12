@@ -341,23 +341,26 @@ or with formatted name (includes unicode support)
 "Ноде Майлер" <foobar@blurdybloop.com>
 ```
 
-or as an address object
+> Notice that all address fields (even `from`) are comma separated lists, so if you want to use a comma in the name part, make sure you enclose the name in double quotes: `"Майлер, Ноде" <foobar@blurdybloop.com>`
+
+or as an address object (in this case you do not need to worry about the formatting, no need to use quotes etc.)
 
 ```
 {
-    name: 'Ноде Майлер',
+    name: 'Майлер, Ноде',
     address: 'foobar@blurdybloop.com'
 }
 ```
 
-To, Cc and Bcc fields accept comma separated list of e-mails or an array of
-e-mails or an array of comma separated list of e-mails - use it as you like.
+All address fields accept comma separated list of e-mails or an array of
+e-mails or an array of comma separated list of e-mails or address objects - use it as you like.
 Formatting can be mixed.
 
 ```
 ...,
 to: 'foobar@blurdybloop.com, "Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>',
-cc: ['foobar@blurdybloop.com', '"Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>']
+cc: ['foobar@blurdybloop.com', '"Ноде Майлер" <bar@blurdybloop.com>, "Name, User" <baz@blurdybloop.com>'],
+bcc: ['foobar@blurdybloop.com', {name: 'Майлер, Ноде', address: 'foobar@blurdybloop.com'}]
 ...
 ```
 
