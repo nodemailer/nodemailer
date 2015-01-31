@@ -76,18 +76,6 @@ See [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-trans
 
 > When using default SMTP transport, then you do not need to define transport type explicitly (even though you can), just provide the SMTP options and that's it. For anything else, see the docs of the particular [transport mechanism](#available-transports).
 
-## Goals for 1.0
-
-### 1. Move optional features out of core
-
-Nodemailer 0.x is quite large and includes a ton of stuff that is not needed for most users. Sometimes it causes problems, for example when
-a feature that you do not even use requires some dependency to be installed that throws in your environment. If you only use SMTP to send e-mails you do not need the SES code and vice versa. The goal is achieved with a plugin system where you can install and load only these plugins that you actually require.
-
-### 2. Gigabyte attachments
-
-Version 1.0 is a total rewrite from the ground up and relying heavily on Streams2. This allows you to reliably
-send messages with gigabyte attachments even through a slow network connection without CPU or memory penalties. You probably never need it but it makes using smaller attachments more reliable as well.
-
 ## Setting up
 
 Install with npm
