@@ -9,7 +9,7 @@ var expect = chai.expect;
 var simplesmtp = require('simplesmtp');
 var crypto = require('crypto');
 
-chai.Assertion.includeStack = true;
+chai.config.includeStack = true;
 
 var PORT_NUMBER = 8397;
 

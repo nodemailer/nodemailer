@@ -5,7 +5,7 @@ var Compiler = require('../src/compiler');
 var sinon = require('sinon');
 var expect = chai.expect;
 
-chai.Assertion.includeStack = true;
+chai.config.includeStack = true;
 
 describe('Compiler unit tests', function() {
     it('should create new Compiler', function() {
