@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.2 2015-03-09
+
+Maintenance release, upgraded dependencies. Replaced simplesmtp based tests with smtp-server based ones.
+
 ## v1.3.0 2014-09-12
 
 Maintenance release, upgrades buildmail and libmime. Allows using functions as transform plugins and fixes issue with unicode filenames in Gmail.

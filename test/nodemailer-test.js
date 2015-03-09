@@ -6,7 +6,7 @@ var sinon = require('sinon');
 var http = require('http');
 var fs = require('fs');
 var expect = chai.expect;
-var simplesmtp = require('simplesmtp');
+var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
 
 chai.config.includeStack = true;
@@ -314,44 +314,60 @@ describe('Nodemailer integration tests', function() {
     var server;
 
     beforeEach(function(done) {
-        server = new simplesmtp.createServer({
-            ignoreTLS: true,
-            disableDNSValidation: true,
-            requireAuthentication: true,
-            debug: false,
-            authMethods: ['PLAIN', 'XOAUTH2']
-        });
+        server = new SMTPServer({
+            authMethods: ['PLAIN', 'XOAUTH2'],
+            disabledCommands: ['STARTTLS'],
 
-        server.on('startData', function(connection) {
-            connection.hash = crypto.createHash('md5');
-        });
+            onData: function(stream, session, callback) {
+                var hash = crypto.createHash('md5');
+                stream.on('data', function(chunk) {
+                    hash.update(chunk);
+                });
+                stream.on('end', function() {
+                    callback(null, hash.digest('hex'));
+                });
+            },
 
-        server.on('data', function(connection, chunk) {
-            connection.hash.update(chunk.toString('utf-8'));
-        });
-
-        server.on('dataReady', function(connection, callback) {
-            var hash = connection.hash.digest('hex');
-            callback(null, hash); // ABC1 is the queue id to be advertised to the client
-        });
-
-        server.on('authorizeUser', function(connection, username, pass, callback) {
-            callback(null, username === 'testuser' && (pass === 'testpass' || pass === 'testtoken'));
-        });
-
-        server.on('validateSender', function(connection, email, callback) {
-            callback(!/@valid.sender/.test(email) && new Error('Invalid sender'));
-        });
-
-        server.on('validateRecipient', function(connection, email, callback) {
-            callback(!/@valid.recipient/.test(email) && new Error('Invalid recipient'));
+            onAuth: function(auth, session, callback) {
+                if (auth.method !== 'XOAUTH2') {
+                    if (auth.username !== 'testuser' || auth.password !== 'testpass') {
+                        return callback(new Error('Invalid username or password'));
+                    }
+                } else {
+                    if (auth.username !== 'testuser' || auth.accessToken !== 'testtoken') {
+                        return callback(null, {
+                            data: {
+                                status: '401',
+                                schemes: 'bearer mac',
+                                scope: 'my_smtp_access_scope_name'
+                            }
+                        });
+                    }
+                }
+                callback(null, {
+                    user: 123
+                });
+            },
+            onMailFrom: function(address, session, callback) {
+                if (!/@valid.sender/.test(address.address)) {
+                    return callback(new Error('Only user@valid.sender is allowed to send mail'));
+                }
+                return callback(); // Accept the address
+            },
+            onRcptTo: function(address, session, callback) {
+                if (!/@valid.recipient/.test(address.address)) {
+                    return callback(new Error('Only user@valid.recipient is allowed to receive mail'));
+                }
+                return callback(); // Accept the address
+            },
+            logger: false
         });
 
         server.listen(PORT_NUMBER, done);
     });
 
     afterEach(function(done) {
-        server.end(done);
+        server.close(done);
     });
 
     it('should log in and send mail', function(done) {
