@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.4 2015-04-25
+
+Maintenance release, bumped buildmail version to get fixed format=flowed handling
+
 ## v1.3.3 2015-04-25
 
 Maintenance release, bumped dependencies
