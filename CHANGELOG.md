@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.3 2015-04-25
+
+Maintenance release, bumped dependencies
+
 ## v1.3.2 2015-03-09
 
 Maintenance release, upgraded dependencies. Replaced simplesmtp based tests with smtp-server based ones.
