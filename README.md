@@ -230,7 +230,7 @@ The following are the possible fields of an e-mail message:
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
   - **messageId** - optional Message-Id value, random value will be generated if not set
   - **date** - optional Date value, current UTC string will be used if not set
-  - **encoding** - optional transfer encoding for the textual parts (defaults to 'quoted-printable')
+  - **encoding** - optional transfer encoding for the textual parts
 
 All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
 Attachments are streamed as binary.
