@@ -65,10 +65,10 @@ var mailOptions = {
 // send mail with defined transport object
 transporter.sendMail(mailOptions, function(error, info){
     if(error){
-        console.log(error);
-    }else{
-        console.log('Message sent: ' + info.response);
+        return console.log(error);
     }
+    console.log('Message sent: ' + info.response);
+    
 });
 ```
 
