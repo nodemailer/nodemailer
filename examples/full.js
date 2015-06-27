@@ -36,6 +36,9 @@ var message = {
     html: '<p><b>Hello</b> to myself <img src="cid:note@example.com"/></p>' +
         '<p>Here\'s a nyan cat for you as an embedded attachment:<br/><img src="cid:nyan@example.com"/></p>',
 
+    // Apple Watch specific HTML body
+    watchHtml: '<b>Hello</b> to myself',
+
     // An array of attachments
     attachments: [
 

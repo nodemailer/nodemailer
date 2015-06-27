@@ -130,7 +130,7 @@ describe('Nodemailer unit tests', function() {
                 res.writeHead(200, {
                     'Content-Type': 'text/plain'
                 });
-                res.end('<p>Tere, tere</p><p>vana kere!</p>');
+                res.end('<p>Tere, tere</p><p>vana kere!</p>\n');
             });
 
             server.listen(port, done);
@@ -143,12 +143,12 @@ describe('Nodemailer unit tests', function() {
         it('should set text from html string', function(done) {
             var mail = {
                 data: {
-                    html: '<p>Tere, tere</p><p>vana kere!</p>'
+                    html: '<p>Tere, tere</p><p>vana kere!</p>\n'
                 }
             };
             nm.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.equal('<p>Tere, tere</p><p>vana kere!</p>');
+                expect(value).to.equal('<p>Tere, tere</p><p>vana kere!</p>\n');
                 done();
             });
         });
@@ -156,7 +156,7 @@ describe('Nodemailer unit tests', function() {
         it('should set text from html buffer', function(done) {
             var mail = {
                 data: {
-                    html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>')
+                    html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n')
                 }
             };
             nm.resolveContent(mail.data, 'html', function(err, value) {
@@ -176,7 +176,7 @@ describe('Nodemailer unit tests', function() {
             };
             nm.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -191,7 +191,7 @@ describe('Nodemailer unit tests', function() {
             };
             nm.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -206,10 +206,10 @@ describe('Nodemailer unit tests', function() {
                 expect(err).to.not.exist;
                 expect(mail).to.deep.equal({
                     data: {
-                        html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>')
+                        html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n')
                     }
                 });
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>'));
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -229,7 +229,7 @@ describe('Nodemailer unit tests', function() {
         });
 
         it('should return encoded string as buffer', function(done) {
-            var str = '<p>Tere, tere</p><p>vana kere!</p>';
+            var str = '<p>Tere, tere</p><p>vana kere!</p>\n';
             var mail = {
                 data: {
                     html: {
@@ -311,6 +311,7 @@ describe('Nodemailer unit tests', function() {
 });
 
 describe('Nodemailer integration tests', function() {
+    this.timeout(10000);
     var server;
 
     beforeEach(function(done) {

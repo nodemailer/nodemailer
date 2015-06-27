@@ -68,7 +68,7 @@ transporter.sendMail(mailOptions, function(error, info){
         return console.log(error);
     }
     console.log('Message sent: ' + info.response);
-    
+
 });
 ```
 
@@ -226,6 +226,7 @@ The following are the possible fields of an e-mail message:
   - **subject** - The subject of the e-mail
   - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
   - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
+  - **watchHtml** - Apple Watch specific HTML version of the message (*experimental*)
   - **headers** - An object or array of additional header fields (e.g. *{"X-Key-Name": "key value"}* or *[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]*)
   - **attachments** - An array of attachment objects  (see [below](#attachments) for details)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)

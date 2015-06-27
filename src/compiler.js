@@ -291,7 +291,7 @@ Compiler.prototype._getAttachments = function(findRelated) {
  */
 Compiler.prototype._getAlternatives = function() {
     var alternatives = [],
-        text, html;
+        text, html, watchHtml;
 
     if (this.mail.text) {
         if (typeof this.mail.text === 'object' && this.mail.text.content || this.mail.text.path || this.mail.text.href) {
@@ -302,6 +302,17 @@ Compiler.prototype._getAlternatives = function() {
             };
         }
         text.contentType = 'text/plain' + (!text.encoding && libmime.isPlainText(text.content) ? '' : '; charset=utf-8');
+    }
+
+    if (this.mail.watchHtml) {
+        if (typeof this.mail.watchHtml === 'object' && this.mail.watchHtml.content || this.mail.watchHtml.path || this.mail.watchHtml.href) {
+            watchHtml = this.mail.watchHtml;
+        } else {
+            watchHtml = {
+                content: this.mail.watchHtml
+            };
+        }
+        watchHtml.contentType = 'text/watch-html' + (!watchHtml.encoding && libmime.isPlainText(watchHtml.content) ? '' : '; charset=utf-8');
     }
 
     if (this.mail.html) {
@@ -315,7 +326,7 @@ Compiler.prototype._getAlternatives = function() {
         html.contentType = 'text/html' + (!html.encoding && libmime.isPlainText(html.content) ? '' : '; charset=utf-8');
     }
 
-    [].concat(text || []).concat(html || []).concat(this.mail.alternatives || []).forEach(function(alternative) {
+    [].concat(text || []).concat(watchHtml || []).concat(html || []).concat(this.mail.alternatives || []).forEach(function(alternative) {
         var data;
 
         if (/^data:/i.test(alternative.path || alternative.href)) {

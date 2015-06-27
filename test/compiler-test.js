@@ -54,6 +54,29 @@ describe('Compiler unit tests', function() {
             sinon.stub(compiler, '_createAlternative');
             compiler.compile();
             expect(compiler._createAlternative.callCount).to.equal(1);
+
+            expect(compiler._alternatives.length).to.equal(2);
+            expect(compiler._alternatives[0].contentType).to.equal('text/plain');
+            expect(compiler._alternatives[1].contentType).to.equal('text/html');
+
+            compiler._createAlternative.restore();
+        });
+
+        it('should create Alternative structure with text, watchHtml and html', function() {
+            var data = {
+                text: 'abc',
+                html: 'def',
+                watchHtml: 'ghi'
+            };
+
+            var compiler = new Compiler(data);
+            sinon.stub(compiler, '_createAlternative');
+            compiler.compile();
+            expect(compiler._createAlternative.callCount).to.equal(1);
+            expect(compiler._alternatives.length).to.equal(3);
+            expect(compiler._alternatives[0].contentType).to.equal('text/plain');
+            expect(compiler._alternatives[1].contentType).to.equal('text/watch-html');
+            expect(compiler._alternatives[2].contentType).to.equal('text/html');
             compiler._createAlternative.restore();
         });
 

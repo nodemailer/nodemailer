@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0 2015-06-27
+
+Added new message option `watchHtml` to specify Apple Watch specific HTML part of the message. See [this post](https://litmus.com/blog/how-to-send-hidden-version-email-apple-watch) for details
+
 ## v1.3.4 2015-04-25
 
 Maintenance release, bumped buildmail version to get fixed format=flowed handling
