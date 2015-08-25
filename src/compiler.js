@@ -90,7 +90,9 @@ Compiler.prototype._createMixed = function(parentNode) {
     var node;
 
     if (!parentNode) {
-        node = new BuildMail('multipart/mixed');
+        node = new BuildMail('multipart/mixed', {
+            keepBcc: true
+        });
     } else {
         node = parentNode.createChild('multipart/mixed');
     }
@@ -122,7 +124,9 @@ Compiler.prototype._createAlternative = function(parentNode) {
     var node;
 
     if (!parentNode) {
-        node = new BuildMail('multipart/alternative');
+        node = new BuildMail('multipart/alternative', {
+            keepBcc: true
+        });
     } else {
         node = parentNode.createChild('multipart/alternative');
     }
@@ -148,7 +152,9 @@ Compiler.prototype._createRelated = function(parentNode) {
     var node;
 
     if (!parentNode) {
-        node = new BuildMail('multipart/related; type="text/html"');
+        node = new BuildMail('multipart/related; type="text/html"', {
+            keepBcc: true
+        });
     } else {
         node = parentNode.createChild('multipart/related; type="text/html"');
     }
@@ -181,6 +187,7 @@ Compiler.prototype._createContentNode = function(parentNode, element) {
 
     if (!parentNode) {
         node = new BuildMail(element.contentType, {
+            keepBcc: true,
             filename: element.filename
         });
     } else {
