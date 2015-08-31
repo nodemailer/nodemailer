@@ -174,6 +174,7 @@ transporter.sendMail({
   * **[nodemailer-sendmail-transport](https://github.com/andris9/nodemailer-sendmail-transport)** for piping messages to the *sendmail* command
   * **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
   * **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
+  * **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
   * **[nodemailer-sendgrid-transport](https://github.com/sendgrid/nodemailer-sendgrid-transport)** for sending messages through SendGrid's Web API
   * **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
   * **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
