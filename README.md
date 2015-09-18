@@ -135,7 +135,7 @@ transporter.sendMail({
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of e-mails.
+> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amount of e-mails.
 >
 > For sending bulk mail using Nodemailer see the [recommendations below](#delivering-bulk-mail)
 
