@@ -26,20 +26,21 @@
   },
   "homepage": "http://www.nodemailer.com",
   "devDependencies": {
-    "chai": "^3.0.0",
+    "chai": "^3.2.0",
     "grunt": "^0.4.5",
     "grunt-contrib-jshint": "^0.11.2",
     "grunt-mocha-test": "^0.12.7",
+    "mocha": "^2.3.3",
     "nodemailer-dkim": "^1.0.3",
     "nodemailer-markdown": "^1.0.0",
     "nodemailer-stub-transport": "^1.0.0",
-    "smtp-server": "^1.4.0",
-    "sinon": "^1.15.4"
+    "sinon": "^1.15.4",
+    "smtp-server": "^1.4.2"
   },
   "dependencies": {
-    "buildmail": "^1.2.4",
     "hyperquest": "^1.2.0",
     "libmime": "^1.0.0",
+    "mailcomposer": "^1.0.0",
     "nodemailer-direct-transport": "^1.0.2",
     "nodemailer-smtp-transport": "^1.0.3"
   },

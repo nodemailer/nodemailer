@@ -1,6 +1,6 @@
 'use strict';
 
-var Compiler = require('./compiler');
+var mailcomposer = require('mailcomposer');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var directTransport = require('nodemailer-direct-transport');
@@ -90,7 +90,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
             return callback(err);
         }
 
-        mail.message = new Compiler(mail.data).compile();
+        mail.message = mailcomposer(mail.data);
 
         if (mail.data.xMailer !== false) {
             mail.message.setHeader('X-Mailer', mail.data.xMailer || this._getVersionString());
