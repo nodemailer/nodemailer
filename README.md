@@ -135,7 +135,7 @@ transporter.sendMail({
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amout of e-mails.
+> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amount of e-mails.
 >
 > For sending bulk mail using Nodemailer see the [recommendations below](#delivering-bulk-mail)
 
@@ -174,6 +174,7 @@ transporter.sendMail({
   * **[nodemailer-sendmail-transport](https://github.com/andris9/nodemailer-sendmail-transport)** for piping messages to the *sendmail* command
   * **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
   * **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
+  * **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
   * **[nodemailer-sendgrid-transport](https://github.com/sendgrid/nodemailer-sendgrid-transport)** for sending messages through SendGrid's Web API
   * **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
   * **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
@@ -184,7 +185,7 @@ transporter.sendMail({
   * **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
   * **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
   * **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
-  * **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handelbars/mustache templates
+  * **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
   * **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
   * *add yours* (see plugin api documentation [here](#plugin-api))
 
@@ -245,7 +246,7 @@ Attachment object consists of the following properties:
   * **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
   * **cid** - optional content id for using inline images in HTML message source
   * **content** - String, Buffer or a Stream contents for the attachment
-  * **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, 'binary' etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
+  * **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
   * **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
   * **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
   * **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
@@ -421,7 +422,7 @@ transporter.use(step, pluginFunc)
 Where
 
   * **transporter** is a transport object created with `createTransport`
-  * **step** is a string, either 'compile' or 'stream' thatd defines when the plugin should be hooked
+  * **step** is a string, either 'compile' or 'stream' that defines when the plugin should be hooked
   * **pluginFunc** is a function that takes two arguments: the mail object and a callback function
 
 ## Plugin API
@@ -598,15 +599,15 @@ See [minimal-transport.js](examples/minimal-transport.js) for a working example.
 
 Even though Gmail is the fastest way to get started with sending emails, it is by no means a preferable solution unless you are using OAuth2 authentication. Gmail expects the user to be an actual user not a robot so it runs a lot of heuristics for every login attempt and blocks anything that looks suspicious to defend the user from account hijacking attempts. For example you might run into trouble if your server is in another geographical location – everything works in your dev machine but messages are blocked in production.
 
-Additionally Gmail has came up with the concept of ['less secure'](https://support.google.com/accounts/answer/6010255?hl=en) apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send (support for 'less secure' apps is enabled) but other is blocked (support for 'less secure' apps is disabled).
+Additionally Gmail has came up with the concept of ['less secure'](https://support.google.com/accounts/answer/6010255?hl=en) apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send (support for 'less secure' apps is enabled) but other is blocked (support for 'less secure' apps is disabled). When using this method make sure to enable the required functionality by completing the "[captcha enable](https://accounts.google.com/b/0/displayunlockcaptcha)". Without this, less secure connections won't work.
 
-To prevent having login issues you should either use XOAUTH2 (see details [here](https://github.com/andris9/nodemailer-smtp-transport#authentication)) or use another provider and preferably a dedicated one like [Mailgun](http://www.mailgun.com/) or [SendGrid](http://mbsy.co/sendgrid/12237825) or any other. Usually these providers have free plans available that are compareable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one *To* and one *Cc* address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
+To prevent having login issues you should either use XOAUTH2 (see details [here](https://github.com/andris9/nodemailer-smtp-transport#authentication)) or use another provider and preferably a dedicated one like [Mailgun](http://www.mailgun.com/) or [SendGrid](http://mbsy.co/sendgrid/12237825) or any other. Usually these providers have free plans available that are comparable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one *To* and one *Cc* address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
 
 ## Delivering Bulk Mail
 
 Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
 
-  1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (thats Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
+  1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
   2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
   3. **Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
   4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
