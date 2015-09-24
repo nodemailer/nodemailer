@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.0 2015-09-24
+
+Use mailcomposer instead of built in solution to generate message sources. Bumped libmime gives better quoted-printable handling.
+
 ## v1.4.0 2015-06-27
 
 Added new message option `watchHtml` to specify Apple Watch specific HTML part of the message. See [this post](https://litmus.com/blog/how-to-send-hidden-version-email-apple-watch) for details
