@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.0 2015-10-05
+
+Maintenance release. Bumped dependencies to get support for unicode filenames for QQ webmail and to support emoji in filenames
+
 ## v1.5.0 2015-09-24
 
 Use mailcomposer instead of built in solution to generate message sources. Bumped libmime gives better quoted-printable handling.
