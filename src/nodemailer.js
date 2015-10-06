@@ -7,7 +7,8 @@ var directTransport = require('nodemailer-direct-transport');
 var smtpTransport = require('nodemailer-smtp-transport');
 var packageData = require('../package.json');
 var fs = require('fs');
-var hyperquest = require('hyperquest');
+var needle = require('needle');
+var PassThrough = require('stream').PassThrough;
 
 // Export createTransport method
 module.exports.createTransport = function(transporter) {
@@ -120,6 +121,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
  */
 Nodemailer.prototype.resolveContent = function(data, key, callback) {
     var content = data && data[key] && data[key].content || data[key];
+    var contentStream;
     var encoding = (typeof data[key] === 'object' && data[key].encoding || 'utf8')
         .toString()
         .toLowerCase()
@@ -141,7 +143,21 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
                 callback(null, value);
             }.bind(this));
         } else if (/^https?:\/\//i.test(content.path || content.href)) {
-            return this._resolveStream(hyperquest(content.path || content.href), callback);
+            contentStream = new PassThrough();
+            needle.get(content.path || content.href, {
+                decode_response: false,
+                parse_response: false,
+                compressed: true,
+                follow_max: 5
+            }).on('end', function(err) {
+                if (err) {
+                    contentStream.emit('error', err);
+                }
+                contentStream.emit('end');
+            }).pipe(contentStream, {
+                end: false
+            });
+            return this._resolveStream(contentStream, callback);
         } else if (/^data:/i.test(content.path || content.href)) {
             var parts = (content.path || content.href).match(/^data:((?:[^;]*;)*(?:[^,]*)),(.*)$/i);
             if (!parts) {

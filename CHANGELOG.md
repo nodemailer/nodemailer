@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.0 2015-10-06
+
+Replaced hyperquest with needle. Fixes issues with compressed data and redirects
+
 ## v1.6.0 2015-10-05
 
 Maintenance release. Bumped dependencies to get support for unicode filenames for QQ webmail and to support emoji in filenames

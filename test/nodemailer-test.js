@@ -8,6 +8,7 @@ var fs = require('fs');
 var expect = chai.expect;
 var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
+var zlib = require('zlib');
 
 chai.config.includeStack = true;
 
@@ -127,10 +128,26 @@ describe('Nodemailer unit tests', function() {
 
         beforeEach(function(done) {
             server = http.createServer(function(req, res) {
-                res.writeHead(200, {
-                    'Content-Type': 'text/plain'
-                });
-                res.end('<p>Tere, tere</p><p>vana kere!</p>\n');
+                if (/redirect/.test(req.url)) {
+                    res.writeHead(302, {
+                        'Location': 'http://localhost:' + port + '/message.html'
+                    });
+                    res.end('Go to http://localhost:' + port + '/message.html');
+                } else if (/compressed/.test(req.url)) {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain',
+                        'Content-Encoding': 'gzip'
+                    });
+                    var stream = zlib.createGzip();
+                    stream.pipe(res);
+                    stream.write('<p>Tere, tere</p><p>vana kere!</p>\n');
+                    stream.end();
+                } else {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end('<p>Tere, tere</p><p>vana kere!</p>\n');
+                }
             });
 
             server.listen(port, done);
@@ -186,6 +203,36 @@ describe('Nodemailer unit tests', function() {
                 data: {
                     html: {
                         path: 'http://localhost:' + port + '/message.html'
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                done();
+            });
+        });
+
+        it('should set text from redirecting url', function(done) {
+            var mail = {
+                data: {
+                    html: {
+                        path: 'http://localhost:' + port + '/redirect.html'
+                    }
+                }
+            };
+            nm.resolveContent(mail.data, 'html', function(err, value) {
+                expect(err).to.not.exist;
+                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                done();
+            });
+        });
+
+        it('should set text from gzipped url', function(done) {
+            var mail = {
+                data: {
+                    html: {
+                        path: 'http://localhost:' + port + '/compressed.html'
                     }
                 }
             };
