@@ -110,6 +110,22 @@ describe('Nodemailer unit tests', function() {
             });
         });
 
+        it('should set priority headers', function(done) {
+            sinon.stub(transport, 'send', function(mail, callback) {
+                expect(mail.message.getHeader('X-Priority')).to.equal('5 (Lowest)');
+                expect(mail.message.getHeader('X-Msmail-Priority')).to.equal('Low');
+                expect(mail.message.getHeader('Importance')).to.equal('Low');
+                callback();
+            });
+            nm.sendMail({
+                priority: 'low'
+            }, function() {
+                expect(transport.send.callCount).to.equal(1);
+                transport.send.restore();
+                done();
+            });
+        });
+
         it('return invalid configuration error', function(done) {
             nm = nodemailer.createTransport('SMTP', {});
             nm.sendMail({

@@ -97,6 +97,23 @@ Nodemailer.prototype.sendMail = function(data, callback) {
             mail.message.setHeader('X-Mailer', mail.data.xMailer || this._getVersionString());
         }
 
+        if (mail.data.priority) {
+            switch((mail.data.priority || '').toString().toLowerCase()){
+                case 'high':
+                    mail.message.setHeader('X-Priority', '1 (Highest)');
+                    mail.message.setHeader('X-MSMail-Priority', 'High');
+                    mail.message.setHeader('Importance', 'High');
+                    break;
+                case 'low':
+                    mail.message.setHeader('X-Priority', '5 (Lowest)');
+                    mail.message.setHeader('X-MSMail-Priority', 'Low');
+                    mail.message.setHeader('Importance', 'Low');
+                    break;
+                default:
+                    // do not add anything, since all messages are 'Normal' by default
+            }
+        }
+
         this._processPlugins('stream', mail, function(err) {
             if (err) {
                 return callback(err);

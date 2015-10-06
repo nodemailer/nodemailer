@@ -6,13 +6,7 @@ Send e-mails from Node.js – easy as cake!
 [![Build Status](https://secure.travis-ci.org/andris9/Nodemailer.svg)](http://travis-ci.org/andris9/Nodemailer)
 <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
 
-## Upgrade warning
-
-Do not upgrade Nodemailer from 0.7 or lower to 1.0 as there are breaking changes. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
-
-### Migration guide
-
-See the migration guide from 0.7 to 1.0 [in the 1.0 release blog post](http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide).
+> **Notice for v0.x users** – Do not upgrade Nodemailer from 0.7 or lower. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
 
 ## Notes and information
 
@@ -228,6 +222,7 @@ The following are the possible fields of an e-mail message:
   - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
   - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
   - **watchHtml** - Apple Watch specific HTML version of the message (*experimental*)
+  - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
   - **headers** - An object or array of additional header fields (e.g. *{"X-Key-Name": "key value"}* or *[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]*)
   - **attachments** - An array of attachment objects  (see [below](#attachments) for details)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
