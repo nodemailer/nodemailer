@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.0 2015-10-08
+
+Added priority option (high, normal, low) for setting Importance header
+
 ## v1.7.0 2015-10-06
 
 Replaced hyperquest with needle. Fixes issues with compressed data and redirects
