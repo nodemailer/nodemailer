@@ -246,6 +246,9 @@ Attachment object consists of the following properties:
   * **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
   * **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
 
+> **Warning about stream errors** –
+> If an error occurs with an input stream, eg. an attachment from an URL fails to load, then message generation is not rejected. Instead, the error message gets written as the attachment contents.
+
 Attachments can be added as many as you want.
 
 ```javascript
