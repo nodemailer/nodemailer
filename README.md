@@ -66,6 +66,8 @@ transporter.sendMail(mailOptions, function(error, info){
 });
 ```
 
+You may need to ["Allow Less Secure Apps"](https://www.google.com/settings/security/lesssecureapps) in your gmail account (it's all the way at the bottom). You also may need to ["Allow access to your Google account"](https://accounts.google.com/DisplayUnlockCaptcha)
+
 See [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport#usage) for SMTP configuration options and [nodemailer-wellknown](https://github.com/andris9/nodemailer-wellknown#supported-services) for preconfigured service names (example uses 'gmail').
 
 > When using default SMTP transport, then you do not need to define transport type explicitly (even though you can), just provide the SMTP options and that's it. For anything else, see the docs of the particular [transport mechanism](#available-transports).
