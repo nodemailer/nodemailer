@@ -190,13 +190,13 @@ transporter.sendMail({
 Once you have a transporter object you can send mail
 
 ```javascript
-transporter.sendMail(data, callback)
+transporter.sendMail(data[, callback])
 ```
 
 Where
 
   * **data** defines the mail content (see [e-mail message fields](#e-mail-message-fields) below)
-  * **callback** is an optional callback function to run once the message is delivered or it failed.
+  * **callback** is an optional callback function to run once the message is delivered or it failed
     * **err** is the error object if message failed
     * **info** includes the result, the exact format depends on the transport mechanism used
       * **info.messageId** most transports *should* return the final Message-Id value used with this property
@@ -207,6 +207,8 @@ Where
       * **response** is a string returned by SMTP transports and includes the last SMTP response from the server
 
 > If the message includes several recipients then the message is considered sent if at least one recipient is accepted
+
+If `callback` argument is not set then the method return a Promise object. Nodemailer itself does not use Promises internally but it wraps the return into a Promise for convenience.
 
 ### E-mail message fields
 

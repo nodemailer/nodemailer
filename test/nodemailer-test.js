@@ -82,12 +82,38 @@ describe('Nodemailer unit tests', function() {
             });
         });
 
+        it('should process sendMail as a Promise', function(done) {
+            sinon.stub(transport, 'send').yields(null, 'tere tere');
+
+            nm.sendMail({
+                subject: 'test'
+            }).then(function(info) {
+                expect(transport.send.callCount).to.equal(1);
+                expect(info).to.equal('tere tere');
+                transport.send.restore();
+                done();
+            });
+        });
+
         it('should return transport error', function(done) {
             sinon.stub(transport, 'send').yields('tere tere');
 
             nm.sendMail({
                 subject: 'test'
             }, function(err) {
+                expect(transport.send.callCount).to.equal(1);
+                expect(err).to.equal('tere tere');
+                transport.send.restore();
+                done();
+            });
+        });
+
+        it('should return transport error as Promise', function(done) {
+            sinon.stub(transport, 'send').yields('tere tere');
+
+            nm.sendMail({
+                subject: 'test'
+            }).catch(function(err) {
                 expect(transport.send.callCount).to.equal(1);
                 expect(err).to.equal('tere tere');
                 transport.send.restore();

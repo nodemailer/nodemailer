@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.0 2015-11-09
+
+Returns a Promise for `sendMail` if callback is not defined
+
 ## v1.8.0 2015-10-08
 
 Added priority option (high, normal, low) for setting Importance header

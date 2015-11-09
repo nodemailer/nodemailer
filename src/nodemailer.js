@@ -72,6 +72,14 @@ Nodemailer.prototype.close = function( /* possible arguments */ ) {
  * @param {Function} callback Callback to run once the sending succeeded or failed
  */
 Nodemailer.prototype.sendMail = function(data, callback) {
+    var promise;
+
+    if (!callback && typeof Promise === 'function') {
+        promise = new Promise(function(resolve, reject) {
+            callback = callbackPromise(resolve, reject);
+        });
+    }
+
     data = data || {};
     data.headers = data.headers || {};
     callback = callback || function() {};
@@ -98,7 +106,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
         }
 
         if (mail.data.priority) {
-            switch((mail.data.priority || '').toString().toLowerCase()){
+            switch ((mail.data.priority || '').toString().toLowerCase()) {
                 case 'high':
                     mail.message.setHeader('X-Priority', '1 (Highest)');
                     mail.message.setHeader('X-MSMail-Priority', 'High');
@@ -121,6 +129,8 @@ Nodemailer.prototype.sendMail = function(data, callback) {
             this.transporter.send(mail, callback);
         }.bind(this));
     }.bind(this));
+
+    return promise;
 };
 
 /**
@@ -137,6 +147,14 @@ Nodemailer.prototype.sendMail = function(data, callback) {
  * @param {Function} callback Callback function with (err, value)
  */
 Nodemailer.prototype.resolveContent = function(data, key, callback) {
+    var promise;
+
+    if (!callback && typeof Promise === 'function') {
+        promise = new Promise(function(resolve, reject) {
+            callback = callbackPromise(resolve, reject);
+        });
+    }
+
     var content = data && data[key] && data[key].content || data[key];
     var contentStream;
     var encoding = (typeof data[key] === 'object' && data[key].encoding || 'utf8')
@@ -191,7 +209,9 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
     }
 
     // default action, return as is
-    callback(null, content);
+    setImmediate(callback.bind(null, null, content));
+
+    return promise;
 };
 
 /**
@@ -273,3 +293,22 @@ Nodemailer.prototype._processPlugins = function(step, mail, callback) {
 
     processPlugins();
 };
+
+ /**
+  * Wrapper for creating a callback than either resolves or rejects a promise
+  * based on input
+  *
+  * @param {Function} resolve Function to run if callback is called
+  * @param {Function} reject Function to run if callback ends with an error
+  */
+function callbackPromise(resolve, reject) {
+    return function() {
+        var args = Array.prototype.slice.call(arguments);
+        var err = args.shift();
+        if (err) {
+            reject(err);
+        } else {
+            resolve.apply(null, args);
+        }
+    };
+}
