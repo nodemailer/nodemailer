@@ -11,7 +11,7 @@ var needle = require('needle');
 var PassThrough = require('stream').PassThrough;
 
 // Export createTransport method
-module.exports.createTransport = function(transporter) {
+module.exports.createTransport = function(transporter, defaults) {
     transporter = transporter || directTransport({
         debug: true
     });
@@ -20,7 +20,7 @@ module.exports.createTransport = function(transporter) {
         transporter = smtpTransport(transporter);
     }
 
-    return new Nodemailer(transporter);
+    return new Nodemailer(transporter, defaults);
 };
 
 /**
@@ -29,8 +29,10 @@ module.exports.createTransport = function(transporter) {
  * @constructor
  * @param {Object} transporter Transport object instance to pass the mails to
  */
-function Nodemailer(transporter) {
+function Nodemailer(transporter, defaults) {
     EventEmitter.call(this);
+
+    this._defaults = defaults || {};
 
     this._plugins = {
         compile: [],
@@ -83,6 +85,20 @@ Nodemailer.prototype.sendMail = function(data, callback) {
     data = data || {};
     data.headers = data.headers || {};
     callback = callback || function() {};
+
+    // apply defaults
+    Object.keys(this._defaults).forEach(function(key) {
+        if (!(key in data)) {
+            data[key] = this._defaults[key];
+        } else if (key === 'headers') {
+            // headers is a special case. Allow setting individual default headers
+            Object.keys(this._defaults.headers || {}).forEach(function(key) {
+                if (!(key in data.headers)) {
+                    data.headers[key] = this._defaults.headers[key];
+                }
+            }.bind(this));
+        }
+    }.bind(this));
 
     var mail = {
         data: data,
@@ -294,13 +310,13 @@ Nodemailer.prototype._processPlugins = function(step, mail, callback) {
     processPlugins();
 };
 
- /**
-  * Wrapper for creating a callback than either resolves or rejects a promise
-  * based on input
-  *
-  * @param {Function} resolve Function to run if callback is called
-  * @param {Function} reject Function to run if callback ends with an error
-  */
+/**
+ * Wrapper for creating a callback than either resolves or rejects a promise
+ * based on input
+ *
+ * @param {Function} resolve Function to run if callback is called
+ * @param {Function} reject Function to run if callback ends with an error
+ */
 function callbackPromise(resolve, reject) {
     return function() {
         var args = Array.prototype.slice.call(arguments);

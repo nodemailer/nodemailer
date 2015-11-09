@@ -81,13 +81,14 @@ Install with npm
 To send e-mails you need a transporter object
 
 ```javascript
-var transporter = nodemailer.createTransport(transport)
+var transporter = nodemailer.createTransport(transport[, defaults])
 ```
 
 Where
 
   * **transporter** is going to be an object that is able to send mail
   * **transport** is a transport mechanism. If it is not set [nodemailer-direct-transport](https://github.com/andris9/nodemailer-direct-transport) transport is used. If it is a regular object [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport) is used and the value is passed as SMTP configuration.
+  * **defaults** is an object that defines default values for mail options (available since Nodemailer v1.10.0)
 
 > You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
 
@@ -122,9 +123,14 @@ var transporter = nodemailer.createTransport({
         user: 'sender@gmail.com',
         pass: 'password'
     }
+}, {
+    // default values for sendMail method
+    from: 'sender@address',
+    headers: {
+        'My-Awesome-Header': '123'
+    }
 });
 transporter.sendMail({
-    from: 'sender@address',
     to: 'receiver@address',
     subject: 'hello',
     text: 'hello world!'
