@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.10.0 2015-11-13
+
+Added `defaults` argument for `createTransport` to predefine commonn values (eg. `from` address)
+
 ## v1.9.0 2015-11-09
 
 Returns a Promise for `sendMail` if callback is not defined

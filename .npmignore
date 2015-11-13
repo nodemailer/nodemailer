@@ -1,4 +1,6 @@
 .travis.yml
+.jshintrc
 assets
 examples
 test
+Gruntfile.js

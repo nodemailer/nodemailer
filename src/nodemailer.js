@@ -107,7 +107,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
     };
 
     if (typeof this.transporter === 'string') {
-        return callback(new Error('Unsupported configuration, downgrade Nodemailer to v0.7.1 or see the migration guide https://github.com/andris9/Nodemailer#migration-guide'));
+        return callback(new Error('Unsupported configuration, downgrade Nodemailer to v0.7.1 to use it'));
     }
 
     this._processPlugins('compile', mail, function(err) {
