@@ -189,6 +189,7 @@ transporter.sendMail({
   * **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
   * **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
   * **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
+  * **[nodemailer-hashcash](https://github.com/andris9/nodemailer-hashcash)** to generate [hashcash](http://www.hashcash.org/) headers
   * *add yours* (see plugin api documentation [here](#plugin-api))
 
 ## Sending mail
