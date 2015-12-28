@@ -11,12 +11,15 @@ var needle = require('needle');
 var PassThrough = require('stream').PassThrough;
 
 // Export createTransport method
-module.exports.createTransport = function(transporter, defaults) {
+module.exports.createTransport = function (transporter, defaults) {
     transporter = transporter || directTransport({
         debug: true
     });
 
-    if (typeof transporter === 'object' && typeof transporter.send !== 'function') {
+    if (
+        (typeof transporter === 'object' && typeof transporter.send !== 'function') ||
+        (typeof transporter === 'string' && /^smtps?:/i.test(transporter))
+    ) {
         transporter = smtpTransport(transporter);
     }
 
@@ -48,7 +51,7 @@ function Nodemailer(transporter, defaults) {
 }
 util.inherits(Nodemailer, EventEmitter);
 
-Nodemailer.prototype.use = function(step, plugin) {
+Nodemailer.prototype.use = function (step, plugin) {
     step = (step || '').toString();
     if (!this._plugins.hasOwnProperty(step)) {
         this._plugins[step] = [plugin];
@@ -60,7 +63,7 @@ Nodemailer.prototype.use = function(step, plugin) {
 /**
  * Optional close method, passed to the underlying transport object
  */
-Nodemailer.prototype.close = function( /* possible arguments */ ) {
+Nodemailer.prototype.close = function ( /* possible arguments */ ) {
     var args = Array.prototype.slice.call(arguments);
     if (typeof this.transporter.close === 'function') {
         this.transporter.close.apply(this.transporter, args);
@@ -73,26 +76,26 @@ Nodemailer.prototype.close = function( /* possible arguments */ ) {
  * @param {Object} data E-data description
  * @param {Function} callback Callback to run once the sending succeeded or failed
  */
-Nodemailer.prototype.sendMail = function(data, callback) {
+Nodemailer.prototype.sendMail = function (data, callback) {
     var promise;
 
     if (!callback && typeof Promise === 'function') {
-        promise = new Promise(function(resolve, reject) {
+        promise = new Promise(function (resolve, reject) {
             callback = callbackPromise(resolve, reject);
         });
     }
 
     data = data || {};
     data.headers = data.headers || {};
-    callback = callback || function() {};
+    callback = callback || function () {};
 
     // apply defaults
-    Object.keys(this._defaults).forEach(function(key) {
+    Object.keys(this._defaults).forEach(function (key) {
         if (!(key in data)) {
             data[key] = this._defaults[key];
         } else if (key === 'headers') {
             // headers is a special case. Allow setting individual default headers
-            Object.keys(this._defaults.headers || {}).forEach(function(key) {
+            Object.keys(this._defaults.headers || {}).forEach(function (key) {
                 if (!(key in data.headers)) {
                     data.headers[key] = this._defaults.headers[key];
                 }
@@ -110,7 +113,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
         return callback(new Error('Unsupported configuration, downgrade Nodemailer to v0.7.1 to use it'));
     }
 
-    this._processPlugins('compile', mail, function(err) {
+    this._processPlugins('compile', mail, function (err) {
         if (err) {
             return callback(err);
         }
@@ -138,7 +141,7 @@ Nodemailer.prototype.sendMail = function(data, callback) {
             }
         }
 
-        this._processPlugins('stream', mail, function(err) {
+        this._processPlugins('stream', mail, function (err) {
             if (err) {
                 return callback(err);
             }
@@ -162,11 +165,11 @@ Nodemailer.prototype.sendMail = function(data, callback) {
  * @param {String|Number} key Property name or an Array index
  * @param {Function} callback Callback function with (err, value)
  */
-Nodemailer.prototype.resolveContent = function(data, key, callback) {
+Nodemailer.prototype.resolveContent = function (data, key, callback) {
     var promise;
 
     if (!callback && typeof Promise === 'function') {
-        promise = new Promise(function(resolve, reject) {
+        promise = new Promise(function (resolve, reject) {
             callback = callbackPromise(resolve, reject);
         });
     }
@@ -184,7 +187,7 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
 
     if (typeof content === 'object') {
         if (typeof content.pipe === 'function') {
-            return this._resolveStream(content, function(err, value) {
+            return this._resolveStream(content, function (err, value) {
                 if (err) {
                     return callback(err);
                 }
@@ -200,7 +203,7 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
                 parse_response: false,
                 compressed: true,
                 follow_max: 5
-            }).on('end', function(err) {
+            }).on('end', function (err) {
                 if (err) {
                     contentStream.emit('error', err);
                 }
@@ -236,12 +239,12 @@ Nodemailer.prototype.resolveContent = function(data, key, callback) {
  * @param {Object} stream Readable stream
  * @param {Function} callback Callback function with (err, value)
  */
-Nodemailer.prototype._resolveStream = function(stream, callback) {
+Nodemailer.prototype._resolveStream = function (stream, callback) {
     var responded = false;
     var chunks = [];
     var chunklen = 0;
 
-    stream.on('error', function(err) {
+    stream.on('error', function (err) {
         if (responded) {
             return;
         }
@@ -250,14 +253,14 @@ Nodemailer.prototype._resolveStream = function(stream, callback) {
         callback(err);
     });
 
-    stream.on('data', function(chunk) {
+    stream.on('data', function (chunk) {
         if (chunk && chunk.length) {
             chunks.push(chunk);
             chunklen += chunk.length;
         }
     });
 
-    stream.on('end', function() {
+    stream.on('end', function () {
         if (responded) {
             return;
         }
@@ -274,7 +277,7 @@ Nodemailer.prototype._resolveStream = function(stream, callback) {
     });
 };
 
-Nodemailer.prototype._getVersionString = function() {
+Nodemailer.prototype._getVersionString = function () {
     return util.format(
         '%s (%s; +%s; %s/%s)',
         packageData.name,
@@ -285,7 +288,7 @@ Nodemailer.prototype._getVersionString = function() {
     );
 };
 
-Nodemailer.prototype._processPlugins = function(step, mail, callback) {
+Nodemailer.prototype._processPlugins = function (step, mail, callback) {
     step = (step || '').toString();
 
     if (!this._plugins.hasOwnProperty(step) || !this._plugins[step].length) {
@@ -294,12 +297,12 @@ Nodemailer.prototype._processPlugins = function(step, mail, callback) {
 
     var plugins = Array.prototype.slice.call(this._plugins[step]);
 
-    var processPlugins = function() {
+    var processPlugins = function () {
         if (!plugins.length) {
             return callback(null);
         }
         var plugin = plugins.shift();
-        plugin(mail, function(err) {
+        plugin(mail, function (err) {
             if (err) {
                 return callback(err);
             }
@@ -318,7 +321,7 @@ Nodemailer.prototype._processPlugins = function(step, mail, callback) {
  * @param {Function} reject Function to run if callback ends with an error
  */
 function callbackPromise(resolve, reject) {
-    return function() {
+    return function () {
         var args = Array.prototype.slice.call(arguments);
         var err = args.shift();
         if (err) {

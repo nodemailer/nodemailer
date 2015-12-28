@@ -35,14 +35,8 @@ This is a complete example to send an e-mail with plaintext and HTML body
 ```javascript
 var nodemailer = require('nodemailer');
 
-// create reusable transporter object using SMTP transport
-var transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-        user: 'gmail.user@gmail.com',
-        pass: 'userpass'
-    }
-});
+// create reusable transporter object using the default SMTP transport
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
 
 // NB! No need to recreate the transporter object. You can use
 // the same transporter object for all e-mails

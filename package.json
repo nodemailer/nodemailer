@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "src/nodemailer.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "grunt": "^0.4.5",
     "grunt-contrib-jshint": "^0.11.3",
     "grunt-mocha-test": "^0.12.7",
-    "mocha": "^2.3.3",
+    "mocha": "^2.3.4",
     "nodemailer-dkim": "^1.0.3",
     "nodemailer-markdown": "^1.0.0",
     "nodemailer-stub-transport": "^1.0.0",
@@ -42,7 +42,7 @@
     "mailcomposer": "^2.1.0",
     "needle": "^0.11.0",
     "nodemailer-direct-transport": "^1.1.0",
-    "nodemailer-smtp-transport": "^1.0.4"
+    "nodemailer-smtp-transport": "^1.1.0"
   },
   "engines": {
     "node": ">=0.10.0"

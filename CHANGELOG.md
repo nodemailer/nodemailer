@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.0 2015-12-28
+
+Allow connection url based SMTP configurations
+
 ## v1.10.0 2015-11-13
 
 Added `defaults` argument for `createTransport` to predefine commonn values (eg. `from` address)
