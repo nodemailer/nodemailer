@@ -8,6 +8,6 @@ transporter.sendMail({
     to: 'receiver@address',
     subject: 'hello',
     text: 'hello world!'
-}, function(err, response) {
+}, function (err, response) {
     console.log(err || response);
 });

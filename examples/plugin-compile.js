@@ -5,7 +5,7 @@
 var nodemailer = require('../src/nodemailer');
 var transporter = nodemailer.createTransport(require('nodemailer-stub-transport')());
 
-var plugin = function(mail, callback) {
+var plugin = function (mail, callback) {
     mail.data.headers['X-SSS'] = 'tere tere';
     return callback(null);
 };
@@ -17,6 +17,10 @@ transporter.sendMail({
     to: 'receiver',
     subject: 'hello',
     text: 'hello world!'
-}, function(err, info) {
-    console.log(info.response.toString());
+}, function (err, info) {
+    if (err) {
+        console.log(err.message);
+    } else {
+        console.log(info.response.toString());
+    }
 });
