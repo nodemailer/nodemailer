@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0-beta.0 2015-12-31
+
+  * Stream errors are not silently swallowed
+  * Do not use format=flowed
+  * Use nodemailer-fetch to fetch URL streams
+  * jshint replaced by eslint
+
 ## v1.11.0 2015-12-28
 
 Allow connection url based SMTP configurations

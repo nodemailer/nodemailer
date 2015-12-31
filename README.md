@@ -6,8 +6,6 @@ Send e-mails from Node.js – easy as cake!
 [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer)
 <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
 
-> **Notice for v0.x users** – Do not upgrade Nodemailer from 0.7 or lower. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/nodemailer/nodemailer/blob/0.7/README.md).
-
 ## Notes and information
 
 ### Nodemailer supports
