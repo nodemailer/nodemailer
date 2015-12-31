@@ -58,11 +58,7 @@ transporter.sendMail(mailOptions, function(error, info){
 });
 ```
 
-You may need to ["Allow Less Secure Apps"](https://www.google.com/settings/security/lesssecureapps) in your gmail account (it's all the way at the bottom). You also may need to ["Allow access to your Google account"](https://accounts.google.com/DisplayUnlockCaptcha)
-
-See [nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport#usage) for SMTP configuration options and [nodemailer-wellknown](https://github.com/nodemailer/nodemailer-wellknown#supported-services) for preconfigured service names (example uses 'gmail').
-
-> When using default SMTP transport, then you do not need to define transport type explicitly (even though you can), just provide the SMTP options and that's it. For anything else, see the docs of the particular [transport mechanism](#available-transports).
+> To use Gmail you may need to configure ["Allow Less Secure Apps"](https://www.google.com/settings/security/lesssecureapps) in your Gmail account (it's all the way at the bottom). You also may need to unlock your account with ["Allow access to your Google account"](https://accounts.google.com/DisplayUnlockCaptcha)
 
 ## Setting up
 
@@ -79,33 +75,16 @@ var transporter = nodemailer.createTransport(transport[, defaults])
 Where
 
   * **transporter** is going to be an object that is able to send mail
-  * **transport** is a transport mechanism. If it is not set [nodemailer-direct-transport](https://github.com/nodemailer/nodemailer-direct-transport) transport is used. If it is a regular object [nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport) is used and the value is passed as SMTP configuration.
+  * **transport** is the transport configuration object or transport plugin
   * **defaults** is an object that defines default values for mail options (available since Nodemailer v1.10.0)
 
 > You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
 
 ### Examples
 
-#### Use *direct* transport
+#### Use the built-in *SMTP* transport
 
-In this case all e-mails are sent directly to the recipients MX server (using port 25)
-
-```javascript
-var nodemailer = require('nodemailer');
-var transporter = nodemailer.createTransport();
-transporter.sendMail({
-    from: 'sender@address',
-    to: 'receiver@address',
-    subject: 'hello',
-    text: 'hello world!'
-});
-```
-
-> Using *direct* transport is not reliable as outgoing port 25 used is often blocked by default. Additionally mail sent from dynamic addresses is often flagged as spam. You should really consider using a SMTP provider.
-
-#### Use the default *SMTP* transport
-
-See SMTP [configuration options here](https://github.com/nodemailer/nodemailer-smtp-transport#usage)
+> TODO: Add smtp configuration options for normal smtp, pool and direct transport
 
 ```javascript
 var nodemailer = require('nodemailer');
@@ -129,10 +108,6 @@ transporter.sendMail({
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool) if you need to send a large amount of e-mails.
->
-> For sending bulk mail using Nodemailer see the [recommendations below](#delivering-bulk-mail)
-
 #### Use a transport plugin
 
 See [Available Transports](#available-transports) for known transport plugins but there might be non listed plugins as well.
@@ -154,16 +129,8 @@ transporter.sendMail({
 });
 ```
 
-## Available Transports
+## Additional Transports
 
-**Built in**
-
-  * **[nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport)** for sending messages using a SMTP service
-  * **[nodemailer-direct-transport](https://github.com/nodemailer/nodemailer-direct-transport)** for sending messages directly to recipients MX servers (zero configuration needed but unreliable)
-
-**Install as dependencies**
-
-  * **[nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool)** for sending messages to SMTP using pooled connections
   * **[nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport)** for sending messages to AWS SES
   * **[nodemailer-sendmail-transport](https://github.com/andris9/nodemailer-sendmail-transport)** for piping messages to the *sendmail* command
   * **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
