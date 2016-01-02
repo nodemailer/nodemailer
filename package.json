@@ -29,9 +29,9 @@
     "libmime": "^1.2.0",
     "mailcomposer": "beta",
     "nodemailer-direct-transport": "^1.1.0",
-    "nodemailer-fetch": "^1.0.0",
+    "nodemailer-shared": "^1.0.0",
     "nodemailer-smtp-pool": "^1.2.0",
-    "nodemailer-smtp-transport": "^1.1.0"
+    "nodemailer-smtp-transport": "beta"
   },
   "devDependencies": {
     "chai": "^3.4.1",

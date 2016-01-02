@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-beta.1 2016-01-03
+
+  * Use bunyan compatible logger instead of the emit('log') style
+  * Outsourced some reusable methods to nodemailer-shared
+  * Support setting direct/smtp/pool with the default configuration
+
 ## 2.0.0-beta.0 2015-12-31
 
   * Stream errors are not silently swallowed
