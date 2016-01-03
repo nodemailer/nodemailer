@@ -8,6 +8,7 @@ var nodemailer = require('../lib/nodemailer');
 var sinon = require('sinon');
 var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
+var stream = require('stream');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -262,6 +263,40 @@ describe('Nodemailer integration tests', function () {
             expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
             done();
         });
+    });
+
+    it('should return stream error, not send', function (done) {
+        var nm = nodemailer.createTransport({
+            host: 'localhost',
+            port: PORT_NUMBER,
+            auth: {
+                user: 'testuser',
+                pass: 'testpass'
+            },
+            ignoreTLS: true,
+            logger: false
+        });
+
+        var mailData = {
+            from: 'from@valid.sender',
+            sender: 'sender@valid.sender',
+            to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+            subject: 'test',
+            date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+            messageId: 'abc@def',
+            xMailer: 'aaa',
+            text: new stream.PassThrough()
+        };
+
+        nm.sendMail(mailData, function (err) {
+            expect(err).to.exist;
+            done();
+        });
+
+        mailData.text.write('teretere');
+        setTimeout(function () {
+            mailData.text.emit('error', new Error('Stream error'));
+        }, 400);
     });
 
     it('should response auth error', function (done) {
