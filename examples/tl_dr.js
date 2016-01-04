@@ -1,6 +1,6 @@
 'use strict';
 
-var nodemailer = require('../src/nodemailer');
+var nodemailer = require('../lib/nodemailer');
 
 // create reusable transporter object using SMTP transport
 var transporter = nodemailer.createTransport({

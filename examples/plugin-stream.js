@@ -2,7 +2,7 @@
 
 // This example demonstrates the 'stream' step with a plugin that converts all spaces to tabs
 
-var nodemailer = require('../src/nodemailer');
+var nodemailer = require('../lib/nodemailer');
 var transporter = nodemailer.createTransport(require('nodemailer-stub-transport')());
 
 var plugin = new(require('stream').Transform)();

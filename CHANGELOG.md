@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-beta.2 2016-01-04
+
+  * Updated documentation to reflect changes with SMTP handling
+  * Use beta versions for smtp/pool/direct transports
+  * Updated logging
+
 ## 2.0.0-beta.1 2016-01-03
 
   * Use bunyan compatible logger instead of the emit('log') style

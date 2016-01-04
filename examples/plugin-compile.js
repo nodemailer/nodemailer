@@ -2,7 +2,7 @@
 
 // This example demonstrates the 'compile' step with a plugin that adds a new header 'X-Sss'
 
-var nodemailer = require('../src/nodemailer');
+var nodemailer = require('../lib/nodemailer');
 var transporter = nodemailer.createTransport(require('nodemailer-stub-transport')());
 
 var plugin = function (mail, callback) {

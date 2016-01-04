@@ -267,6 +267,35 @@ describe('Nodemailer integration tests', function () {
             });
         });
 
+        it('should log in and send mail using connection url', function (done) {
+            var nm = nodemailer.createTransport('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?logger=false&debug=true');
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal([
+                    'to1@valid.recipient',
+                    'to2@valid.recipient'
+                ]);
+                expect(info.rejected).to.deep.equal([
+                    'to@invalid.recipient'
+                ]);
+                expect(info.messageId).to.equal('abc@def');
+                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                done();
+            });
+        });
+
         it('should return stream error, not send', function (done) {
             var nm = nodemailer.createTransport({
                 host: 'localhost',
@@ -443,6 +472,36 @@ describe('Nodemailer integration tests', function () {
             });
         });
 
+        it('should log in and send mail using connection url', function (done) {
+            var nm = nodemailer.createTransport('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?pool=true&logger=false&debug=true');
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                nm.close();
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal([
+                    'to1@valid.recipient',
+                    'to2@valid.recipient'
+                ]);
+                expect(info.rejected).to.deep.equal([
+                    'to@invalid.recipient'
+                ]);
+                expect(info.messageId).to.equal('abc@def');
+                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                done();
+            });
+        });
+
         it('should return stream error, not send', function (done) {
             var nm = nodemailer.createTransport({
                 pool: true,
@@ -480,5 +539,138 @@ describe('Nodemailer integration tests', function () {
                 mailData.text.emit('error', new Error('Stream error'));
             }, 400);
         });
+    });
+});
+
+describe('direct-transport tests', function () {
+
+    this.timeout(10000); // eslint-disable-line no-invalid-this
+    var server;
+    var retryCount = 0;
+
+    beforeEach(function (done) {
+        server = new SMTPServer({
+            disabledCommands: ['STARTTLS', 'AUTH'],
+
+            onData: function (stream, session, callback) {
+                stream.on('data', function () {});
+                stream.on('end', function () {
+                    var err;
+                    if (/retry@/.test(session.envelope.mailFrom.address) && retryCount++ < 3) {
+                        err = new Error('Please try again later');
+                        err.responseCode = 451;
+                        return callback(err);
+                    } else {
+                        return callback(null, 'OK');
+                    }
+                });
+            },
+
+            onMailFrom: function (address, session, callback) {
+                if (/invalid@/.test(address.address)) {
+                    return callback(new Error('Invalid sender'));
+                }
+                return callback(); // Accept the address
+            },
+            onRcptTo: function (address, session, callback) {
+                if (/invalid@/.test(address.address)) {
+                    return callback(new Error('Invalid recipient'));
+                }
+                return callback(); // Accept the address
+            },
+            logger: false
+        });
+
+        server.listen(PORT_NUMBER, done);
+    });
+
+    afterEach(function (done) {
+        server.close(done);
+    });
+
+    it('should send mail', function (done) {
+        var nm = nodemailer.createTransport({
+            direct: true,
+            port: PORT_NUMBER,
+            logger: false,
+            debug: true
+        });
+
+        var mailData = {
+            from: 'from@valid.sender',
+            to: ['test@[127.0.0.1]'],
+            subject: 'test',
+            date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+            messageId: 'abc@def',
+            xMailer: 'aaa',
+            text: 'uuu'
+        };
+
+        nm.sendMail(mailData, function (err, info) {
+            nm.close();
+            expect(err).to.not.exist;
+            expect(info.accepted).to.deep.equal([
+                'test@[127.0.0.1]'
+            ]);
+            expect(info.rejected).to.deep.equal([]);
+            expect(info.messageId).to.equal('abc@def');
+            done();
+        });
+    });
+
+    it('should send mail using connection url', function (done) {
+        var nm = nodemailer.createTransport('direct:?port=' + PORT_NUMBER + '&logger=false&debug=true');
+
+        var mailData = {
+            from: 'from@valid.sender',
+            to: ['test@[127.0.0.1]'],
+            subject: 'test',
+            date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+            messageId: 'abc@def',
+            xMailer: 'aaa',
+            text: 'uuu'
+        };
+
+        nm.sendMail(mailData, function (err, info) {
+            nm.close();
+            expect(err).to.not.exist;
+            expect(info.accepted).to.deep.equal([
+                'test@[127.0.0.1]'
+            ]);
+            expect(info.rejected).to.deep.equal([]);
+            expect(info.messageId).to.equal('abc@def');
+            done();
+        });
+    });
+
+    it('should return stream error, not send', function (done) {
+        var nm = nodemailer.createTransport({
+            direct: true,
+            port: PORT_NUMBER,
+            logger: false,
+            debug: true
+        });
+
+        var mailData = {
+            from: 'from@valid.sender',
+            sender: 'sender@valid.sender',
+            to: ['test@[127.0.0.1]'],
+            subject: 'test',
+            date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+            messageId: 'abc@def',
+            xMailer: 'aaa',
+            text: new stream.PassThrough()
+        };
+
+        nm.sendMail(mailData, function (err) {
+            nm.close();
+            expect(err).to.exist;
+            done();
+        });
+
+        mailData.text.write('teretere');
+        setTimeout(function () {
+            mailData.text.emit('error', new Error('Stream error'));
+        }, 400);
     });
 });

@@ -1,6 +1,6 @@
 'use strict';
 
-var nodemailer = require('../src/nodemailer');
+var nodemailer = require('../lib/nodemailer');
 
 // Create a SMTP transporter object
 var transporter = nodemailer.createTransport({
@@ -8,6 +8,16 @@ var transporter = nodemailer.createTransport({
     auth: {
         user: 'test.nodemailer@gmail.com',
         pass: 'Nodemailer123'
+    },
+    logger: true, // log to console
+    debug: true // include SMTP traffic in the logs
+}, {
+    // default message fields
+
+    // sender info
+    from: 'Sender Name <sender@example.com>',
+    headers: {
+        'X-Laziness-level': 1000 // just an example header, no need to use this
     }
 });
 
@@ -16,18 +26,11 @@ console.log('SMTP Configured');
 // Message object
 var message = {
 
-    // sender info
-    from: 'Sender Name <sender@example.com>',
-
     // Comma separated list of recipients
     to: '"Receiver Name" <receiver@example.com>',
 
     // Subject of the message
     subject: 'Nodemailer is unicode friendly ✔', //
-
-    headers: {
-        'X-Laziness-level': 1000
-    },
 
     // plaintext body
     text: 'Hello to myself!',
