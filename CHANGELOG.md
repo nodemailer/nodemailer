@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-rc.2 2016-01-04
+
+  * Locked dependencies
+
 ## 2.0.0-beta.2 2016-01-04
 
   * Updated documentation to reflect changes with SMTP handling
