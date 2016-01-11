@@ -17,6 +17,8 @@ Send e-mails from Node.js – easy as cake!
   - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
 
+> See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
+
 ## Support Nodemailer development
 [![Donate to author](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DB26KWR2BQX5W)
 

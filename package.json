@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.0.0-rc.2",
+  "version": "2.0.0",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {

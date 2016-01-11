@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0 2016-01-11
+
+  * Released rc.2 as stable
+
 ## 2.0.0-rc.2 2016-01-04
 
   * Locked dependencies
