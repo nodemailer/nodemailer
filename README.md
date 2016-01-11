@@ -2,20 +2,20 @@
 
 Send e-mails from Node.js – easy as cake!
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
+<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
 
 # Notes and information
 ## Nodemailer supports
-- Supports **Node.js 0.10+**, no ES6 shenanigans used that would break your production app
-- **Unicode** to use any characters, including full emoji support 👻
-- **Windows** – you can install it with _npm_ on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
-- **HTML content** as well as **plain text** alternative
-- **Attachments** (including attachment **streaming** for sending larger files)
-- **Embedded images** in HTML
-- Secure e-mail delivery using **SSL/STARTTLS**
-- Different **transport methods**, either using built in transports or from external plugins
-- Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
-- Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
+  - **Node.js 0.10+**, no ES6 shenanigans used that would break your production app
+  - **Unicode** to use any characters, including full emoji support 👻
+  - **Windows** – you can install it with _npm_ on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
+  - **HTML content** as well as **plain text** alternative
+  - **Attachments** (including attachment **streaming** for sending larger files)
+  - **Embedded images** in HTML
+  - Secure e-mail delivery using **SSL/STARTTLS**
+  - Different **transport methods**, either using built in transports or from external plugins
+  - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
+  - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
 
 ## Support Nodemailer development
 [![Donate to author](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DB26KWR2BQX5W)
@@ -65,9 +65,9 @@ var transporter = nodemailer.createTransport(transport[, defaults])
 ```
 
 Where
-- **transporter** is going to be an object that is able to send mail
-- **transport** is the transport configuration object, connection url or a transport plugin instance
-- **defaults** is an object that defines default values for mail options
+  - **transporter** is going to be an object that is able to send mail
+  - **transport** is the transport configuration object, connection url or a transport plugin instance
+  - **defaults** is an object that defines default values for mail options
 
 > You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
 
@@ -237,16 +237,16 @@ transporter.sendMail(data[, callback])
 ```
 
 Where
-- **data** defines the mail content (see [e-mail message fields](#e-mail-message-fields) below)
-- **callback** is an optional callback function to run once the message is delivered or it failed
-  - **err** is the error object if message failed
-  - **info** includes the result, the exact format depends on the transport mechanism used
-    - **info.messageId** most transports _should_ return the final Message-Id value used with this property
-    - **info.envelope** includes the envelope object for the message
-    - **info.accepted** is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
-    - **info.rejected** is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
-    - **info.pending** is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
-    - **response** is a string returned by SMTP transports and includes the last SMTP response from the server
+  - **data** defines the mail content (see [e-mail message fields](#e-mail-message-fields) below)
+  - **callback** is an optional callback function to run once the message is delivered or it failed
+    - **err** is the error object if message failed
+    - **info** includes the result, the exact format depends on the transport mechanism used
+      - **info.messageId** most transports _should_ return the final Message-Id value used with this property
+      - **info.envelope** includes the envelope object for the message
+      - **info.accepted** is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
+      - **info.rejected** is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
+      - **info.pending** is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
+      - **response** is a string returned by SMTP transports and includes the last SMTP response from the server
 
 > If the message includes several recipients then the message is considered sent if at least one recipient is accepted
 
@@ -257,41 +257,42 @@ The following are the possible fields of an e-mail message:
 
 Commmon fields:
 
-- **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [Address Formatting](#address-formatting) for details
-- **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the _To:_ field
-- **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Cc:_ field
-- **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Bcc:_ field
-- **subject** - The subject of the e-mail
-- **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: '/var/data/...'}`)
-- **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: 'http://...'}`)
-- **attachments** - An array of attachment objects  (see [below](#attachments) for details)
+  - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [Address Formatting](#address-formatting) for details
+  - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the _To:_ field
+  - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Cc:_ field
+  - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Bcc:_ field
+  - **subject** - The subject of the e-mail
+  - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: '/var/data/...'}`)
+  - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: 'http://...'}`)
+  - **attachments** - An array of attachment objects  (see [below](#attachments) for details)
 
 Advanced fields:
 
-- **sender** - An e-mail address that will appear on the _Sender:_ field (always prefer `from` if you're not sure which one to use)
-- **replyTo** - An e-mail address that will appear on the _Reply-To:_ field
-- **inReplyTo** - The message-id this message is replying to
-- **references** - Message-id list (an array or space separated string)
-- **watchHtml** - Apple Watch specific HTML version of the message (_experimental_)
-- **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
-- **headers** - An object or array of additional header fields (e.g. _{"X-Key-Name": "key value"}_ or _[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]_)
-- **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
-- **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
-- **messageId** - optional Message-Id value, random value will be generated if not set
-- **date** - optional Date value, current UTC string will be used if not set
-- **encoding** - optional transfer encoding for the textual parts
+  - **sender** - An e-mail address that will appear on the _Sender:_ field (always prefer `from` if you're not sure which one to use)
+  - **replyTo** - An e-mail address that will appear on the _Reply-To:_ field
+  - **inReplyTo** - The message-id this message is replying to
+  - **references** - Message-id list (an array or space separated string)
+  - **watchHtml** - Apple Watch specific HTML version of the message (_experimental_)
+  - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
+  - **headers** - An object or array of additional header fields (e.g. _{"X-Key-Name": "key value"}_ or _[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]_)
+  - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
+  - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
+  - **messageId** - optional Message-Id value, random value will be generated if not set
+  - **date** - optional Date value, current UTC string will be used if not set
+  - **encoding** - optional transfer encoding for the textual parts
 
 All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
 ## Attachments
 Attachment object consists of the following properties:
-- **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
-- **content** - String, Buffer or a Stream contents for the attachment
-- **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
-- **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
-- **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
-- **cid** - optional content id for using inline images in HTML message source
-- **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
+
+  - **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
+  - **content** - String, Buffer or a Stream contents for the attachment
+  - **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
+  - **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
+  - **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
+  - **cid** - optional content id for using inline images in HTML message source
+  - **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
 
 Attachments can be added as many as you want.
 
