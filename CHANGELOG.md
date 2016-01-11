@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0 2016-01-11
+
+  * Released rc.2 as stable
+
+## 2.0.0-rc.2 2016-01-04
+
+  * Locked dependencies
+
+## 2.0.0-beta.2 2016-01-04
+
+  * Updated documentation to reflect changes with SMTP handling
+  * Use beta versions for smtp/pool/direct transports
+  * Updated logging
+
+## 2.0.0-beta.1 2016-01-03
+
+  * Use bunyan compatible logger instead of the emit('log') style
+  * Outsourced some reusable methods to nodemailer-shared
+  * Support setting direct/smtp/pool with the default configuration
+
+## 2.0.0-beta.0 2015-12-31
+
+  * Stream errors are not silently swallowed
+  * Do not use format=flowed
+  * Use nodemailer-fetch to fetch URL streams
+  * jshint replaced by eslint
+
 ## v1.11.0 2015-12-28
 
 Allow connection url based SMTP configurations

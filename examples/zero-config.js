@@ -1,6 +1,6 @@
 'use strict';
 
-var nodemailer = require('../src/nodemailer');
+var nodemailer = require('../lib/nodemailer');
 var transporter = nodemailer.createTransport();
 
 transporter.sendMail({
@@ -8,6 +8,6 @@ transporter.sendMail({
     to: 'receiver@address',
     subject: 'hello',
     text: 'hello world!'
-}, function(err, response) {
+}, function (err, response) {
     console.log(err || response);
 });

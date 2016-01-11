@@ -1,37 +1,30 @@
-![Nodemailer](https://raw.githubusercontent.com/andris9/Nodemailer/master/assets/nm_logo_200x136.png)
+![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)
 
 Send e-mails from Node.js – easy as cake!
 
-> **Nodemailer v2.0.0 beta is released, see the details [here](http://nodemailer.com/nodemailer-v2-0-0-beta-released/)**
+<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer)
-<a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
+# Notes and information
+## Nodemailer supports
+  - **Node.js 0.10+**, no ES6 shenanigans used that would break your production app
+  - **Unicode** to use any characters, including full emoji support 👻
+  - **Windows** – you can install it with _npm_ on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
+  - **HTML content** as well as **plain text** alternative
+  - **Attachments** (including attachment **streaming** for sending larger files)
+  - **Embedded images** in HTML
+  - Secure e-mail delivery using **SSL/STARTTLS**
+  - Different **transport methods**, either using built in transports or from external plugins
+  - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
+  - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
 
-> **Notice for v0.x users** – Do not upgrade Nodemailer from 0.7 or lower. You can continue to use the 0.7 branch as long as you like. See the documentation for 0.7 [here](https://github.com/andris9/Nodemailer/blob/0.7/README.md).
+> See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
-## Notes and information
-
-### Nodemailer supports
-
-  * **Unicode** to use any characters
-  * **Windows** – you can install it with *npm* on Windows just like any other module, there are no compiled dependencies. Use it from Azure or from your Windows box hassle free.
-  * **HTML content** as well as **plain text** alternative
-  * **Attachments** (including attachment **streaming** for sending larger files)
-  * **Embedded images** in HTML
-  * Secure e-mail delivery using **SSL/STARTTLS**
-  * Different **transport methods**, either using built in transports or from external plugins
-  * Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
-  * Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
-
-### Support Nodemailer development
-
+## Support Nodemailer development
 [![Donate to author](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DB26KWR2BQX5W)
 
 If you want to support with Bitcoins, then my wallet address is `15Z8ADxhssKUiwP3jbbqJwA21744KMCfTM`
 
-## TL;DR Usage Example
-
+# TL;DR Usage Example
 This is a complete example to send an e-mail with plaintext and HTML body
 
 ```javascript
@@ -40,16 +33,13 @@ var nodemailer = require('nodemailer');
 // create reusable transporter object using the default SMTP transport
 var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
 
-// NB! No need to recreate the transporter object. You can use
-// the same transporter object for all e-mails
-
 // setup e-mail data with unicode symbols
 var mailOptions = {
-    from: 'Fred Foo ✔ <foo@blurdybloop.com>', // sender address
+    from: 'Fred Foo 👥 <foo@blurdybloop.com>', // sender address
     to: 'bar@blurdybloop.com, baz@blurdybloop.com', // list of receivers
     subject: 'Hello ✔', // Subject line
-    text: 'Hello world ✔', // plaintext body
-    html: '<b>Hello world ✔</b>' // html body
+    text: 'Hello world 🐴', // plaintext body
+    html: '<b>Hello world 🐴</b>' // html body
 };
 
 // send mail with defined transport object
@@ -58,21 +48,17 @@ transporter.sendMail(mailOptions, function(error, info){
         return console.log(error);
     }
     console.log('Message sent: ' + info.response);
-
 });
 ```
 
-You may need to ["Allow Less Secure Apps"](https://www.google.com/settings/security/lesssecureapps) in your gmail account (it's all the way at the bottom). You also may need to ["Allow access to your Google account"](https://accounts.google.com/DisplayUnlockCaptcha)
+> To use Gmail you may need to configure ["Allow Less Secure Apps"](https://www.google.com/settings/security/lesssecureapps) in your Gmail account unless you are using 2FA in which case you would have to create an [Application Specific](https://security.google.com/settings/security/apppasswords) password. You also may need to unlock your account with ["Allow access to your Google account"](https://accounts.google.com/DisplayUnlockCaptcha) to use SMTP.
 
-See [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport#usage) for SMTP configuration options and [nodemailer-wellknown](https://github.com/andris9/nodemailer-wellknown#supported-services) for preconfigured service names (example uses 'gmail').
-
-> When using default SMTP transport, then you do not need to define transport type explicitly (even though you can), just provide the SMTP options and that's it. For anything else, see the docs of the particular [transport mechanism](#available-transports).
-
-## Setting up
-
+# Setting up
 Install with npm
 
-    npm install nodemailer
+```
+npm install nodemailer
+```
 
 To send e-mails you need a transporter object
 
@@ -81,65 +67,146 @@ var transporter = nodemailer.createTransport(transport[, defaults])
 ```
 
 Where
-
-  * **transporter** is going to be an object that is able to send mail
-  * **transport** is a transport mechanism. If it is not set [nodemailer-direct-transport](https://github.com/andris9/nodemailer-direct-transport) transport is used. If it is a regular object [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport) is used and the value is passed as SMTP configuration.
-  * **defaults** is an object that defines default values for mail options (available since Nodemailer v1.10.0)
+  - **transporter** is going to be an object that is able to send mail
+  - **transport** is the transport configuration object, connection url or a transport plugin instance
+  - **defaults** is an object that defines default values for mail options
 
 > You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
 
-### Examples
+## Send using SMTP
 
-#### Use *direct* transport
+You can use 3 kinds of different approaches when using SMTP
 
-In this case all e-mails are sent directly to the recipients MX server (using port 25)
+  1. *normal* usage. No specific configuration needed. For every e-mail a new SMTP connection is created and message is sent immediately. Used when the amount of sent messages is low.
+  1. *pooled* usage. Set *pool* option to `true` to use it. A fixed amount of pooled connections are used to send messages. Useful when you have a large number of messages that you want to send in batches.
+  1. *direct* usage. Set *direct* option to `true` to use it. SMTP connection is opened directly to recipients MX server, skipping any local SMTP relays. useful when you do not have a SMTP relay to use. Riskier though since messages from untrusted servers usually end up in the Spam folder.
 
 ```javascript
-var nodemailer = require('nodemailer');
-var transporter = nodemailer.createTransport();
-transporter.sendMail({
-    from: 'sender@address',
-    to: 'receiver@address',
-    subject: 'hello',
-    text: 'hello world!'
-});
+var transporter = nodemailer.createTransport(options[, defaults])
 ```
 
-> Using *direct* transport is not reliable as outgoing port 25 used is often blocked by default. Additionally mail sent from dynamic addresses is often flagged as spam. You should really consider using a SMTP provider.
+Where
 
-#### Use the default *SMTP* transport
+  * **options** defines connection data
+    * **options.pool** if set to `true` uses pooled connections (defaults to `false`), otherwise creates a new connection for every e-mail.
+    * **options.direct** if set to `true`, bypasses MTA relay and connects directly to recipients MX. Easier to set up but has higher chances of ending up in the Spam folder
+    * **options.port** is the port to connect to (defaults to 25 or 465)
+    * **options.host** is the hostname or IP address to connect to (defaults to `'localhost'`)
+    * **options.secure** defines if the connection should use SSL (if `true`) or not (if `false`). Set to `false` if you want to use STARTTLS
+    * **options.auth** defines authentication data (see [authentication](#authentication) section below)
+    * **options.ignoreTLS** turns off STARTTLS support if true
+    * **options.name** optional hostname of the client, used for identifying to the server
+    * **options.localAddress** is the local interface to bind to for network connections
+    * **options.connectionTimeout** how many milliseconds to wait for the connection to establish
+    * **options.greetingTimeout** how many milliseconds to wait for the greeting after connection is established
+    * **options.socketTimeout** how many milliseconds of inactivity to allow
+    * **options.logger** optional [bunyan](https://github.com/trentm/node-bunyan) compatible logger instance. If set to `true` then logs to console. If value is not set or is `false` then nothing is logged
+    * **options.debug** if set to true, then logs SMTP traffic, otherwise logs only transaction events
+    * **options.authMethod** defines preferred authentication method, eg. 'PLAIN'
+    * **options.tls** defines additional options to be passed to the socket constructor, eg. *{rejectUnauthorized: true}*
+    * **options.maxConnections** available only if *pool* is set to `true`. (defaults to 5) is the count of maximum simultaneous connections to make against the SMTP server
+    * **options.maxMessages** available only if *pool* is set to `true`. (defaults to 100) limits the message count to be sent using a single connection. After maxMessages messages the connection is dropped and a new one is created for the following messages
+    * **options.rateLimit** available only if *pool* is set to `true`. (defaults to `false`) limits the message count to be sent in a second. Once rateLimit is reached, sending is paused until the end of the second. This limit is shared between connections, so if one connection uses up the limit, then other connections are paused as well
 
-See SMTP [configuration options here](https://github.com/andris9/nodemailer-smtp-transport#usage)
+**Examples**
+
+```javascript
+var smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // use SSL
+    auth: {
+        user: 'user@gmail.com',
+        pass: 'pass'
+    }
+};
+
+var poolConfig = {
+    pool: true,
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // use SSL
+    auth: {
+        user: 'user@gmail.com',
+        pass: 'pass'
+    }
+};
+
+var directConfig = {
+    name: 'hostname' // must be the same that can be reverse resolved by DNS for your IP
+};
+```
+
+Alternatively you could use connection url. Use `smtp:`, `smtps:` or `direct:` as the protocol.
+
+```javascript
+var smtpConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com';
+var poolConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com/?pool=true';
+var directConfig = 'direct:?name=hostname';
+```
+
+### Authentication
+
+If authentication data is not present, the connection is considered authenticated from the start. Set authentication data with `options.auth`
+
+  - **auth** is the authentication object
+    - **auth.user** is the username
+    - **auth.pass** is the password for the user
+    - **auth.xoauth2** is the OAuth2 access token (preferred if both `pass` and `xoauth2` values are set) or an [XOAuth2](https://github.com/andris9/xoauth2) token generator object.
+
+**Using OAuth2**
+
+If a [XOAuth2](https://github.com/andris9/xoauth2) token generator is used as the value for `auth.xoauth2` then you do not need to set the value for `user` or `pass`. XOAuth2 generator generates required `accessToken` itself if it is missing or expired. In this case if the authentication fails, a new token is requested and the authentication is retried once. If it still fails, an error is returned.
+
+> **NB!** The correct OAuth2 scope for Gmail is `https://mail.google.com/`
+
+Install xoauth2 module to use XOauth2 token generators (not included by default)
+
+    npm install xoauth2 --save
+
+**Example**
 
 ```javascript
 var nodemailer = require('nodemailer');
+var xoauth2 = require('xoauth2');
+
+// listen for token updates (if refreshToken is set)
+// you probably want to store these to a db
+generator.on('token', function(token){
+    console.log('New token for %s: %s', token.user, token.accessToken);
+});
+
+// login
 var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'sender@gmail.com',
-        pass: 'password'
+        xoauth2: xoauth2.createXOAuth2Generator({
+            user: '{username}',
+            clientId: '{Client ID}',
+            clientSecret: '{Client Secret}',
+            refreshToken: '{refresh-token}',
+            accessToken: '{cached access token}'
+        })
     }
-}, {
-    // default values for sendMail method
-    from: 'sender@address',
-    headers: {
-        'My-Awesome-Header': '123'
-    }
-});
-transporter.sendMail({
-    to: 'receiver@address',
-    subject: 'hello',
-    text: 'hello world!'
 });
 ```
 
-> Default SMTP transport is not suitable for large volume of e-mails new SMTP connection is established for every mail sent. Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) if you need to send a large amount of e-mails.
->
-> For sending bulk mail using Nodemailer see the [recommendations below](#delivering-bulk-mail)
+### Using *well-known* services
 
-#### Use a transport plugin
+If you do not want to specify the hostname, port and security settings for a well known service, you can use it by its name (case insensitive)
 
-See [Available Transports](#available-transports) for known transport plugins but there might be non listed plugins as well.
+```javascript
+smtpTransport({
+    service: 'gmail',
+    auth: ..
+});
+```
+
+See the list of all supported services [here](https://github.com/andris9/nodemailer-wellknown#supported-services).
+
+## Send using a transport plugin
+
+In addition to SMTP you can use other kind of transports as well with Nodemailer. See *Available Transports* below for known transports.
 
 The following example uses [nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport) (Amazon SES).
 
@@ -150,113 +217,88 @@ var transporter = nodemailer.createTransport(ses({
     accessKeyId: 'AWSACCESSKEY',
     secretAccessKey: 'AWS/Secret/key'
 }));
-transporter.sendMail({
-    from: 'sender@address',
-    to: 'receiver@address',
-    subject: 'hello',
-    text: 'hello world!'
-});
 ```
 
-## Available Transports
+**Available Transports**
 
-**Built in**
+  - **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
+  - **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
+  - **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
+  - **[nodemailer-sendgrid-transport](https://github.com/sendgrid/nodemailer-sendgrid-transport)** for sending messages through SendGrid's Web API
+  - **[nodemailer-sendmail-transport](https://github.com/andris9/nodemailer-sendmail-transport)** for piping messages to the _sendmail_ command
+  - **[nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport)** for sending messages to AWS SES
+  - **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
+  - **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
+  - _add yours_ (see transport api documentation [here](#transports))
 
-  * **[nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport)** for sending messages using a SMTP service
-  * **[nodemailer-direct-transport](https://github.com/andris9/nodemailer-direct-transport)** for sending messages directly to recipients MX servers (zero configuration needed but unreliable)
-
-**Install as dependencies**
-
-  * **[nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool)** for sending messages to SMTP using pooled connections
-  * **[nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport)** for sending messages to AWS SES
-  * **[nodemailer-sendmail-transport](https://github.com/andris9/nodemailer-sendmail-transport)** for piping messages to the *sendmail* command
-  * **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
-  * **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
-  * **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
-  * **[nodemailer-sendgrid-transport](https://github.com/sendgrid/nodemailer-sendgrid-transport)** for sending messages through SendGrid's Web API
-  * **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
-  * **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
-  * *add yours* (see transport api documentation [here](#transports))
-
-## Available Plugins
-
-  * **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
-  * **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
-  * **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
-  * **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
-  * **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
-  * **[nodemailer-hashcash](https://github.com/andris9/nodemailer-hashcash)** to generate [hashcash](http://www.hashcash.org/) headers
-  * *add yours* (see plugin api documentation [here](#plugin-api))
-
-## Sending mail
-
-Once you have a transporter object you can send mail
+# Sending mail
+Once you have a transporter object you can send mail with it:
 
 ```javascript
 transporter.sendMail(data[, callback])
 ```
 
 Where
-
-  * **data** defines the mail content (see [e-mail message fields](#e-mail-message-fields) below)
-  * **callback** is an optional callback function to run once the message is delivered or it failed
-    * **err** is the error object if message failed
-    * **info** includes the result, the exact format depends on the transport mechanism used
-      * **info.messageId** most transports *should* return the final Message-Id value used with this property
-      * **info.envelope** includes the envelope object for the message
-      * **info.accepted** is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
-      * **info.rejected** is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
-      * **info.pending** is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
-      * **response** is a string returned by SMTP transports and includes the last SMTP response from the server
+  - **data** defines the mail content (see [e-mail message fields](#e-mail-message-fields) below)
+  - **callback** is an optional callback function to run once the message is delivered or it failed
+    - **err** is the error object if message failed
+    - **info** includes the result, the exact format depends on the transport mechanism used
+      - **info.messageId** most transports _should_ return the final Message-Id value used with this property
+      - **info.envelope** includes the envelope object for the message
+      - **info.accepted** is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
+      - **info.rejected** is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
+      - **info.pending** is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
+      - **response** is a string returned by SMTP transports and includes the last SMTP response from the server
 
 > If the message includes several recipients then the message is considered sent if at least one recipient is accepted
 
-If `callback` argument is not set then the method return a Promise object. Nodemailer itself does not use Promises internally but it wraps the return into a Promise for convenience.
+If `callback` argument is not set then the method returns a Promise object. Nodemailer itself does not use Promises internally but it wraps the return into a Promise for convenience.
 
-### E-mail message fields
-
+## E-mail message fields
 The following are the possible fields of an e-mail message:
 
-  - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [here](#address-formatting) for details
-  - **sender** - An e-mail address that will appear on the *Sender:* field
-  - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the *To:* field
-  - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the *Cc:* field
-  - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the *Bcc:* field
-  - **replyTo** - An e-mail address that will appear on the *Reply-To:* field
-  - **inReplyTo** - The message-id this message is replying
-  - **references** - Message-id list (an array or space separated string)
+Commmon fields:
+
+  - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [Address Formatting](#address-formatting) for details
+  - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the _To:_ field
+  - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Cc:_ field
+  - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Bcc:_ field
   - **subject** - The subject of the e-mail
-  - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
-  - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an object *{path: '...'}*
-  - **watchHtml** - Apple Watch specific HTML version of the message (*experimental*)
-  - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
-  - **headers** - An object or array of additional header fields (e.g. *{"X-Key-Name": "key value"}* or *[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]*)
+  - **text** - The plaintext version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: '/var/data/...'}`)
+  - **html** - The HTML version of the message as an Unicode string, Buffer, Stream or an attachment-like object (`{path: 'http://...'}`)
   - **attachments** - An array of attachment objects  (see [below](#attachments) for details)
+
+Advanced fields:
+
+  - **sender** - An e-mail address that will appear on the _Sender:_ field (always prefer `from` if you're not sure which one to use)
+  - **replyTo** - An e-mail address that will appear on the _Reply-To:_ field
+  - **inReplyTo** - The message-id this message is replying to
+  - **references** - Message-id list (an array or space separated string)
+  - **watchHtml** - Apple Watch specific HTML version of the message (_experimental_)
+  - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
+  - **headers** - An object or array of additional header fields (e.g. _{"X-Key-Name": "key value"}_ or _[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]_)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
   - **messageId** - optional Message-Id value, random value will be generated if not set
   - **date** - optional Date value, current UTC string will be used if not set
   - **encoding** - optional transfer encoding for the textual parts
 
-All text fields (e-mail addresses, plaintext body, html body) use UTF-8 as the encoding.
-Attachments are streamed as binary.
+All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
-### Attachments
-
+## Attachments
 Attachment object consists of the following properties:
 
-  * **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
-  * **cid** - optional content id for using inline images in HTML message source
-  * **content** - String, Buffer or a Stream contents for the attachment
-  * **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
-  * **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
-  * **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
-  * **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
-
-> **Warning about stream errors** –
-> If an error occurs with an input stream, eg. an attachment from an URL fails to load, then message generation is not rejected. Instead, the error message gets written as the attachment contents.
+  - **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
+  - **content** - String, Buffer or a Stream contents for the attachment
+  - **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
+  - **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property
+  - **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
+  - **cid** - optional content id for using inline images in HTML message source
+  - **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
 
 Attachments can be added as many as you want.
+
+**Example**
 
 ```javascript
 var mailOptions = {
@@ -288,7 +330,7 @@ var mailOptions = {
         },
         {   // use URL as an attachment
             filename: 'license.txt',
-            path: 'https://raw.github.com/andris9/Nodemailer/master/LICENSE'
+            path: 'https://raw.github.com/nodemailer/nodemailer/master/LICENSE'
         },
         {   // encoded string as an attachment
             filename: 'text1.txt',
@@ -302,11 +344,10 @@ var mailOptions = {
 }
 ```
 
-### Alternatives
-
+## Alternatives
 In addition to text and HTML, any kind of data can be inserted as an alternative content of the main body - for example a word processing document with the same text as in the HTML field. It is the job of the e-mail client to select and show the best fitting alternative to the reader. Usually this field is used for calendar events and such.
 
-Alternative objects use the same options as [attachment objects](#attachments). The difference between an attachment and an alternative is the fact that attachments are placed into *multipart/mixed* or *multipart/related* parts of the message white alternatives are placed into *multipart/alternative* part.
+Alternative objects use the same options as [attachment objects](#attachments). The difference between an attachment and an alternative is the fact that attachments are placed into _multipart/mixed_ or _multipart/related_ parts of the message white alternatives are placed into _multipart/alternative_ part.
 
 **Usage example:**
 
@@ -325,8 +366,7 @@ var mailOptions = {
 
 Alternatives can be added as many as you want.
 
-### Address Formatting
-
+## Address Formatting
 All the e-mail addresses can be plain e-mail addresses
 
 ```
@@ -339,7 +379,7 @@ or with formatted name (includes unicode support)
 "Ноде Майлер" <foobar@blurdybloop.com>
 ```
 
-> Notice that all address fields (even `from`) are comma separated lists, so if you want to use a comma in the name part, make sure you enclose the name in double quotes: `"Майлер, Ноде" <foobar@blurdybloop.com>`
+> Notice that all address fields (even `from:`) are comma separated lists, so if you want to use a comma in the name part, make sure you enclose the name in double quotes: `"Майлер, Ноде" <foobar@blurdybloop.com>`
 
 or as an address object (in this case you do not need to worry about the formatting, no need to use quotes etc.)
 
@@ -350,9 +390,7 @@ or as an address object (in this case you do not need to worry about the formatt
 }
 ```
 
-All address fields accept comma separated list of e-mails or an array of
-e-mails or an array of comma separated list of e-mails or address objects - use it as you like.
-Formatting can be mixed.
+All address fields accept comma separated list of e-mails or an array of e-mails or an array of comma separated list of e-mails or address objects - use it as you like. Formatting can be mixed.
 
 ```
 ...,
@@ -368,30 +406,26 @@ You can even use unicode domains, these are automatically converted to punycode
 '"Unicode Domain" <info@müriaad-polüteism.info>'
 ```
 
-### SMTP envelope
+## SMTP envelope
+SMTP envelope is usually auto generated from `from`, `to`, `cc` and `bcc` fields but if for some reason you want to specify it yourself (custom envelopes are usually used for VERP addresses), you can do it with `envelope` property.
 
-SMTP envelope is usually auto generated from `from`, `to`, `cc` and `bcc` fields but
-if for some reason you want to specify it yourself, you can do it with `envelope` property.
-
-`envelope` is an object with the following params: `from`, `to`, `cc` and `bcc` just like
-with regular mail options. You can also use the regular address format, unicode domains etc.
+`envelope` is an object with the following params: `from`, `to`, `cc` and `bcc` just like with regular mail options. You can also use the regular address format, unicode domains etc.
 
 ```javascript
 mailOptions = {
     ...,
-    from: 'mailer@kreata.ee',
-    to: 'daemon@kreata.ee',
+    from: 'mailer@kreata.ee', // listed in rfc822 message header
+    to: 'daemon@kreata.ee', // listed in rfc822 message header
     envelope: {
-        from: 'Daemon <deamon@kreata.ee>',
-        to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>'
+        from: 'Daemon <deamon@kreata.ee>', // used as MAIL FROM: address for SMTP
+        to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>' // used as RCPT TO: address for SMTP
     }
 }
 ```
 
-> Not all transports can use the `envelope` object, for example SES ignores it and uses the data from the From:, To: etc. headers.
+> Not all transports can use the `envelope` object, for example SES ignores it and only uses the data from the From:, To: etc. headers.
 
-### Using Embedded Images
-
+## Using Embedded Images
 Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property of the attachment - `cid` (unique identifier of the file) which is a reference to the attachment file. The same `cid` value must be used as the image URL in HTML (using `cid:` as the URL protocol, see example below).
 
 **NB!** the cid value should be as unique as possible!
@@ -408,16 +442,43 @@ var mailOptions = {
 }
 ```
 
-## Plugin system
+# Available Plugins
+
+In addition to built-in e-mail fields you can extend these by using plugins.
+
+  - **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
+  - **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
+  - **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
+  - **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
+  - **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
+  - **[nodemailer-hashcash](https://github.com/andris9/nodemailer-hashcash)** to generate [hashcash](http://www.hashcash.org/) headers
+  - _add yours_ (see plugin api documentation [here](#plugin-api))
+
+# Using Gmail
+Even though Gmail is the fastest way to get started with sending emails, it is by no means a preferable solution unless you are using OAuth2 authentication. Gmail expects the user to be an actual user not a robot so it runs a lot of heuristics for every login attempt and blocks anything that looks suspicious to defend the user from account hijacking attempts. For example you might run into trouble if your server is in another geographical location – everything works in your dev machine but messages are blocked in production.
+
+Additionally Gmail has came up with the concept of ['less secure'](https://support.google.com/accounts/answer/6010255?hl=en) apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send (support for 'less secure' apps is enabled) but other is blocked (support for 'less secure' apps is disabled). When using this method make sure to enable the required functionality by completing the "[captcha enable](https://accounts.google.com/b/0/displayunlockcaptcha)". Without this, less secure connections won't work.
+
+To prevent having login issues you should either use XOAUTH2 (see details [here](https://github.com/nodemailer/nodemailer-smtp-transport#authentication)) or use another provider and preferably a dedicated one like [Mailgun](http://www.mailgun.com/) or [SendGrid](http://mbsy.co/sendgrid/12237825) or any other. Usually these providers have free plans available that are comparable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one _To_ and one _Cc_ address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
+
+# Delivering Bulk Mail
+Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
+1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
+2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
+3. **Use [nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
+4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
+5. **Set `maxConnections` to whatever your system can handle.** There might be limits to this on the receiving side, so do not set it to `Infinity`, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
+6. **Use file paths not URLs for attachments.** If you are reading the same file from the disk several million times, the contents for the file probably get cached somewhere between your app and the physical hard disk, so you get your files back quicker (assuming you send the same attachment to all recipients). There is nothing like this for URLs – every new message makes a fresh HTTP fetch to receive the file from the server.
+7. If the SMTP service accepts HTTP API as well you still might prefer SMTP and not the HTTP API as HTTP introduces additional overhead. You probably want to use HTTP over SMTP if the HTTP API is bulk aware – you send a message template and the list of 10 million recipients and the service compiles this information into e-mails itself, you can't beat this with SMTP.
+
+# Implementing plugins and transports
 
 There are 3 stages a plugin can hook to
+1. **'compile'** is the step where e-mail data is set but nothing has been done with it yet. At this step you can modify mail options, for example modify `html` content, add new headers etc. Example: [nodemailer-markdown](https://github.com/andris9/nodemailer-markdown) that allows you to use `markdown` source instead of `text` and `html`.
+2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw e-mail will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
+3. **Transport** step where the raw e-mail is streamed to destination. Example: [nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport) that streams the message to a SMTP server.
 
-  1. **'compile'** is the step where e-mail data is set but nothing has been done with it yet. At this step you can modify mail options, for example modify `html` content, add new headers etc. Example: [nodemailer-markdown](https://github.com/andris9/nodemailer-markdown) that allows you to use `markdown` source instead of `text` and `html`.
-  2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw e-mail will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
-  3. **Transport** step where the raw e-mail is streamed to destination. Example: [nodemailer-smtp-transport](https://github.com/andris9/nodemailer-smtp-transport) that streams the message to a SMTP server.
-
-### Including plugins
-
+## Including plugins
 'compile' and 'stream' plugins can be attached with `use(plugin)` method
 
 ```javascript
@@ -425,35 +486,29 @@ transporter.use(step, pluginFunc)
 ```
 
 Where
+- **transporter** is a transport object created with `createTransport`
+- **step** is a string, either 'compile' or 'stream' that defines when the plugin should be hooked
+- **pluginFunc** is a function that takes two arguments: the mail object and a callback function
 
-  * **transporter** is a transport object created with `createTransport`
-  * **step** is a string, either 'compile' or 'stream' that defines when the plugin should be hooked
-  * **pluginFunc** is a function that takes two arguments: the mail object and a callback function
-
-## Plugin API
-
+# Plugin API
 All plugins (including transports) get two arguments, the mail object and a callback function.
 
 Mail object that is passed to the plugin function as the first argument is an object with the following properties:
+- **data** is the mail data object that is passed to the `sendMail` method
+- **message** is the [BuildMail](https://github.com/nodemailer/buildmail) object of the message. This is available for the 'stream' step and for the transport but not for 'compile'.
+- **resolveContent** is a helper function for converting Nodemailer compatible stream objects into Strings or Buffers
 
-  * **data** is the mail data object that is passed to the `sendMail` method
-  * **message** is the [BuildMail](https://github.com/andris9/buildmail) object of the message. This is available for the 'stream' step and for the transport but not for 'compile'.
-  * **resolveContent** is a helper function for converting Nodemailer compatible stream objects into Strings or Buffers
-
-### resolveContent()
-
-If your plugin needs to get the full value of a param, for example the String value for the `html` content, you can use `resolveContent()` to convert Nodemailer
-compatible content objects to Strings or Buffers.
+## resolveContent()
+If your plugin needs to get the full value of a param, for example the String value for the `html` content, you can use `resolveContent()` to convert Nodemailer compatible content objects to Strings or Buffers.
 
 ```javascript
 data.resolveContent(obj, key, callback)
 ```
 
 Where
-
-  * **obj** is an object that has a property you want to convert to a String or a Buffer
-  * **key** is the name of the property you want to convert
-  * **callback** is the callback function with (err, value) where `value` is either a String or Buffer, depending on the input
+- **obj** is an object that has a property you want to convert to a String or a Buffer
+- **key** is the name of the property you want to convert
+- **callback** is the callback function with (err, value) where `value` is either a String or Buffer, depending on the input
 
 **Example**
 
@@ -470,8 +525,7 @@ function plugin(mail, callback){
 };
 ```
 
-### 'compile'
-
+## 'compile'
 Compile step plugins get only the `mail.data` object but not `mail.message` in the `mail` argument of the plugin function. If you need to access the `mail.message` as well use 'stream' step instead.
 
 This is really straightforward, your plugin can modify the `mail.data` object at will and once everything is finished run the callback function. If the callback gets an error object as an argument, then the process is terminated and the error is returned to the `sendMail` callback.
@@ -491,13 +545,12 @@ transporter.use('compile', function(mail, callback){
 
 See [plugin-compile.js](examples/plugin-compile.js) for a working example.
 
-### 'stream'
-
+## 'stream'
 Streaming step is invoked once the message structure is built and ready to be streamed to the transport. Plugin function still gets `mail.data` but it is included just for the reference, modifying it should not change anything (unless the transport requires something from the `mail.data`, for example `mail.data.envelope`).
 
 You can modify the `mail.message` object as you like, the message is not yet streaming anything (message starts streaming when the transport calls `mail.message.createReadStream()`).
 
-In most cases you might be interested in the [message.transform()](https://github.com/andris9/buildmail#transform) method for applying transform streams to the raw message.
+In most cases you might be interested in the [message.transform()](https://github.com/nodemailer/buildmail#transform) method for applying transform streams to the raw message.
 
 **Example**
 
@@ -525,7 +578,7 @@ transporter.use('stream', function(mail, callback){
 
 See [plugin-stream.js](examples/plugin-stream.js) for a working example.
 
-Additionally you might be interested in the [message.getAddresses()](https://github.com/andris9/buildmail#getaddresses) method that returns the contents for all address fields as structured objects.
+Additionally you might be interested in the [message.getAddresses()](https://github.com/nodemailer/buildmail#getaddresses) method that returns the contents for all address fields as structured objects.
 
 **Example**
 
@@ -542,8 +595,7 @@ transporter.use('stream', function(mail, callback){
 });
 ```
 
-### Transports
-
+## Transports
 Transports are objects that have a method `send` and properies `name` and `version`. Additionally, if the transport object is an Event Emitter, 'log' events are piped through Nodemailer. A transport object is passed to the `nodemailer.createTransport(transport)` method to create the transporter object.
 
 **`transport.name`**
@@ -566,7 +618,7 @@ transport.version = require('package.json').version;
 
 This is the method that actually sends out e-mails. The method is basically the same as 'stream' plugin functions. It gets two arguments: `mail` and a callback. To start streaming the message, create the stream with `mail.message.createReadStream()`
 
-Callback function should return an `info` object as the second arugment. This info object should contain `messageId` value with the Message-Id header (without the surrounding &lt; &gt; brackets)
+Callback function should return an `info` object as the second arugment. This info object should contain `messageId` value with the Message-Id header (without the surrounding < > brackets)
 
 The following example pipes the raw stream to the console.
 
@@ -600,31 +652,9 @@ transporter.sendMail({mail data});
 
 See [minimal-transport.js](examples/minimal-transport.js) for a working example.
 
-## Using Gmail
+# License
+**Nodemailer** is licensed under [MIT license](https://github.com/nodemailer/nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it
 
-Even though Gmail is the fastest way to get started with sending emails, it is by no means a preferable solution unless you are using OAuth2 authentication. Gmail expects the user to be an actual user not a robot so it runs a lot of heuristics for every login attempt and blocks anything that looks suspicious to defend the user from account hijacking attempts. For example you might run into trouble if your server is in another geographical location – everything works in your dev machine but messages are blocked in production.
-
-Additionally Gmail has came up with the concept of ['less secure'](https://support.google.com/accounts/answer/6010255?hl=en) apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send (support for 'less secure' apps is enabled) but other is blocked (support for 'less secure' apps is disabled). When using this method make sure to enable the required functionality by completing the "[captcha enable](https://accounts.google.com/b/0/displayunlockcaptcha)". Without this, less secure connections won't work.
-
-To prevent having login issues you should either use XOAUTH2 (see details [here](https://github.com/andris9/nodemailer-smtp-transport#authentication)) or use another provider and preferably a dedicated one like [Mailgun](http://www.mailgun.com/) or [SendGrid](http://mbsy.co/sendgrid/12237825) or any other. Usually these providers have free plans available that are comparable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one *To* and one *Cc* address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
-
-## Delivering Bulk Mail
-
-Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
-
-  1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
-  2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
-  3. **Use [nodemailer-smtp-pool](https://github.com/andris9/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
-  4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
-  5. **Set `maxConnections` to whatever your system can handle.** There might be limits to this on the receiving side, so do not set it to `Infinity`, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
-  6. **Use file paths not URLs for attachments.** If you are reading the same file from the disk several million times, the contents for the file probably get cached somewhere between your app and the physical hard disk, so you get your files back quicker (assuming you send the same attachment to all recipients). There is nothing like this for URLs – every new message makes a fresh HTTP fetch to receive the file from the server.
-  7. If the SMTP service accepts HTTP API as well you still might prefer SMTP and not the HTTP API as HTTP introduces additional overhead. You probably want to use HTTP over SMTP if the HTTP API is bulk aware – you send a message template and the list of 10 million recipients and the service compiles this information into e-mails itself, you can't beat this with SMTP.
-
-
-## License
-
-**Nodemailer** is licensed under [MIT license](https://github.com/andris9/Nodemailer/blob/master/LICENSE). Basically you can do whatever you want to with it
-
-----
+--------------------------------------------------------------------------------
 
 The Nodemailer logo was designed by [Sven Kristjansen](https://www.behance.net/kristjansen).
