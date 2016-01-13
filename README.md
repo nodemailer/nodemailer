@@ -90,6 +90,7 @@ Where
   * **options** defines connection data
     * **options.pool** if set to `true` uses pooled connections (defaults to `false`), otherwise creates a new connection for every e-mail.
     * **options.direct** if set to `true`, bypasses MTA relay and connects directly to recipients MX. Easier to set up but has higher chances of ending up in the Spam folder
+    * **options.service** can be set to the name of a well-known service so you don't have to input the `port`, `host`, and `secure` options (see [Using well-known services](#using-well-known-services)
     * **options.port** is the port to connect to (defaults to 25 or 465)
     * **options.host** is the hostname or IP address to connect to (defaults to `'localhost'`)
     * **options.secure** defines if the connection should use SSL (if `true`) or not (if `false`). Set to `false` if you want to use STARTTLS
