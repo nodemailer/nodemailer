@@ -93,8 +93,9 @@ Where
     * **options.service** can be set to the name of a well-known service so you don't have to input the `port`, `host`, and `secure` options (see [Using well-known services](#using-well-known-services))
     * **options.port** is the port to connect to (defaults to 25 or 465)
     * **options.host** is the hostname or IP address to connect to (defaults to `'localhost'`)
-    * **options.secure** if `true`the connection will only use TLS. If `false` (the default), TLS may still be upgraded to if available via the STARTTLS command. 
+    * **options.secure** if `true`the connection will only use TLS. If `false` (the default), TLS may still be upgraded to if available via the STARTTLS command.
     * **options.ignoreTLS** if this is `true` and `secure` is false, TLS will not be used (either to connect, or as a STARTTLS connection upgrade command).
+    * **options.requireTLS** if this is `true` and `secure` is false, it forces Nodemailer to use STARTTLS even if the server does not advertise support for it.
     * **options.tls** defines additional [node.js TLSSocket options](https://nodejs.org/api/tls.html#tls_class_tls_tlssocket) to be passed to the socket constructor, eg. *{rejectUnauthorized: true}*.
     * **options.auth** defines authentication data (see [authentication](#authentication) section below)
     * **options.authMethod** defines preferred authentication method, eg. 'PLAIN'
