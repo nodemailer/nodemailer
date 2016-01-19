@@ -9,6 +9,7 @@ var sinon = require('sinon');
 var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
 var stream = require('stream');
+var stubTransport = require('nodemailer-stub-transport');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -672,5 +673,27 @@ describe('direct-transport tests', function () {
         setTimeout(function () {
             mailData.text.emit('error', new Error('Stream error'));
         }, 400);
+    });
+});
+
+describe('Generated messages tests', function () {
+    it('should set Message-Id automatically', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var mailData = {
+            from: 'Sender Name 👻 <sender@example.com>',
+            to: ['Recipient Name 1 👻 <recipient1@example.com>', 'Recipient Name 2 👻 <recipient2@example.com>'],
+            subject: 'test 💀',
+            text: 'test message 👽'
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.envelope).to.deep.equal({
+                from: 'sender@example.com',
+                to: ['recipient1@example.com', 'recipient2@example.com']
+            });
+            expect(info.messageId).to.exist;
+            expect(info.response.toString()).to.exist;
+            done();
+        });
     });
 });

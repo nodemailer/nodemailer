@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0-beta.0 2016-01-20
+
+  * Use the same header custom structure for message root, attachments and alternatives
+  * Ensure that Message-Id exists when accessing message
+  * Allow using array values for custom headers (inserts every value in its own row)
+
 ## 2.0.0 2016-01-11
 
   * Released rc.2 as stable
