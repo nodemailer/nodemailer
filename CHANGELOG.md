@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0-beta.3 2016-01-20
+
+  * Added support for node-email-templates templating in addition to the built-in renderer
+
 ## 2.1.0-beta.2 2016-01-20
 
   * Implemented simple templating feature

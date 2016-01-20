@@ -10,6 +10,9 @@ var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
 var stream = require('stream');
 var stubTransport = require('nodemailer-stub-transport');
+var EmailTemplate = require('email-templates').EmailTemplate;
+var path = require('path');
+var templateDir = path.join(__dirname, 'fixtures', 'welcome-email');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -734,6 +737,35 @@ describe('Generated messages tests', function () {
             expect(msg.indexOf('\r\nSubject: Password reminder for Node Mailer!\r\n')).to.be.gte(0);
             expect(msg.indexOf('\r\nHello, Node Mailer, Your password is: !"\'<>&some-thing\r\n')).to.be.gte(0);
             expect(msg.indexOf('\n<b>!&quot;&#039;&lt;&gt;&amp;some-thing</b></p>\r\n')).to.be.gte(0);
+
+            done();
+        }).catch(function (err) {
+            expect(err).to.not.exist;
+        });
+    });
+
+    it('should send mail using external renderer', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+
+        var sendWelcome = nm.templateSender(new EmailTemplate(templateDir), {
+            from: 'sender@example.com'
+        });
+
+        sendWelcome(
+            // keep indent
+            {
+                to: 'receiver@example.com'
+            }, {
+                name: {
+                    first: 'Node',
+                    last: 'Mailer'
+                }
+            }
+        ).then(function (info) {
+            var msg = info.response.toString();
+
+            expect(msg.indexOf('\nHello Mailer, Node!\n')).to.be.gte(0);
+            expect(msg.indexOf('<h1 style="text-align: center;">Hello Mailer, Node!</h1>')).to.be.gte(0);
 
             done();
         }).catch(function (err) {

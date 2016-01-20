@@ -13,10 +13,10 @@ Send e-mails from Node.js – easy as cake!
   - **Attachments** (including attachment **streaming** for sending larger files)
   - **Embedded images** in HTML
   - Secure e-mail delivery using **SSL/STARTTLS**
-  - Different **transport methods**, either using built in transports or from external plugins
+  - Different **transport methods**, either using built-in SMTP transports or from external plugins
   - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
-  - Simple **templating**
+  - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -507,47 +507,52 @@ var mailOptions = {
 
 ## Using templates
 
-Nodemailer allows to use simple built-in templating for common messages.
+Nodemailer allows to use simple built-in templating or alternatively external renderers for common messages.
 
 ```javascript
 var transporter = nodemailer.createTransport(...);
-var templateSender = transporter.templateSender(templates, [defaults]);
+var send = transporter.templateSender(templates, [defaults]);
 
 // send a message based on provided templates
-templateSender(mailData, context, callback);
+send(mailData, context, callback);
 ```
 
 Where
 
-  * **templates** is an object with template strings. Key is message data field to be filled with the template.
+  * **templates** is an object with template strings for built-in renderer or an [EmailTemplate](https://github.com/niftylettuce/node-email-templates) object for more complex rendering
 
 ```javascript
-var templates = {
+// built-in renderer
+var send = transporter.templateSender({
     subject: 'This template is used for the "subject" field',
     text: 'This template is used for the "text" field',
     html: 'This template is used for the "html" field'
-};
+});
+// external renderer
+var EmailTemplate = require('email-templates').EmailTemplate
+var send = transporter.templateSender(new EmailTemplate('template/directory'));
 ```
 
-  * **defaults** is an optional object of message data fields that are set for every message sent through this template based sender
+  * **defaults** is an optional object of message data fields that are set for every message sent using this sender
   * **mailData** includes message fields for current message
-  * **context** is an object with template replacements, where `key` replaces `{{key}}` in the templates
+  * **context** is an object with template replacements, where `key` replaces `{{key}}` when using the built-in renderer
 
 ```javascript
 var templates = {
-    subject: 'Hello {{username}}!'
+    text: 'Hello {{username}}!'
 };
 var context = {
     username: 'User Name'
 };
-// results in "Hello, User Name!" as the subject field of the message
+// results in "Hello, User Name!" as the text body
+// of the message when using built-in renderer
 ```
 
-  * **callback** is the `sendMail` callback (if not set then the function returns a Promise)
+  * **callback** is the `transporter.sendMail` callback (if not set then the function returns a Promise)
 
-> **NB!** Template variables are HTML escaped for the `html` field but kept as is for other fields
+> **NB!** Template variables are HTML escaped for the `html` field but kept as is for other fields when using the built-in renderer
 
-**Example**
+**Example 1. Built-in renderer**
 
 ```javascript
 var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
@@ -564,6 +569,36 @@ var sendPwdReminder = transporter.templateSender({
 // use template based sender to send a message
 sendPwdReminder({
     to: 'receiver@example.com'
+}, {
+    username: 'Node Mailer',
+    password: '!"\'<>&some-thing'
+}, function(err, info){
+    if(err){
+       console.log('Error');
+    }else{
+        console.log('Password reminder sent');
+    }
+});
+```
+
+**Example 2. External renderer**
+
+```javascript
+var EmailTemplate = require('email-templates').EmailTemplate;
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
+
+// create template based sender function
+// assumes text.{ext} and html.{ext} in template/directory
+var sendPwdReminder = transporter.templateSender(new EmailTemplate('template/directory'), {
+    from: 'sender@example.com',
+});
+
+// use template based sender to send a message
+sendPwdReminder({
+    to: 'receiver@example.com',
+    // EmailTemplate renders html and text but no subject so we need to
+    // set it manually either here or in the defaults section of templateSender()
+    subject: 'Password reminder'
 }, {
     username: 'Node Mailer',
     password: '!"\'<>&some-thing'
