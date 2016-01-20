@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0-beta.1 2016-01-20
+
+  * Allow using prepared header values that are not folded or encoded by Nodemailer
+
 ## 2.1.0-beta.0 2016-01-20
 
   * Use the same header custom structure for message root, attachments and alternatives
