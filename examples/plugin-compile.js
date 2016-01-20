@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 'use strict';
 
 // This example demonstrates the 'compile' step with a plugin that adds a new header 'X-Sss'

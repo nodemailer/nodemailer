@@ -45,7 +45,7 @@ module.exports = {
         'no-bitwise': 2,
         'no-lonely-if': 2,
         'no-mixed-spaces-and-tabs': 2,
-        'no-console': 0
+        'no-console': 2
     },
     env: {
         es6: false,

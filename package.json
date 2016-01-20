@@ -27,7 +27,7 @@
   "homepage": "http://nodemailer.com/",
   "dependencies": {
     "libmime": "2.0.0",
-    "mailcomposer": "3.3.0",
+    "mailcomposer": "3.3.1",
     "nodemailer-direct-transport": "2.0.0",
     "nodemailer-shared": "1.0.2",
     "nodemailer-smtp-pool": "2.0.0",
