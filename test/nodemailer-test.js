@@ -696,4 +696,48 @@ describe('Generated messages tests', function () {
             done();
         });
     });
+
+    it('should send mail using a template', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+
+        var sendPwdReminder = nm.templateSender({
+            subject: 'Password reminder for {{username}}!',
+            text: 'Hello, {{username}}, Your password is: {{ password }}',
+            html: '<b>Hello, <strong>{{username}}</strong>, Your password is:\n<b>{{ password }}</b></p>'
+        }, {
+            from: 'sender@example.com',
+            headers: {
+                'X-Key1': 'value1'
+            }
+        });
+
+        sendPwdReminder(
+            // keep indent
+            {
+                to: 'receiver@example.com',
+                headers: {
+                    'X-Key2': 'value2'
+                }
+            }, {
+                username: 'Node Mailer',
+                password: '!"\'<>&some-thing'
+            }
+        ).then(function (info) {
+            var msg = info.response.toString();
+
+            expect(msg.indexOf('\r\nFrom: sender@example.com\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nTo: receiver@example.com\r\n')).to.be.gte(0);
+
+            expect(msg.indexOf('\r\nX-Key1: value1\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nX-Key2: value2\r\n')).to.be.gte(0);
+
+            expect(msg.indexOf('\r\nSubject: Password reminder for Node Mailer!\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nHello, Node Mailer, Your password is: !"\'<>&some-thing\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\n<b>!&quot;&#039;&lt;&gt;&amp;some-thing</b></p>\r\n')).to.be.gte(0);
+
+            done();
+        }).catch(function (err) {
+            expect(err).to.not.exist;
+        });
+    });
 });

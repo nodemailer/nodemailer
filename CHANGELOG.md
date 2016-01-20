@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0-beta.2 2016-01-20
+
+  * Implemented simple templating feature
+
 ## 2.1.0-beta.1 2016-01-20
 
   * Allow using prepared header values that are not folded or encoded by Nodemailer
