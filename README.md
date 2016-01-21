@@ -507,7 +507,7 @@ var mailOptions = {
 
 ## Using templates
 
-Nodemailer allows to use simple built-in templating or alternatively external renderers for common messages.
+Nodemailer allows to use simple built-in templating or alternatively external renderers for common message types.
 
 ```javascript
 var transporter = nodemailer.createTransport(...);
@@ -550,7 +550,7 @@ var context = {
 
   * **callback** is the `transporter.sendMail` callback (if not set then the function returns a Promise)
 
-> **NB!** Template variables are HTML escaped for the `html` field but kept as is for other fields when using the built-in renderer
+> **NB!** If using built-in renderer then template variables are HTML escaped for the `html` field but kept as is for other fields
 
 **Example 1. Built-in renderer**
 
@@ -609,6 +609,47 @@ sendPwdReminder({
         console.log('Password reminder sent');
     }
 });
+```
+
+### Custom renderer
+
+In addition to the built-in and node-email-templates based renderers you can also bring your own.
+
+```javascript
+var sendPwdReminder = transporter.templateSender({
+    render: function(context, callback){
+        callback(null, {
+            html: 'rendered html content',
+            text: 'rendered text content'
+        });
+    }
+});
+```
+
+**Example. Using swig-email-templates**
+
+```javascript
+var EmailTemplates = require('swig-email-templates');
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
+
+// create template renderer
+var templates = new EmailTemplates();
+
+// provide custom rendering function
+var sendPwdReminder = transporter.templateSender({
+    render: function(context, callback){
+        templates.render('pwreminder.html', context, function (err, html, text) {
+            if(err){
+                return callback(err);
+            }
+            callback(null, {
+                html: html,
+                text: text
+            });
+        });
+    }
+});
+...
 ```
 
 # Available Plugins
