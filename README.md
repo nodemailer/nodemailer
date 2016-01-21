@@ -515,6 +515,8 @@ var send = transporter.templateSender(templates, [defaults]);
 
 // send a message based on provided templates
 send(mailData, context, callback);
+// or
+send(mailData, context).then(...).catch(...);
 ```
 
 Where
