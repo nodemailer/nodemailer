@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0-rc.1 2016-01-25
+
+Sneaked in some new features even though it is already rc
+
+  * If a SMTP pool is closed while there are still messages in a queue, the message callbacks are invoked with an error
+  * In case of SMTP pool the transporter emits 'idle' when there is a free connection slot available
+  * Added method `isIdle()` that checks if a pool has still some free connection slots available
+
 ## 2.1.0-rc.0 2016-01-20
 
   * Bumped dependency versions

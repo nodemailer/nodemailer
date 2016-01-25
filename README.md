@@ -148,6 +148,22 @@ var poolConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com/?pool=true';
 var directConfig = 'direct:?name=hostname';
 ```
 
+### Events
+
+#### Event:'idle'
+
+Applies to pooled SMTP connections. Emitted by the transport object if connection pool has free connection slots. Check if a connection is still available with `isIdle()` method (returns `true` if a connection is still available). This allows to create push-like senders where messages are not queued into memory in a Node.js process but pushed and loaded through an external queue like RabbitMQ.
+
+```javascript
+var messages = [...'list of messages'];
+transporter.on('idle', function(){
+    // send next messages from the pending queue
+    while(transporter.isIdle() && messages.length){
+        transporter.send(messages.shift());
+    }
+});
+```
+
 ### Authentication
 
 If authentication data is not present, the connection is considered authenticated from the start. Set authentication data with `options.auth`
@@ -531,7 +547,7 @@ var send = transporter.templateSender({
     html: 'This template is used for the "html" field'
 });
 // external renderer
-var EmailTemplate = require('email-templates').EmailTemplate
+var EmailTemplate = require('email-templates').EmailTemplate;
 var send = transporter.templateSender(new EmailTemplate('template/directory'));
 ```
 

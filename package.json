@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.1.0-rc.0",
+  "version": "2.1.0-rc.1",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "mailcomposer": "3.3.2",
     "nodemailer-direct-transport": "2.0.1",
     "nodemailer-shared": "1.0.3",
-    "nodemailer-smtp-pool": "2.0.1",
+    "nodemailer-smtp-pool": "2.1.0",
     "nodemailer-smtp-transport": "2.0.1"
   },
   "devDependencies": {
@@ -45,7 +45,8 @@
     "nodemailer-markdown": "^1.0.0",
     "nodemailer-stub-transport": "^1.0.0",
     "sinon": "^1.17.2",
-    "smtp-server": "^1.7.1"
+    "smtp-server": "^1.7.1",
+    "swig-email-templates": "^2.0.0"
   },
   "engines": {
     "node": ">=0.10.0"

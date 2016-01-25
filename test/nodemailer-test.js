@@ -543,6 +543,51 @@ describe('Nodemailer integration tests', function () {
                 mailData.text.emit('error', new Error('Stream error'));
             }, 400);
         });
+
+        it('should send mail on idle', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false,
+                debug: true
+            });
+
+            var mailData = [{
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            }];
+
+            nm.on('idle', function () {
+                if (nm.isIdle() && mailData.length) {
+                    nm.sendMail(mailData.pop(), function (err, info) {
+                        nm.close();
+                        expect(err).to.not.exist;
+                        expect(info.accepted).to.deep.equal([
+                            'to1@valid.recipient',
+                            'to2@valid.recipient'
+                        ]);
+                        expect(info.rejected).to.deep.equal([
+                            'to@invalid.recipient'
+                        ]);
+                        expect(info.messageId).to.equal('abc@def');
+                        expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                        done();
+                    });
+                }
+            });
+        });
     });
 });
 
