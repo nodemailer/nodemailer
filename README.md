@@ -2,7 +2,7 @@
 
 Send e-mails from Node.js – easy as cake!
 
-<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
+<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
 # Notes and information
 ## Nodemailer supports
@@ -18,8 +18,8 @@ Send e-mails from Node.js – easy as cake!
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
   - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
   - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
-  - Easy rollbacks since downgrading Nodemailer also downgrades all dependencies to a previously known stable state
-  - Reasonable footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
+  - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
+  - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
