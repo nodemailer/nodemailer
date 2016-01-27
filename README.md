@@ -304,6 +304,17 @@ Advanced fields:
 
 All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
+> **NB!** When using readable streams as any kind of content and sending fails then Nodemailer does not abort the already opened but not yet finished stream automatically, you need to do this yourself
+
+```javascript
+var htmlstream = fs.createReadStream('content.html');
+transport.sendMail({html: htmlstream}, function(err){
+    if(err){
+        // check if htmlstream is still open and close it to clean up
+    }
+});
+```
+
 ## Attachments
 Attachment object consists of the following properties:
 
