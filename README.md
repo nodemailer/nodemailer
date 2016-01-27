@@ -19,6 +19,7 @@ Send e-mails from Node.js – easy as cake!
   - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
   - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
   - Easy rollbacks since downgrading Nodemailer also downgrades all dependencies to a previously known stable state
+  - Reasonable footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
