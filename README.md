@@ -17,6 +17,8 @@ Send e-mails from Node.js – easy as cake!
   - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
   - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
+  - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
+  - Easy rollbacks since downgrading Nodemailer also downgrades all dependencies to a previously known stable state
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
