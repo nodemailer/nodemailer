@@ -1,7 +1,7 @@
 # RabbitMQ queue example
 
 This example uses RabbitMQ queue as a source for messages. In this case the Node.js app itself does
-never cache more than preset amount of messages (for this example the limit is 10 messages) which allows you to send even millions of messages without worrying that your app would run out of memory. You also wouldn't loose messages, if sender crashes then RabbitMQ requeues unacked messages.
+never cache more than preset amount of messages (for this example the limit is 10 messages) which allows you to send even millions of messages in the fastest way without worrying that your app would run out of memory. You also wouldn't loose messages, if sender crashes then RabbitMQ requeues unacked messages.
 
 ## Files
 
