@@ -10,7 +10,7 @@ var amqp = require('amqp');
 var queueHost = 'amqp://test:test@192.168.56.52';
 var queueName = 'outgoing';
 
-var totalMessages = 100000;
+var totalMessages = 1000;
 
 // Create connection to RabbitMQ
 var queueConnection = amqp.createConnection({
