@@ -20,6 +20,7 @@ var smtpHost = {
         pass: 'testpass'
     },
     tls:{
+        // testserver uses self signed certificate, so we need to lax a bit
         rejectUnauthorized: false
     },
     logger: false
@@ -58,19 +59,23 @@ queueConnection.on('ready', function () {
                 deliveryTag: deliveryInfo.deliveryTag.toString('hex'),
                 ack: ack
             });
-            // try to flush cached messages
+            // try to flush cached messages by sending these to SMTP
             flushWaitingMessages();
         });
     });
 });
 
-// whenever transporter gets into idling, try to send some mail
+// Whenever transporter gets into idling, try to send some mail
 transporter.on('idle', flushWaitingMessages);
 
 // Flushes cached messages to nodemailer for delivery
 function flushWaitingMessages() {
     // actual send function
     var send = function (data) {
+        // sendMail does not immediatelly send, instead it tries to allocate a free connection to SMTP server
+        // and if fails, then pushes the message into internal queue. As we only prefetch 10 messages
+        // then the internal queue can never grow into something too large. At most there will be 5 messages
+        // idling in the queue (another 5 are being currently sent by the default number of 5 connections)
         transporter.sendMail(data.message, function (err, info) {
             if (err) {
                 console.log('Message failed (%s): %s', data.deliveryTag, err.message);
