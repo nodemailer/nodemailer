@@ -706,7 +706,7 @@ To prevent having login issues you should either use XOAUTH2 (see details [here]
 # Delivering Bulk Mail
 Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
 1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
-2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
+2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback). See [rabbit-queue](examples/rabbit-queue) for an example of using RabbitMQ queues with Nodemailer connection pool.
 3. **Use [nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
 4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
 5. **Set `maxConnections` to whatever your system can handle.** There might be limits to this on the receiving side, so do not set it to `Infinity`, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
@@ -882,6 +882,12 @@ transport.send = function(mail, callback){
 If your transport needs to be closed explicitly, you can implement a `close` method.
 
 This is purely optional feature and only makes sense in special contexts (eg. closing a SMTP pool).
+
+**`transport.isIdle()`**
+
+If your transport is able to notify about idling state by issuing `'idle'` events then this method should return if the transport is still idling or not.
+
+**Wrapping up**
 
 Once you have a transport object, you can create a mail transporter out of it.
 
