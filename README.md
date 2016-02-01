@@ -2,7 +2,7 @@
 
 Send e-mails from Node.js – easy as cake!
 
-<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> [![Build Status](https://secure.travis-ci.org/nodemailer/nodemailer.svg)](http://travis-ci.org/nodemailer/nodemailer) <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a>
+<a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> <a href="http://travis-ci.org/nodemailer/nodemailer"><img src="https://secure.travis-ci.org/nodemailer/nodemailer.svg" alt="Build Status" height="18"></a> <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
 # Notes and information
 ## Nodemailer supports
@@ -13,9 +13,13 @@ Send e-mails from Node.js – easy as cake!
   - **Attachments** (including attachment **streaming** for sending larger files)
   - **Embedded images** in HTML
   - Secure e-mail delivery using **SSL/STARTTLS**
-  - Different **transport methods**, either using built in transports or from external plugins
+  - Different **transport methods**, either using built-in SMTP transports or from external plugins
   - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
+  - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
+  - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
+  - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
+  - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -145,6 +149,22 @@ Alternatively you could use connection url. Use `smtp:`, `smtps:` or `direct:` a
 var smtpConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com';
 var poolConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com/?pool=true';
 var directConfig = 'direct:?name=hostname';
+```
+
+### Events
+
+#### Event:'idle'
+
+Applies to pooled SMTP connections. Emitted by the transport object if connection pool has free connection slots. Check if a connection is still available with `isIdle()` method (returns `true` if a connection is still available). This allows to create push-like senders where messages are not queued into memory in a Node.js process but pushed and loaded through an external queue like RabbitMQ.
+
+```javascript
+var messages = [...'list of messages'];
+transporter.on('idle', function(){
+    // send next messages from the pending queue
+    while(transporter.isIdle() && messages.length){
+        transporter.send(messages.shift());
+    }
+});
 ```
 
 ### Authentication
@@ -287,6 +307,17 @@ Advanced fields:
 
 All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
+> **NB!** When using readable streams as any kind of content and sending fails then Nodemailer does not abort the already opened but not yet finished stream automatically, you need to do this yourself
+
+```javascript
+var htmlstream = fs.createReadStream('content.html');
+transport.sendMail({html: htmlstream}, function(err){
+    if(err){
+        // check if htmlstream is still open and close it to clean up
+    }
+});
+```
+
 ## Attachments
 Attachment object consists of the following properties:
 
@@ -297,6 +328,7 @@ Attachment object consists of the following properties:
   - **contentDisposition** - optional content disposition type for the attachment, defaults to 'attachment'
   - **cid** - optional content id for using inline images in HTML message source
   - **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
+  - **headers** - custom headers for the attachment node. Same usage as with message headers
 
 Attachments can be added as many as you want.
 
@@ -367,6 +399,65 @@ var mailOptions = {
 ```
 
 Alternatives can be added as many as you want.
+
+## Headers
+
+Most messages do not need any kind of tampering with the headers. If you do need to add custom headers either to the message or to an attachment/alternative, you can add these values with the `headers` option. Values are processed automatically, non-ascii strings are encoded as mime-words and long lines are folded.
+
+```javascript
+var mail = {
+    ...,
+    headers: {
+        'x-my-key': 'header value',
+        'x-another-key': 'another value'
+    }
+}
+
+// X-My-Key: header value
+// X-Another-Key: another value
+```
+
+### Multiple rows
+
+The same header key can be used multiple times if the header value is an Array
+
+```javascript
+var mail = {
+    ...,
+    headers: {
+        'x-my-key': [
+            'value for row 1',
+            'value for row 2',
+            'value for row 3'
+        ]
+    }
+}
+
+// X-My-Key: value for row 1
+// X-My-Key: value for row 2
+// X-My-Key: value for row 3
+```
+
+### Prepared headers
+
+Normally all headers are encoded and folded to meet the requirement of having plain-ASCII messages with lines no longer than 78 bytes. Sometimes it is preferable to not modify header values and pass these as provided. This can be achieved with the `prepared` option:
+
+```javascript
+var mail = {
+    ...,
+    headers: {
+        'x-processed': 'a really long header or value with non-ascii characters 👮',
+        'x-unprocessed': {
+            prepared: true,
+            value: 'a really long header or value with non-ascii characters 👮'
+        }
+    }
+}
+
+// X-Processed: a really long header or value with non-ascii characters
+//  =?UTF-8?Q?=F0=9F=91=AE?=
+// X-Unprocessed: a really long header or value with non-ascii characters 👮
+```
 
 ## Address Formatting
 All the e-mail addresses can be plain e-mail addresses
@@ -444,6 +535,155 @@ var mailOptions = {
 }
 ```
 
+## Using templates
+
+Nodemailer allows to use simple built-in templating or alternatively external renderers for common message types.
+
+```javascript
+var transporter = nodemailer.createTransport(...);
+var send = transporter.templateSender(templates, [defaults]);
+
+// send a message based on provided templates
+send(mailData, context, callback);
+// or
+send(mailData, context).then(...).catch(...);
+```
+
+Where
+
+  * **templates** is an object with template strings for built-in renderer or an [EmailTemplate](https://github.com/niftylettuce/node-email-templates) object for more complex rendering
+
+```javascript
+// built-in renderer
+var send = transporter.templateSender({
+    subject: 'This template is used for the "subject" field',
+    text: 'This template is used for the "text" field',
+    html: 'This template is used for the "html" field'
+});
+// external renderer
+var EmailTemplate = require('email-templates').EmailTemplate;
+var send = transporter.templateSender(new EmailTemplate('template/directory'));
+```
+
+  * **defaults** is an optional object of message data fields that are set for every message sent using this sender
+  * **mailData** includes message fields for current message
+  * **context** is an object with template replacements, where `key` replaces `{{key}}` when using the built-in renderer
+
+```javascript
+var templates = {
+    text: 'Hello {{username}}!'
+};
+var context = {
+    username: 'User Name'
+};
+// results in "Hello, User Name!" as the text body
+// of the message when using built-in renderer
+```
+
+  * **callback** is the `transporter.sendMail` callback (if not set then the function returns a Promise)
+
+> **NB!** If using built-in renderer then template variables are HTML escaped for the `html` field but kept as is for other fields
+
+**Example 1. Built-in renderer**
+
+```javascript
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
+
+// create template based sender function
+var sendPwdReminder = transporter.templateSender({
+    subject: 'Password reminder for {{username}}!',
+    text: 'Hello, {{username}}, Your password is: {{ password }}',
+    html: '<b>Hello, <strong>{{username}}</strong>, Your password is:\n<b>{{ password }}</b></p>'
+}, {
+    from: 'sender@example.com',
+});
+
+// use template based sender to send a message
+sendPwdReminder({
+    to: 'receiver@example.com'
+}, {
+    username: 'Node Mailer',
+    password: '!"\'<>&some-thing'
+}, function(err, info){
+    if(err){
+       console.log('Error');
+    }else{
+        console.log('Password reminder sent');
+    }
+});
+```
+
+**Example 2. External renderer**
+
+```javascript
+var EmailTemplate = require('email-templates').EmailTemplate;
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
+
+// create template based sender function
+// assumes text.{ext} and html.{ext} in template/directory
+var sendPwdReminder = transporter.templateSender(new EmailTemplate('template/directory'), {
+    from: 'sender@example.com',
+});
+
+// use template based sender to send a message
+sendPwdReminder({
+    to: 'receiver@example.com',
+    // EmailTemplate renders html and text but no subject so we need to
+    // set it manually either here or in the defaults section of templateSender()
+    subject: 'Password reminder'
+}, {
+    username: 'Node Mailer',
+    password: '!"\'<>&some-thing'
+}, function(err, info){
+    if(err){
+       console.log('Error');
+    }else{
+        console.log('Password reminder sent');
+    }
+});
+```
+
+### Custom renderer
+
+In addition to the built-in and node-email-templates based renderers you can also bring your own.
+
+```javascript
+var sendPwdReminder = transporter.templateSender({
+    render: function(context, callback){
+        callback(null, {
+            html: 'rendered html content',
+            text: 'rendered text content'
+        });
+    }
+});
+```
+
+**Example. Using swig-email-templates**
+
+```javascript
+var EmailTemplates = require('swig-email-templates');
+var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
+
+// create template renderer
+var templates = new EmailTemplates();
+
+// provide custom rendering function
+var sendPwdReminder = transporter.templateSender({
+    render: function(context, callback){
+        templates.render('pwreminder.html', context, function (err, html, text) {
+            if(err){
+                return callback(err);
+            }
+            callback(null, {
+                html: html,
+                text: text
+            });
+        });
+    }
+});
+...
+```
+
 # Available Plugins
 
 In addition to built-in e-mail fields you can extend these by using plugins.
@@ -465,20 +705,20 @@ To prevent having login issues you should either use XOAUTH2 (see details [here]
 
 # Delivering Bulk Mail
 Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once (originally published as a [blog post](http://www.andrisreinman.com/delivering-bulk-mail-with-nodemailer/)).
-1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
-2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback).
-3. **Use [nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
-4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
-5. **Set `maxConnections` to whatever your system can handle.** There might be limits to this on the receiving side, so do not set it to `Infinity`, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
-6. **Use file paths not URLs for attachments.** If you are reading the same file from the disk several million times, the contents for the file probably get cached somewhere between your app and the physical hard disk, so you get your files back quicker (assuming you send the same attachment to all recipients). There is nothing like this for URLs – every new message makes a fresh HTTP fetch to receive the file from the server.
-7. If the SMTP service accepts HTTP API as well you still might prefer SMTP and not the HTTP API as HTTP introduces additional overhead. You probably want to use HTTP over SMTP if the HTTP API is bulk aware – you send a message template and the list of 10 million recipients and the service compiles this information into e-mails itself, you can't beat this with SMTP.
+  1. **Use a dedicated SMTP provider** like [SendGrid](http://mbsy.co/sendgrid/12237825) or [Mailgun](http://www.mailgun.com/) or any other. Do not use services that offer SMTP as a sideline or for free (that's Gmail or the SMTP of your homepage hosting company) to send bulk mail – you'll hit all the hard limits immediatelly or get labelled as spam. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. E-mail might seem free but it is only free to a certain amount and that amount certainly does not include 10 million e-mails in a short period of time.
+  2. **Use a dedicated queue manager,** for example [RabbitMQ](http://www.rabbitmq.com/) for queueing the e-mails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there's a free spot in the connection pool (previously sent message returns its callback). See [rabbit-queue](examples/rabbit-queue) for an example of using RabbitMQ queues with Nodemailer connection pool.
+  3. **Use [nodemailer-smtp-pool](https://github.com/nodemailer/nodemailer-smtp-pool) transport.** You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single e-mail. Pooled connections make it possible to bring this overhead to a minimum.
+  4. **Set `maxMessages` option to `Infinity`** for the nodemailer-smtp-pool transport. Dedicated SMTP providers happily accept all your e-mails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
+  5. **Set `maxConnections` to whatever your system can handle.** There might be limits to this on the receiving side, so do not set it to `Infinity`, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
+  6. **Use file paths not URLs for attachments.** If you are reading the same file from the disk several million times, the contents for the file probably get cached somewhere between your app and the physical hard disk, so you get your files back quicker (assuming you send the same attachment to all recipients). There is nothing like this for URLs – every new message makes a fresh HTTP fetch to receive the file from the server.
+  7. If the SMTP service accepts HTTP API as well you still might prefer SMTP and not the HTTP API as HTTP introduces additional overhead. You probably want to use HTTP over SMTP if the HTTP API is bulk aware – you send a message template and the list of 10 million recipients and the service compiles this information into e-mails itself, you can't beat this with SMTP.
 
 # Implementing plugins and transports
 
 There are 3 stages a plugin can hook to
-1. **'compile'** is the step where e-mail data is set but nothing has been done with it yet. At this step you can modify mail options, for example modify `html` content, add new headers etc. Example: [nodemailer-markdown](https://github.com/andris9/nodemailer-markdown) that allows you to use `markdown` source instead of `text` and `html`.
-2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw e-mail will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
-3. **Transport** step where the raw e-mail is streamed to destination. Example: [nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport) that streams the message to a SMTP server.
+  1. **'compile'** is the step where e-mail data is set but nothing has been done with it yet. At this step you can modify mail options, for example modify `html` content, add new headers etc. Example: [nodemailer-markdown](https://github.com/andris9/nodemailer-markdown) that allows you to use `markdown` source instead of `text` and `html`.
+  2. **'stream'** is the step where message tree has been compiled and is ready to be streamed. At this step you can modify the generated MIME tree or add a transform stream that the generated raw e-mail will be piped through before passed to the transport object. Example: [nodemailer-dkim](https://github.com/andris9/nodemailer-dkim) that adds DKIM signature to the generated message.
+  3. **Transport** step where the raw e-mail is streamed to destination. Example: [nodemailer-smtp-transport](https://github.com/nodemailer/nodemailer-smtp-transport) that streams the message to a SMTP server.
 
 ## Including plugins
 'compile' and 'stream' plugins can be attached with `use(plugin)` method
@@ -642,6 +882,12 @@ transport.send = function(mail, callback){
 If your transport needs to be closed explicitly, you can implement a `close` method.
 
 This is purely optional feature and only makes sense in special contexts (eg. closing a SMTP pool).
+
+**`transport.isIdle()`**
+
+If your transport is able to notify about idling state by issuing `'idle'` events then this method should return if the transport is still idling or not.
+
+**Wrapping up**
 
 Once you have a transport object, you can create a mail transporter out of it.
 

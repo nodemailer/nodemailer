@@ -9,6 +9,10 @@ var sinon = require('sinon');
 var SMTPServer = require('smtp-server').SMTPServer;
 var crypto = require('crypto');
 var stream = require('stream');
+var stubTransport = require('nodemailer-stub-transport');
+var EmailTemplate = require('email-templates').EmailTemplate;
+var path = require('path');
+var templateDir = path.join(__dirname, 'fixtures', 'welcome-email');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -539,6 +543,51 @@ describe('Nodemailer integration tests', function () {
                 mailData.text.emit('error', new Error('Stream error'));
             }, 400);
         });
+
+        it('should send mail on idle', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false,
+                debug: true
+            });
+
+            var mailData = [{
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            }];
+
+            nm.on('idle', function () {
+                if (nm.isIdle() && mailData.length) {
+                    nm.sendMail(mailData.pop(), function (err, info) {
+                        nm.close();
+                        expect(err).to.not.exist;
+                        expect(info.accepted).to.deep.equal([
+                            'to1@valid.recipient',
+                            'to2@valid.recipient'
+                        ]);
+                        expect(info.rejected).to.deep.equal([
+                            'to@invalid.recipient'
+                        ]);
+                        expect(info.messageId).to.equal('abc@def');
+                        expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                        done();
+                    });
+                }
+            });
+        });
     });
 });
 
@@ -672,5 +721,100 @@ describe('direct-transport tests', function () {
         setTimeout(function () {
             mailData.text.emit('error', new Error('Stream error'));
         }, 400);
+    });
+});
+
+describe('Generated messages tests', function () {
+    it('should set Message-Id automatically', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var mailData = {
+            from: 'Sender Name 👻 <sender@example.com>',
+            to: ['Recipient Name 1 👻 <recipient1@example.com>', 'Recipient Name 2 👻 <recipient2@example.com>'],
+            subject: 'test 💀',
+            text: 'test message 👽'
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.envelope).to.deep.equal({
+                from: 'sender@example.com',
+                to: ['recipient1@example.com', 'recipient2@example.com']
+            });
+            expect(info.messageId).to.exist;
+            expect(info.response.toString()).to.exist;
+            done();
+        });
+    });
+
+    it('should send mail using a template', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+
+        var sendPwdReminder = nm.templateSender({
+            subject: 'Password reminder for {{username}}!',
+            text: 'Hello, {{username}}, Your password is: {{ password }}',
+            html: '<b>Hello, <strong>{{username}}</strong>, Your password is:\n<b>{{ password }}</b></p>'
+        }, {
+            from: 'sender@example.com',
+            headers: {
+                'X-Key1': 'value1'
+            }
+        });
+
+        sendPwdReminder(
+            // keep indent
+            {
+                to: 'receiver@example.com',
+                headers: {
+                    'X-Key2': 'value2'
+                }
+            }, {
+                username: 'Node Mailer',
+                password: '!"\'<>&some-thing'
+            }
+        ).then(function (info) {
+            var msg = info.response.toString();
+
+            expect(msg.indexOf('\r\nFrom: sender@example.com\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nTo: receiver@example.com\r\n')).to.be.gte(0);
+
+            expect(msg.indexOf('\r\nX-Key1: value1\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nX-Key2: value2\r\n')).to.be.gte(0);
+
+            expect(msg.indexOf('\r\nSubject: Password reminder for Node Mailer!\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\r\nHello, Node Mailer, Your password is: !"\'<>&some-thing\r\n')).to.be.gte(0);
+            expect(msg.indexOf('\n<b>!&quot;&#039;&lt;&gt;&amp;some-thing</b></p>\r\n')).to.be.gte(0);
+
+            done();
+        }).catch(function (err) {
+            expect(err).to.not.exist;
+        });
+    });
+
+    it('should send mail using external renderer', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+
+        var sendWelcome = nm.templateSender(new EmailTemplate(templateDir), {
+            from: 'sender@example.com'
+        });
+
+        sendWelcome(
+            // keep indent
+            {
+                to: 'receiver@example.com'
+            }, {
+                name: {
+                    first: 'Node',
+                    last: 'Mailer'
+                }
+            }
+        ).then(function (info) {
+            var msg = info.response.toString();
+
+            expect(msg.indexOf('\nHello Mailer, Node!\n')).to.be.gte(0);
+            expect(msg.indexOf('<h1 style="text-align: center;">Hello Mailer, Node!</h1>')).to.be.gte(0);
+
+            done();
+        }).catch(function (err) {
+            expect(err).to.not.exist;
+        });
     });
 });

@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 'use strict';
 
 // This example demonstrates the 'stream' step with a plugin that converts all spaces to tabs

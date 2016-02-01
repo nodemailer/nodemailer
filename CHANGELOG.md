@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.1.0-rc.1 2016-01-25
+
+Sneaked in some new features even though it is already rc
+
+  * If a SMTP pool is closed while there are still messages in a queue, the message callbacks are invoked with an error
+  * In case of SMTP pool the transporter emits 'idle' when there is a free connection slot available
+  * Added method `isIdle()` that checks if a pool has still some free connection slots available
+
+## 2.1.0-rc.0 2016-01-20
+
+  * Bumped dependency versions
+
+## 2.1.0-beta.3 2016-01-20
+
+  * Added support for node-email-templates templating in addition to the built-in renderer
+
+## 2.1.0-beta.2 2016-01-20
+
+  * Implemented simple templating feature
+
+## 2.1.0-beta.1 2016-01-20
+
+  * Allow using prepared header values that are not folded or encoded by Nodemailer
+
+## 2.1.0-beta.0 2016-01-20
+
+  * Use the same header custom structure for message root, attachments and alternatives
+  * Ensure that Message-Id exists when accessing message
+  * Allow using array values for custom headers (inserts every value in its own row)
+
 ## 2.0.0 2016-01-11
 
   * Released rc.2 as stable
