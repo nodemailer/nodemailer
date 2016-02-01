@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 2016-02-01
+
+Republishing 2.1.0-rc.1 as stable. To recap, here's the notable changes between v2.0 and v2.1:
+
+  * Implemented templating support. You can either use a simple built-in renderer or some external advanced renderer, eg. [node-email-templates](https://github.com/niftylettuce/node-email-templates). Templating [docs](http://nodemailer.com/2-0-0-beta/templating/).
+  * Updated smtp-pool to emit 'idle' events in order to handle message queue more effectively
+  * Updated custom header handling, works everywhere the same now, no differences between adding custom headers to the message or to an attachment
+
 ## 2.1.0-rc.1 2016-01-25
 
 Sneaked in some new features even though it is already rc
