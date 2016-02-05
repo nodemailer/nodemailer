@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-beta.0 2016-02-05
+
+  * Added new message option `raw` to use an existing MIME message instead of generating a new one
+
 ## 2.1.0 2016-02-01
 
 Republishing 2.1.0-rc.1 as stable. To recap, here's the notable changes between v2.0 and v2.1:

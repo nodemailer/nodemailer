@@ -817,4 +817,20 @@ describe('Generated messages tests', function () {
             expect(err).to.not.exist;
         });
     });
+
+    it('should use pregenerated message', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var raw = 'Content-Type: text/plain\r\n' +
+            'Subject: test message\r\n' +
+            '\r\n' +
+            'Hello world!';
+        var mailData = {
+            raw: raw
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.response.toString()).to.equal(raw);
+            done();
+        });
+    });
 });
