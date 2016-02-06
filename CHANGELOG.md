@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0-beta.1 2016-02-06
+
+  * Added new message option `icalEvent` to embed iCalendar events. Example [here](examples/ical-event.js)
+  * Added new attachment option `raw` to use prepared MIME contents instead of generating a new one. This might be useful when you want to handcraft some parts of the message yourself, for example if you want to inject a PGP encrypted message as the contents of a MIME node
+
 ## 2.2.0-beta.0 2016-02-05
 
   * Added new message option `raw` to use an existing MIME message instead of generating a new one

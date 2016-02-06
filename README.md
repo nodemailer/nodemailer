@@ -296,7 +296,8 @@ Advanced fields:
   - **replyTo** - An e-mail address that will appear on the _Reply-To:_ field
   - **inReplyTo** - The message-id this message is replying to
   - **references** - Message-id list (an array or space separated string)
-  - **watchHtml** - Apple Watch specific HTML version of the message (_experimental_)
+  - **watchHtml** - Apple Watch specific HTML version of the message. Same usage as with `text` or `html`
+  - **icalEvent** – iCalendar event to use as an alternative. Same usage as with `text` or `html`. Additionally you could set `method` property (defaults to `'PUBLISH'`). See an example [here](examples/ical-event.js)
   - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
   - **headers** - An object or array of additional header fields (e.g. _{"X-Key-Name": "key value"}_ or _[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]_)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
@@ -330,6 +331,7 @@ Attachment object consists of the following properties:
   - **cid** - optional content id for using inline images in HTML message source
   - **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
   - **headers** - custom headers for the attachment node. Same usage as with message headers
+  - **raw** - is an optional special value that overrides entire contents of current mime node including mime headers. Useful if you want to prepare node contents yourself
 
 Attachments can be added as many as you want.
 
