@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-beta.5 2016-02-06
+
+  * Added new message option `list` for setting List-\* headers
+
 ## 2.2.0-beta.3 2016-02-06
 
   * Bumped dependencies
