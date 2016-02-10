@@ -342,6 +342,7 @@ Advanced fields:
   - **encoding** - optional transfer encoding for the textual parts
   - **raw** - existing MIME message to use instead of generating a new one. If this value is set then you should also set the envelope object (if required) as the provided raw message is not parsed. The value could be a string, a buffer, a stream or an attachment-like object.
   - **textEncoding** - force content-transfer-encoding for text values (either *quoted-printable* or *base64*). By default the best option is detected (for lots of ascii use *quoted-printable*, otherwise *base64*)
+  - **list** - helper for setting List-\* headers
 
 All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
@@ -721,6 +722,53 @@ var sendPwdReminder = transporter.templateSender({
     }
 });
 ...
+```
+
+## List-\* headers
+
+Nodemailer includes a helper for setting more complex List-\* headers with ease.
+Use message option `list` to provide all list headers. You do not need to add protocol
+prefix for the urls, or enclose the url between &lt; and &gt;, this is handled automatically.
+
+If the value is a string, it is treated as an URL. If you want to provide an optional comment,
+use `{url:'url', comment: 'comment'}` object. If you want to have multiple header rows for the
+same List-\* key, use an array as the value for this key. If you want to have multiple URLs for
+single List-\* header row, use an array inside an array.
+
+> List-\* headers are treated as pregenerated values, this means that lines are not folded and strings
+are not encoded. Use only ascii characters and be prepared for longer header lines.
+
+```javascript
+var mailOptions = {
+    list: {
+        // List-Help: <mailto:admin@example.com?subject=help>
+        help: 'admin@example.com?subject=help',
+        // List-Unsubscribe: <http://example.com> (Comment)
+        unsubscribe: {
+            url: 'http://example.com',
+            comment: 'Comment'
+        },
+        // List-Subscribe: <mailto:admin@example.com?subject=subscribe>
+        // List-Subscribe: <http://example.com> (Subscribe)
+        subscribe: [
+            'admin@example.com?subject=subscribe',
+            {
+                url: 'http://example.com',
+                comment: 'Subscribe'
+            }
+        ],
+        // List-Post: <http://example.com/post>, <mailto:admin@example.com?subject=post> (Post)
+        post: [
+            [
+                'http://example.com/post',
+                {
+                    url: 'admin@example.com?subject=post',
+                    comment: 'Post'
+                }
+            ]
+        ]
+    }
+};
 ```
 
 # Available Plugins

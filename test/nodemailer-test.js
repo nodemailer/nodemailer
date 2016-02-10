@@ -829,6 +829,56 @@ describe('Generated messages tests', function () {
         });
     });
 
+    it('should set List-* headers', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var mailData = {
+            list: {
+                help: [
+                    // keep indent
+                    {
+                        url: 'list@host.com?subject=help',
+                        comment: 'List Instructions'
+                    }, 'list-manager@host.com?body=info', {
+                        url: 'list-info@host.com>',
+                        comment: 'Info about the list'
+                    },
+                    [
+                        'http://www.host.com/list/', 'list-info@host.com'
+                    ],
+                    [
+                        // keep indent
+                        {
+                            url: 'ftp://ftp.host.com/list.txt',
+                            comment: 'FTP'
+                        },
+                        'list@host.com?subject=help'
+                    ]
+                ],
+                unsubscribe: [
+                    'list@host.com?subject=unsubscribe', {
+                        url: 'list-manager@host.com?body=unsubscribe%20list',
+                        commend: 'Use this command to get off the list'
+                    },
+                    'list-off@host.com', [
+                        'http://www.host.com/list.cgi?cmd=unsub&lst=list',
+                        'list-request@host.com?subject=unsubscribe'
+                    ]
+                ],
+                post: [
+                    [
+                        'admin@exmaple.com?subject=post',
+                        'admin@exmaple2.com?subject=post'
+                    ]
+                ]
+            }
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.response.toString().match(/^List\-/gim).length).to.equal(10);
+            done();
+        });
+    });
+
     it('should send mail using a template', function (done) {
         var nm = nodemailer.createTransport(stubTransport());
 
