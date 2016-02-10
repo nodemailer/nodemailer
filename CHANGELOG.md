@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0-beta.3 2016-02-06
+
+  * Bumped dependencies
+  * Add simple proxy support with `getSocket` method
+  * Added new message option `textEncoding`
+  * If `textEncoding` is not set then detect best encoding automatically
+
 ## 2.2.0-beta.1 2016-02-06
 
   * Added new message option `icalEvent` to embed iCalendar events. Example [here](examples/ical-event.js)
