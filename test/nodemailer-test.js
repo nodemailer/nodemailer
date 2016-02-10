@@ -13,6 +13,7 @@ var stubTransport = require('nodemailer-stub-transport');
 var EmailTemplate = require('email-templates').EmailTemplate;
 var path = require('path');
 var templateDir = path.join(__dirname, 'fixtures', 'welcome-email');
+var net = require('net');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -542,6 +543,89 @@ describe('Nodemailer integration tests', function () {
             setTimeout(function () {
                 mailData.text.emit('error', new Error('Stream error'));
             }, 400);
+        });
+
+        it('should return proxy error, not send', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'example.com',
+                port: 25,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                maxConnections: 1,
+                logger: false,
+                debug: true
+            });
+
+            nm.getSocket = function (options, callback) {
+                return callback(new Error('PROXY ERROR'));
+            };
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err) {
+                nm.close();
+                expect(err).to.exist;
+                done();
+            });
+        });
+
+        it('should send using proxy call', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                maxConnections: 1,
+                logger: false,
+                debug: true
+            });
+
+            var socketCreated = false;
+
+            nm.getSocket = function (options, callback) {
+                var socket = net.connect(PORT_NUMBER, 'localhost', function () {
+                    socketCreated = true;
+                    return callback(null, {
+                        connection: socket
+                    });
+                });
+            };
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                nm.close();
+                expect(socketCreated).to.be.true;
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal(['to1@valid.recipient', 'to2@valid.recipient']);
+                done();
+            });
         });
 
         it('should send mail on idle', function (done) {

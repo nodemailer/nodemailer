@@ -20,6 +20,7 @@ Send e-mails from Node.js – easy as cake!
   - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
   - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
   - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
+  - Support for custom **proxies**
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -150,6 +151,40 @@ var smtpConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com';
 var poolConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com/?pool=true';
 var directConfig = 'direct:?name=hostname';
 ```
+
+### Proxy support
+
+Nodemailer does not have built-in support for proxy protocols. To use proxies it is
+possible to connect proxied sockets yourself and pass these to Nodemailer with the `getSocket` method.
+
+```javascript
+// This method is called every time Nodemailer needs a new
+// connection against the SMTP server
+transporter.getSocket = function(options, callback){
+    getProxySocketSomehow(options.port, options.host, function(err, socket){
+        if(err){
+            return callback(err);
+        }
+        callback(null, {
+            connection: socket
+        });
+    });
+};
+```
+
+Normally proxies provide plaintext sockets, so if the connection is supposed to use TLS
+then Nodemailer upgrades the socket from plaintext to TLS itself. If the socket is
+already upgraded then you can pass additional option `secured: true` to prevent Nodemailer
+from upgrading the already upgraded socket.
+
+```javascript
+callback(null, {
+    connection: socket,
+    secured: true
+});
+```
+
+See complete example using SOCKS5 protocol [here](examples/proxy.js).
 
 ### Events
 
