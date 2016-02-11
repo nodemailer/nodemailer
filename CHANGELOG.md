@@ -1,6 +1,11 @@
 # Changelog
 
-## 2.2.0-beta.5 2016-02-06
+## 2.2.0-beta.6 2016-02-11
+
+  * Added new method `verify` to check SMTP configuration
+  * Direct transport uses STARTTLS by default, fallbacks to plaintext if STARTTLS fails
+
+## 2.2.0-beta.5 2016-02-10
 
   * Added new message option `list` for setting List-\* headers
 

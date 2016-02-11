@@ -261,6 +261,21 @@ smtpTransport({
 
 See the list of all supported services [here](https://github.com/andris9/nodemailer-wellknown#supported-services).
 
+## Verify SMTP connection configuration
+
+You can verify your SMTP configuration with `verify(callback)` call. If it returns an error, then something is not correct, otherwise the server is ready to accept messages.
+
+```javascript
+// verify connection configuration
+transporter.verify(function(error, success) {
+   if (error) {
+        console.log(error);
+   } else {
+        console.log('Server is ready to take our messages');
+   }
+});
+```
+
 ## Send using a transport plugin
 
 In addition to SMTP you can use other kind of transports as well with Nodemailer. See *Available Transports* below for known transports.

@@ -234,6 +234,43 @@ describe('Nodemailer integration tests', function () {
 
     describe('smtp-transport tests', function () {
 
+        it('Should verify connection with success', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err, success) {
+                expect(err).to.not.exist;
+                expect(success).to.be.true;
+                done();
+            });
+        });
+
+        it('Should not verify connection', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                requireTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err) {
+                expect(err).to.exist;
+                done();
+            });
+        });
+
         it('should log in and send mail', function (done) {
             var nm = nodemailer.createTransport({
                 host: 'localhost',
@@ -436,6 +473,48 @@ describe('Nodemailer integration tests', function () {
     });
 
     describe('smtp-pool tests', function () {
+
+        it('Should verify connection with success', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                pool: true,
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err, success) {
+                expect(err).to.not.exist;
+                expect(success).to.be.true;
+                nm.close();
+                done();
+            });
+        });
+
+        it('Should not verify connection', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                pool: true,
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                requireTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err) {
+                expect(err).to.exist;
+                nm.close();
+                done();
+            });
+        });
+
         it('should log in and send mail', function (done) {
             var nm = nodemailer.createTransport({
                 pool: true,

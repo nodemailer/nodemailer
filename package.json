@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.2.0-beta.5",
+  "version": "2.2.0-beta.6",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -28,17 +28,17 @@
   "dependencies": {
     "libmime": "2.0.2",
     "mailcomposer": "3.6.2",
-    "nodemailer-direct-transport": "2.1.1",
+    "nodemailer-direct-transport": "3.0.1",
     "nodemailer-shared": "1.0.4",
-    "nodemailer-smtp-pool": "2.2.1",
-    "nodemailer-smtp-transport": "2.1.1"
+    "nodemailer-smtp-pool": "2.3.0",
+    "nodemailer-smtp-transport": "2.2.0"
   },
   "devDependencies": {
     "amqp": "^0.2.4",
     "chai": "^3.5.0",
     "email-templates": "^2.1.0",
     "grunt": "^0.4.5",
-    "grunt-eslint": "^17.3.1",
+    "grunt-eslint": "^17.3.2",
     "grunt-mocha-test": "^0.12.7",
     "handlebars": "^4.0.5",
     "mocha": "^2.4.5",
