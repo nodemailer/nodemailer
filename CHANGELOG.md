@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-rc.7 2016-02-12
+
+  * Republishing beta as RC
+
 ## 2.2.0-beta.6 2016-02-11
 
   * Added new method `verify` to check SMTP configuration
