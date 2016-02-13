@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-rc.8 2016-02-13
+
+  * Bumped direct-transport dependency to fix a bug with proxy sockets
+
 ## 2.2.0-rc.7 2016-02-12
 
   * Republishing beta as RC
