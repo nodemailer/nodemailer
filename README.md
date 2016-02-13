@@ -80,6 +80,47 @@ Where
 
 ## Send using SMTP
 
+### SMTP? Say what?
+
+You might wonder why you would need to set something up while in comparison
+PHP's [mail](http://php.net/manual/en/function.mail.php) command works out of
+the box with no special configuration whatsoever. Just call `mail(...)` and
+you're already sending mail. So what's going on in Node.js?
+
+The difference is in the software stack required for your application to work.
+While Node.js stack is thin, all you need for your app to work is the *node*
+binary, then PHP's stack is fat. The server you're running your PHP code on has
+several different components installed. Firstly the PHP interpreter itself. Then
+there's some kind of web server, most probably Apache or Nginx. Web server needs
+some way to interact with the PHP interpreter, so you have a CGI process
+manager. There might be MySQL also running in the same host. Depending on the
+installation type you might even have imagemagick executables or other helpers
+lying around somewhere. And finally, you have the *sendmail* binary.
+
+What PHP's `mail()` call actually does is that it passes your mail data to
+sendmail's *stdin* and thats it, no magic involved. *sendmail* does alle the
+heavy lifting of queueing your message and trying to send it to the recipients'
+MX mail server. Usually this works because the server is an actual web server
+accessible from the web and has also gathered some mail sending reputation
+because PHP web hosts have been around for, like, forever.
+
+Node.js apps on the other hand might run wherever, usually on some really new
+VPS behind an IP address that has no sending reputation at all. Or the IP is
+dynamically allocated which is the fastest way to get rejected while trying to
+send mail. So while you might actually emulate the same behavior with Nodemailer
+by using either the [sendmail transport](https://github.com/andris9/nodemailer-sendmail-transport)
+or so called *direct* transport, then this does not guarantee yet any
+deliverability. Recipient's server might reject connection from your app because
+your server has dynamic IP address. Or it might reject or send your mail
+straight to spam mailbox because your IP address is not yet trusted.
+
+So the reason why PHP's `mail` works and Node.js's does not is that your PHP
+hosting provider has put in a lot of work over several years to provide a solid
+mail sending infrastructure. It is not about PHP at all, it is about the
+infrastructure around it.
+
+### Set up SMTP
+
 You can use 3 kinds of different approaches when using SMTP
 
   1. *normal* usage. No specific configuration needed. For every e-mail a new SMTP connection is created and message is sent immediately. Used when the amount of sent messages is low.
