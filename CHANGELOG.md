@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-rc.9 2016-02-15
+
+  * Bumped smtp-connection subdependency to fix an issue with proxied sockets and TLS
+
 ## 2.2.0-rc.8 2016-02-13
 
   * Bumped direct-transport dependency to fix a bug with proxy sockets
