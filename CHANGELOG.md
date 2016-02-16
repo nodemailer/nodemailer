@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0-rc.10 2016-02-16
+
+  * yet another supdep bump to get proxied sockets to work
+
 ## 2.2.0-rc.9 2016-02-15
 
   * Bumped smtp-connection subdependency to fix an issue with proxied sockets and TLS
