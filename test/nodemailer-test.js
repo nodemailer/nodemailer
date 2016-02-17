@@ -246,9 +246,11 @@ describe('Nodemailer integration tests', function () {
                 logger: false
             });
 
-            nm.verify(function (err, success) {
-                expect(err).to.not.exist;
+            nm.verify().then(function (success) {
                 expect(success).to.be.true;
+                done();
+            }).catch(function (err) {
+                expect(err).to.not.exist;
                 done();
             });
         });

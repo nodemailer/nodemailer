@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0-rc.11 2016-02-16
+
+  * removed the need to use clone dependency
+  * expose `verify` as a Promise
+
 ## 2.2.0-rc.10 2016-02-16
 
   * yet another supdep bump to get proxied sockets to work

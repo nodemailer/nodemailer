@@ -304,7 +304,7 @@ See the list of all supported services [here](https://github.com/andris9/nodemai
 
 ## Verify SMTP connection configuration
 
-You can verify your SMTP configuration with `verify(callback)` call. If it returns an error, then something is not correct, otherwise the server is ready to accept messages.
+You can verify your SMTP configuration with `verify(callback)` call (also works as a Promise). If it returns an error, then something is not correct, otherwise the server is ready to accept messages.
 
 ```javascript
 // verify connection configuration
