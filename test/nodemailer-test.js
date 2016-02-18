@@ -13,6 +13,7 @@ var stubTransport = require('nodemailer-stub-transport');
 var EmailTemplate = require('email-templates').EmailTemplate;
 var path = require('path');
 var templateDir = path.join(__dirname, 'fixtures', 'welcome-email');
+var net = require('net');
 
 var expect = chai.expect;
 chai.config.includeStack = true;
@@ -233,6 +234,45 @@ describe('Nodemailer integration tests', function () {
 
     describe('smtp-transport tests', function () {
 
+        it('Should verify connection with success', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false
+            });
+
+            nm.verify().then(function (success) {
+                expect(success).to.be.true;
+                done();
+            }).catch(function (err) {
+                expect(err).to.not.exist;
+                done();
+            });
+        });
+
+        it('Should not verify connection', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                requireTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err) {
+                expect(err).to.exist;
+                done();
+            });
+        });
+
         it('should log in and send mail', function (done) {
             var nm = nodemailer.createTransport({
                 host: 'localhost',
@@ -435,6 +475,48 @@ describe('Nodemailer integration tests', function () {
     });
 
     describe('smtp-pool tests', function () {
+
+        it('Should verify connection with success', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                pool: true,
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err, success) {
+                expect(err).to.not.exist;
+                expect(success).to.be.true;
+                nm.close();
+                done();
+            });
+        });
+
+        it('Should not verify connection', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                pool: true,
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                requireTLS: true,
+                logger: false
+            });
+
+            nm.verify(function (err) {
+                expect(err).to.exist;
+                nm.close();
+                done();
+            });
+        });
+
         it('should log in and send mail', function (done) {
             var nm = nodemailer.createTransport({
                 pool: true,
@@ -542,6 +624,89 @@ describe('Nodemailer integration tests', function () {
             setTimeout(function () {
                 mailData.text.emit('error', new Error('Stream error'));
             }, 400);
+        });
+
+        it('should return proxy error, not send', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'example.com',
+                port: 25,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                maxConnections: 1,
+                logger: false,
+                debug: true
+            });
+
+            nm.getSocket = function (options, callback) {
+                return callback(new Error('PROXY ERROR'));
+            };
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err) {
+                nm.close();
+                expect(err).to.exist;
+                done();
+            });
+        });
+
+        it('should send using proxy call', function (done) {
+            var nm = nodemailer.createTransport({
+                pool: true,
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                maxConnections: 1,
+                logger: false,
+                debug: true
+            });
+
+            var socketCreated = false;
+
+            nm.getSocket = function (options, callback) {
+                var socket = net.connect(PORT_NUMBER, 'localhost', function () {
+                    socketCreated = true;
+                    return callback(null, {
+                        connection: socket
+                    });
+                });
+            };
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                nm.close();
+                expect(socketCreated).to.be.true;
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal(['to1@valid.recipient', 'to2@valid.recipient']);
+                done();
+            });
         });
 
         it('should send mail on idle', function (done) {
@@ -745,6 +910,56 @@ describe('Generated messages tests', function () {
         });
     });
 
+    it('should set List-* headers', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var mailData = {
+            list: {
+                help: [
+                    // keep indent
+                    {
+                        url: 'list@host.com?subject=help',
+                        comment: 'List Instructions'
+                    }, 'list-manager@host.com?body=info', {
+                        url: 'list-info@host.com>',
+                        comment: 'Info about the list'
+                    },
+                    [
+                        'http://www.host.com/list/', 'list-info@host.com'
+                    ],
+                    [
+                        // keep indent
+                        {
+                            url: 'ftp://ftp.host.com/list.txt',
+                            comment: 'FTP'
+                        },
+                        'list@host.com?subject=help'
+                    ]
+                ],
+                unsubscribe: [
+                    'list@host.com?subject=unsubscribe', {
+                        url: 'list-manager@host.com?body=unsubscribe%20list',
+                        commend: 'Use this command to get off the list'
+                    },
+                    'list-off@host.com', [
+                        'http://www.host.com/list.cgi?cmd=unsub&lst=list',
+                        'list-request@host.com?subject=unsubscribe'
+                    ]
+                ],
+                post: [
+                    [
+                        'admin@exmaple.com?subject=post',
+                        'admin@exmaple2.com?subject=post'
+                    ]
+                ]
+            }
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.response.toString().match(/^List\-/gim).length).to.equal(10);
+            done();
+        });
+    });
+
     it('should send mail using a template', function (done) {
         var nm = nodemailer.createTransport(stubTransport());
 
@@ -815,6 +1030,22 @@ describe('Generated messages tests', function () {
             done();
         }).catch(function (err) {
             expect(err).to.not.exist;
+        });
+    });
+
+    it('should use pregenerated message', function (done) {
+        var nm = nodemailer.createTransport(stubTransport());
+        var raw = 'Content-Type: text/plain\r\n' +
+            'Subject: test message\r\n' +
+            '\r\n' +
+            'Hello world!';
+        var mailData = {
+            raw: raw
+        };
+        nm.sendMail(mailData, function (err, info) {
+            expect(err).to.not.exist;
+            expect(info.response.toString()).to.equal(raw);
+            done();
         });
     });
 });

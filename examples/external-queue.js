@@ -31,8 +31,7 @@ var messages = [{
     to: '"Receiver Name" <receiver@example.com>',
     subject: 'Nodemailer is unicode friendly ✔', //
     text: 'Hello to myself!',
-    html: '<p><b>Hello</b> to myself <img src="cid:note@example.com"/></p>' +
-        '<p>Here\'s a nyan cat for you as an embedded attachment:<br/><img src="cid:nyan@example.com"/></p>'
+    html: '<p><b>Hello</b> world!</p>'
 }];
 
 // send mail only if there are free connection slots available

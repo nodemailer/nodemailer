@@ -52,5 +52,8 @@ module.exports = {
         node: true
     },
     extends: 'eslint:recommended',
-    fix: true
+    fix: true,
+    globals: {
+        Promise: false
+    }
 };

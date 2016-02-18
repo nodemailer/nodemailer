@@ -20,6 +20,7 @@ Send e-mails from Node.js – easy as cake!
   - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
   - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
   - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
+  - Support for custom **proxies**
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -78,6 +79,47 @@ Where
 > You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
 
 ## Send using SMTP
+
+### SMTP? Say what?
+
+You might wonder why you would need to set something up while in comparison
+PHP's [mail](http://php.net/manual/en/function.mail.php) command works out of
+the box with no special configuration whatsoever. Just call `mail(...)` and
+you're already sending mail. So what's going on in Node.js?
+
+The difference is in the software stack required for your application to work.
+While Node.js stack is thin, all you need for your app to work is the *node*
+binary, then PHP's stack is fat. The server you're running your PHP code on has
+several different components installed. Firstly the PHP interpreter itself. Then
+there's some kind of web server, most probably Apache or Nginx. Web server needs
+some way to interact with the PHP interpreter, so you have a CGI process
+manager. There might be MySQL also running in the same host. Depending on the
+installation type you might even have imagemagick executables or other helpers
+lying around somewhere. And finally, you have the *sendmail* binary.
+
+What PHP's `mail()` call actually does is that it passes your mail data to
+sendmail's *stdin* and thats it, no magic involved. *sendmail* does alle the
+heavy lifting of queueing your message and trying to send it to the recipients'
+MX mail server. Usually this works because the server is an actual web server
+accessible from the web and has also gathered some mail sending reputation
+because PHP web hosts have been around for, like, forever.
+
+Node.js apps on the other hand might run wherever, usually on some really new
+VPS behind an IP address that has no sending reputation at all. Or the IP is
+dynamically allocated which is the fastest way to get rejected while trying to
+send mail. So while you might actually emulate the same behavior with Nodemailer
+by using either the [sendmail transport](https://github.com/andris9/nodemailer-sendmail-transport)
+or so called *direct* transport, then this does not guarantee yet any
+deliverability. Recipient's server might reject connection from your app because
+your server has dynamic IP address. Or it might reject or send your mail
+straight to spam mailbox because your IP address is not yet trusted.
+
+So the reason why PHP's `mail` works and Node.js's does not is that your PHP
+hosting provider has put in a lot of work over several years to provide a solid
+mail sending infrastructure. It is not about PHP at all, it is about the
+infrastructure around it.
+
+### Set up SMTP
 
 You can use 3 kinds of different approaches when using SMTP
 
@@ -150,6 +192,40 @@ var smtpConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com';
 var poolConfig = 'smtps://user%40gmail.com:pass@smtp.gmail.com/?pool=true';
 var directConfig = 'direct:?name=hostname';
 ```
+
+### Proxy support
+
+Nodemailer does not have built-in support for proxy protocols. To use proxies it is
+possible to connect proxied sockets yourself and pass these to Nodemailer with the `getSocket` method.
+
+```javascript
+// This method is called every time Nodemailer needs a new
+// connection against the SMTP server
+transporter.getSocket = function(options, callback){
+    getProxySocketSomehow(options.port, options.host, function(err, socket){
+        if(err){
+            return callback(err);
+        }
+        callback(null, {
+            connection: socket
+        });
+    });
+};
+```
+
+Normally proxies provide plaintext sockets, so if the connection is supposed to use TLS
+then Nodemailer upgrades the socket from plaintext to TLS itself. If the socket is
+already upgraded then you can pass additional option `secured: true` to prevent Nodemailer
+from upgrading the already upgraded socket.
+
+```javascript
+callback(null, {
+    connection: socket,
+    secured: true
+});
+```
+
+See complete example using SOCKS5 protocol [here](examples/proxy.js).
 
 ### Events
 
@@ -226,6 +302,21 @@ smtpTransport({
 
 See the list of all supported services [here](https://github.com/andris9/nodemailer-wellknown#supported-services).
 
+## Verify SMTP connection configuration
+
+You can verify your SMTP configuration with `verify(callback)` call (also works as a Promise). If it returns an error, then something is not correct, otherwise the server is ready to accept messages.
+
+```javascript
+// verify connection configuration
+transporter.verify(function(error, success) {
+   if (error) {
+        console.log(error);
+   } else {
+        console.log('Server is ready to take our messages');
+   }
+});
+```
+
 ## Send using a transport plugin
 
 In addition to SMTP you can use other kind of transports as well with Nodemailer. See *Available Transports* below for known transports.
@@ -296,7 +387,8 @@ Advanced fields:
   - **replyTo** - An e-mail address that will appear on the _Reply-To:_ field
   - **inReplyTo** - The message-id this message is replying to
   - **references** - Message-id list (an array or space separated string)
-  - **watchHtml** - Apple Watch specific HTML version of the message (_experimental_)
+  - **watchHtml** - Apple Watch specific HTML version of the message. Same usage as with `text` or `html`
+  - **icalEvent** – iCalendar event to use as an alternative. Same usage as with `text` or `html`. Additionally you could set `method` property (defaults to `'PUBLISH'`). See an example [here](examples/ical-event.js)
   - **priority** - Sets message importance headers, either `'high'`, `'normal'` (default) or `'low'`.
   - **headers** - An object or array of additional header fields (e.g. _{"X-Key-Name": "key value"}_ or _[{key: "X-Key-Name", value: "val1"}, {key: "X-Key-Name", value: "val2"}]_)
   - **alternatives** - An array of alternative text contents (in addition to text and html parts)  (see [below](#alternatives) for details)
@@ -304,6 +396,9 @@ Advanced fields:
   - **messageId** - optional Message-Id value, random value will be generated if not set
   - **date** - optional Date value, current UTC string will be used if not set
   - **encoding** - optional transfer encoding for the textual parts
+  - **raw** - existing MIME message to use instead of generating a new one. If this value is set then you should also set the envelope object (if required) as the provided raw message is not parsed. The value could be a string, a buffer, a stream or an attachment-like object.
+  - **textEncoding** - force content-transfer-encoding for text values (either *quoted-printable* or *base64*). By default the best option is detected (for lots of ascii use *quoted-printable*, otherwise *base64*)
+  - **list** - helper for setting List-\* headers
 
 All text fields (e-mail addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
 
@@ -329,6 +424,7 @@ Attachment object consists of the following properties:
   - **cid** - optional content id for using inline images in HTML message source
   - **encoding** - If set and `content` is string, then encodes the content to a Buffer using the specified encoding. Example values: `base64`, `hex`, `binary` etc. Useful if you want to use binary attachments in a JSON formatted e-mail object.
   - **headers** - custom headers for the attachment node. Same usage as with message headers
+  - **raw** - is an optional special value that overrides entire contents of current mime node including mime headers. Useful if you want to prepare node contents yourself
 
 Attachments can be added as many as you want.
 
@@ -682,6 +778,53 @@ var sendPwdReminder = transporter.templateSender({
     }
 });
 ...
+```
+
+## List-\* headers
+
+Nodemailer includes a helper for setting more complex List-\* headers with ease.
+Use message option `list` to provide all list headers. You do not need to add protocol
+prefix for the urls, or enclose the url between &lt; and &gt;, this is handled automatically.
+
+If the value is a string, it is treated as an URL. If you want to provide an optional comment,
+use `{url:'url', comment: 'comment'}` object. If you want to have multiple header rows for the
+same List-\* key, use an array as the value for this key. If you want to have multiple URLs for
+single List-\* header row, use an array inside an array.
+
+> List-\* headers are treated as pregenerated values, this means that lines are not folded and strings
+are not encoded. Use only ascii characters and be prepared for longer header lines.
+
+```javascript
+var mailOptions = {
+    list: {
+        // List-Help: <mailto:admin@example.com?subject=help>
+        help: 'admin@example.com?subject=help',
+        // List-Unsubscribe: <http://example.com> (Comment)
+        unsubscribe: {
+            url: 'http://example.com',
+            comment: 'Comment'
+        },
+        // List-Subscribe: <mailto:admin@example.com?subject=subscribe>
+        // List-Subscribe: <http://example.com> (Subscribe)
+        subscribe: [
+            'admin@example.com?subject=subscribe',
+            {
+                url: 'http://example.com',
+                comment: 'Subscribe'
+            }
+        ],
+        // List-Post: <http://example.com/post>, <mailto:admin@example.com?subject=post> (Post)
+        post: [
+            [
+                'http://example.com/post',
+                {
+                    url: 'admin@example.com?subject=post',
+                    comment: 'Post'
+                }
+            ]
+        ]
+    }
+};
 ```
 
 # Available Plugins
