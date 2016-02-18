@@ -1,49 +1,15 @@
 # Changelog
 
-## 2.2.0-rc.11 2016-02-16
+## 2.2.0
 
-  * removed the need to use clone dependency
-  * expose `verify` as a Promise
-
-## 2.2.0-rc.10 2016-02-16
-
-  * yet another supdep bump to get proxied sockets to work
-
-## 2.2.0-rc.9 2016-02-15
-
-  * Bumped smtp-connection subdependency to fix an issue with proxied sockets and TLS
-
-## 2.2.0-rc.8 2016-02-13
-
-  * Bumped direct-transport dependency to fix a bug with proxy sockets
-
-## 2.2.0-rc.7 2016-02-12
-
-  * Republishing beta as RC
-
-## 2.2.0-beta.6 2016-02-11
-
+  * Removed the need to use `clone` dependency
   * Added new method `verify` to check SMTP configuration
   * Direct transport uses STARTTLS by default, fallbacks to plaintext if STARTTLS fails
-
-## 2.2.0-beta.5 2016-02-10
-
   * Added new message option `list` for setting List-\* headers
-
-## 2.2.0-beta.3 2016-02-06
-
-  * Bumped dependencies
   * Add simple proxy support with `getSocket` method
-  * Added new message option `textEncoding`
-  * If `textEncoding` is not set then detect best encoding automatically
-
-## 2.2.0-beta.1 2016-02-06
-
+  * Added new message option `textEncoding`. If `textEncoding` is not set then detect best encoding automatically
   * Added new message option `icalEvent` to embed iCalendar events. Example [here](examples/ical-event.js)
   * Added new attachment option `raw` to use prepared MIME contents instead of generating a new one. This might be useful when you want to handcraft some parts of the message yourself, for example if you want to inject a PGP encrypted message as the contents of a MIME node
-
-## 2.2.0-beta.0 2016-02-05
-
   * Added new message option `raw` to use an existing MIME message instead of generating a new one
 
 ## 2.1.0 2016-02-01
