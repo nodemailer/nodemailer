@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.2.0
+## 2.2.1 2016-02-20
+
+  * Fixed a bug in SMTP requireTLS option that was broken
+
+## 2.2.0 2016-02-18
 
   * Removed the need to use `clone` dependency
   * Added new method `verify` to check SMTP configuration
