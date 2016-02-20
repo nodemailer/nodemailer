@@ -40,7 +40,7 @@ var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp
 
 // setup e-mail data with unicode symbols
 var mailOptions = {
-    from: 'Fred Foo 👥 <foo@blurdybloop.com>', // sender address
+    from: '"Fred Foo 👥" <foo@blurdybloop.com>', // sender address
     to: 'bar@blurdybloop.com, baz@blurdybloop.com', // list of receivers
     subject: 'Hello ✔', // Subject line
     text: 'Hello world 🐴', // plaintext body
@@ -372,7 +372,7 @@ The following are the possible fields of an e-mail message:
 
 Commmon fields:
 
-  - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'Sender Name <sender@server.com>'`, see [Address Formatting](#address-formatting) for details
+  - **from** - The e-mail address of the sender. All e-mail addresses can be plain `'sender@server.com'` or formatted `'"Sender Name" <sender@server.com>'`, see [Address Formatting](#address-formatting) for details
   - **to** - Comma separated list or an array of recipients e-mail addresses that will appear on the _To:_ field
   - **cc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Cc:_ field
   - **bcc** - Comma separated list or an array of recipients e-mail addresses that will appear on the _Bcc:_ field
@@ -606,8 +606,8 @@ mailOptions = {
     from: 'mailer@kreata.ee', // listed in rfc822 message header
     to: 'daemon@kreata.ee', // listed in rfc822 message header
     envelope: {
-        from: 'Daemon <deamon@kreata.ee>', // used as MAIL FROM: address for SMTP
-        to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>' // used as RCPT TO: address for SMTP
+        from: '"Daemon" <deamon@kreata.ee>', // used as MAIL FROM: address for SMTP
+        to: 'mailer@kreata.ee, "Mailer" <mailer2@kreata.ee>' // used as RCPT TO: address for SMTP
     }
 }
 ```
