@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.2.1",
+  "version": "2.3.0-beta.0",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -38,6 +38,7 @@
     "chai": "^3.5.0",
     "email-templates": "^2.1.0",
     "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
     "grunt-eslint": "^18.0.0",
     "grunt-mocha-test": "^0.12.7",
     "handlebars": "^4.0.5",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0-beta.0 2016-02-22
+
+  * Added option `transport` to dynamically load transport plugins
+  * Do not require globally installed grunt-cli
+
 ## 2.2.1 2016-02-20
 
   * Fixed a bug in SMTP requireTLS option that was broken

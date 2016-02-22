@@ -332,6 +332,17 @@ var transporter = nodemailer.createTransport(ses({
 }));
 ```
 
+If the transport plugin follows common conventions, then you can also load it dynamically with the `transport` option. This way you would not have to load the transport plugin in your code (you do need to install the transport plugin though before you can use it), you only need to modify the configuration data accordingly.
+
+```javascript
+var nodemailer = require('nodemailer');
+var transporter = nodemailer.createTransport({
+    transport: 'ses', // loads nodemailer-ses-transport
+    accessKeyId: 'AWSACCESSKEY',
+    secretAccessKey: 'AWS/Secret/key'
+});
+```
+
 **Available Transports**
 
   - **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
