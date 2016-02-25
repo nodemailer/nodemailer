@@ -20,7 +20,7 @@ Send e-mails from Node.js – easy as cake!
   - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
   - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
   - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
-  - Support for custom **proxies**
+  - SMTP **proxy** support
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -195,14 +195,15 @@ var directConfig = 'direct:?name=hostname';
 
 ### Proxy support
 
-Nodemailer supports out of the box HTTP and SOCKS proxies for SMTP connections.
-You can also use a custom connection handler by providing a `getSocket` method.
+Nodemailer supports out of the box HTTP and SOCKS proxies for SMTP connections with the `proxy` configuration option. You can also use a custom connection handler with the `getSocket` method.
 
-### HTTP CONNECT tunnel
+Proxy configuration is provided as a connection url where used protocol defines proxy protocol (eg. `'socks://hostname:port'` for a SOCKS5 proxy). You can also use authentication by passing proxy username and password into the configuration url (eg `'socks://username:password@hostname:port'`)
+
+#### HTTP CONNECT tunnel
 
 HTTP proxy must support CONNECT tunnels (also called "SSL support") to SMTP ports. To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the HTTP proxy configuration URL.
 
-```
+```javascript
 var smtpConfig = {
     host: 'smtp.gmail.com',
     port: 465,
@@ -213,11 +214,20 @@ var smtpConfig = {
 };
 ```
 
-### SOCKS 4/5
+Possible protocol values for the HTTP proxy:
+
+  * `'http:'` if the proxy is running in a plaintext server
+  * `'https:'` if the proxy is running in a secure server
+
+> NB! Proxy protocol (http/s) does not affect how SMTP connection is secured or not
+
+See an example of using a HTTP proxy [here](examples/proxy/http-proxy.js).
+
+#### SOCKS 4/5
 
 To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the SOCKS4/5 proxy configuration URL.
 
-```
+```javascript
 var smtpConfig = {
     host: 'smtp.gmail.com',
     port: 465,
@@ -228,9 +238,18 @@ var smtpConfig = {
 };
 ```
 
-### Custom connection handler
+Possible protocol values for the SOCKS proxy:
 
-This example
+  * `'socks4:'` or `'socks4a:'` for a SOCKS4 proxy
+  * `'socks5:'` or `'socks:'` for a SOCKS5 proxy
+
+See an example of using a SOCKS proxy [here](examples/proxy/socks-proxy.js).
+
+#### Custom connection handler
+
+If you do not want to use SOCKS or HTTP proxies then you can alternatively provide a custom
+proxy handling code with the `getSocket` method. In this case you should initiate a new
+socket yourself and pass it to Nodemailer for usage.
 
 ```javascript
 // This method is called every time Nodemailer needs a new
