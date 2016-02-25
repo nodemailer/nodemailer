@@ -195,8 +195,42 @@ var directConfig = 'direct:?name=hostname';
 
 ### Proxy support
 
-Nodemailer does not have built-in support for proxy protocols. To use proxies it is
-possible to connect proxied sockets yourself and pass these to Nodemailer with the `getSocket` method.
+Nodemailer supports out of the box HTTP and SOCKS proxies for SMTP connections.
+You can also use a custom connection handler by providing a `getSocket` method.
+
+### HTTP CONNECT tunnel
+
+HTTP proxy must support CONNECT tunnels (also called "SSL support") to SMTP ports. To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the HTTP proxy configuration URL.
+
+```
+var smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    ...,
+    //proxy config
+    // assumes a HTTP proxy running on port 3128
+    proxy: 'http://localhost:3128/'
+};
+```
+
+### SOCKS 4/5
+
+To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the SOCKS4/5 proxy configuration URL.
+
+```
+var smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    ...,
+    //proxy config
+    // assumes a SOCKS5 proxy running on port 1080
+    proxy: 'socks5://localhost:1080/'
+};
+```
+
+### Custom connection handler
+
+This example
 
 ```javascript
 // This method is called every time Nodemailer needs a new
@@ -225,7 +259,7 @@ callback(null, {
 });
 ```
 
-See complete example using SOCKS5 protocol [here](examples/proxy.js).
+See complete example using a custom socket connector [here](examples/proxy/custom-proxy.js).
 
 ### Events
 

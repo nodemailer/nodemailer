@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.0-beta.1 2016-02-25
+
+  * Added built-in support for proxies by providing a new SMTP option `proxy` that takes a proxy configuration url as its value
+
 ## 2.3.0-beta.0 2016-02-22
 
   * Added option `transport` to dynamically load transport plugins
