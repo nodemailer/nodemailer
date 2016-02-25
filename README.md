@@ -235,6 +235,8 @@ var smtpConfig = {
 };
 ```
 
+> **NB!** When using SOCKS4, only an ipv4 address can be used
+
 Possible protocol values for the SOCKS proxy:
 
   * `'socks4:'` or `'socks4a:'` for a SOCKS4 proxy
