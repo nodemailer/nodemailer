@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.0-rc.2 2016-02-25
+
+  * Tagged latest beta as a rc version
+
 ## 2.3.0-beta.1 2016-02-25
 
   * Added built-in support for proxies by providing a new SMTP option `proxy` that takes a proxy configuration url as its value
