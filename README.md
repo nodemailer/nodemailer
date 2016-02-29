@@ -342,6 +342,7 @@ var transporter = nodemailer.createTransport(ses({
   - **[nodemailer-ses-transport](https://github.com/andris9/nodemailer-ses-transport)** for sending messages to AWS SES
   - **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
   - **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
+  - **[nodemailer-wellknown](https://github.com/nodemailer/nodemailer-wellknown)** for sending messages through one of those many [supported services](https://github.com/nodemailer/nodemailer-wellknown#supported-services)
   - _add yours_ (see transport api documentation [here](#transports))
 
 # Sending mail
