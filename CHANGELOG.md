@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.0-rc.3 2016-02-29
+
+  * Bumped dependencies to fix a bug with filename with mixed unicode and dashes
+
 ## 2.3.0-rc.2 2016-02-25
 
   * Tagged latest beta as a rc version
