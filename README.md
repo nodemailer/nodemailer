@@ -98,7 +98,7 @@ installation type you might even have imagemagick executables or other helpers
 lying around somewhere. And finally, you have the *sendmail* binary.
 
 What PHP's `mail()` call actually does is that it passes your mail data to
-sendmail's *stdin* and thats it, no magic involved. *sendmail* does alle the
+sendmail's *stdin* and thats it, no magic involved. *sendmail* does all the
 heavy lifting of queueing your message and trying to send it to the recipients'
 MX mail server. Usually this works because the server is an actual web server
 accessible from the web and has also gathered some mail sending reputation
