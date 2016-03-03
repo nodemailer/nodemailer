@@ -891,7 +891,9 @@ describe('direct-transport tests', function () {
 
 describe('Generated messages tests', function () {
     it('should set Message-Id automatically', function (done) {
-        var nm = nodemailer.createTransport(stubTransport());
+        var nm = nodemailer.createTransport({
+            transport: 'stub'
+        });
         var mailData = {
             from: 'Sender Name 👻 <sender@example.com>',
             to: ['Recipient Name 1 👻 <recipient1@example.com>', 'Recipient Name 2 👻 <recipient2@example.com>'],

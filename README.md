@@ -1,6 +1,6 @@
 ![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)
 
-Send e-mails from Node.js – easy as cake!
+Send e-mails from Node.js – easy as cake! 🍰✉️
 
 <a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> <a href="http://travis-ci.org/nodemailer/nodemailer"><img src="https://secure.travis-ci.org/nodemailer/nodemailer.svg" alt="Build Status" height="18"></a> <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
@@ -14,13 +14,10 @@ Send e-mails from Node.js – easy as cake!
   - **Embedded images** in HTML
   - Secure e-mail delivery using **SSL/STARTTLS**
   - Different **transport methods**, either using built-in SMTP transports or from external plugins
-  - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
+  - Custom **plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
-  - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
-  - Manually reviewed and locked dependency tree, so no surprises sneaked in by some updated subdependency
-  - Easy rollbacks as downgrading Nodemailer also downgrades all dependencies to a previously known stable state
-  - Reasonably sized footprint with installed size smaller than 1MB. Installation takes around 5 seconds even when using npm@3
-  - Support for custom **proxies**
+  - Simple built-in **templating** using [node-email-templates](https://github.com/niftylettuce/node-email-templates) or custom renderer
+  - **Proxies** for SMTP connections (SOCKS, HTTP and custom connections)
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 
@@ -195,8 +192,63 @@ var directConfig = 'direct:?name=hostname';
 
 ### Proxy support
 
-Nodemailer does not have built-in support for proxy protocols. To use proxies it is
-possible to connect proxied sockets yourself and pass these to Nodemailer with the `getSocket` method.
+Nodemailer supports out of the box HTTP and SOCKS proxies for SMTP connections with the `proxy` configuration option. You can also use a custom connection handler with the `getSocket` method.
+
+Proxy configuration is provided as a connection url where used protocol defines proxy protocol (eg. `'socks://hostname:port'` for a SOCKS5 proxy). You can also use authentication by passing proxy username and password into the configuration url (eg `'socks://username:password@hostname:port'`)
+
+#### HTTP CONNECT tunnel
+
+HTTP proxy must support CONNECT tunnels (also called "SSL support") to SMTP ports. To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the HTTP proxy configuration URL.
+
+```javascript
+var smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    ...,
+    //proxy config
+    // assumes a HTTP proxy running on port 3128
+    proxy: 'http://localhost:3128/'
+};
+```
+
+Possible protocol values for the HTTP proxy:
+
+  * `'http:'` if the proxy is running in a plaintext server
+  * `'https:'` if the proxy is running in a secure server
+
+> NB! Proxy protocol (http/s) does not affect how SMTP connection is secured or not
+
+See an example of using a HTTP proxy [here](examples/proxy/http-proxy.js).
+
+#### SOCKS 4/5
+
+To use a HTTP/S server, provide a `proxy` option to SMTP configuration with the SOCKS4/5 proxy configuration URL.
+
+```javascript
+var smtpConfig = {
+    host: 'smtp.gmail.com',
+    port: 465,
+    ...,
+    //proxy config
+    // assumes a SOCKS5 proxy running on port 1080
+    proxy: 'socks5://localhost:1080/'
+};
+```
+
+> **NB!** When using SOCKS4, only an ipv4 address can be used
+
+Possible protocol values for the SOCKS proxy:
+
+  * `'socks4:'` or `'socks4a:'` for a SOCKS4 proxy
+  * `'socks5:'` or `'socks:'` for a SOCKS5 proxy
+
+See an example of using a SOCKS proxy [here](examples/proxy/socks-proxy.js).
+
+#### Custom connection handler
+
+If you do not want to use SOCKS or HTTP proxies then you can alternatively provide a custom
+proxy handling code with the `getSocket` method. In this case you should initiate a new
+socket yourself and pass it to Nodemailer for usage.
 
 ```javascript
 // This method is called every time Nodemailer needs a new
@@ -225,7 +277,7 @@ callback(null, {
 });
 ```
 
-See complete example using SOCKS5 protocol [here](examples/proxy.js).
+See complete example using a custom socket connector [here](examples/proxy/custom-proxy.js).
 
 ### Events
 
@@ -330,6 +382,17 @@ var transporter = nodemailer.createTransport(ses({
     accessKeyId: 'AWSACCESSKEY',
     secretAccessKey: 'AWS/Secret/key'
 }));
+```
+
+If the transport plugin follows common conventions, then you can also load it dynamically with the `transport` option. This way you would not have to load the transport plugin in your code (you do need to install the transport plugin though before you can use it), you only need to modify the configuration data accordingly.
+
+```javascript
+var nodemailer = require('nodemailer');
+var transporter = nodemailer.createTransport({
+    transport: 'ses', // loads nodemailer-ses-transport
+    accessKeyId: 'AWSACCESSKEY',
+    secretAccessKey: 'AWS/Secret/key'
+});
 ```
 
 **Available Transports**

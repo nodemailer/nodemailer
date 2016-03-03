@@ -3,19 +3,14 @@
 'use strict';
 
 /*
-This example demosntrates how to use proxies when connecting to a SMTP Server.
-
-Nodemailer does not have any built-in proxy protocol support, so you would need
-to use some other module for this, eg. "socks". Nodemailer exposes socket creation,
-so instead of letting Nodemailer to create a new socket, you can create one
-yourself and provide it to be used.
+This example demonstrates how to use proxies using a custom proxy connector
 */
-
-var Socks = require('socks');
-var nodemailer = require('../lib/nodemailer');
 
 // create SOCKS5 proxy with
 //     ssh -N -D 0.0.0.0:1080 username@remote.host
+
+var Socks = require('socks');
+var nodemailer = require('../../lib/nodemailer');
 
 var proxy = {
     ipaddress: 'localhost',

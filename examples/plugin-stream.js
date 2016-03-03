@@ -5,7 +5,9 @@
 // This example demonstrates the 'stream' step with a plugin that converts all spaces to tabs
 
 var nodemailer = require('../lib/nodemailer');
-var transporter = nodemailer.createTransport(require('nodemailer-stub-transport')());
+var transporter = nodemailer.createTransport({
+    transport: 'stub' // load dynamically nodemailer-stub-tranport
+});
 
 var plugin = new(require('stream').Transform)();
 plugin._transform = function (chunk, encoding, done) {
@@ -26,8 +28,8 @@ transporter.use('stream', function (mail, callback) {
 });
 
 transporter.sendMail({
-    from: 'sender',
-    to: 'receiver',
+    from: 'sender@example.com',
+    to: 'receiver@example.com',
     subject: 'hello',
     text: 'hello world!'
 }, function (err, info) {
