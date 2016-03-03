@@ -1,6 +1,6 @@
 ![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)
 
-Send e-mails from Node.js – easy as cake!
+Send e-mails from Node.js – easy as cake! 🍰✉️
 
 <a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> <a href="http://travis-ci.org/nodemailer/nodemailer"><img src="https://secure.travis-ci.org/nodemailer/nodemailer.svg" alt="Build Status" height="18"></a> <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
@@ -14,10 +14,10 @@ Send e-mails from Node.js – easy as cake!
   - **Embedded images** in HTML
   - Secure e-mail delivery using **SSL/STARTTLS**
   - Different **transport methods**, either using built-in SMTP transports or from external plugins
-  - Custom **Plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
+  - Custom **plugin support** for manipulating messages (add DKIM signatures, use markdown content instead of HTML etc.)
   - Sane **XOAUTH2** login with automatic access token generation (and feedback about the updated tokens)
-  - Simple built-in **templating** and external template renderers through [node-email-templates](https://github.com/niftylettuce/node-email-templates) (*optional*)
-  - **Proxy** support for SMTP connections (SOCKS, HTTP and custom connections)
+  - Simple built-in **templating** using [node-email-templates](https://github.com/niftylettuce/node-email-templates) or custom renderer
+  - **Proxies** for SMTP connections (SOCKS, HTTP and custom connections)
 
 > See Nodemailer [homepage](http://nodemailer.com/) for complete documentation
 

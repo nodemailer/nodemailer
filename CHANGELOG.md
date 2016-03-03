@@ -1,19 +1,9 @@
 # Changelog
 
-## 2.3.0-rc.3 2016-02-29
+## 2.3.0 2016-03-03
 
-  * Bumped dependencies to fix a bug with filename with mixed unicode and dashes
-
-## 2.3.0-rc.2 2016-02-25
-
-  * Tagged latest beta as a rc version
-
-## 2.3.0-beta.1 2016-02-25
-
+  * Fixed a bug with attachment filename that contains mixed unicode and dashes
   * Added built-in support for proxies by providing a new SMTP option `proxy` that takes a proxy configuration url as its value
-
-## 2.3.0-beta.0 2016-02-22
-
   * Added option `transport` to dynamically load transport plugins
   * Do not require globally installed grunt-cli
 
