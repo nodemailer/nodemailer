@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.1-rc.0 2016-03-25
+
+  * Bumped mailcomposer to have better support for message/822 attachments
+
 ## 2.3.0 2016-03-03
 
   * Fixed a bug with attachment filename that contains mixed unicode and dashes
