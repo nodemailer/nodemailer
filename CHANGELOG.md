@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.3.1-rc.0 2016-03-25
+## 2.3.1 2016-04-08
 
   * Bumped mailcomposer to have better support for message/822 attachments
 
