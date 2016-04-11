@@ -1,0 +1,83 @@
+{
+  "name": "nodemailer",
+  "version": "2.3.2",
+  "dependencies": {
+    "addressparser": {
+      "version": "1.0.1",
+      "from": "addressparser@1.0.1"
+    },
+    "buildmail": {
+      "version": "3.6.0",
+      "from": "buildmail@3.6.0"
+    },
+    "iconv-lite": {
+      "version": "0.4.13",
+      "from": "iconv-lite@0.4.13",
+      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.4.13.tgz"
+    },
+    "ip": {
+      "version": "1.1.2",
+      "from": "ip@>=1.1.2 <2.0.0",
+      "resolved": "https://registry.npmjs.org/ip/-/ip-1.1.2.tgz"
+    },
+    "libbase64": {
+      "version": "0.1.0",
+      "from": "libbase64@0.1.0",
+      "resolved": "https://registry.npmjs.org/libbase64/-/libbase64-0.1.0.tgz"
+    },
+    "libmime": {
+      "version": "2.0.3",
+      "from": "libmime@2.0.3",
+      "resolved": "https://registry.npmjs.org/libmime/-/libmime-2.0.3.tgz"
+    },
+    "libqp": {
+      "version": "1.1.0",
+      "from": "libqp@1.1.0",
+      "resolved": "https://registry.npmjs.org/libqp/-/libqp-1.1.0.tgz"
+    },
+    "mailcomposer": {
+      "version": "3.7.0",
+      "from": "mailcomposer@3.7.0"
+    },
+    "nodemailer-direct-transport": {
+      "version": "3.0.7",
+      "from": "nodemailer-direct-transport@3.0.7"
+    },
+    "nodemailer-fetch": {
+      "version": "1.3.0",
+      "from": "nodemailer-fetch@1.3.0",
+      "resolved": "https://registry.npmjs.org/nodemailer-fetch/-/nodemailer-fetch-1.3.0.tgz"
+    },
+    "nodemailer-shared": {
+      "version": "1.0.4",
+      "from": "nodemailer-shared@1.0.4",
+      "resolved": "https://registry.npmjs.org/nodemailer-shared/-/nodemailer-shared-1.0.4.tgz"
+    },
+    "nodemailer-smtp-pool": {
+      "version": "2.5.2",
+      "from": "nodemailer-smtp-pool@2.5.2"
+    },
+    "nodemailer-smtp-transport": {
+      "version": "2.4.2",
+      "from": "nodemailer-smtp-transport@2.4.2"
+    },
+    "nodemailer-wellknown": {
+      "version": "0.1.8",
+      "from": "nodemailer-wellknown@0.1.8"
+    },
+    "smart-buffer": {
+      "version": "1.0.4",
+      "from": "smart-buffer@>=1.0.4 <2.0.0",
+      "resolved": "https://registry.npmjs.org/smart-buffer/-/smart-buffer-1.0.4.tgz"
+    },
+    "smtp-connection": {
+      "version": "2.3.2",
+      "from": "smtp-connection@2.3.2"
+    },
+    "socks": {
+      "version": "1.1.9",
+      "from": "socks@1.1.9",
+      "resolved": "https://registry.npmjs.org/socks/-/socks-1.1.9.tgz"
+    }
+  }
+}

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.2 2016-04-11
+
+  * Bumped smtp transport modules to get newest smtp-connection that fixes SMTPUTF8 support for internationalized email addresses
+
 ## 2.3.1 2016-04-08
 
   * Bumped mailcomposer to have better support for message/822 attachments

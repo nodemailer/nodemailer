@@ -472,6 +472,38 @@ describe('Nodemailer integration tests', function () {
             });
         });
 
+        it('should send to internationalized address', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false,
+                debug: false
+            });
+
+            var mailData = {
+                from: 'from@valid.sender',
+                to: ['internätiõnäližed@valid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu'
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal(['internätiõnäližed@valid.recipient']);
+                expect(info.rejected).to.deep.equal([]);
+                expect(info.messageId).to.equal('abc@def');
+                done();
+            });
+        });
+
     });
 
     describe('smtp-pool tests', function () {
