@@ -406,6 +406,7 @@ var transporter = nodemailer.createTransport({
   - **[nodemailer-sparkpost-transport](https://github.com/sparkpost/nodemailer-sparkpost-transport)** for sending messages through SparkPost's Web API
   - **[nodemailer-stub-transport](https://github.com/andris9/nodemailer-stub-transport)** is just for returning messages, most probably for testing purposes
   - **[nodemailer-wellknown](https://github.com/nodemailer/nodemailer-wellknown)** for sending messages through one of those many [supported services](https://github.com/nodemailer/nodemailer-wellknown#supported-services)
+  - **[nodemailer-postmark-transport](https://github.com/killmenot/nodemailer-postmark-transport)** for sending messages through Postmark's Web API
   - _add yours_ (see transport api documentation [here](#transports))
 
 # Sending mail
