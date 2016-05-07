@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.3.2",
+  "version": "2.4.0-beta.0",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "homepage": "http://nodemailer.com/",
   "dependencies": {
     "libmime": "2.0.3",
-    "mailcomposer": "3.7.0",
+    "mailcomposer": "3.8.0",
     "nodemailer-direct-transport": "3.0.7",
     "nodemailer-shared": "1.0.4",
     "nodemailer-smtp-pool": "2.5.2",
@@ -40,7 +40,7 @@
     "email-templates": "^2.3.0",
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
-    "grunt-eslint": "^18.0.0",
+    "grunt-eslint": "^18.1.0",
     "grunt-mocha-test": "^0.12.7",
     "handlebars": "^4.0.5",
     "mocha": "^2.4.5",
@@ -48,9 +48,9 @@
     "nodemailer-markdown": "^1.0.0",
     "nodemailer-stub-transport": "^1.0.0",
     "proxy-test-server": "^1.0.0",
-    "sinon": "^1.17.3",
-    "smtp-server": "^1.9.0",
-    "swig-email-templates": "^2.0.0"
+    "sinon": "^1.17.4",
+    "smtp-server": "^1.9.1",
+    "swig-email-templates": "^2.1.0"
   },
   "engines": {
     "node": ">=0.10.0"

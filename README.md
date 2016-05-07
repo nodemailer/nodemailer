@@ -480,7 +480,7 @@ transport.sendMail({html: htmlstream}, function(err){
 ## Attachments
 Attachment object consists of the following properties:
 
-  - **filename** - filename to be reported as the name of the attached file, use of unicode is allowed
+  - **filename** - filename to be reported as the name of the attached file, use of unicode is allowed. If you do not want to use a filename, set this value as `false`, otherwise a filename is generated automatically
   - **content** - String, Buffer or a Stream contents for the attachment
   - **path** - path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments)
   - **contentType** - optional content type for the attachment, if not set will be derived from the `filename` property

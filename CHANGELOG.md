@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.0-beta.0 2016-05-07
+
+  * Bumped mailcomposer module to allow using `false` as attachment filename (suppresses filename usage)
+
 ## 2.3.2 2016-04-11
 
   * Bumped smtp transport modules to get newest smtp-connection that fixes SMTPUTF8 support for internationalized email addresses
