@@ -1,8 +1,9 @@
 # Changelog
 
-## 2.4.0-beta.0 2016-05-07
+## 2.4.0 2016-05-11
 
   * Bumped mailcomposer module to allow using `false` as attachment filename (suppresses filename usage)
+  * Added NTLM authentication support
 
 ## 2.3.2 2016-04-11
 
