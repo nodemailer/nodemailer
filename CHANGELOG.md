@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.1 2016-05-12
+
+  * Fixed outdated shrinkwrap file
+
 ## 2.4.0 2016-05-11
 
   * Bumped mailcomposer module to allow using `false` as attachment filename (suppresses filename usage)
