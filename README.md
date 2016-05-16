@@ -751,25 +751,25 @@ var context = {
 var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
 
 // create template based sender function
-var sendPwdReminder = transporter.templateSender({
-    subject: 'Password reminder for {{username}}!',
-    text: 'Hello, {{username}}, Your password is: {{ password }}',
-    html: '<b>Hello, <strong>{{username}}</strong>, Your password is:\n<b>{{ password }}</b></p>'
+var sendPwdReset = transporter.templateSender({
+    subject: 'Password reset for {{username}}!',
+    text: 'Hello, {{username}}, Please go here to reset your password: {{ reset }}',
+    html: '<b>Hello, <strong>{{username}}</strong>, Please <a href="{{ reset }}">go here to reset your password</a>: {{ reset }}</p>'
 }, {
     from: 'sender@example.com',
 });
 
 // use template based sender to send a message
-sendPwdReminder({
+sendPwdReset({
     to: 'receiver@example.com'
 }, {
     username: 'Node Mailer',
-    password: '!"\'<>&some-thing'
+    reset: 'https://www.example.com/reset?token=<unique-single-use-token>'
 }, function(err, info){
     if(err){
-       console.log('Error');
+        console.log('Error');
     }else{
-        console.log('Password reminder sent');
+        console.log('Password reset sent');
     }
 });
 ```
