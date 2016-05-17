@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "dependencies": {
     "addressparser": {
       "version": "1.0.1",
@@ -82,9 +82,9 @@
       "resolved": "https://registry.npmjs.org/nodemailer-wellknown/-/nodemailer-wellknown-0.1.9.tgz"
     },
     "smart-buffer": {
-      "version": "1.0.9",
+      "version": "1.0.10",
       "from": "smart-buffer@>=1.0.4 <2.0.0",
-      "resolved": "https://registry.npmjs.org/smart-buffer/-/smart-buffer-1.0.9.tgz"
+      "resolved": "https://registry.npmjs.org/smart-buffer/-/smart-buffer-1.0.10.tgz"
     },
     "smtp-connection": {
       "version": "2.5.0",
