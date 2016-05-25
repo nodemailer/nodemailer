@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.2 2016-05-25
+
+  * Removed shrinkwrap file. Seemed to cause more trouble than help
+
 ## 2.4.1 2016-05-12
 
   * Fixed outdated shrinkwrap file
