@@ -306,7 +306,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -335,7 +335,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -467,7 +467,7 @@ describe('Nodemailer integration tests', function () {
                 ]);
                 expect(info.rejected).to.deep.equal([]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/eaa13435e1401328be32bc7a4c629f9f/i.test(info.response)).to.be.true;
+                expect(/7924b6d606c89e2c683afea8d3e9a75b/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -585,7 +585,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -615,7 +615,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -779,7 +779,7 @@ describe('Nodemailer integration tests', function () {
                             'to@invalid.recipient'
                         ]);
                         expect(info.messageId).to.equal('abc@def');
-                        expect(/538ec1431ce376bc46f11b0f51849beb/i.test(info.response)).to.be.true;
+                        expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
                         done();
                     });
                 }
