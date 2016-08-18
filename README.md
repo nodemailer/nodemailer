@@ -148,7 +148,7 @@ Where
     * **options.greetingTimeout** how many milliseconds to wait for the greeting after connection is established
     * **options.socketTimeout** how many milliseconds of inactivity to allow
     * **options.logger** optional [bunyan](https://github.com/trentm/node-bunyan) compatible logger instance. If set to `true` then logs to console. If value is not set or is `false` then nothing is logged
-    * **options.debug** if set to true, then logs SMTP traffic, otherwise logs only transaction events
+    * **options.debug** if set to true, then logs SMTP traffic, otherwise logs only transaction events. This option requires **options.logger** to be set, otherwise there is nowhere to log the transaction data
     * **options.maxConnections** available only if *pool* is set to `true`. (defaults to 5) is the count of maximum simultaneous connections to make against the SMTP server
     * **options.maxMessages** available only if *pool* is set to `true`. (defaults to 100) limits the message count to be sent using a single connection. After maxMessages messages the connection is dropped and a new one is created for the following messages
     * **options.rateLimit** available only if *pool* is set to `true`. (defaults to `false`) limits the message count to be sent in a second. Once rateLimit is reached, sending is paused until the end of the second. This limit is shared between connections, so if one connection uses up the limit, then other connections are paused as well
