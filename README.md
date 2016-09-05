@@ -152,6 +152,8 @@ Where
     * **options.maxConnections** available only if *pool* is set to `true`. (defaults to 5) is the count of maximum simultaneous connections to make against the SMTP server
     * **options.maxMessages** available only if *pool* is set to `true`. (defaults to 100) limits the message count to be sent using a single connection. After maxMessages messages the connection is dropped and a new one is created for the following messages
     * **options.rateLimit** available only if *pool* is set to `true`. (defaults to `false`) limits the message count to be sent in a second. Once rateLimit is reached, sending is paused until the end of the second. This limit is shared between connections, so if one connection uses up the limit, then other connections are paused as well
+    * **options.disableFileAccess** if true, then does not allow to use files as content. Use it when you want to use JSON data from untrusted source as the email. If an attachment or message node tries to fetch something from a file the sending returns an error
+    * **options.disableUrlAccess** if true, then does not allow to use Urls as content
 
 **Examples**
 
@@ -460,7 +462,7 @@ Advanced fields:
   - **envelope** - optional SMTP envelope, if auto generated envelope is not suitable (see [below](#smtp-envelope) for details)
   - **messageId** - optional Message-Id value, random value will be generated if not set
   - **date** - optional Date value, current UTC string will be used if not set
-  - **encoding** - optional transfer encoding for the textual parts
+  - **encoding** - identifies encoding for text/html strings (defaults to 'utf-8', other values are 'hex' and 'base64')
   - **raw** - existing MIME message to use instead of generating a new one. If this value is set then you should also set the envelope object (if required) as the provided raw message is not parsed. The value could be a string, a buffer, a stream or an attachment-like object.
   - **textEncoding** - force content-transfer-encoding for text values (either *quoted-printable* or *base64*). By default the best option is detected (for lots of ascii use *quoted-printable*, otherwise *base64*)
   - **list** - helper for setting List-\* headers

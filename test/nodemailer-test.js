@@ -306,7 +306,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
+                expect(/d1ed1d46968a6ccdb4f1726fee6d4fb6/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -335,7 +335,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
+                expect(/d1ed1d46968a6ccdb4f1726fee6d4fb6/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -456,18 +456,20 @@ describe('Nodemailer integration tests', function () {
                 text: 'uuu',
                 envelope: {
                     from: 'aaa@valid.sender',
-                    to: 'vvv@valid.recipient'
+                    to: 'vvv@valid.recipient',
+                    cc: 'vvv2@valid.recipient'
                 }
             };
 
             nm.sendMail(mailData, function (err, info) {
                 expect(err).to.not.exist;
                 expect(info.accepted).to.deep.equal([
-                    'vvv@valid.recipient'
+                    'vvv@valid.recipient',
+                    'vvv2@valid.recipient'
                 ]);
                 expect(info.rejected).to.deep.equal([]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/7924b6d606c89e2c683afea8d3e9a75b/i.test(info.response)).to.be.true;
+                expect(/4f16894de78867c6177b6379a78724ac/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -500,6 +502,82 @@ describe('Nodemailer integration tests', function () {
                 expect(info.accepted).to.deep.equal(['internätiõnäližed@valid.recipient']);
                 expect(info.rejected).to.deep.equal([]);
                 expect(info.messageId).to.equal('abc@def');
+                done();
+            });
+        });
+
+        it('should log in send mail with attachment', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false
+            });
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu',
+                baseBoundary: 'test',
+                attachments: [{
+                    path: __dirname + '/fixtures/attachment.bin'
+                }]
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                expect(err).to.not.exist;
+                expect(info.accepted).to.deep.equal([
+                    'to1@valid.recipient',
+                    'to2@valid.recipient'
+                ]);
+                expect(info.rejected).to.deep.equal([
+                    'to@invalid.recipient'
+                ]);
+                expect(info.messageId).to.equal('abc@def');
+                expect(/1908f76a72db88adff9a6c926c61a416/i.test(info.response)).to.be.true;
+                done();
+            });
+        });
+
+        it('should return an error for disabled file access', function (done) {
+            var nm = nodemailer.createTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'testuser',
+                    pass: 'testpass'
+                },
+                ignoreTLS: true,
+                logger: false,
+                disableFileAccess: true
+            });
+
+            var mailData = {
+                from: 'from@valid.sender',
+                sender: 'sender@valid.sender',
+                to: ['to1@valid.recipient', 'to2@valid.recipient', 'to@invalid.recipient'],
+                subject: 'test',
+                date: new Date('Mon, 31 Jan 2011 23:01:00 +0000'),
+                messageId: 'abc@def',
+                xMailer: 'aaa',
+                text: 'uuu',
+                attachments: [{
+                    path: __dirname + '/fixtures/attachment.bin'
+                }]
+            };
+
+            nm.sendMail(mailData, function (err, info) {
+                expect(err).to.exist;
+                expect(info).to.not.exist;
                 done();
             });
         });
@@ -585,7 +663,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
+                expect(/d1ed1d46968a6ccdb4f1726fee6d4fb6/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -615,7 +693,7 @@ describe('Nodemailer integration tests', function () {
                     'to@invalid.recipient'
                 ]);
                 expect(info.messageId).to.equal('abc@def');
-                expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
+                expect(/d1ed1d46968a6ccdb4f1726fee6d4fb6/i.test(info.response)).to.be.true;
                 done();
             });
         });
@@ -779,7 +857,7 @@ describe('Nodemailer integration tests', function () {
                             'to@invalid.recipient'
                         ]);
                         expect(info.messageId).to.equal('abc@def');
-                        expect(/7e6b56df12172dfebe7fba2641992a63/i.test(info.response)).to.be.true;
+                        expect(/d1ed1d46968a6ccdb4f1726fee6d4fb6/i.test(info.response)).to.be.true;
                         done();
                     });
                 }

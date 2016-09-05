@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.0 2016-09-05
+
+  * Added new options disableFileAccess and disableUrlAccess
+  * Fixed envelope handling where cc/bcc fields were ignored in the envelope object
+
 ## 2.4.2 2016-05-25
 
   * Removed shrinkwrap file. Seemed to cause more trouble than help

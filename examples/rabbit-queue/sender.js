@@ -7,7 +7,7 @@
 var nodemailer = require('../../lib/nodemailer');
 var amqp = require('amqp');
 
-var queueHost = 'amqp://test:test@192.168.56.52';
+var queueHost = 'amqp://guest:guest@localhost';
 var queueName = 'outgoing';
 
 var smtpHost = {
