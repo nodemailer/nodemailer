@@ -428,7 +428,7 @@ Where
       - **info.accepted** is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
       - **info.rejected** is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
       - **info.pending** is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
-      - **response** is a string returned by SMTP transports and includes the last SMTP response from the server
+      - **info.response** is a string returned by SMTP transports and includes the last SMTP response from the server
 
 > If the message includes several recipients then the message is considered sent if at least one recipient is accepted
 
