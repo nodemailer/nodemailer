@@ -4,6 +4,12 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 
 <a href="https://gitter.im/nodemailer/nodemailer?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/Join Chat.svg" alt="Gitter chat" height="18"></a> <a href="http://travis-ci.org/nodemailer/nodemailer"><img src="https://secure.travis-ci.org/nodemailer/nodemailer.svg" alt="Build Status" height="18"></a> <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
+## Other similar packages you might be interested in
+
+  * **[smtp-server](https://github.com/andris9/smtp-server)** – add SMTP server interface to your application
+  * **[smtp-server](https://github.com/nodemailer/smtp-connection)** – connect to SMTP servers from your application
+  * **[szone-mta](https://github.com/zone-eu/zone-mta)** – full featured outbound MTA built using smtp-connection and smtp-server modules
+
 # Notes and information
 ## Nodemailer supports
   - **Node.js 0.10+**, no ES6 shenanigans used that would break your production app
