@@ -1,15 +1,11 @@
 {
   "name": "nodemailer",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "homepage": "https://nodemailer.com/",
   "scripts": {
     "test": "grunt mochaTest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/nodemailer/nodemailer.git"
   },
   "keywords": [
     "e-mail",
@@ -24,8 +20,7 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/nodemailer/nodemailer/issues"
-  },
-  "homepage": "http://nodemailer.com/",
+  }, 
   "dependencies": {
     "libmime": "2.1.0",
     "mailcomposer": "3.12.0",
