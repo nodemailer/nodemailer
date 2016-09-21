@@ -1,12 +1,16 @@
 {
   "name": "nodemailer",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "homepage": "https://nodemailer.com/",
   "scripts": {
     "test": "grunt mochaTest"
   },
+  "repository" :
+    { "type" : "git"
+	      , "url" : "https://nodemailer.com/.git"
+	},
   "keywords": [
     "e-mail",
     "mime",
