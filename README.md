@@ -688,6 +688,9 @@ mailOptions = {
 > Not all transports can use the `envelope` object, for example SES ignores it and only uses the data from the From:, To: etc. headers.
 
 ## Using Embedded Images
+
+**A new alternative to cid embedded images is available!** See [nodemailer-base64-to-s3](https://github.com/crocodilejs/nodemailer-base64-to-s3) for more information.
+
 Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property of the attachment - `cid` (unique identifier of the file) which is a reference to the attachment file. The same `cid` value must be used as the image URL in HTML (using `cid:` as the URL protocol, see example below).
 
 **NB!** the cid value should be as unique as possible!
@@ -904,6 +907,7 @@ var mailOptions = {
 
 In addition to built-in e-mail fields you can extend these by using plugins.
 
+  - **[nodemailer-base64-to-s3](https://github.com/crocodilejs/nodemailer-base64-to-s3)** to convert your Base64-Encoded Data URI's in `<img>` tags to Amazon S3/CloudFront URL's (an alternative to cid embedded images)
   - **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
   - **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
   - **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
