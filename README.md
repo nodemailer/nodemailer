@@ -915,6 +915,7 @@ In addition to built-in e-mail fields you can extend these by using plugins.
   - **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
   - **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
   - **[nodemailer-hashcash](https://github.com/andris9/nodemailer-hashcash)** to generate [hashcash](http://www.hashcash.org/) headers
+  - **[nodemailer-trap-plugin](https://github.com/killmenot/nodemailer-trap-plugin)** to intercept emails in non production environments
   - _add yours_ (see plugin api documentation [here](#plugin-api))
 
 # Using Gmail
