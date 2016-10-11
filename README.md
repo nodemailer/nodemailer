@@ -405,6 +405,7 @@ var transporter = nodemailer.createTransport({
 
 **Available Transports**
 
+  - **[nodemailer-mailgun-transport](https://github.com/orliesaurus/nodemailer-mailgun-transport)** for sending messages through Mailgun's Web API
   - **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
   - **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
   - **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
