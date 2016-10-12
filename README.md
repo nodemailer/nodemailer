@@ -7,7 +7,7 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 ## Other similar packages you might be interested in
 
   * **[smtp-server](https://github.com/andris9/smtp-server)** – add SMTP server interface to your application
-  * **[smtp-server](https://github.com/nodemailer/smtp-connection)** – connect to SMTP servers from your application
+  * **[smtp-connection](https://github.com/nodemailer/smtp-connection)** – connect to SMTP servers from your application
   * **[zone-mta](https://github.com/zone-eu/zone-mta)** – full featured outbound MTA built using smtp-connection and smtp-server modules
 
 # Notes and information
