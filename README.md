@@ -1060,7 +1060,7 @@ transporter.use('stream', function(mail, callback){
 ```
 
 ## Transports
-Transports are objects that have a method `send` and properies `name` and `version`. Additionally, if the transport object is an Event Emitter, 'log' events are piped through Nodemailer. A transport object is passed to the `nodemailer.createTransport(transport)` method to create the transporter object.
+Transports are objects that have a method `send` and properties `name` and `version`. Additionally, if the transport object is an Event Emitter, 'log' events are piped through Nodemailer. A transport object is passed to the `nodemailer.createTransport(transport)` method to create the transporter object.
 
 **`transport.name`**
 
