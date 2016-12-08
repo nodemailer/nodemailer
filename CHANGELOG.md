@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.7.0 2016-12-08
+
+  * Bumped mailcomposer that generates encoded-words differently which might break some tests
+
 ## 2.6.0 2016-09-05
 
   * Added new options disableFileAccess and disableUrlAccess
