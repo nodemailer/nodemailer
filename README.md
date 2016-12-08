@@ -7,7 +7,7 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 ## Other similar packages you might be interested in
 
   * **[smtp-server](https://github.com/andris9/smtp-server)** – add SMTP server interface to your application
-  * **[smtp-server](https://github.com/nodemailer/smtp-connection)** – connect to SMTP servers from your application
+  * **[smtp-connection](https://github.com/nodemailer/smtp-connection)** – connect to SMTP servers from your application
   * **[zone-mta](https://github.com/zone-eu/zone-mta)** – full featured outbound MTA built using smtp-connection and smtp-server modules
 
 # Notes and information
@@ -405,6 +405,7 @@ var transporter = nodemailer.createTransport({
 
 **Available Transports**
 
+  - **[nodemailer-mailgun-transport](https://github.com/orliesaurus/nodemailer-mailgun-transport)** for sending messages through Mailgun's Web API
   - **[nodemailer-mandrill-transport](https://github.com/rebelmail/nodemailer-mandrill-transport)** for sending messages through Mandrill's Web API
   - **[nodemailer-pickup-transport](https://github.com/andris9/nodemailer-pickup-transport)** for storing messages to pickup folders
   - **[nodemailer-sailthru-transport](https://github.com/rebelmail/nodemailer-sailthru-transport)** for sending messages through Sailthru's Web API
@@ -688,6 +689,9 @@ mailOptions = {
 > Not all transports can use the `envelope` object, for example SES ignores it and only uses the data from the From:, To: etc. headers.
 
 ## Using Embedded Images
+
+**A new alternative to cid embedded images is available!** See [nodemailer-base64-to-s3](https://github.com/crocodilejs/nodemailer-base64-to-s3) for more information.
+
 Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property of the attachment - `cid` (unique identifier of the file) which is a reference to the attachment file. The same `cid` value must be used as the image URL in HTML (using `cid:` as the URL protocol, see example below).
 
 **NB!** the cid value should be as unique as possible!
@@ -904,12 +908,14 @@ var mailOptions = {
 
 In addition to built-in e-mail fields you can extend these by using plugins.
 
+  - **[nodemailer-base64-to-s3](https://github.com/crocodilejs/nodemailer-base64-to-s3)** to convert your Base64-Encoded Data URI's in `<img>` tags to Amazon S3/CloudFront URL's (an alternative to cid embedded images)
   - **[nodemailer-markdown](https://github.com/andris9/nodemailer-markdown)** to use markdown for the content
   - **[nodemailer-dkim](https://github.com/andris9/nodemailer-dkim)** to sign messages with DKIM
   - **[nodemailer-html-to-text](https://github.com/andris9/nodemailer-html-to-text)** to auto generate plaintext content from html
   - **[nodemailer-express-handlebars](https://github.com/yads/nodemailer-express-handlebars)** to auto generate html emails from handlebars/mustache templates
   - **[nodemailer-plugin-inline-base64](https://github.com/mixmaxhq/nodemailer-plugin-inline-base64)** to convert base64 images to attachments
   - **[nodemailer-hashcash](https://github.com/andris9/nodemailer-hashcash)** to generate [hashcash](http://www.hashcash.org/) headers
+  - **[nodemailer-trap-plugin](https://github.com/killmenot/nodemailer-trap-plugin)** to intercept emails in non production environments
   - _add yours_ (see plugin api documentation [here](#plugin-api))
 
 # Using Gmail
@@ -1054,7 +1060,7 @@ transporter.use('stream', function(mail, callback){
 ```
 
 ## Transports
-Transports are objects that have a method `send` and properies `name` and `version`. Additionally, if the transport object is an Event Emitter, 'log' events are piped through Nodemailer. A transport object is passed to the `nodemailer.createTransport(transport)` method to create the transporter object.
+Transports are objects that have a method `send` and properties `name` and `version`. Additionally, if the transport object is an Event Emitter, 'log' events are piped through Nodemailer. A transport object is passed to the `nodemailer.createTransport(transport)` method to create the transporter object.
 
 **`transport.name`**
 
