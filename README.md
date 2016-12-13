@@ -703,7 +703,8 @@ var mailOptions = {
     attachments: [{
         filename: 'image.png',
         path: '/path/to/file',
-        cid: 'unique@kreata.ee' //same cid value as in the html img src
+        cid: 'unique@kreata.ee', //same cid value as in the html img src
+        contentDisposition: 'inline' //If you dont set it as inline, it wont work in some email clients like Outlook for Android
     }]
 }
 ```
