@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://nodemailer.com/"
+    "url": "https://github.com/nodemailer/nodemailer"
   },
   "keywords": [
     "e-mail",
