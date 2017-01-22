@@ -4,7 +4,11 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 
 <a href="http://badge.fury.io/js/nodemailer"><img src="https://badge.fury.io/js/nodemailer.svg" alt="NPM version" height="18"></a> <a href="https://www.npmjs.com/package/nodemailer"><img src="https://img.shields.io/npm/dt/nodemailer.svg" alt="NPM downloads" height="18"></a>
 
-See [Nodemailer](https://nodemailer.com/) homepage for details.
+### Community version
+
+This is the community version of Nodemailer ([usage docs](https://community.nodemailer.com/)). Community meaning minimal maintenance and support by the author.
+
+For an upgraded and up to date **Nodemailer PRO** see [nodemailer.com](https://nodemailer.com/) homepage.
 
 --------------------------------------------------------------------------------
 
