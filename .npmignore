@@ -3,5 +3,7 @@ test
 examples
 .eslintrc
 .gitignore
+.travis.yml
 Gruntfile.js
 ISSUE_TEMPLATE.md
+CONTRIBUTING.md
