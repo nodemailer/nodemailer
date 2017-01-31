@@ -1,0 +1,3 @@
+# cacheDir
+
+Temporary cache files

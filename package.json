@@ -1,58 +1,42 @@
 {
   "name": "nodemailer",
-  "version": "2.7.2",
+  "version": "3.0.0",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
-  "homepage": "https://nodemailer.com/",
   "scripts": {
-    "test": "grunt mochaTest"
+    "test": "grunt"
   },
   "repository": {
     "type": "git",
-    "url": "https://nodemailer.com/"
+    "url": "https://github.com/nodemailer/nodemailer.git"
   },
   "keywords": [
-    "e-mail",
-    "mime",
-    "email",
-    "mail",
-    "sendmail",
-    "ses",
-    "smtp"
+    "Nodemailer"
   ],
   "author": "Andris Reinman",
-  "license": "MIT",
+  "license": "EUPL-1.1",
   "bugs": {
     "url": "https://github.com/nodemailer/nodemailer/issues"
   },
-  "dependencies": {
-    "libmime": "3.0.0",
-    "mailcomposer": "4.0.1",
-    "nodemailer-direct-transport": "3.3.2",
-    "nodemailer-shared": "1.1.0",
-    "nodemailer-smtp-pool": "2.8.2",
-    "nodemailer-smtp-transport": "2.7.2",
-    "socks": "1.1.9"
-  },
+  "homepage": "https://nodemailer.com/",
   "devDependencies": {
-    "amqp": "^0.2.6",
+    "bunyan": "^1.8.5",
     "chai": "^3.5.0",
-    "email-templates": "^2.5.4",
+    "eslint-config-nodemailer": "^1.0.0",
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
     "grunt-eslint": "^19.0.0",
     "grunt-mocha-test": "^0.13.2",
-    "handlebars": "^4.0.6",
+    "libbase64": "^0.1.0",
+    "libmime": "^3.1.0",
+    "libqp": "^1.1.0",
     "mocha": "^3.2.0",
-    "nodemailer-dkim": "^1.0.4",
-    "nodemailer-markdown": "^1.0.1",
-    "nodemailer-stub-transport": "^1.1.0",
+    "proxy": "^0.2.4",
     "proxy-test-server": "^1.0.0",
-    "sinon": "^1.17.6",
-    "smtp-server": "^1.16.1",
-    "swig-email-templates": "^4.0.0"
+    "sinon": "^1.17.7",
+    "smtp-server": "^1.17.0"
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=6.0.0"
   }
 }

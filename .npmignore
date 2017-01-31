@@ -1,6 +1,7 @@
-.travis.yml
-.jshintrc
 assets
-examples
 test
+examples
+.eslintrc
+.gitignore
 Gruntfile.js
+ISSUE_TEMPLATE.md
