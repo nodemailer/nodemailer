@@ -1,4 +1,8 @@
-# Changelog
+# CHANGELOG
+
+## v3.0.0 2017-01-31
+
+  * Initial version of Nodemailer 3
 
 ## 2.7.0 2016-12-08
 

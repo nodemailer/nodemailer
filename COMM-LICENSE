@@ -1,0 +1,71 @@
+END-USER LICENSE AGREEMENT
+
+------------------------------------------------------------------------------
+
+IMPORTANT: THIS SOFTWARE END-USER LICENSE AGREEMENT ("EULA") IS A LEGAL AGREEMENT (“Agreement”) BETWEEN YOU (THE CUSTOMER, EITHER AS AN INDIVIDUAL OR, IF PURCHASED OR OTHERWISE ACQUIRED BY OR FOR AN ENTITY, AS AN ENTITY) AND KREATA OÜ (“Kreata”). READ IT CAREFULLY BEFORE COMPLETING THE INSTALLATION PROCESS AND USING NODEMAILER AND RELATED SOFTWARE COMPONENTS (“SOFTWARE”). IT PROVIDES A LICENSE TO USE THE SOFTWARE AND CONTAINS WARRANTY INFORMATION AND LIABILITY DISCLAIMERS. BY INSTALLING AND USING THE SOFTWARE, YOU ARE CONFIRMING YOUR ACCEPTANCE OF THE SOFTWARE AND AGREEING TO BECOME BOUND BY THE TERMS OF THIS AGREEMENT.
+
+------------------------------------------------------------------------------
+
+In order to use the Software under this Agreement, you must receive a “License Key” at the time of purchase, in accordance with the scope of use and other terms specified for each type of Software and as set forth in this Section 1 of this Agreement.
+
+1. License Grant
+
+1.1 General Use. This Agreement grants you a non-exclusive, non-transferable, limited license to the use rights for the Software, without the right to grant sublicenses, subject to the terms and conditions in this Agreement. The Software is licensed, not sold.
+
+1.2 You may install the Software on an unlimited number of Hosts. “Host” means any physical or virtual machine which is controlled by you.
+
+1.3 Archive Copies. You are entitled to make a reasonable amount of copies of the Software for archival purposes. Each copy must reproduce all copyright and other proprietary rights notices on or in the Software Product.
+
+1.4 Electronic Delivery. All Software and license documentation shall be delivered by electronic means unless otherwise specified on the applicable invoice or at the time of purchase. Software is available for download from https://www.npmjs.com/ under the user handle @nodemailer.
+
+2. Modifications. Kreata shall provide you with source code so that you can create Modifications of the original software. “Modification” means: (a) any addition to or deletion from the contents of a file included in the original Software or previous Modifications created by You, or (b) any new file that contains any part of the original Software or previous Modifications. While you retain all rights to any original work authored by you as part of the Modifications, We continue to own all copyright and other intellectual property rights in the Software.
+
+3. Restricted Uses.
+
+3.1 You shall not (and shall not allow any third party to): (a) distribute, sell, sublicense, rent, lease or use the Software for time sharing, hosting, service provider or like purposes, except as expressly permitted under this Agreement; (b) redistribute the Software or Modifications other than by including the Software or a portion thereof within your own product, which must have substantially different functionality than the Software or Modifications and must not allow any third party to use the Software or Modifications, or any portions thereof, for software development or application development purposes; (c) redistribute the Software as part of a product, "appliance" or "virtual server"; (d) redistribute the Software on any server which is not directly under your control; (e) remove any product identification, proprietary, copyright or other notices contained in the Software; (f) create a derivative work of any part of the Software (except as permitted in Section 4), or incorporate the Software, except to the extent expressly authorized in writing by Kreata.
+
+The Open Source version of the Software (OSS Version”) is licensed
+under the terms of the European Union Public License 1.1 (“EUPL-1.1”) and not under this EULA.
+
+4. Ownership. Notwithstanding anything to the contrary contained herein, except for the limited license rights expressly provided herein, Kreata and its suppliers have and will retain all rights, title and interest (including, without limitation, all patent, copyright, trademark, trade secret and other intellectual property rights) in and to the Software and all copies, modifications and derivative works thereof (including any changes which incorporate any of your ideas, feedback or suggestions). You acknowledge that you are obtaining only a limited license right to the Software, and that irrespective of any use of the words “purchase”, “sale” or like terms hereunder no ownership rights are being conveyed to you under this Agreement or otherwise.
+
+5. Fees and Payment. The Software license fees will be due and payable in full as set forth in the applicable invoice or at the time of purchase. If the Software does not function properly within two weeks of purchase, please contact us within those two weeks for a refund.
+
+6. Support, Maintenance and Services. Subject to the terms and conditions of this Agreement, as set forth in your invoice, and as set forth on the Nodemailer Pro support page (https://nodemailer.com/about/pro-support/), support and maintenance services may be included with the purchase of your license subscription.
+
+7. Term of Agreement.
+
+7.1 Term. This Agreement is effective as of the Delivery of the Software and expires at such time as all license and service subscriptions hereunder have expired in accordance with their own terms (the “Term”). For clarification, the term of your license under this Agreement may be perpetual, limited for Evaluation Version, or designated as a fixed-term license in the Invoice, and shall be specified at your time of purchase. Either party may terminate this Agreement (including all related Invoices) if the other party: (a) fails to cure any material breach of this Agreement within thirty (30) days after written notice of such breach, provided that Kreata may terminate this Agreement immediately if you exceed any restrictions contained in Section 1, unless otherwise specified in this agreement; (b) ceases operation without a successor; or (c) seeks protection under any bankruptcy, receivership, trust deed, creditors arrangement, composition or comparable proceeding, or if any such proceeding is instituted against such party (and not dismissed within sixty (60) days)). Termination is not an exclusive remedy and the exercise by either party of any remedy under this Agreement will be without prejudice to any other remedies it may have under this Agreement, by law, or otherwise.
+
+7.2 Termination. Upon any termination of this Agreement, you shall cease any and all use of any Software.
+
+7.3 Expiration of License. Upon the expiration of any term under this Agreement, (a) all Software updates and services pursuant to the license shall cease, (b) you may only continue to run existing installations of the Software, (c) you may not install the Software on any additional Hosts, and (d) any new installation of the Software shall require the purchase of a new license subscription from Kreata.
+
+8. Disclaimer of Warranties. The Software is provided "as is," with all faults, defects and errors, and without warranty of any kind. Kreata does not warrant that the Software will be free of bugs, errors, viruses or other defects, and Kreata shall have no liability of any kind for the use of or inability to use the Software, the Software content or any associated service, and you acknowledge that it is not technically practicable for Kreata to do so.
+To the maximum extent permitted by applicable law, Kreata disclaims all warranties, express, implied, arising by law or otherwise, regarding the Software, the Software content and their respective performance or suitability for your intended use, including without limitation any implied warranty of merchantability, fitness for a particular purpose.
+
+9. Limitation of Liability.
+
+In no event will Kreata be liable for any direct, indirect, consequential, incidental, special, exemplary, or punitive damages or liabilities whatsoever arising from or relating to the Software, the Software content or this Agreement, whether based on contract, tort (including negligence), strict liability or other theory, even if Kreata has been advised of the possibility of such damages.
+
+In no event will Kreata' liability exceed the Software license price as indicated in the invoice. The existence of more than one claim will not enlarge or extend this limit.
+
+10. Remedies. Your exclusive remedy and Kreata’ entire liability for breach of this Agreement shall be limited, at Kreata’ sole and exclusive discretion, to (a) replacement of any defective software or documentation; or (b) refund of the license fee paid to Kreata, payable in accordance with Kreata' refund policy.
+
+11. Acknowledgements.
+
+11.1 Consent to the Use of Data. You agree that Kreata and its affiliates may collect and use technical information gathered as part of the product support services. Kreata may use this information solely to improve products and services and will not disclose this information in a form that personally identifies you.
+
+12. Miscellaneous
+
+12.1 Entire Agreement. This Agreement sets forth our entire agreement with respect to the Software and the subject matter hereof and supersedes all prior and contemporaneous understandings and agreements whether written or oral.
+
+12.2 Amendment. Kreata reserves the right, in its sole discretion, to amend this Agreement from time. Amendments to this Agreement can be located at: https://nodemailer.com/COMM-LICENSE.
+
+12.3 Assignment. You may not assign this Agreement or any of its rights under this Agreement without the prior written consent of Kreata and any attempted assignment without such consent shall be void.
+
+12.4 Disputes. All disputes between you and Kreata will be settled by agreement if possible. If you and Kreata fail to reach an agreement, the dispute between Kreata and you related to the Software will be settled by court.
+
+12.5 Jurisdiction. Unless otherwise agreed on between you and Kreata or unless otherwise imperatively provided by the legislation, Estonian law shall apply to the contract entered into between you and Kreata and any disputes shall be settled by Harju County Court.
+
+13. Contact Information. If you have any questions about this EULA, or if you want to contact Kreata for any reason, please direct correspondence to info@kreata.ee.

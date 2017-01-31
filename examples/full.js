@@ -2,22 +2,25 @@
 
 'use strict';
 
-var nodemailer = require('../lib/nodemailer');
+const bunyan = require('bunyan');
+const nodemailer = require('../lib/nodemailer');
 
 // Create a SMTP transporter object
-var transporter = nodemailer.createTransport({
+let transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-        user: 'test.nodemailer@gmail.com',
-        pass: 'Nodemailer123'
+        user: 'username',
+        pass:  'password'
     },
-    logger: true, // log to console
+    logger: bunyan.createLogger({
+        name: 'nodemailer'
+    }),
     debug: true // include SMTP traffic in the logs
 }, {
     // default message fields
 
     // sender info
-    from: 'Sender Name <sender@example.com>',
+    from: 'Pangalink <no-reply@pangalink.net>',
     headers: {
         'X-Laziness-level': 1000 // just an example header, no need to use this
     }
@@ -26,13 +29,13 @@ var transporter = nodemailer.createTransport({
 console.log('SMTP Configured');
 
 // Message object
-var message = {
+let message = {
 
     // Comma separated list of recipients
-    to: '"Receiver Name" <receiver@example.com>',
+    to: 'Andris Reinman <andris.reinman@gmail.com>',
 
     // Subject of the message
-    subject: 'Nodemailer is unicode friendly ✔', //
+    subject: 'Nodemailer is unicode friendly ✔ #', //
 
     // plaintext body
     text: 'Hello to myself!',
@@ -74,7 +77,7 @@ var message = {
 };
 
 console.log('Sending Mail');
-transporter.sendMail(message, function (error, info) {
+transporter.sendMail(message, (error, info) => {
     if (error) {
         console.log('Error occurred');
         console.log(error.message);
@@ -82,4 +85,5 @@ transporter.sendMail(message, function (error, info) {
     }
     console.log('Message sent successfully!');
     console.log('Server responded with "%s"', info.response);
+    transporter.close();
 });

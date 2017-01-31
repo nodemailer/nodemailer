@@ -5,7 +5,7 @@ module.exports = function (grunt) {
     // Project configuration.
     grunt.initConfig({
         eslint: {
-            all: ['lib/*.js', 'test/*.js', 'examples/*.js', 'Gruntfile.js']
+            all: ['index.js', 'lib/**/*.js', 'test/**/*.js', 'examples/**/*.js', 'Gruntfile.js']
         },
 
         mochaTest: {
@@ -13,7 +13,7 @@ module.exports = function (grunt) {
                 options: {
                     reporter: 'spec'
                 },
-                src: ['test/*-test.js']
+                src: ['test/**/*-test.js']
             }
         }
     });
