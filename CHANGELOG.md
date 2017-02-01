@@ -2,125 +2,144 @@
 
 ## v3.0.0 2017-01-31
 
-  * Initial version of Nodemailer 3
+- Initial version of Nodemailer 3
+
+This update brings a lot of breaking changes:
+
+- License changed from MIT to **EUPL-1.1**
+- Requires **Node.js v6+**
+- All **templating is gone**. It was too confusing to use and to be really universal a huge list of different renderers would be required. Nodemailer is about email, not about parsing different template sytaxes
+- **No NTLM authentication**. It was too difficult to re-implement. If you still need it then it would be possible to introduce a pluggable SASL interface where you could load the NTLM module in your own code and pass it to Nodemailer. Currently this is not possible.
+- **OAuth2 authentication** is built in and has a different [configuration](https://nodemailer.com/smtp/oauth2/). You can use both user (3LO) and service (2LO) accounts to generate access tokens from Nodemailer. Additionally there's a new feature to authenticate differently for every message – useful if your application sends on behalf of different users instead of a single sender.
+- **Improved Calendaring**. Provide an ical file to Nodemailer to send out [calendar events](https://nodemailer.com/message/calendar-events/).
+
+And also some non-breaking changes:
+
+- All **dependencies were dropped**. There is exactly 0 dependencies needed to use Nodemailer. This brings the installation time of Nodemailer from NPM down to less than 2 seconds
+- **Delivery status notifications** added to Nodemailer
+- Improved and built-in **DKIM** signing of messages. Previously you needed an external module for this and it did quite a lousy job with larger messages
+- **Stream transport** to return a RFC822 formatted message as a stream. Useful if you want to use Nodemailer as a preprocessor and not for actual delivery.
+- **Sendmail** transport built-in, no need for external transport plugin
+
+See [Nodemailer.com](https://nodemailer.com/) for full documentation
 
 ## 2.7.0 2016-12-08
 
-  * Bumped mailcomposer that generates encoded-words differently which might break some tests
+- Bumped mailcomposer that generates encoded-words differently which might break some tests
 
 ## 2.6.0 2016-09-05
 
-  * Added new options disableFileAccess and disableUrlAccess
-  * Fixed envelope handling where cc/bcc fields were ignored in the envelope object
+- Added new options disableFileAccess and disableUrlAccess
+- Fixed envelope handling where cc/bcc fields were ignored in the envelope object
 
 ## 2.4.2 2016-05-25
 
-  * Removed shrinkwrap file. Seemed to cause more trouble than help
+- Removed shrinkwrap file. Seemed to cause more trouble than help
 
 ## 2.4.1 2016-05-12
 
-  * Fixed outdated shrinkwrap file
+- Fixed outdated shrinkwrap file
 
 ## 2.4.0 2016-05-11
 
-  * Bumped mailcomposer module to allow using `false` as attachment filename (suppresses filename usage)
-  * Added NTLM authentication support
+- Bumped mailcomposer module to allow using `false` as attachment filename (suppresses filename usage)
+- Added NTLM authentication support
 
 ## 2.3.2 2016-04-11
 
-  * Bumped smtp transport modules to get newest smtp-connection that fixes SMTPUTF8 support for internationalized email addresses
+- Bumped smtp transport modules to get newest smtp-connection that fixes SMTPUTF8 support for internationalized email addresses
 
 ## 2.3.1 2016-04-08
 
-  * Bumped mailcomposer to have better support for message/822 attachments
+- Bumped mailcomposer to have better support for message/822 attachments
 
 ## 2.3.0 2016-03-03
 
-  * Fixed a bug with attachment filename that contains mixed unicode and dashes
-  * Added built-in support for proxies by providing a new SMTP option `proxy` that takes a proxy configuration url as its value
-  * Added option `transport` to dynamically load transport plugins
-  * Do not require globally installed grunt-cli
+- Fixed a bug with attachment filename that contains mixed unicode and dashes
+- Added built-in support for proxies by providing a new SMTP option `proxy` that takes a proxy configuration url as its value
+- Added option `transport` to dynamically load transport plugins
+- Do not require globally installed grunt-cli
 
 ## 2.2.1 2016-02-20
 
-  * Fixed a bug in SMTP requireTLS option that was broken
+- Fixed a bug in SMTP requireTLS option that was broken
 
 ## 2.2.0 2016-02-18
 
-  * Removed the need to use `clone` dependency
-  * Added new method `verify` to check SMTP configuration
-  * Direct transport uses STARTTLS by default, fallbacks to plaintext if STARTTLS fails
-  * Added new message option `list` for setting List-\* headers
-  * Add simple proxy support with `getSocket` method
-  * Added new message option `textEncoding`. If `textEncoding` is not set then detect best encoding automatically
-  * Added new message option `icalEvent` to embed iCalendar events. Example [here](examples/ical-event.js)
-  * Added new attachment option `raw` to use prepared MIME contents instead of generating a new one. This might be useful when you want to handcraft some parts of the message yourself, for example if you want to inject a PGP encrypted message as the contents of a MIME node
-  * Added new message option `raw` to use an existing MIME message instead of generating a new one
+- Removed the need to use `clone` dependency
+- Added new method `verify` to check SMTP configuration
+- Direct transport uses STARTTLS by default, fallbacks to plaintext if STARTTLS fails
+- Added new message option `list` for setting List-* headers
+- Add simple proxy support with `getSocket` method
+- Added new message option `textEncoding`. If `textEncoding` is not set then detect best encoding automatically
+- Added new message option `icalEvent` to embed iCalendar events. Example [here](examples/ical-event.js)
+- Added new attachment option `raw` to use prepared MIME contents instead of generating a new one. This might be useful when you want to handcraft some parts of the message yourself, for example if you want to inject a PGP encrypted message as the contents of a MIME node
+- Added new message option `raw` to use an existing MIME message instead of generating a new one
 
 ## 2.1.0 2016-02-01
 
 Republishing 2.1.0-rc.1 as stable. To recap, here's the notable changes between v2.0 and v2.1:
 
-  * Implemented templating support. You can either use a simple built-in renderer or some external advanced renderer, eg. [node-email-templates](https://github.com/niftylettuce/node-email-templates). Templating [docs](http://nodemailer.com/2-0-0-beta/templating/).
-  * Updated smtp-pool to emit 'idle' events in order to handle message queue more effectively
-  * Updated custom header handling, works everywhere the same now, no differences between adding custom headers to the message or to an attachment
+- Implemented templating support. You can either use a simple built-in renderer or some external advanced renderer, eg. [node-email-templates](https://github.com/niftylettuce/node-email-templates). Templating [docs](http://nodemailer.com/2-0-0-beta/templating/).
+- Updated smtp-pool to emit 'idle' events in order to handle message queue more effectively
+- Updated custom header handling, works everywhere the same now, no differences between adding custom headers to the message or to an attachment
 
 ## 2.1.0-rc.1 2016-01-25
 
 Sneaked in some new features even though it is already rc
 
-  * If a SMTP pool is closed while there are still messages in a queue, the message callbacks are invoked with an error
-  * In case of SMTP pool the transporter emits 'idle' when there is a free connection slot available
-  * Added method `isIdle()` that checks if a pool has still some free connection slots available
+- If a SMTP pool is closed while there are still messages in a queue, the message callbacks are invoked with an error
+- In case of SMTP pool the transporter emits 'idle' when there is a free connection slot available
+- Added method `isIdle()` that checks if a pool has still some free connection slots available
 
 ## 2.1.0-rc.0 2016-01-20
 
-  * Bumped dependency versions
+- Bumped dependency versions
 
 ## 2.1.0-beta.3 2016-01-20
 
-  * Added support for node-email-templates templating in addition to the built-in renderer
+- Added support for node-email-templates templating in addition to the built-in renderer
 
 ## 2.1.0-beta.2 2016-01-20
 
-  * Implemented simple templating feature
+- Implemented simple templating feature
 
 ## 2.1.0-beta.1 2016-01-20
 
-  * Allow using prepared header values that are not folded or encoded by Nodemailer
+- Allow using prepared header values that are not folded or encoded by Nodemailer
 
 ## 2.1.0-beta.0 2016-01-20
 
-  * Use the same header custom structure for message root, attachments and alternatives
-  * Ensure that Message-Id exists when accessing message
-  * Allow using array values for custom headers (inserts every value in its own row)
+- Use the same header custom structure for message root, attachments and alternatives
+- Ensure that Message-Id exists when accessing message
+- Allow using array values for custom headers (inserts every value in its own row)
 
 ## 2.0.0 2016-01-11
 
-  * Released rc.2 as stable
+- Released rc.2 as stable
 
 ## 2.0.0-rc.2 2016-01-04
 
-  * Locked dependencies
+- Locked dependencies
 
 ## 2.0.0-beta.2 2016-01-04
 
-  * Updated documentation to reflect changes with SMTP handling
-  * Use beta versions for smtp/pool/direct transports
-  * Updated logging
+- Updated documentation to reflect changes with SMTP handling
+- Use beta versions for smtp/pool/direct transports
+- Updated logging
 
 ## 2.0.0-beta.1 2016-01-03
 
-  * Use bunyan compatible logger instead of the emit('log') style
-  * Outsourced some reusable methods to nodemailer-shared
-  * Support setting direct/smtp/pool with the default configuration
+- Use bunyan compatible logger instead of the emit('log') style
+- Outsourced some reusable methods to nodemailer-shared
+- Support setting direct/smtp/pool with the default configuration
 
 ## 2.0.0-beta.0 2015-12-31
 
-  * Stream errors are not silently swallowed
-  * Do not use format=flowed
-  * Use nodemailer-fetch to fetch URL streams
-  * jshint replaced by eslint
+- Stream errors are not silently swallowed
+- Do not use format=flowed
+- Use nodemailer-fetch to fetch URL streams
+- jshint replaced by eslint
 
 ## v1.11.0 2015-12-28
 
@@ -196,10 +215,7 @@ Added new method `resolveContent()` to get the html/text/attachment content as a
 
 ## v1.0.4 2014-07-23
 
-Bugfix release. HTML node was instered twice if the message consisted of a HTML
-content (but no text content) + at least one attachment with CID + at least
-one attachment without CID. In this case the HTML node was inserted both to
-the root level multipart/mixed section and to the multipart/related sub section
+Bugfix release. HTML node was instered twice if the message consisted of a HTML content (but no text content) + at least one attachment with CID + at least one attachment without CID. In this case the HTML node was inserted both to the root level multipart/mixed section and to the multipart/related sub section
 
 ## v1.0.3 2014-07-16
 
@@ -207,7 +223,7 @@ Fixed a bug where Nodemailer crashed if the message content type was multipart/r
 
 ## v1.0.2 2014-07-16
 
-Upgraded nodemailer-smtp-transport to 0.1.11. The docs state that for SSL you should use 'secure' option but the underlying smtp-connection module used 'secureConnection' for this purpose. Fixed smpt-connection to match the docs.
+Upgraded nodemailer-smtp-transport to 0.1.11\. The docs state that for SSL you should use 'secure' option but the underlying smtp-connection module used 'secureConnection' for this purpose. Fixed smpt-connection to match the docs.
 
 ## v1.0.1 2014-07-15
 
@@ -215,155 +231,151 @@ Implemented missing #close method that is passed to the underlying transport obj
 
 ## v1.0.0 2014-07-15
 
-Total rewrite. See migration guide here: http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide
+Total rewrite. See migration guide here: <http://www.andrisreinman.com/nodemailer-v1-0/#migrationguide>
 
 ## v0.7.1 2014-07-09
 
-  * Upgraded aws-sdk to 2.0.5
+- Upgraded aws-sdk to 2.0.5
 
 ## v0.7.0 2014-06-17
 
-  * Bumped version to v0.7.0
-  * Fix AWS-SES usage [5b6bc144]
-  * Replace current SES with new SES using AWS-SDK (Elanorr) [c79d797a]
-  * Updated README.md about Node Email Templates (niftylettuce) [e52bef81]
+- Bumped version to v0.7.0
+- Fix AWS-SES usage [5b6bc144]
+- Replace current SES with new SES using AWS-SDK (Elanorr) [c79d797a]
+- Updated README.md about Node Email Templates (niftylettuce) [e52bef81]
 
 ## v0.6.5 2014-05-15
 
-  * Bumped version to v0.6.5
-  * Use tildes instead of carets for dependency listing [5296ce41]
-  * Allow clients to set a custom identityString (venables) [5373287d]
-  * bugfix (adding "-i" to sendmail command line for each new mail)  by copying this.args (vrodic) [05a8a9a3]
-  * update copyright (gdi2290) [3a6cba3a]
+- Bumped version to v0.6.5
+- Use tildes instead of carets for dependency listing [5296ce41]
+- Allow clients to set a custom identityString (venables) [5373287d]
+- bugfix (adding "-i" to sendmail command line for each new mail) by copying this.args (vrodic) [05a8a9a3]
+- update copyright (gdi2290) [3a6cba3a]
 
 ## v0.6.4 2014-05-13
 
-  * Bumped version to v0.6.4
-  * added npmignore, bumped dependencies [21bddcd9]
-  * Add AOL to well-known services (msouce) [da7dd3b7]
+- Bumped version to v0.6.4
+- added npmignore, bumped dependencies [21bddcd9]
+- Add AOL to well-known services (msouce) [da7dd3b7]
 
 ## v0.6.3 2014-04-16
 
-  * Bumped version to v0.6.3
-  * Upgraded simplesmtp dependency [dd367f59]
+- Bumped version to v0.6.3
+- Upgraded simplesmtp dependency [dd367f59]
 
 ## v0.6.2 2014-04-09
 
-  * Bumped version to v0.6.2
-  * Added error option to Stub transport [c423acad]
-  * Use SVG npm badge (t3chnoboy) [677117b7]
-  * add SendCloud to well known services (haio) [43c358e0]
-  * High-res build-passing and NPM module badges (sahat) [9fdc37cd]
+- Bumped version to v0.6.2
+- Added error option to Stub transport [c423acad]
+- Use SVG npm badge (t3chnoboy) [677117b7]
+- add SendCloud to well known services (haio) [43c358e0]
+- High-res build-passing and NPM module badges (sahat) [9fdc37cd]
 
 ## v0.6.1 2014-01-26
 
-  * Bumped version to v0.6.1
-  * Do not throw on multiple errors from sendmail command [c6e2cd12]
-  * Do not require callback for pickup, fixes #238 [93eb3214]
-  * Added AWSSecurityToken information to README, fixes #235 [58e921d1]
-  * Added Nodemailer logo [06b7d1a8]
+- Bumped version to v0.6.1
+- Do not throw on multiple errors from sendmail command [c6e2cd12]
+- Do not require callback for pickup, fixes #238 [93eb3214]
+- Added AWSSecurityToken information to README, fixes #235 [58e921d1]
+- Added Nodemailer logo [06b7d1a8]
 
 ## v0.6.0 2013-12-30
 
-  * Bumped version to v0.6.0
-  * Allow defining custom transport methods [ec5b48ce]
-  * Return messageId with responseObject for all built in transport methods [74445cec]
-  * Bumped dependency versions for mailcomposer and readable-stream [9a034c34]
-  * Changed pickup argument name to 'directory' [01c3ea53]
-  * Added support for IIS pickup directory with PICKUP transport (philipproplesch) [36940b59..360a2878]
-  * Applied common styles [9e93a409]
-  * Updated readme [c78075e7]
+- Bumped version to v0.6.0
+- Allow defining custom transport methods [ec5b48ce]
+- Return messageId with responseObject for all built in transport methods [74445cec]
+- Bumped dependency versions for mailcomposer and readable-stream [9a034c34]
+- Changed pickup argument name to 'directory' [01c3ea53]
+- Added support for IIS pickup directory with PICKUP transport (philipproplesch) [36940b59..360a2878]
+- Applied common styles [9e93a409]
+- Updated readme [c78075e7]
 
 ## v0.5.15 2013-12-13
 
-  * bumped version to v0.5.15
-  * Updated README, added global options info for setting uo transports [554bb0e5]
-  * Resolve public hostname, if resolveHostname property for a transport object is set to `true` [9023a6e1..4c66b819]
+- bumped version to v0.5.15
+- Updated README, added global options info for setting uo transports [554bb0e5]
+- Resolve public hostname, if resolveHostname property for a transport object is set to `true` [9023a6e1..4c66b819]
 
 ## v0.5.14 2013-12-05
 
-  * bumped version to v0.5.14
-  * Expose status for direct messages [f0312df6]
-  * Allow to skip the X-Mailer header if xMailer value is set to 'false' [f2c20a68]
+- bumped version to v0.5.14
+- Expose status for direct messages [f0312df6]
+- Allow to skip the X-Mailer header if xMailer value is set to 'false' [f2c20a68]
 
 ## v0.5.13 2013-12-03
 
-  * bumped version to v0.5.13
-  * Use the name property from the transport object to use for the domain part of message-id values (1598eee9)
+- bumped version to v0.5.13
+- Use the name property from the transport object to use for the domain part of message-id values (1598eee9)
 
 ## v0.5.12 2013-12-02
 
-  * bumped version to v0.5.12
-  * Expose transport method and transport module version if available [a495106e]
-  * Added 'he' module instead of using custom html entity decoding [c197d102]
-  * Added xMailer property for transport configuration object to override X-Mailer value [e8733a61]
-  * Updated README, added description for 'mail' method [e1f5f3a6]
+- bumped version to v0.5.12
+- Expose transport method and transport module version if available [a495106e]
+- Added 'he' module instead of using custom html entity decoding [c197d102]
+- Added xMailer property for transport configuration object to override X-Mailer value [e8733a61]
+- Updated README, added description for 'mail' method [e1f5f3a6]
 
 ## v0.5.11 2013-11-28
 
-  * bumped version to v0.5.11
-  * Updated mailcomposer version. Replaces ent with he [6a45b790e]
+- bumped version to v0.5.11
+- Updated mailcomposer version. Replaces ent with he [6a45b790e]
 
 ## v0.5.10 2013-11-26
 
-  * bumped version to v0.5.10
-  * added shorthand function mail() for direct transport type [88129bd7]
-  * minor tweaks and typo fixes [f797409e..ceac0ca4]
+- bumped version to v0.5.10
+- added shorthand function mail() for direct transport type [88129bd7]
+- minor tweaks and typo fixes [f797409e..ceac0ca4]
 
 ## v0.5.9 2013-11-25
 
-  * bumped version to v0.5.9
-  * Update for 'direct' handling [77b84e2f]
-  * do not require callback to be provided for 'direct' type [ec51c79f]
+- bumped version to v0.5.9
+- Update for 'direct' handling [77b84e2f]
+- do not require callback to be provided for 'direct' type [ec51c79f]
 
 ## v0.5.8 2013-11-22
 
-  * bumped version to v0.5.8
-  * Added support for 'direct' transport [826f226d..0dbbcbbc]
+- bumped version to v0.5.8
+- Added support for 'direct' transport [826f226d..0dbbcbbc]
 
 ## v0.5.7 2013-11-18
 
-  * bumped version to v0.5.7
-  * Replace \r\n by \n in Sendmail transport (rolftimmermans) [fed2089e..616ec90c]
-    A lot of sendmail implementations choke on \r\n newlines and require \n
-    This commit addresses this by transforming all \r\n sequences passed to
-    the sendmail command with \n
+- bumped version to v0.5.7
+- Replace \r\n by \n in Sendmail transport (rolftimmermans) [fed2089e..616ec90c] A lot of sendmail implementations choke on \r\n newlines and require \n This commit addresses this by transforming all \r\n sequences passed to the sendmail command with \n
 
 ## v0.5.6 2013-11-15
 
-  * bumped version to v0.5.6
-  * Upgraded mailcomposer dependency to 0.2.4 [e5ff9c40]
-  * Removed noCR option [e810d1b8]
-  * Update wellknown.js, added FastMail (k-j-kleist) [cf930f6d]
+- bumped version to v0.5.6
+- Upgraded mailcomposer dependency to 0.2.4 [e5ff9c40]
+- Removed noCR option [e810d1b8]
+- Update wellknown.js, added FastMail (k-j-kleist) [cf930f6d]
 
 ## v0.5.5 2013-10-30
 
-  * bumped version to v0.5.5
-  * Updated mailcomposer dependnecy version to 0.2.3
-  * Remove legacy code - node v0.4 is not supported anymore anyway
-  * Use hostname (autodetected or from the options.name property) for Message-Id instead of "Nodemailer" (helps a bit when messages are identified as spam)
-  * Added maxMessages info to README
+- bumped version to v0.5.5
+- Updated mailcomposer dependnecy version to 0.2.3
+- Remove legacy code - node v0.4 is not supported anymore anyway
+- Use hostname (autodetected or from the options.name property) for Message-Id instead of "Nodemailer" (helps a bit when messages are identified as spam)
+- Added maxMessages info to README
 
 ## v0.5.4 2013-10-29
 
-  * bumped version to v0.5.4
-  * added "use strict" statements
-  * Added DSN info to README
-  * add support for QQ enterprise email (coderhaoxin)
-  * Add a Bitdeli Badge to README
-  * DSN options Passthrought into simplesmtp. (irvinzz)
+- bumped version to v0.5.4
+- added "use strict" statements
+- Added DSN info to README
+- add support for QQ enterprise email (coderhaoxin)
+- Add a Bitdeli Badge to README
+- DSN options Passthrought into simplesmtp. (irvinzz)
 
 ## v0.5.3 2013-10-03
 
-  * bumped version v0.5.3
-  * Using a stub transport to prevent sendmail from being called during a test. (jsdevel)
-  * closes #78: sendmail transport does not work correctly on Unix machines. (jsdevel)
-  * Updated PaaS Support list to include Modulus. (fiveisprime)
-  * Translate self closing break tags to newline (kosmasgiannis)
-  * fix typos (aeosynth)
+- bumped version v0.5.3
+- Using a stub transport to prevent sendmail from being called during a test. (jsdevel)
+- closes #78: sendmail transport does not work correctly on Unix machines. (jsdevel)
+- Updated PaaS Support list to include Modulus. (fiveisprime)
+- Translate self closing break tags to newline (kosmasgiannis)
+- fix typos (aeosynth)
 
 ## v0.5.2 2013-07-25
 
-  * bumped version v0.5.2
-  * Merge pull request #177 from MrSwitch/master
-    Fixing Amazon SES, fatal error caused by bad connection
+- bumped version v0.5.2
+- Merge pull request #177 from MrSwitch/master Fixing Amazon SES, fatal error caused by bad connection
