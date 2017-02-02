@@ -8,7 +8,7 @@ This update brings a lot of breaking changes:
 
 - License changed from MIT to **EUPL-1.1**. This was possible as the new version of Nodemailer is a major rewrite. The features I don't have ownership for, were removed or reimplemented. If there's still some snippets in the code that have vague ownership then notify [andris@kreata.ee](mailto:andris@kreata.ee) about the conflicting code and I'll fix it.
 - Requires **Node.js v6+**
-- All **templating is gone**. It was too confusing to use and to be really universal a huge list of different renderers would be required. Nodemailer is about email, not about parsing different template sytaxes
+- All **templating is gone**. It was too confusing to use and to be really universal a huge list of different renderers would be required. Nodemailer is about email, not about parsing different template syntaxes
 - **No NTLM authentication**. It was too difficult to re-implement. If you still need it then it would be possible to introduce a pluggable SASL interface where you could load the NTLM module in your own code and pass it to Nodemailer. Currently this is not possible.
 - **OAuth2 authentication** is built in and has a different [configuration](https://nodemailer.com/smtp/oauth2/). You can use both user (3LO) and service (2LO) accounts to generate access tokens from Nodemailer. Additionally there's a new feature to authenticate differently for every message – useful if your application sends on behalf of different users instead of a single sender.
 - **Improved Calendaring**. Provide an ical file to Nodemailer to send out [calendar events](https://nodemailer.com/message/calendar-events/).
