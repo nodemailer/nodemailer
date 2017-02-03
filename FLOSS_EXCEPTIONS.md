@@ -20,11 +20,10 @@ You are free to distribute a Derivative Work that is formed entirely from the Li
 - All identifiable sections of the Derivative Work which are not derived from the Library, and which can reasonably be considered independent and separate works in themselves, are distributed subject to one of the FLOSS licenses listed below, and
 - The object code or executable form of those sections are accompanied by the complete corresponding machine-readable source code for those sections on the same medium and under the same FLOSS license as the corresponding object code or executable forms of those sections, and
 - Any works which are aggregated with the Library or with a Derivative Work on a volume of a storage or distribution medium in accordance with the EUPL, can reasonably be considered independent and separate works in themselves which are not derivatives of either the Library, a Derivative Work or a FLOSS Work.
-- The Derivative Work can reasonably be considered independent and separate work that is intended for use by end-users and not as a library for software development purposes.
 
 ## 3\. Applicability
 
-This exception applies to Nodemailer version 3.0.0 or later, MailParser 2.0.0 or later released under the EUPL that contain a notice placed by Kreata OÜ. saying that Derivative Works built using the Library may be distributed under the terms of this Exception.
+This exception applies to Nodemailer version 3.0.0 or later, MailParser 2.0.0 or later released under the EUPL that contain a notice placed by Kreata OÜ saying that Derivative Works built using the Library may be distributed under the terms of this Exception.
 
 ## 4\. Termination
 
