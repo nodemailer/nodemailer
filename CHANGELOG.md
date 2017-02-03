@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v3.0.1 2017-02-03
+
+- Fixed a bug where Nodemailer threw an exception if `disableFileAccess` option was used
+- Added FLOSS [exception declaration](FLOSS_EXCEPTIONS.md)
+
 ## v3.0.0 2017-01-31
 
 - Initial version of Nodemailer 3
