@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.0.2 2017-02-04
+
+- Fixed a bug with OAuth2 login where error callback was fired twice if getToken was not available.
+
 ## v3.0.1 2017-02-03
 
 - Fixed a bug where Nodemailer threw an exception if `disableFileAccess` option was used
