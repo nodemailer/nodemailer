@@ -56,8 +56,20 @@ describe('SMTP-Connection Tests', function () {
             insecureServer = new SMTPServer({
                 disabledCommands: ['STARTTLS', 'AUTH'],
                 onData: function (stream, session, callback) {
-                    stream.on('data', function () {});
-                    stream.on('end', callback);
+                    let err = false;
+                    stream.on('data', function (chunk) {
+                        if (err || session.use8BitMime) {
+                            return;
+                        }
+                        for (let i = 0, len = chunk.length; i < len; i++) {
+                            if (chunk[i] >= 0x80) {
+                                err = new Error('8 bit content not allowed');
+                            }
+                        }
+                    });
+                    stream.on('end', function () {
+                        callback(err, false);
+                    });
                 },
                 logger: false
             });
@@ -371,6 +383,48 @@ describe('SMTP-Connection Tests', function () {
                 expect(err).to.not.exist;
                 runTest(socket);
             });
+        });
+
+        it('should send to unsecure server', function (done) {
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 3,
+                ignoreTLS: true,
+                logger: false
+            });
+
+            client.on('error', function (err) {
+                expect(err).to.not.exist;
+            });
+
+            client.connect(function () {
+                expect(client.secure).to.be.false;
+
+                let chunks = [],
+                    fname = __dirname + '/../../LICENSE',
+                    message = fs.readFileSync(fname, 'utf-8');
+
+                server.on('data', function (connection, chunk) {
+                    chunks.push(chunk);
+                });
+
+                server.removeAllListeners('dataReady');
+                server.on('dataReady', function (connection, callback) {
+                    let body = Buffer.concat(chunks);
+                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
+                    callback(null, 'ABC1');
+                });
+
+                client.send({
+                    from: 'test@valid.sender',
+                    to: 'test@valid.recipient'
+                }, fs.createReadStream(fname), function (err) {
+                    expect(err).to.not.exist;
+                    client.close();
+                });
+
+            });
+
+            client.on('end', done);
         });
     });
 

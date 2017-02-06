@@ -34,7 +34,7 @@
     "proxy": "^0.2.4",
     "proxy-test-server": "^1.0.0",
     "sinon": "^1.17.7",
-    "smtp-server": "^1.17.0"
+    "smtp-server": "^2.0.1"
   },
   "engines": {
     "node": ">=6.0.0"
