@@ -1,0 +1,242 @@
+/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
+/* globals beforeEach, describe, it */
+
+'use strict';
+
+const nodemailer = require('../../lib/nodemailer');
+const chai = require('chai');
+const expect = chai.expect;
+chai.config.includeStack = true;
+
+describe('SES Transport Tests', function () {
+    this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
+
+    it('should return MessageId', function (done) {
+        let transport = nodemailer.createTransport({
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                sendRawEmail: (message, cb) => {
+                    setImmediate(() => {
+                        cb(null, {
+                            MessageId: 'testtest'
+                        });
+                    });
+                }
+            }
+        });
+
+        let messageObject = {
+            from: 'Andris Reinman <andris.reinman@gmail.com>',
+            to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
+            cc: 'info@nodemailer.com',
+            subject: 'Awesome!',
+            messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>',
+            html: {
+                path: __dirname + '/../json-transport/fixtures/body.html'
+            },
+            text: 'hello world',
+            attachments: [{
+                filename: 'image.png',
+                path: __dirname + '/../json-transport/fixtures/image.png'
+            }]
+        };
+
+        transport.sendMail(messageObject, (err, info) => {
+            expect(err).to.not.exist;
+            expect(info).to.exist;
+            expect(info).to.deep.equal({
+                envelope: {
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
+                },
+                messageId: '<testtest@eu-west-1.amazonses.com>'
+            });
+            done();
+        });
+    });
+
+    it('should limit parallel connections', function (done) {
+        let transport = nodemailer.createTransport({
+            maxConnections: 2,
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                sendRawEmail: (message, cb) => {
+                    setTimeout(() => {
+                        cb(null, {
+                            MessageId: 'testtest'
+                        });
+                    }, 100);
+                }
+            }
+        });
+
+        let total = 100;
+        let finished = 0;
+        let start = Date.now();
+
+        for (let i = 0; i < total; i++) {
+
+            let messageObject = {
+                from: 'Andris Reinman <andris.reinman@gmail.com>',
+                to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
+                cc: 'info@nodemailer.com',
+                subject: 'Awesome!',
+                messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>',
+                html: {
+                    path: __dirname + '/../json-transport/fixtures/body.html'
+                },
+                text: 'hello world',
+                attachments: [{
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }]
+            };
+
+            transport.sendMail(messageObject, (err, info) => {
+                finished++;
+                expect(err).to.not.exist;
+                expect(info).to.exist;
+                expect(info).to.deep.equal({
+                    envelope: {
+                        from: 'andris.reinman@gmail.com',
+                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
+                    },
+                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                });
+
+                if (total === finished) {
+                    expect(Date.now() - start).to.be.gte(5000);
+                    expect(Date.now() - start).to.be.lte(10000);
+                    return done();
+                }
+            });
+        }
+    });
+
+    it('should rate limit messages', function (done) {
+        let transport = nodemailer.createTransport({
+            sendingRate: 10,
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                sendRawEmail: (message, cb) => {
+                    setTimeout(() => {
+                        cb(null, {
+                            MessageId: 'testtest'
+                        });
+                    }, 100);
+                }
+            }
+        });
+
+        let total = 100;
+        let finished = 0;
+        let start = Date.now();
+
+        for (let i = 0; i < total; i++) {
+
+            let messageObject = {
+                from: 'Andris Reinman <andris.reinman@gmail.com>',
+                to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
+                cc: 'info@nodemailer.com',
+                subject: 'Awesome!',
+                messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>',
+                html: {
+                    path: __dirname + '/../json-transport/fixtures/body.html'
+                },
+                text: 'hello world',
+                attachments: [{
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }]
+            };
+
+            transport.sendMail(messageObject, (err, info) => {
+                finished++;
+                expect(err).to.not.exist;
+                expect(info).to.exist;
+                expect(info).to.deep.equal({
+                    envelope: {
+                        from: 'andris.reinman@gmail.com',
+                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
+                    },
+                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                });
+
+                if (total === finished) {
+                    expect(Date.now() - start).to.be.gte(10000);
+                    expect(Date.now() - start).to.be.lte(15000);
+                    return done();
+                }
+            });
+        }
+    });
+
+    it('should rate limit messages and connections', function (done) {
+        let transport = nodemailer.createTransport({
+            sendingRate: 100,
+            maxConnections: 1,
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                sendRawEmail: (message, cb) => {
+                    setTimeout(() => {
+                        cb(null, {
+                            MessageId: 'testtest'
+                        });
+                    }, 100);
+                }
+            }
+        });
+
+        let total = 100;
+        let finished = 0;
+        let start = Date.now();
+
+        for (let i = 0; i < total; i++) {
+
+            let messageObject = {
+                from: 'Andris Reinman <andris.reinman@gmail.com>',
+                to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
+                cc: 'info@nodemailer.com',
+                subject: 'Awesome!',
+                messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>',
+                html: {
+                    path: __dirname + '/../json-transport/fixtures/body.html'
+                },
+                text: 'hello world',
+                attachments: [{
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }]
+            };
+
+            transport.sendMail(messageObject, (err, info) => {
+                finished++;
+                expect(err).to.not.exist;
+                expect(info).to.exist;
+                expect(info).to.deep.equal({
+                    envelope: {
+                        from: 'andris.reinman@gmail.com',
+                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
+                    },
+                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                });
+
+                if (total === finished) {
+                    expect(Date.now() - start).to.be.gte(10000);
+                    expect(Date.now() - start).to.be.lte(15000);
+                    return done();
+                }
+            });
+        }
+    });
+
+
+});
