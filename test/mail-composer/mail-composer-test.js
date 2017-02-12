@@ -101,6 +101,28 @@ describe('MailComposer unit tests', function () {
             compiler._createAlternative.restore();
         });
 
+        it('should create Alternative structure using encoded icalEvent', function (done) {
+            let data = {
+                text: 'abc',
+                html: 'def',
+                icalEvent: {
+                    method: 'publish',
+                    content: 'dGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==',
+                    encoding: 'base64'
+                }
+            };
+
+            let compiler = new MailComposer(data);
+            sinon.spy(compiler, '_createAlternative');
+            compiler.compile().build(function (err, message) {
+                expect(err).to.not.exist;
+                let msg  = message.toString();
+                expect(msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n')).to.be.gte(0);
+                expect(msg.indexOf('\r\ndGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRl\r\ncmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==\r\n')).to.be.gte(0);
+                done();
+            });
+        });
+
         it('should create Alternative structure with text, html and cid attachment', function () {
             let data = {
                 text: 'abc',
