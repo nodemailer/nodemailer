@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v3.1.0 2017-02-13
+
+- Added built-in transport for AWS SES. [Docs](http://localhost:1313/transports/ses/)
+- Updated stream transport to allow building JSON strings. [Docs](http://localhost:1313/transports/stream/#json-transport)
+- Added new method _mail.resolveAll_ that fetches all attachments and such to be able to more easily build API-based transports
+
 ## v3.0.2 2017-02-04
 
 - Fixed a bug with OAuth2 login where error callback was fired twice if getToken was not available.
@@ -15,7 +21,7 @@
 
 This update brings a lot of breaking changes:
 
-- License changed from MIT to **EUPL-1.1**. This was possible as the new version of Nodemailer is a major rewrite. The features I don't have ownership for, were removed or reimplemented. If there's still some snippets in the code that have vague ownership then notify [andris@kreata.ee](mailto:andris@kreata.ee) about the conflicting code and I'll fix it.
+- License changed from MIT to **EUPL-1.1**. This was possible as the new version of Nodemailer is a major rewrite. The features I don't have ownership for, were removed or reimplemented. If there's still some snippets in the code that have vague ownership then notify <andris@kreata.ee> about the conflicting code and I'll fix it.
 - Requires **Node.js v6+**
 - All **templating is gone**. It was too confusing to use and to be really universal a huge list of different renderers would be required. Nodemailer is about email, not about parsing different template syntaxes
 - **No NTLM authentication**. It was too difficult to re-implement. If you still need it then it would be possible to introduce a pluggable SASL interface where you could load the NTLM module in your own code and pass it to Nodemailer. Currently this is not possible.

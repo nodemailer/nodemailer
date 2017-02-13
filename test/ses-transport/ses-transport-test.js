@@ -243,6 +243,66 @@ describe('SES Transport Tests', function () {
         }
     });
 
+    it('should rate limit long messages', function (done) {
+        let transport = nodemailer.createTransport({
+            sendingRate: 30,
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                sendRawEmail: (message, cb) => {
+                    setTimeout(() => {
+                        cb(null, {
+                            MessageId: 'testtest'
+                        });
+                    }, 3000);
+                }
+            }
+        });
+
+        let total = 100;
+        let finished = 0;
+        let start = Date.now();
+
+        for (let i = 0; i < total; i++) {
+
+            let messageObject = {
+                from: 'Andris Reinman <andris.reinman@gmail.com>',
+                to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
+                cc: 'info@nodemailer.com',
+                subject: 'Awesome!',
+                messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>',
+                html: {
+                    path: __dirname + '/../json-transport/fixtures/body.html'
+                },
+                text: 'hello world',
+                attachments: [{
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }]
+            };
+
+            transport.sendMail(messageObject, (err, info) => {
+                finished++;
+                expect(err).to.not.exist;
+                expect(info).to.exist;
+                expect(info).to.deep.equal({
+                    envelope: {
+                        from: 'andris.reinman@gmail.com',
+                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
+                    },
+                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                });
+
+                if (total === finished) {
+                    expect(Date.now() - start).to.be.gte(12000);
+                    expect(Date.now() - start).to.be.lte(15000);
+                    return done();
+                }
+            });
+        }
+    });
+
     it('should rate limit messages and connections', function (done) {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
