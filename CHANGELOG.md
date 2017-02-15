@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.1 2017-02-13
+
+- Fixed missing `transport.on('idle')` and `transport.isIdle()` methods for SES transports
+
 ## v3.1.0 2017-02-13
 
 - Added built-in transport for AWS SES. [Docs](http://localhost:1313/transports/ses/)
