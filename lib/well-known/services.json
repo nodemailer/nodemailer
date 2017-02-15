@@ -148,9 +148,9 @@
     },
 
     "Outlook365": {
-      "host": "smtp.office365.com",
-      "port": 587,
-      "secure": false
+        "host": "smtp.office365.com",
+        "port": 587,
+        "secure": false
     },
 
     "Postmark": {
@@ -193,6 +193,12 @@
         "port": 587
     },
 
+    "SendPulse": {
+        "host": "smtp-pulse.com",
+        "port": 465,
+        "secure": true
+    },
+
     "SES": {
         "host": "email-smtp.us-east-1.amazonaws.com",
         "port": 465,
@@ -213,7 +219,6 @@
         "port": 465,
         "secure": true
     },
-
 
     "Sparkpost": {
         "aliases": [
@@ -261,6 +266,10 @@
         "host": "smtp.163.com",
         "port": 465,
         "secure": true
+    },
+    "qiye.aliyun": {
+        "host": "smtp.mxhichina.com",
+        "port": "465",
+        "secure": true
     }
-
 }
