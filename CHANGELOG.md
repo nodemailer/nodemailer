@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.2 2017-02-17
+
+- Added missing error handlers for Sendmail, SES and Stream transports. If a messages contained an invalid URL as attachment then these transports threw an uncatched error
+
 ## v3.1.1 2017-02-13
 
 - Fixed missing `transport.on('idle')` and `transport.isIdle()` methods for SES transports
