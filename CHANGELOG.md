@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.3 2017-02-17
+
+- Fixed missing `transport.verify()` methods for SES transport
+
 ## v3.1.2 2017-02-17
 
 - Added missing error handlers for Sendmail, SES and Stream transports. If a messages contained an invalid URL as attachment then these transports threw an uncatched error
