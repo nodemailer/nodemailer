@@ -12,17 +12,17 @@ In order to use the Software under this Agreement, you must receive a “License
 
 1.1 General Use. This Agreement grants you a non-exclusive, non-transferable, limited license to the use rights for the Software, without the right to grant sublicenses, subject to the terms and conditions in this Agreement. The Software is licensed, not sold.
 
-1.2 You may install the Software on an unlimited number of Hosts. “Host” means any physical or virtual machine which is controlled by you.
+1.2 You may install the Software on an unlimited number of Hosts. “Host” means any physical or virtual machine.
 
 1.3 Archive Copies. You are entitled to make a reasonable amount of copies of the Software for archival purposes. Each copy must reproduce all copyright and other proprietary rights notices on or in the Software Product.
 
-1.4 Electronic Delivery. All Software and license documentation shall be delivered by electronic means unless otherwise specified on the applicable invoice or at the time of purchase. Software is available for download from https://www.npmjs.com/ under the user handle @nodemailer.
+1.4 Electronic Delivery. All Software and license documentation shall be delivered by electronic means unless otherwise specified on the applicable invoice or at the time of purchase. Software is available for download from https://www.npmjs.com/package/nodemailer.
 
 2. Modifications. Kreata shall provide you with source code so that you can create Modifications of the original software. “Modification” means: (a) any addition to or deletion from the contents of a file included in the original Software or previous Modifications created by You, or (b) any new file that contains any part of the original Software or previous Modifications. While you retain all rights to any original work authored by you as part of the Modifications, We continue to own all copyright and other intellectual property rights in the Software.
 
 3. Restricted Uses.
 
-3.1 You shall not (and shall not allow any third party to): (a) distribute, sell, sublicense, rent, lease or use the Software for time sharing, hosting, service provider or like purposes, except as expressly permitted under this Agreement; (b) redistribute the Software or Modifications other than by including the Software or a portion thereof within your own product, which must have substantially different functionality than the Software or Modifications and must not allow any third party to use the Software or Modifications, or any portions thereof, for software development or application development purposes; (c) redistribute the Software as part of a product, "appliance" or "virtual server"; (d) redistribute the Software on any server which is not directly under your control; (e) remove any product identification, proprietary, copyright or other notices contained in the Software; (f) create a derivative work of any part of the Software (except as permitted in Section 4), or incorporate the Software, except to the extent expressly authorized in writing by Kreata.
+3.1 You shall not (and shall not allow any third party to): (a) distribute, sell, sublicense, rent, lease or use the Software for time sharing, hosting, service provider or like purposes, except as expressly permitted under this Agreement; (b) redistribute the Software or Modifications other than by including the Software or a portion thereof within your own product, which must have substantially different functionality than the Software or Modifications and must not allow any third party to use the Software or Modifications, or any portions thereof, for software development or application development purposes; (c) remove any product identification, proprietary, copyright or other notices contained in the Software; (d) create a derivative work of any part of the Software (except as permitted in Section 4), or incorporate the Software, except to the extent expressly authorized in writing by Kreata.
 
 The Open Source version of the Software (OSS Version”) is licensed
 under the terms of the European Union Public License 1.1 (“EUPL-1.1”) and not under this EULA.
