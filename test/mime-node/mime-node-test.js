@@ -220,7 +220,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'Hello world!';
+                'Hello world!\r\n';
 
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -238,7 +238,7 @@ describe('MimeNode Tests', function () {
                 expected = 'Content-Type: text/plain\r\n' +
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 '\r\n' +
-                'Hello world!';
+                'Hello world!\r\n';
 
             childNode.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -412,7 +412,7 @@ describe('MimeNode Tests', function () {
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
-                expect(/\r\n\r\ntere tere$/.test(msg)).to.be.true;
+                expect(/\r\n\r\ntere tere\r\n$/.test(msg)).to.be.true;
                 expect(/^Content-Type: text\/plain$/m.test(msg)).to.be.true;
                 expect(/^Content-Transfer-Encoding: 7bit$/m.test(msg)).to.be.true;
                 done();
@@ -437,7 +437,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('w7XDtcO1w7XDtcO1w7XDtQ==');
+                expect(msg).to.equal('w7XDtcO1w7XDtcO1w7XDtQ==\r\n');
                 done();
             });
         });
@@ -462,7 +462,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5');
+                expect(msg).to.equal('=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5\r\n');
                 done();
             });
         });
@@ -482,7 +482,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('oooooooo=C3=B5');
+                expect(msg).to.equal('oooooooo=C3=B5\r\n');
                 done();
             });
         });
@@ -502,7 +502,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0');
+                expect(msg).to.equal('a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0\r\n');
                 done();
             });
         });
@@ -521,7 +521,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0');
+                expect(msg).to.equal('a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0\r\n');
                 done();
             });
         });
@@ -540,7 +540,7 @@ describe('MimeNode Tests', function () {
                 msg.shift();
                 msg = msg.join('\r\n\r\n');
 
-                expect(msg).to.equal('a b c d e f g h i j k l m o p\r\nq r s t u w x y z 1 2 3 4 5 6\r\n7 8 9 0 a b c d e f g h i j k\r\nl m o p q r s t u w x y z\r\n1 2 3 4 5 6 7 8 9 0');
+                expect(msg).to.equal('a b c d e f g h i j k l m o p\r\nq r s t u w x y z 1 2 3 4 5 6\r\n7 8 9 0 a b c d e f g h i j k\r\nl m o p q r s t u w x y z\r\n1 2 3 4 5 6 7 8 9 0\r\n');
                 done();
             });
         });
@@ -554,7 +554,7 @@ describe('MimeNode Tests', function () {
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
-                expect(/\r\n\r\njogeva$/.test(msg)).to.be.true;
+                expect(/\r\n\r\njogeva\r\n$/.test(msg)).to.be.true;
                 expect(/^Content-Type: text\/plain; name=jogeva.txt$/m.test(msg)).to.be.true;
                 expect(/^Content-Transfer-Encoding: 7bit$/m.test(msg)).to.be.true;
                 expect(/^Content-Disposition: attachment; filename=jogeva.txt$/m.test(msg)).to.be.true;
@@ -673,7 +673,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'Hello world!';
+                'Hello world!\r\n';
 
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -722,7 +722,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'Hello world!';
+                'Hello world!\r\n';
 
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -746,7 +746,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding: base64\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'SGVsbG8gd29ybGQh';
+                'SGVsbG8gd29ybGQh\r\n';
 
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -796,7 +796,7 @@ describe('MimeNode Tests', function () {
                 'Message-ID: <67890>\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'Hello world!';
+                'Hello world!\r\n';
 
             mb.build(function (err, msg) {
                 expect(err).to.not.exist;
@@ -1293,7 +1293,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding:\t7bit\r\n' +
                 'MIME-Version:\t1.0\r\n' +
                 '\r\n' +
-                'Hello\tworld!';
+                'Hello\tworld!\r\n';
 
             // Transform stream that replaces all spaces with tabs
             let transform = new Transform();
@@ -1336,7 +1336,7 @@ describe('MimeNode Tests', function () {
                 'Content-Transfer-Encoding:\t7bit\r\n' +
                 'MIME-Version:\t1.0\r\n' +
                 '\r\n' +
-                'Hello\tworld!';
+                'Hello\tworld!\r\n';
 
             // Transform stream that replaces all spaces with tabs
             let transform = new Transform();

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v3.1.4 2017-02-26
+
+- Fixed DKIM calculation for empty body
+- Ensure linebreak after message content. This fixes DKIM signatures for non-multipart messages where input did not end with a newline
+
 ## v3.1.3 2017-02-17
 
 - Fixed missing `transport.verify()` methods for SES transport

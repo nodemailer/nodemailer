@@ -266,14 +266,14 @@ describe('MailComposer unit tests', function () {
 
         it('should use raw input for the message', function (done) {
             let data = {
-                raw: 'test test test',
+                raw: 'test test test\r\n',
                 envelope: {
                     from: 'Daemon <deamon@kreata.ee>',
                     to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>'
                 }
             };
 
-            let expected = 'test test test';
+            let expected = 'test test test\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.build(function (err, message) {
@@ -368,7 +368,7 @@ describe('MailComposer unit tests', function () {
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'def';
+                'def\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.build(function (err, message) {
@@ -398,7 +398,7 @@ describe('MailComposer unit tests', function () {
                 'Content-Transfer-Encoding: quoted-printable\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84';
+                'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.build(function (err, message) {
@@ -429,7 +429,7 @@ describe('MailComposer unit tests', function () {
                 'Content-Transfer-Encoding: quoted-printable\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84';
+                'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.build(function (err, message) {
@@ -460,7 +460,7 @@ describe('MailComposer unit tests', function () {
                 'Content-Transfer-Encoding: base64\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==';
+                'ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.build(function (err, message) {
@@ -490,7 +490,7 @@ describe('MailComposer unit tests', function () {
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
                 '\r\n' +
-                'def';
+                'def\r\n';
 
             let mail = new MailComposer(data).compile();
             mail.keepBcc = true;
