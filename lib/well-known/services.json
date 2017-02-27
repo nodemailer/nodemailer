@@ -127,6 +127,11 @@
         "port": 587
     },
 
+    "Mailosaur": {
+        "host": "mailosaur.io",
+        "port": 25
+    },
+
     "Mandrill": {
         "host": "smtp.mandrillapp.com",
         "port": 587
