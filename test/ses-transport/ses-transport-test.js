@@ -65,7 +65,8 @@ describe('SES Transport Tests', function () {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 },
-                messageId: '<testtest@eu-west-1.amazonses.com>'
+                messageId: '<testtest@eu-west-1.amazonses.com>',
+                response: 'testtest'
             });
             done();
         });
@@ -117,7 +118,8 @@ describe('SES Transport Tests', function () {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 },
-                messageId: '<testtest@eu-west-1.amazonses.com>'
+                messageId: '<testtest@eu-west-1.amazonses.com>',
+                response: 'testtest'
             });
             done();
         });
@@ -171,7 +173,8 @@ describe('SES Transport Tests', function () {
                         from: 'andris.reinman@gmail.com',
                         to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                     },
-                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                    messageId: '<testtest@eu-west-1.amazonses.com>',
+                    response: 'testtest'
                 });
 
                 if (total === finished) {
@@ -231,7 +234,8 @@ describe('SES Transport Tests', function () {
                         from: 'andris.reinman@gmail.com',
                         to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                     },
-                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                    messageId: '<testtest@eu-west-1.amazonses.com>',
+                    response: 'testtest'
                 });
 
                 if (total === finished) {
@@ -291,7 +295,8 @@ describe('SES Transport Tests', function () {
                         from: 'andris.reinman@gmail.com',
                         to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                     },
-                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                    messageId: '<testtest@eu-west-1.amazonses.com>',
+                    response: 'testtest'
                 });
 
                 if (total === finished) {
@@ -352,7 +357,8 @@ describe('SES Transport Tests', function () {
                         from: 'andris.reinman@gmail.com',
                         to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                     },
-                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                    messageId: '<testtest@eu-west-1.amazonses.com>',
+                    response: 'testtest'
                 });
 
                 if (total === finished) {
@@ -413,7 +419,8 @@ describe('SES Transport Tests', function () {
                         from: 'andris.reinman@gmail.com',
                         to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                     },
-                    messageId: '<testtest@eu-west-1.amazonses.com>'
+                    messageId: '<testtest@eu-west-1.amazonses.com>',
+                    response: 'testtest'
                 });
 
                 if (total === finished) {

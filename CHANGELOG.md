@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.5 2017-03-08
+
+- Fixed SES transport, added missing `response` value
+
 ## v3.1.4 2017-02-26
 
 - Fixed DKIM calculation for empty body

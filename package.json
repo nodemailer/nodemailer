@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://nodemailer.com/",
   "devDependencies": {
-    "bunyan": "^1.8.5",
+    "bunyan": "^1.8.8",
     "chai": "^3.5.0",
     "eslint-config-nodemailer": "^1.0.0",
     "grunt": "^1.0.1",
