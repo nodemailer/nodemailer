@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.6 2017-03-14
+
+- Expose last server response for smtpConnection
+
 ## v3.1.5 2017-03-08
 
 - Fixed SES transport, added missing `response` value
