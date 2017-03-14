@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.7 2017-03-14
+
+- Emit an error if STARTTLS ends with connection being closed
+
 ## v3.1.6 2017-03-14
 
 - Expose last server response for smtpConnection
