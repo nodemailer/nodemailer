@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.8 2017-03-21
+
+- Fixed invalid List-* header generation
+
 ## v3.1.7 2017-03-14
 
 - Emit an error if STARTTLS ends with connection being closed

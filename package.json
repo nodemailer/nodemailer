@@ -1,6 +1,6 @@
 {
   "name": "nodemailer",
-  "version": "3.1.7",
+  "version": "3.1.8",
   "description": "Easy as cake e-mail sending from your Node.js applications",
   "main": "lib/nodemailer.js",
   "scripts": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://nodemailer.com/",
   "devDependencies": {
-    "bunyan": "^1.8.8",
+    "bunyan": "^1.8.9",
     "chai": "^3.5.0",
     "eslint-config-nodemailer": "^1.0.0",
     "grunt": "^1.0.1",
@@ -33,8 +33,8 @@
     "mocha": "^3.2.0",
     "proxy": "^0.2.4",
     "proxy-test-server": "^1.0.0",
-    "sinon": "^1.17.7",
-    "smtp-server": "^2.0.2"
+    "sinon": "^2.1.0",
+    "smtp-server": "^2.0.3"
   },
   "engines": {
     "node": ">=6.0.0"
