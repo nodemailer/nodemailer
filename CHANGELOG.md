@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.0.0 2017-04-06
+
+- License changed from EUPLv1.1 to MIT
+
 ## v3.1.8 2017-03-21
 
 - Fixed invalid List-* header generation
