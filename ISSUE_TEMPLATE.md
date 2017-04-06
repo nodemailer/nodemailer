@@ -7,3 +7,5 @@ Include the following information with your issue:
 5. If possible, include a minimal test case that can be used to verify your issue (link to a gist would be great!)
 
 If you are having problems with Gmail, then make sure you have read this post before filing your issue: <https://nodemailer.com/usage/using-gmail/>
+
+"SyntaxError: Unexpected token ..." – check your Node.js version, it must be at least v6.0.0. If you do have Node.js v6 or later installed then check if you have multiple Node versions installed.
