@@ -15,8 +15,8 @@ const PassThrough = require('stream').PassThrough;
 
 chai.config.includeStack = true;
 
-const HTTP_PORT = 9998;
-const HTTPS_PORT = 9993;
+const HTTP_PORT = 19998;
+const HTTPS_PORT = 19993;
 
 const httpsOptions = {
     key: '-----BEGIN RSA PRIVATE KEY-----\n' +

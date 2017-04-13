@@ -20,7 +20,7 @@
   },
   "homepage": "https://nodemailer.com/",
   "devDependencies": {
-    "bunyan": "^1.8.9",
+    "bunyan": "^1.8.10",
     "chai": "^3.5.0",
     "eslint-config-nodemailer": "^1.0.0",
     "grunt": "^1.0.1",
@@ -34,7 +34,7 @@
     "proxy": "^0.2.4",
     "proxy-test-server": "^1.0.0",
     "sinon": "^2.1.0",
-    "smtp-server": "^2.0.3"
+    "smtp-server": "^3.0.1"
   },
   "engines": {
     "node": ">=6.0.0"
