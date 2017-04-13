@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.0.1 2017-04-13
+
+- Fixed issue with LMTP and STARTTLS
+
 ## v4.0.0 2017-04-06
 
 - License changed from EUPLv1.1 to MIT
