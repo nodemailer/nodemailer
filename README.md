@@ -28,7 +28,7 @@ Check your firewall settings. Timeout usually occurs when you try to open a conn
 
 #### I get TLS errors
 
-If you are running the code in your own machine, then check your antivirus settings. Antiviruses often mess around with port 25 usage. Node.js might not recognize the MITM cert your antivirus is using.
+If you are running the code in your own machine, then check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
 
 #### I have a different problem
 
