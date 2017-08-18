@@ -131,6 +131,11 @@
         "host": "mailosaur.io",
         "port": 25
     },
+    
+    "Mailtrap": {
+        "host": "smtp.mailtrap.io",
+        "port": 2525
+    },
 
     "Mandrill": {
         "host": "smtp.mandrillapp.com",
