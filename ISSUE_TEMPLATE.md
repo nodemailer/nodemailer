@@ -19,7 +19,7 @@ Complete the following form to have your issue reviewed
  - [ ] Yes
  - [ ] No
  
- > Note. Most probably you are trying to connect to a server with a self-signed/expired cert or the server supports only ancient ciphers. Such issues are closed by default.
+ > Note. Most probably you are trying to connect to a server with a self-signed/expired cert or the server supports only ancient ciphers or you are using an antivirus that intercepts your internet connection. Such issues are closed by default.
 
 ### 4. Is your issue related to connection timeouts
 
