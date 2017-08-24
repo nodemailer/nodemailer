@@ -12,7 +12,7 @@ Complete the following form to have your issue reviewed
  - [ ] Yes
  - [ ] No
  
- > Note. If you can not log in to Gmail then Gmail is blocking you. These issues are cloed by default.
+ > Note. If you can not log in to Gmail then Gmail is blocking you. These issues are closed by default.
 
 ### 3. Is your issue related to SSL/TLS errors?
 
