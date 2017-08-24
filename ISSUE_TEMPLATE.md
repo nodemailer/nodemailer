@@ -1,4 +1,4 @@
-Complete the following form to have your issue reviewed:
+Complete the following form to have your issue reviewed
 
 ### 1. Is this a bug in Nodemailer?
  
