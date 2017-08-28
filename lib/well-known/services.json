@@ -7,9 +7,7 @@
     },
 
     "AOL": {
-        "domains": [
-            "aol.com"
-        ],
+        "domains": ["aol.com"],
         "host": "smtp.aol.com",
         "port": 587
     },
@@ -26,31 +24,21 @@
     },
 
     "FastMail": {
-        "domains": [
-            "fastmail.fm"
-        ],
+        "domains": ["fastmail.fm"],
         "host": "mail.messagingengine.com",
         "port": 465,
         "secure": true
     },
 
     "GandiMail": {
-        "aliases": [
-            "Gandi",
-            "Gandi Mail"
-        ],
+        "aliases": ["Gandi", "Gandi Mail"],
         "host": "mail.gandi.net",
         "port": 587
     },
 
     "Gmail": {
-        "aliases": [
-            "Google Mail"
-        ],
-        "domains": [
-            "gmail.com",
-            "googlemail.com"
-        ],
+        "aliases": ["Google Mail"],
+        "domains": ["gmail.com", "googlemail.com"],
         "host": "smtp.gmail.com",
         "port": 465,
         "secure": true
@@ -76,15 +64,8 @@
     },
 
     "Hotmail": {
-        "aliases": [
-            "Outlook",
-            "Outlook.com",
-            "Hotmail.com"
-        ],
-        "domains": [
-            "hotmail.com",
-            "outlook.com"
-        ],
+        "aliases": ["Outlook", "Outlook.com", "Hotmail.com"],
+        "domains": ["hotmail.com", "outlook.com"],
         "host": "smtp.live.com",
         "port": 587,
         "tls": {
@@ -94,10 +75,7 @@
 
     "iCloud": {
         "aliases": ["Me", "Mac"],
-        "domains": [
-            "me.com",
-            "mac.com"
-        ],
+        "domains": ["me.com", "mac.com"],
         "host": "smtp.mail.me.com",
         "port": 587
     },
@@ -131,7 +109,7 @@
         "host": "mailosaur.io",
         "port": 25
     },
-    
+
     "Mailtrap": {
         "host": "smtp.mailtrap.io",
         "port": 2525
@@ -148,10 +126,7 @@
     },
 
     "OpenMailBox": {
-        "aliases": [
-            "OMB",
-            "openmailbox.org"
-        ],
+        "aliases": ["OMB", "openmailbox.org"],
         "host": "smtp.openmailbox.org",
         "port": 465,
         "secure": true
@@ -170,9 +145,7 @@
     },
 
     "QQ": {
-        "domains": [
-            "qq.com"
-        ],
+        "domains": ["qq.com"],
         "host": "smtp.qq.com",
         "port": 465,
         "secure": true
@@ -180,9 +153,7 @@
 
     "QQex": {
         "aliases": ["QQ Enterprise"],
-        "domains": [
-            "exmail.qq.com"
-        ],
+        "domains": ["exmail.qq.com"],
         "host": "smtp.exmail.qq.com",
         "port": 465,
         "secure": true
@@ -231,31 +202,22 @@
     },
 
     "Sparkpost": {
-        "aliases": [
-            "SparkPost",
-            "SparkPost Mail"
-        ],
-        "domains": [
-            "sparkpost.com"
-        ],
+        "aliases": ["SparkPost", "SparkPost Mail"],
+        "domains": ["sparkpost.com"],
         "host": "smtp.sparkpostmail.com",
         "port": 587,
         "secure": false
     },
 
     "Yahoo": {
-        "domains": [
-            "yahoo.com"
-        ],
+        "domains": ["yahoo.com"],
         "host": "smtp.mail.yahoo.com",
         "port": 465,
         "secure": true
     },
 
     "Yandex": {
-        "domains": [
-            "yandex.ru"
-        ],
+        "domains": ["yandex.ru"],
         "host": "smtp.yandex.ru",
         "port": 465,
         "secure": true

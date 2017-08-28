@@ -15,10 +15,8 @@ chai.config.includeStack = true;
 const PROXY_PORT = 3128;
 const TARGET_PORT = 3129;
 
-describe('HTTP Proxy Client Tests', function () {
-
-    it('should connect to a socket through proxy', function (done) {
-
+describe('HTTP Proxy Client Tests', function() {
+    it('should connect to a socket through proxy', function(done) {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -29,7 +27,7 @@ describe('HTTP Proxy Client Tests', function () {
                 httpProxyClient('http://localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
                     expect(err).to.not.exist;
                     socket.once('data', chunk => {
-                        expect(/^220[ \-]/.test(chunk.toString())).to.equal.true;
+                        expect(/^220[ -]/.test(chunk.toString())).to.be.true;
                         socket.end();
                         socket.on('close', () => {
                             socket.destroy();
@@ -40,8 +38,7 @@ describe('HTTP Proxy Client Tests', function () {
             });
         });
     });
-    it('should connect to a socket through proxy with auth', function (done) {
-
+    it('should connect to a socket through proxy with auth', function(done) {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -55,7 +52,7 @@ describe('HTTP Proxy Client Tests', function () {
                 httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
                     expect(err).to.not.exist;
                     socket.once('data', chunk => {
-                        expect(/^220[ \-]/.test(chunk.toString())).to.equal.true;
+                        expect(/^220[ -]/.test(chunk.toString())).to.be.true;
                         socket.end();
                         socket.on('close', () => {
                             socket.destroy();
@@ -67,8 +64,7 @@ describe('HTTP Proxy Client Tests', function () {
         });
     });
 
-    it('should should fail auth', function (done) {
-
+    it('should should fail auth', function(done) {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -88,5 +84,4 @@ describe('HTTP Proxy Client Tests', function () {
             });
         });
     });
-
 });

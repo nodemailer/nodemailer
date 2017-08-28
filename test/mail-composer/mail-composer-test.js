@@ -10,18 +10,20 @@ const expect = chai.expect;
 
 chai.config.includeStack = true;
 
-describe('MailComposer unit tests', function () {
-    it('should create new MailComposer', function () {
+describe('MailComposer unit tests', function() {
+    it('should create new MailComposer', function() {
         expect(new MailComposer({})).to.exist;
     });
 
-    describe('#compile', function () {
-        it('should use Mixed structure with text and attachment', function () {
+    describe('#compile', function() {
+        it('should use Mixed structure with text and attachment', function() {
             let data = {
                 text: 'abc',
-                attachments: [{
-                    content: 'abc'
-                }]
+                attachments: [
+                    {
+                        content: 'abc'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -31,13 +33,16 @@ describe('MailComposer unit tests', function () {
             compiler._createMixed.restore();
         });
 
-        it('should use Mixed structure with multiple attachments', function () {
+        it('should use Mixed structure with multiple attachments', function() {
             let data = {
-                attachments: [{
-                    content: 'abc'
-                }, {
-                    content: 'def'
-                }]
+                attachments: [
+                    {
+                        content: 'abc'
+                    },
+                    {
+                        content: 'def'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -47,7 +52,7 @@ describe('MailComposer unit tests', function () {
             compiler._createMixed.restore();
         });
 
-        it('should create Alternative structure with text and html', function () {
+        it('should create Alternative structure with text and html', function() {
             let data = {
                 text: 'abc',
                 html: 'def'
@@ -65,7 +70,7 @@ describe('MailComposer unit tests', function () {
             compiler._createAlternative.restore();
         });
 
-        it('should create Alternative structure with text, watchHtml and html', function () {
+        it('should create Alternative structure with text, watchHtml and html', function() {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -83,7 +88,7 @@ describe('MailComposer unit tests', function () {
             compiler._createAlternative.restore();
         });
 
-        it('should create Alternative structure with text, icalEvent and html', function () {
+        it('should create Alternative structure with text, icalEvent and html', function() {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -101,39 +106,49 @@ describe('MailComposer unit tests', function () {
             compiler._createAlternative.restore();
         });
 
-        it('should create Alternative structure using encoded icalEvent', function (done) {
+        it('should create Alternative structure using encoded icalEvent', function(done) {
             let data = {
                 text: 'abc',
                 html: 'def',
                 icalEvent: {
                     method: 'publish',
-                    content: 'dGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==',
+                    content:
+                        'dGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==',
                     encoding: 'base64'
                 }
             };
 
             let compiler = new MailComposer(data);
             sinon.spy(compiler, '_createAlternative');
-            compiler.compile().build(function (err, message) {
+            compiler.compile().build(function(err, message) {
                 expect(err).to.not.exist;
-                let msg  = message.toString();
-                expect(msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n')).to.be.gte(0);
-                expect(msg.indexOf('\r\ndGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRl\r\ncmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==\r\n')).to.be.gte(0);
+                let msg = message.toString();
+                expect(
+                    msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n')
+                ).to.be.gte(0);
+                expect(
+                    msg.indexOf(
+                        '\r\ndGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRl\r\ncmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==\r\n'
+                    )
+                ).to.be.gte(0);
                 done();
             });
         });
 
-        it('should create Alternative structure with text, html and cid attachment', function () {
+        it('should create Alternative structure with text, html and cid attachment', function() {
             let data = {
                 text: 'abc',
                 html: 'def',
-                attachments: [{
-                    content: 'abc',
-                    cid: 'aaa'
-                }, {
-                    content: 'def',
-                    cid: 'bbb'
-                }]
+                attachments: [
+                    {
+                        content: 'abc',
+                        cid: 'aaa'
+                    },
+                    {
+                        content: 'def',
+                        cid: 'bbb'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -143,16 +158,19 @@ describe('MailComposer unit tests', function () {
             compiler._createAlternative.restore();
         });
 
-        it('should create Related structure with html and cid attachment', function () {
+        it('should create Related structure with html and cid attachment', function() {
             let data = {
                 html: 'def',
-                attachments: [{
-                    content: 'abc',
-                    cid: 'aaa'
-                }, {
-                    content: 'def',
-                    cid: 'bbb'
-                }]
+                attachments: [
+                    {
+                        content: 'abc',
+                        cid: 'aaa'
+                    },
+                    {
+                        content: 'def',
+                        cid: 'bbb'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -162,7 +180,7 @@ describe('MailComposer unit tests', function () {
             compiler._createRelated.restore();
         });
 
-        it('should create content node with only text', function () {
+        it('should create content node with only text', function() {
             let data = {
                 text: 'def'
             };
@@ -174,12 +192,14 @@ describe('MailComposer unit tests', function () {
             compiler._createContentNode.restore();
         });
 
-        it('should create content node with only an attachment', function () {
+        it('should create content node with only an attachment', function() {
             let data = {
-                attachments: [{
-                    content: 'abc',
-                    cid: 'aaa'
-                }]
+                attachments: [
+                    {
+                        content: 'abc',
+                        cid: 'aaa'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -189,7 +209,7 @@ describe('MailComposer unit tests', function () {
             compiler._createContentNode.restore();
         });
 
-        it('should create content node with encoded buffer', function () {
+        it('should create content node with encoded buffer', function() {
             let str = 'tere tere';
             let data = {
                 text: {
@@ -203,12 +223,14 @@ describe('MailComposer unit tests', function () {
             expect(compiler.message.content).to.deep.equal(new Buffer(str));
         });
 
-        it('should create content node from data url', function () {
+        it('should create content node from data url', function() {
             let str = 'tere tere';
             let data = {
-                attachments: [{
-                    href: 'data:image/png,tere%20tere'
-                }]
+                attachments: [
+                    {
+                        href: 'data:image/png,tere%20tere'
+                    }
+                ]
             };
 
             let compiler = new MailComposer(data);
@@ -218,7 +240,7 @@ describe('MailComposer unit tests', function () {
             expect(compiler.mail.attachments[0].contentType).to.equal('image/png');
         });
 
-        it('should create the same output', function (done) {
+        it('should create the same output', function(done) {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -234,7 +256,8 @@ describe('MailComposer unit tests', function () {
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_1"\r\n' +
                 'X-Processed: a really long header or value with non-ascii characters\r\n' +
                 ' =?UTF-8?Q?=F0=9F=91=AE?=\r\n' +
@@ -257,14 +280,14 @@ describe('MailComposer unit tests', function () {
 
             let mail = new MailComposer(data).compile();
             expect(mail.messageId()).to.equal('<zzzzzz>');
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should use raw input for the message', function (done) {
+        it('should use raw input for the message', function(done) {
             let data = {
                 raw: 'test test test\r\n',
                 envelope: {
@@ -276,7 +299,7 @@ describe('MailComposer unit tests', function () {
             let expected = 'test test test\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(mail.getEnvelope()).to.deep.equal({
                     from: 'deamon@kreata.ee',
@@ -287,7 +310,7 @@ describe('MailComposer unit tests', function () {
             });
         });
 
-        it('should use raw input for different parts', function (done) {
+        it('should use raw input for different parts', function(done) {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -305,17 +328,22 @@ describe('MailComposer unit tests', function () {
                 icalEvent: {
                     raw: 'rawcalendar'
                 },
-                attachments: [{
-                    raw: 'rawattachment'
-                }],
-                alternatives: [{
-                    raw: 'rawalternative'
-                }],
+                attachments: [
+                    {
+                        raw: 'rawattachment'
+                    }
+                ],
+                alternatives: [
+                    {
+                        raw: 'rawalternative'
+                    }
+                ],
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',
                 baseBoundary: 'test'
             };
 
-            let expected = 'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+            let expected =
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
                 'Message-ID: <rawtest>\r\n' +
@@ -342,14 +370,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should discard BCC', function (done) {
+        it('should discard BCC', function(done) {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -359,7 +387,8 @@ describe('MailComposer unit tests', function () {
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: text/plain\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
@@ -371,14 +400,14 @@ describe('MailComposer unit tests', function () {
                 'def\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should autodetect text encoding', function (done) {
+        it('should autodetect text encoding', function(done) {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -388,7 +417,8 @@ describe('MailComposer unit tests', function () {
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?B?w4TDhMOEw4Q=?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?Q?AAA=C3=84?= <test2@example.com>\r\n' +
@@ -401,14 +431,14 @@ describe('MailComposer unit tests', function () {
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should use quoted-printable text encoding', function (done) {
+        it('should use quoted-printable text encoding', function(done) {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -419,7 +449,8 @@ describe('MailComposer unit tests', function () {
                 textEncoding: 'quoted-printable'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?Q?=C3=84=C3=84=C3=84=C3=84?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?Q?AAA=C3=84?= <test2@example.com>\r\n' +
@@ -432,14 +463,14 @@ describe('MailComposer unit tests', function () {
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should use base64 text encoding', function (done) {
+        it('should use base64 text encoding', function(done) {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -450,7 +481,8 @@ describe('MailComposer unit tests', function () {
                 textEncoding: 'base64'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?B?w4TDhMOEw4Q=?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?B?QUFBw4Q=?= <test2@example.com>\r\n' +
@@ -463,14 +495,14 @@ describe('MailComposer unit tests', function () {
                 'ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should keep BCC', function (done) {
+        it('should keep BCC', function(done) {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -480,7 +512,8 @@ describe('MailComposer unit tests', function () {
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: text/plain\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
@@ -494,31 +527,34 @@ describe('MailComposer unit tests', function () {
 
             let mail = new MailComposer(data).compile();
             mail.keepBcc = true;
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should set headers for attachment', function (done) {
+        it('should set headers for attachment', function(done) {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
                 messageId: 'zzzzzz',
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',
-                attachments: [{
-                    headers: {
-                        'X-Test-1': 12345,
-                        'X-Test-2': 'ÕÄÖÜ',
-                        'X-Test-3': ['foo', 'bar']
-                    },
-                    content: 'test',
-                    filename: 'test.txt'
-                }]
+                attachments: [
+                    {
+                        headers: {
+                            'X-Test-1': 12345,
+                            'X-Test-2': 'ÕÄÖÜ',
+                            'X-Test-3': ['foo', 'bar']
+                        },
+                        content: 'test',
+                        filename: 'test.txt'
+                    }
+                ]
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
@@ -542,29 +578,33 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should ignore attachment filename', function (done) {
+        it('should ignore attachment filename', function(done) {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
                 messageId: 'zzzzzz',
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',
-                attachments: [{
-                    content: 'test',
-                    filename: 'test.txt'
-                }, {
-                    content: 'test2',
-                    filename: false
-                }]
+                attachments: [
+                    {
+                        content: 'test',
+                        filename: 'test.txt'
+                    },
+                    {
+                        content: 'test2',
+                        filename: false
+                    }
+                ]
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
@@ -590,14 +630,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should add ical alternative', function (done) {
+        it('should add ical alternative', function(done) {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -613,7 +653,8 @@ describe('MailComposer unit tests', function () {
                 baseBoundary: 'test'
             };
 
-            let expected = '' +
+            let expected =
+                '' +
                 'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
@@ -645,40 +686,44 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.equal(expected);
                 done();
             });
         });
 
-        it('should use load attachment from file', function (done) {
+        it('should use load attachment from file', function(done) {
             let data = {
                 text: 'abc',
-                attachments: [{
-                    path: __dirname + '/fixtures/attachment.bin'
-                }]
+                attachments: [
+                    {
+                        path: __dirname + '/fixtures/attachment.bin'
+                    }
+                ]
             };
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.not.exist;
                 expect(message.toString()).to.include('w7VrdmEK');
                 done();
             });
         });
 
-        it('should not load attachment from file', function (done) {
+        it('should not load attachment from file', function(done) {
             let data = {
                 text: 'abc',
-                attachments: [{
-                    path: __dirname + '/fixtures/attachment.bin'
-                }],
+                attachments: [
+                    {
+                        path: __dirname + '/fixtures/attachment.bin'
+                    }
+                ],
                 disableFileAccess: true
             };
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
+            mail.build(function(err, message) {
                 expect(err).to.exist;
                 expect(message).to.not.exist;
                 done();

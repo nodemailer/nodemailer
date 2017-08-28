@@ -11,34 +11,36 @@ let logger = bunyan.createLogger({
 logger.level('trace');
 
 // Create a SMTP transporter object
-let transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-        type: 'OAuth2',
-        user: 'mail',
-        clientId: 'clientid',
-        clientSecret: 'clientsecret',
-        refreshToken: 'refreshtoken',
-        accessToken: 'accesstoken',
-        expires: 12345
+let transporter = nodemailer.createTransport(
+    {
+        service: 'Gmail',
+        auth: {
+            type: 'OAuth2',
+            user: 'mail',
+            clientId: 'clientid',
+            clientSecret: 'clientsecret',
+            refreshToken: 'refreshtoken',
+            accessToken: 'accesstoken',
+            expires: 12345
+        },
+        logger,
+        debug: true // include SMTP traffic in the logs
     },
-    logger,
-    debug: true // include SMTP traffic in the logs
-}, {
-    // default message fields
+    {
+        // default message fields
 
-    // sender info
-    from: 'Testbox <andristestbox@gmail.com>',
-    headers: {
-        'X-Laziness-level': 1000 // just an example header, no need to use this
+        // sender info
+        from: 'Testbox <andristestbox@gmail.com>',
+        headers: {
+            'X-Laziness-level': 1000 // just an example header, no need to use this
+        }
     }
-});
+);
 
 console.log('SMTP Configured');
 
 // Message object
 let message = {
-
     // Comma separated list of recipients
     to: 'Andris Reinman <andris.reinman@gmail.com>',
 
@@ -49,7 +51,8 @@ let message = {
     text: 'Hello to myself!',
 
     // HTML body
-    html: '<p><b>Hello</b> to myself <img src="cid:note@example.com"/></p>' +
+    html:
+        '<p><b>Hello</b> to myself <img src="cid:note@example.com"/></p>' +
         '<p>Here\'s a nyan cat for you as an embedded attachment:<br/><img src="cid:nyan@example.com"/></p>',
 
     // Apple Watch specific HTML body
@@ -57,7 +60,6 @@ let message = {
 
     // An array of attachments
     attachments: [
-
         // String attachment
         {
             filename: 'notes.txt',
@@ -68,9 +70,12 @@ let message = {
         // Binary Buffer attachment
         {
             filename: 'image.png',
-            content: new Buffer('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/' +
-                '//+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4U' +
-                'g9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC', 'base64'),
+            content: new Buffer(
+                'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/' +
+                    '//+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4U' +
+                    'g9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC',
+                'base64'
+            ),
 
             cid: 'note@example.com' // should be as unique as possible
         },

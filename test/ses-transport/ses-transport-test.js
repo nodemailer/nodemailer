@@ -21,11 +21,10 @@ cmDrj/7jJHb+ykFNb7GaEkiSYqzUjKkfpweBDYECMFJUyzuuFJAjq3BXmGJlyykQ
 TweUw+zMVdSXjO+FCPcYNi6CP1t1KoESzGKBVoqA/g==
 -----END RSA PRIVATE KEY-----`;
 
-
-describe('SES Transport Tests', function () {
+describe('SES Transport Tests', function() {
     this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
 
-    it('should return MessageId', function (done) {
+    it('should return MessageId', function(done) {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -51,10 +50,12 @@ describe('SES Transport Tests', function () {
                 path: __dirname + '/../json-transport/fixtures/body.html'
             },
             text: 'hello world',
-            attachments: [{
-                filename: 'image.png',
-                path: __dirname + '/../json-transport/fixtures/image.png'
-            }]
+            attachments: [
+                {
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }
+            ]
         };
 
         transport.sendMail(messageObject, (err, info) => {
@@ -72,7 +73,7 @@ describe('SES Transport Tests', function () {
         });
     });
 
-    it('should sign message with DKIM', function (done) {
+    it('should sign message with DKIM', function(done) {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -104,10 +105,12 @@ describe('SES Transport Tests', function () {
                 path: __dirname + '/../json-transport/fixtures/body.html'
             },
             text: 'hello world',
-            attachments: [{
-                filename: 'image.png',
-                path: __dirname + '/../json-transport/fixtures/image.png'
-            }]
+            attachments: [
+                {
+                    filename: 'image.png',
+                    path: __dirname + '/../json-transport/fixtures/image.png'
+                }
+            ]
         };
 
         transport.sendMail(messageObject, (err, info) => {
@@ -125,7 +128,7 @@ describe('SES Transport Tests', function () {
         });
     });
 
-    it('should limit parallel connections', function (done) {
+    it('should limit parallel connections', function(done) {
         let transport = nodemailer.createTransport({
             maxConnections: 2,
             SES: {
@@ -147,7 +150,6 @@ describe('SES Transport Tests', function () {
         let start = Date.now();
 
         for (let i = 0; i < total; i++) {
-
             let messageObject = {
                 from: 'Andris Reinman <andris.reinman@gmail.com>',
                 to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
@@ -158,10 +160,12 @@ describe('SES Transport Tests', function () {
                     path: __dirname + '/../json-transport/fixtures/body.html'
                 },
                 text: 'hello world',
-                attachments: [{
-                    filename: 'image.png',
-                    path: __dirname + '/../json-transport/fixtures/image.png'
-                }]
+                attachments: [
+                    {
+                        filename: 'image.png',
+                        path: __dirname + '/../json-transport/fixtures/image.png'
+                    }
+                ]
             };
 
             transport.sendMail(messageObject, (err, info) => {
@@ -186,7 +190,7 @@ describe('SES Transport Tests', function () {
         }
     });
 
-    it('should rate limit messages', function (done) {
+    it('should rate limit messages', function(done) {
         let transport = nodemailer.createTransport({
             sendingRate: 10,
             SES: {
@@ -208,7 +212,6 @@ describe('SES Transport Tests', function () {
         let start = Date.now();
 
         for (let i = 0; i < total; i++) {
-
             let messageObject = {
                 from: 'Andris Reinman <andris.reinman@gmail.com>',
                 to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
@@ -219,10 +222,12 @@ describe('SES Transport Tests', function () {
                     path: __dirname + '/../json-transport/fixtures/body.html'
                 },
                 text: 'hello world',
-                attachments: [{
-                    filename: 'image.png',
-                    path: __dirname + '/../json-transport/fixtures/image.png'
-                }]
+                attachments: [
+                    {
+                        filename: 'image.png',
+                        path: __dirname + '/../json-transport/fixtures/image.png'
+                    }
+                ]
             };
 
             transport.sendMail(messageObject, (err, info) => {
@@ -247,7 +252,7 @@ describe('SES Transport Tests', function () {
         }
     });
 
-    it('should rate limit long messages', function (done) {
+    it('should rate limit long messages', function(done) {
         let transport = nodemailer.createTransport({
             sendingRate: 30,
             SES: {
@@ -269,7 +274,6 @@ describe('SES Transport Tests', function () {
         let start = Date.now();
 
         for (let i = 0; i < total; i++) {
-
             let messageObject = {
                 from: 'Andris Reinman <andris.reinman@gmail.com>',
                 to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
@@ -280,10 +284,12 @@ describe('SES Transport Tests', function () {
                     path: __dirname + '/../json-transport/fixtures/body.html'
                 },
                 text: 'hello world',
-                attachments: [{
-                    filename: 'image.png',
-                    path: __dirname + '/../json-transport/fixtures/image.png'
-                }]
+                attachments: [
+                    {
+                        filename: 'image.png',
+                        path: __dirname + '/../json-transport/fixtures/image.png'
+                    }
+                ]
             };
 
             transport.sendMail(messageObject, (err, info) => {
@@ -308,7 +314,7 @@ describe('SES Transport Tests', function () {
         }
     });
 
-    it('should rate limit messages and connections', function (done) {
+    it('should rate limit messages and connections', function(done) {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -331,7 +337,6 @@ describe('SES Transport Tests', function () {
         let start = Date.now();
 
         for (let i = 0; i < total; i++) {
-
             let messageObject = {
                 from: 'Andris Reinman <andris.reinman@gmail.com>',
                 to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
@@ -342,10 +347,12 @@ describe('SES Transport Tests', function () {
                     path: __dirname + '/../json-transport/fixtures/body.html'
                 },
                 text: 'hello world',
-                attachments: [{
-                    filename: 'image.png',
-                    path: __dirname + '/../json-transport/fixtures/image.png'
-                }]
+                attachments: [
+                    {
+                        filename: 'image.png',
+                        path: __dirname + '/../json-transport/fixtures/image.png'
+                    }
+                ]
             };
 
             transport.sendMail(messageObject, (err, info) => {
@@ -370,7 +377,7 @@ describe('SES Transport Tests', function () {
         }
     });
 
-    it('detect sending slots on idle events', function (done) {
+    it('detect sending slots on idle events', function(done) {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -404,10 +411,12 @@ describe('SES Transport Tests', function () {
                     path: __dirname + '/../json-transport/fixtures/body.html'
                 },
                 text: 'hello world',
-                attachments: [{
-                    filename: 'image.png',
-                    path: __dirname + '/../json-transport/fixtures/image.png'
-                }]
+                attachments: [
+                    {
+                        filename: 'image.png',
+                        path: __dirname + '/../json-transport/fixtures/image.png'
+                    }
+                ]
             };
 
             transport.sendMail(messageObject, (err, info) => {
@@ -438,5 +447,4 @@ describe('SES Transport Tests', function () {
             }
         });
     });
-
 });

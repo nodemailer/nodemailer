@@ -10,9 +10,8 @@ const chai = require('chai');
 const expect = chai.expect;
 chai.config.includeStack = true;
 
-describe('JSON Transport Tests', function () {
-    it('should return an JSON string', function (done) {
-
+describe('JSON Transport Tests', function() {
+    it('should return an JSON string', function(done) {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
@@ -27,10 +26,12 @@ describe('JSON Transport Tests', function () {
                 path: __dirname + '/fixtures/body.html'
             },
             text: 'hello world',
-            attachments: [{
-                filename: 'image.png',
-                path: __dirname + '/fixtures/image.png'
-            }]
+            attachments: [
+                {
+                    filename: 'image.png',
+                    path: __dirname + '/fixtures/image.png'
+                }
+            ]
         };
 
         transport.sendMail(messageObject, (err, info) => {
@@ -52,28 +53,31 @@ describe('JSON Transport Tests', function () {
                         name: ''
                     }
                 ],
-                cc: [{
-                    address: 'info@nodemailer.com',
-                    name: ''
-                }],
+                cc: [
+                    {
+                        address: 'info@nodemailer.com',
+                        name: ''
+                    }
+                ],
                 subject: 'Awesome!',
                 html: '<h1>Message</h1>\n\n<p>\n    Body\n</p>\n',
                 text: 'hello world',
-                attachments: [{
-                    content: 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD///+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4Ug9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC',
-                    filename: 'image.png',
-                    encoding: 'base64'
-                }],
+                attachments: [
+                    {
+                        content:
+                            'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD///+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4Ug9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC',
+                        filename: 'image.png',
+                        encoding: 'base64'
+                    }
+                ],
                 headers: {},
                 messageId: '<fede478a-aab9-af02-789c-ad93a76a3548@gmail.com>'
             });
             done();
         });
-
     });
 
-    it('should return an JSON string for calendar event', function (done) {
-
+    it('should return an JSON string for calendar event', function(done) {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
@@ -111,16 +115,19 @@ describe('JSON Transport Tests', function () {
                         name: ''
                     }
                 ],
-                cc: [{
-                    address: 'info@nodemailer.com',
-                    name: ''
-                }],
+                cc: [
+                    {
+                        address: 'info@nodemailer.com',
+                        name: ''
+                    }
+                ],
                 subject: 'Awesome!',
                 text: 'hello world',
 
                 html: '<p>hello world!</p>',
                 icalEvent: {
-                    content: 'QkVHSU46VkNBTEVOREFSClZFUlNJT046Mi4wClBST0RJRDotLy9oYWNrc3cvaGFuZGNhbC8vTk9OU0dNTCB2MS4wLy9FTgpCRUdJTjpWRVZFTlQKVUlEOnVpZDFAZXhhbXBsZS5jb20KRFRTVEFNUDoxOTk3MDcxNFQxNzAwMDBaCk9SR0FOSVpFUjtDTj1Kb2huIERvZTpNQUlMVE86am9obi5kb2VAZXhhbXBsZS5jb20KRFRTVEFSVDoxOTk3MDcxNFQxNzAwMDBaCkRURU5EOjE5OTcwNzE1VDAzNTk1OVoKU1VNTUFSWTpCYXN0aWxsZSBEYXkgUGFydHkKRU5EOlZFVkVOVApFTkQ6VkNBTEVOREFSCg==',
+                    content:
+                        'QkVHSU46VkNBTEVOREFSClZFUlNJT046Mi4wClBST0RJRDotLy9oYWNrc3cvaGFuZGNhbC8vTk9OU0dNTCB2MS4wLy9FTgpCRUdJTjpWRVZFTlQKVUlEOnVpZDFAZXhhbXBsZS5jb20KRFRTVEFNUDoxOTk3MDcxNFQxNzAwMDBaCk9SR0FOSVpFUjtDTj1Kb2huIERvZTpNQUlMVE86am9obi5kb2VAZXhhbXBsZS5jb20KRFRTVEFSVDoxOTk3MDcxNFQxNzAwMDBaCkRURU5EOjE5OTcwNzE1VDAzNTk1OVoKU1VNTUFSWTpCYXN0aWxsZSBEYXkgUGFydHkKRU5EOlZFVkVOVApFTkQ6VkNBTEVOREFSCg==',
                     encoding: 'base64',
                     method: 'request'
                 },
@@ -130,7 +137,5 @@ describe('JSON Transport Tests', function () {
             });
             done();
         });
-
     });
-
 });

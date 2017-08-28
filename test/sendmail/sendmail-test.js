@@ -65,19 +65,25 @@ describe('Sendmail Transport Tests', function() {
 
         sinon.stub(client, '_spawn').returns(stubbedSpawn);
 
-        client.send({
-            data: {},
-            message: new MockBuilder({
-                from: 'test@valid.sender',
-                to: 'test@valid.recipient'
-            }, 'message\r\nline 2')
-        }, function(err, data) {
-            expect(err).to.not.exist;
-            expect(data.messageId).to.equal('<test>');
-            expect(output).to.equal('message\nline 2');
-            client._spawn.restore();
-            done();
-        });
+        client.send(
+            {
+                data: {},
+                message: new MockBuilder(
+                    {
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient'
+                    },
+                    'message\r\nline 2'
+                )
+            },
+            function(err, data) {
+                expect(err).to.not.exist;
+                expect(data.messageId).to.equal('<test>');
+                expect(output).to.equal('message\nline 2');
+                client._spawn.restore();
+                done();
+            }
+        );
     });
 
     it('Should return an error', function(done) {
@@ -87,7 +93,7 @@ describe('Sendmail Transport Tests', function() {
         stubbedSpawn.stdin = new PassThrough();
         stubbedSpawn.stdout = new PassThrough();
 
-        stubbedSpawn.stdin.on('data', ()=>false);
+        stubbedSpawn.stdin.on('data', () => false);
 
         stubbedSpawn.stdin.on('end', function() {
             stubbedSpawn.emit('close', 127);
@@ -96,17 +102,23 @@ describe('Sendmail Transport Tests', function() {
 
         sinon.stub(client, '_spawn').returns(stubbedSpawn);
 
-        client.send({
-            data: {},
-            message: new MockBuilder({
-                from: 'test@valid.sender',
-                to: 'test@valid.recipient'
-            }, 'message\r\nline 2')
-        }, function(err, data) {
-            expect(err).to.exist;
-            expect(data).to.not.exist;
-            client._spawn.restore();
-            done();
-        });
+        client.send(
+            {
+                data: {},
+                message: new MockBuilder(
+                    {
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient'
+                    },
+                    'message\r\nline 2'
+                )
+            },
+            function(err, data) {
+                expect(err).to.exist;
+                expect(data).to.not.exist;
+                client._spawn.restore();
+                done();
+            }
+        );
     });
 });

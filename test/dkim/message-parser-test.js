@@ -11,11 +11,10 @@ const MessageParser = require('../../lib/dkim/message-parser');
 
 chai.config.includeStack = true;
 
-describe('DKIM MessageParser Tests', function () {
-    it('should extract header and body', function (done) {
+describe('DKIM MessageParser Tests', function() {
+    it('should extract header and body', function(done) {
         let parser = new MessageParser();
-        let message =
-            `From: saatja aadress
+        let message = `From: saatja aadress
 To: Saaja aadress
 Subject: pealkiri
   mitmel

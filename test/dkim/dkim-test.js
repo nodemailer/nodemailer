@@ -34,12 +34,11 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 -----END PUBLIC KEY-----`;
 */
 
-describe('DKIM Tests', function () {
+describe('DKIM Tests', function() {
     this.timeout(100 * 1000); // eslint-disable-line
 
-    it('should sign message', function (done) {
-        let message =
-            `From: saatja aadress
+    it('should sign message', function(done) {
+        let message = `From: saatja aadress
 To: Saaja aadress
 Subject: pealkiri
   mitmel
@@ -80,20 +79,22 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message).to.equal('DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=node.ee; q=dns/txt;\r\n' +
-                ' s=dkim; bh=h2JdEKA6yVYSGuI3DQCDlg2KL+96GxA7Yw7owvsYDUM=;\r\n' +
-                ' h=from:subject:message-id:to;\r\n' +
-                ' b=tey8mL2VQVuy/phh7yEKi86Y0Yyzyy04qTy73G4yg3qdEDB7uymjNr32ruRPVFmC9PimIK75p\r\n' +
-                ' KVPF5T1oB8/oY6TFqyyuECRrI4D2CfG3VXWBShK32r1Wtv7eWN04b4s\r\n' +
-                'From: saatja aadress\n' +
-                'To: Saaja aadress\n' +
-                'Subject: pealkiri\n' +
-                '  mitmel\n' +
-                '  real\n' +
-                'Message-Id: test\n' +
-                '\n' +
-                'tere tere\n' +
-                'teine rida\n');
+            expect(message).to.equal(
+                'DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=node.ee; q=dns/txt;\r\n' +
+                    ' s=dkim; bh=h2JdEKA6yVYSGuI3DQCDlg2KL+96GxA7Yw7owvsYDUM=;\r\n' +
+                    ' h=from:subject:message-id:to;\r\n' +
+                    ' b=tey8mL2VQVuy/phh7yEKi86Y0Yyzyy04qTy73G4yg3qdEDB7uymjNr32ruRPVFmC9PimIK75p\r\n' +
+                    ' KVPF5T1oB8/oY6TFqyyuECRrI4D2CfG3VXWBShK32r1Wtv7eWN04b4s\r\n' +
+                    'From: saatja aadress\n' +
+                    'To: Saaja aadress\n' +
+                    'Subject: pealkiri\n' +
+                    '  mitmel\n' +
+                    '  real\n' +
+                    'Message-Id: test\n' +
+                    '\n' +
+                    'tere tere\n' +
+                    'teine rida\n'
+            );
             done();
         });
 
@@ -109,7 +110,7 @@ teine rida
         writeNext();
     });
 
-    it('should sign large message using cache dir', function (done) {
+    it('should sign large message using cache dir', function(done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -146,13 +147,15 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
+            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
             expect(output.usingCache).to.be.true;
             done();
         });
     });
 
-    it('should sign large message without cache dir', function (done) {
+    it('should sign large message without cache dir', function(done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -188,13 +191,15 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
+            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
             expect(output.usingCache).to.be.false;
             done();
         });
     });
 
-    it('should emit cache error', function (done) {
+    it('should emit cache error', function(done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -209,7 +214,7 @@ teine rida
         });
     });
 
-    it('should sign large message as Buffer', function (done) {
+    it('should sign large message as Buffer', function(done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -246,13 +251,15 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
+            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
             expect(output.usingCache).to.be.true;
             done();
         });
     });
 
-    it('should sign large message as String', function (done) {
+    it('should sign large message as String', function(done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -289,7 +296,9 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
+            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
             expect(output.usingCache).to.be.true;
             done();
         });
