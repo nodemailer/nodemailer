@@ -10,7 +10,9 @@
         "type": "git",
         "url": "https://github.com/nodemailer/nodemailer.git"
     },
-    "keywords": ["Nodemailer"],
+    "keywords": [
+        "Nodemailer"
+    ],
     "author": "Andris Reinman",
     "license": "MIT",
     "bugs": {
@@ -19,19 +21,19 @@
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
         "bunyan": "^1.8.12",
-        "chai": "^4.1.1",
+        "chai": "^4.1.2",
         "eslint-config-nodemailer": "^1.2.0",
         "grunt": "^1.0.1",
         "grunt-cli": "^1.2.0",
-        "grunt-eslint": "^20.0.0",
+        "grunt-eslint": "^20.1.0",
         "grunt-mocha-test": "^0.13.2",
         "libbase64": "^0.2.0",
         "libmime": "^3.1.0",
         "libqp": "^1.1.0",
-        "mocha": "^3.5.0",
+        "mocha": "^3.5.3",
         "proxy": "^0.2.4",
         "proxy-test-server": "^1.0.0",
-        "sinon": "^3.2.1",
+        "sinon": "^3.3.0",
         "smtp-server": "^3.1.0"
     },
     "engines": {
