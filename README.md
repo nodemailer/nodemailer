@@ -18,6 +18,10 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 ## Having an issue?
 
+#### First review the docs
+
+Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer.com/about/)
+
 #### Nodemailer throws a SyntaxError for "..."
 
 You are using older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator
