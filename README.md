@@ -36,7 +36,7 @@ If you are running the code in your own machine, then check your antivirus setti
 
 #### I have a different problem
 
-If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer).
+If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer) or revisit the [docs](https://nodemailer.com/about/).
 
 ### License
 
