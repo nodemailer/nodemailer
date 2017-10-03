@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.1.2 2017-10-03
+
+- No actual changes. Needed to push updated README to npmjs
+
 ## v4.1.1 2017-09-25
 
 - Fixed JSONTransport attachment handling
