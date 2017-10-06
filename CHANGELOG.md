@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.1.3 2017-10-06
+
+- Allow generating preview links without calling createTestAccount first
+
 ## v4.1.2 2017-10-03
 
 - No actual changes. Needed to push updated README to npmjs
