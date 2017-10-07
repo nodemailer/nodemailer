@@ -23,7 +23,7 @@ let transporter = nodemailer.createTransport(
             accessToken: 'accesstoken',
             expires: 12345
         },
-        logger,
+        logger: true,
         debug: true // include SMTP traffic in the logs
     },
     {
