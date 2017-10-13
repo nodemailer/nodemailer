@@ -414,7 +414,12 @@ describe('SMTP-Connection Tests', function() {
                 server.removeAllListeners('dataReady');
                 server.on('dataReady', function(connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
+                    expect(body.toString()).to.equal(
+                        message
+                            .toString()
+                            .trim()
+                            .replace(/\n/g, '\r\n')
+                    );
                     callback(null, 'ABC1');
                 });
 
@@ -802,6 +807,9 @@ describe('SMTP-Connection Tests', function() {
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
                             rejectedErrors: info.rejectedErrors,
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         expect(info.rejectedErrors.length).to.equal(1);
@@ -840,6 +848,9 @@ describe('SMTP-Connection Tests', function() {
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
                             rejected: [],
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         done();
@@ -859,6 +870,9 @@ describe('SMTP-Connection Tests', function() {
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
                             rejected: [],
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         client.reset(function(err) {
@@ -875,6 +889,9 @@ describe('SMTP-Connection Tests', function() {
                                     expect(info).to.deep.equal({
                                         accepted: ['test2@valid.recipient'],
                                         rejected: [],
+                                        envelopeTime: info.envelopeTime,
+                                        messageTime: info.messageTime,
+                                        messageSize: info.messageSize,
                                         response: '250 OK: message queued'
                                     });
                                     done();
@@ -898,6 +915,9 @@ describe('SMTP-Connection Tests', function() {
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
                             rejectedErrors: info.rejectedErrors,
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         expect(info.rejectedErrors.length).to.equal(1);
@@ -968,6 +988,9 @@ describe('SMTP-Connection Tests', function() {
                         expect(info).to.deep.equal({
                             accepted: ['test2@valid.recipient'],
                             rejected: [],
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         done();
@@ -1017,6 +1040,9 @@ describe('SMTP-Connection Tests', function() {
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
                             rejectedErrors: info.rejectedErrors,
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         done();
@@ -1038,6 +1064,9 @@ describe('SMTP-Connection Tests', function() {
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
                             rejectedErrors: info.rejectedErrors,
+                            envelopeTime: info.envelopeTime,
+                            messageTime: info.messageTime,
+                            messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
                         done();
@@ -1141,7 +1170,12 @@ describe('SMTP-Connection Tests', function() {
                 server.removeAllListeners('dataReady');
                 server.on('dataReady', function(connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
+                    expect(body.toString()).to.equal(
+                        message
+                            .toString()
+                            .trim()
+                            .replace(/\n/g, '\r\n')
+                    );
                     callback(null, 'ABC1');
                 });
 
@@ -1170,7 +1204,12 @@ describe('SMTP-Connection Tests', function() {
                 server.removeAllListeners('dataReady');
                 server.on('dataReady', function(connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
+                    expect(body.toString()).to.equal(
+                        message
+                            .toString()
+                            .trim()
+                            .replace(/\n/g, '\r\n')
+                    );
                     callback(null, 'ABC1');
                 });
 

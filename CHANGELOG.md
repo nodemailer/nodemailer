@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.2.0 2017-10-13
+
+- Expose streamed messages size and timers in info response
+
 ## v4.1.3 2017-10-06
 
 - Allow generating preview links without calling createTestAccount first
