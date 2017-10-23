@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.3.0 2017-10-23
+
+- Added new mail object method `mail.normalize(cb)` that should make creating HTTP API based transports much easier
+
 ## 4.2.0 2017-10-13
 
 - Expose streamed messages size and timers in info response
