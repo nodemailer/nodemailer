@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.3.1 2017-10-25
+
+- Fixed a confict with Electron.js where timers do not have unref method
+
 ## 4.3.0 2017-10-23
 
 - Added new mail object method `mail.normalize(cb)` that should make creating HTTP API based transports much easier
