@@ -571,6 +571,58 @@ describe('MailComposer unit tests', function() {
                 'X-Test-2: =?UTF-8?B?w5XDhMOWw5w=?=\r\n' +
                 'X-Test-3: foo\r\n' +
                 'X-Test-3: bar\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: attachment; filename=test.txt\r\n' +
+                '\r\n' +
+                'dGVzdA==\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build(function(err, message) {
+                expect(err).to.not.exist;
+                expect(message.toString()).to.equal(expected);
+                done();
+            });
+        });
+
+        it('should keep plaintext for attachment', function(done) {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        headers: {
+                            'X-Test-1': 12345,
+                            'X-Test-2': 'ÕÄÖÜ',
+                            'X-Test-3': ['foo', 'bar']
+                        },
+                        content: 'test',
+                        filename: 'test.txt',
+                        contentTransferEncoding: false
+                    }
+                ]
+            };
+
+            let expected =
+                '' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                'abc\r\n-' +
+                '---_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; name=test.txt\r\n' +
+                'X-Test-1: 12345\r\n' +
+                'X-Test-2: =?UTF-8?B?w5XDhMOWw5w=?=\r\n' +
+                'X-Test-3: foo\r\n' +
+                'X-Test-3: bar\r\n' +
                 'Content-Disposition: attachment; filename=test.txt\r\n' +
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 '\r\n' +
@@ -617,14 +669,14 @@ describe('MailComposer unit tests', function() {
                 'abc\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; name=test.txt\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
                 'Content-Disposition: attachment; filename=test.txt\r\n' +
-                'Content-Transfer-Encoding: 7bit\r\n' +
                 '\r\n' +
-                'test\r\n' +
+                'dGVzdA==\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: application/octet-stream\r\n' +
-                'Content-Disposition: attachment\r\n' +
                 'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: attachment\r\n' +
                 '\r\n' +
                 'dGVzdDI=\r\n' +
                 '----_NmP-test-Part_1--\r\n';

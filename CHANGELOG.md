@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.4.0 2017-11-10
+
+- Changed default behavior for attachment option contentTransferEncoding. If it is unset then base64 encoding is used for the attachment. If it is set to false then previous default applies (base64 for most, 7bit for text)
+
 ## 4.3.1 2017-10-25
 
 - Fixed a confict with Electron.js where timers do not have unref method
