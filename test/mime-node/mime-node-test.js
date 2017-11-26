@@ -1238,13 +1238,13 @@ describe('MimeNode Tests', function() {
                 res.writeHead(200, {
                     'Content-Type': 'text/plain'
                 });
-                let data = new Buffer(new Array(1024 + 1).join('ä'), 'utf-8');
+                let data = Buffer.from(new Array(1024 + 1).join('ä'), 'utf-8');
                 let i = 0;
                 let sendByte = function() {
                     if (i >= data.length) {
                         return res.end();
                     }
-                    res.write(new Buffer([data[i++]]));
+                    res.write(Buffer.from([data[i++]]));
                     setImmediate(sendByte);
                 };
 
@@ -1387,7 +1387,7 @@ describe('MimeNode Tests', function() {
             let transform = new Transform();
             transform._transform = function(chunk, encoding, done) {
                 if (encoding !== 'buffer') {
-                    chunk = new Buffer(chunk, encoding);
+                    chunk = Buffer.from(chunk, encoding);
                 }
                 for (let i = 0, len = chunk.length; i < len; i++) {
                     if (chunk[i] === 0x20) {
@@ -1431,7 +1431,7 @@ describe('MimeNode Tests', function() {
             let transform = new Transform();
             transform._transform = function(chunk, encoding, done) {
                 if (encoding !== 'buffer') {
-                    chunk = new Buffer(chunk, encoding);
+                    chunk = Buffer.from(chunk, encoding);
                 }
                 for (let i = 0, len = chunk.length; i < len; i++) {
                     if (chunk[i] === 0x20) {

@@ -112,7 +112,7 @@ describe('Shared Funcs Tests', function() {
         it('should set text from html buffer', function(done) {
             let mail = {
                 data: {
-                    html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n')
+                    html: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
                 }
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
@@ -132,7 +132,7 @@ describe('Shared Funcs Tests', function() {
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -147,7 +147,7 @@ describe('Shared Funcs Tests', function() {
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -162,7 +162,7 @@ describe('Shared Funcs Tests', function() {
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -177,7 +177,7 @@ describe('Shared Funcs Tests', function() {
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -192,10 +192,10 @@ describe('Shared Funcs Tests', function() {
                 expect(err).to.not.exist;
                 expect(mail).to.deep.equal({
                     data: {
-                        html: new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n')
+                        html: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
                     }
                 });
-                expect(value).to.deep.equal(new Buffer('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
@@ -220,13 +220,13 @@ describe('Shared Funcs Tests', function() {
                 data: {
                     html: {
                         encoding: 'base64',
-                        content: new Buffer(str).toString('base64')
+                        content: Buffer.from(str).toString('base64')
                     }
                 }
             };
             shared.resolveContent(mail.data, 'html', function(err, value) {
                 expect(err).to.not.exist;
-                expect(value).to.deep.equal(new Buffer(str));
+                expect(value).to.deep.equal(Buffer.from(str));
                 done();
             });
         });
@@ -244,7 +244,7 @@ describe('Shared Funcs Tests', function() {
                 shared.resolveContent(mail.data, 'attachment', function(err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(
-                        new Buffer(
+                        Buffer.from(
                             'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
                             'base64'
                         )
@@ -263,7 +263,7 @@ describe('Shared Funcs Tests', function() {
                 };
                 shared.resolveContent(mail.data, 'attachment', function(err, value) {
                     expect(err).to.not.exist;
-                    expect(value).to.deep.equal(new Buffer('tere tere'));
+                    expect(value).to.deep.equal(Buffer.from('tere tere'));
                     done();
                 });
             });
@@ -278,7 +278,7 @@ describe('Shared Funcs Tests', function() {
                 };
                 shared.resolveContent(mail.data, 'attachment', function(err, value) {
                     expect(err).to.not.exist;
-                    expect(value).to.deep.equal(new Buffer('tere tere'));
+                    expect(value).to.deep.equal(Buffer.from('tere tere'));
                     done();
                 });
             });
@@ -295,7 +295,7 @@ describe('Shared Funcs Tests', function() {
                 shared.resolveContent(mail.data, 'attachment', function(err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(
-                        new Buffer(
+                        Buffer.from(
                             'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
                             'base64'
                         )

@@ -145,7 +145,7 @@ describe('Fetch Tests', function() {
                     res.writeHead(200, {
                         'Content-Type': 'text/plain'
                     });
-                    res.end(new Buffer(req.headers.authorization.split(' ').pop(), 'base64'));
+                    res.end(Buffer.from(req.headers.authorization.split(' ').pop(), 'base64'));
                     break;
 
                 case '/cookie':
@@ -458,7 +458,7 @@ describe('Fetch Tests', function() {
 
     it('should post stream data', function(done) {
         let body = new PassThrough();
-        let data = new Buffer('hello=world%20%F0%9F%98%AD&another=value');
+        let data = Buffer.from('hello=world%20%F0%9F%98%AD&another=value');
 
         let req = fetch('http://localhost:' + HTTP_PORT + '/post', {
             method: 'post',

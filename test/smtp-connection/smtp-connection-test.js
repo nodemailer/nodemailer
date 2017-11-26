@@ -1199,7 +1199,7 @@ describe('SMTP-Connection Tests', function() {
 
             it('should send message buffer', function(done) {
                 let chunks = [],
-                    message = new Buffer(new Array(1024).join('teretere, vana kere\n'));
+                    message = Buffer.from(new Array(1024).join('teretere, vana kere\n'));
 
                 server.on('data', function(connection, chunk) {
                     chunks.push(chunk);
@@ -1282,7 +1282,7 @@ function proxyConnect(port, host, destinationPort, destinationHost, callback) {
                 remainder = headers.substr(match.index + match[0].length);
                 headers = headers.substr(0, match.index);
                 if (remainder) {
-                    socket.unshift(new Buffer(remainder, 'binary'));
+                    socket.unshift(Buffer.from(remainder, 'binary'));
                 }
                 // proxy connection is now established
                 return callback(null, socket);
