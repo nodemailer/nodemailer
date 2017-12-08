@@ -8,10 +8,6 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/riRUvXLoy7hDEa8ptqPY9cHd/nodemailer/nodemailer'>
-  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/riRUvXLoy7hDEa8ptqPY9cHd/nodemailer/nodemailer.svg' />
-</a>
-
 ## Having an issue?
 
 #### First review the docs
