@@ -45,7 +45,7 @@ describe('SMTP Transport Tests', function() {
     this.timeout(10000); // eslint-disable-line no-invalid-this
 
     describe('Anonymous sender tests', function() {
-        let server;
+        let server, failingServer;
 
         beforeEach(function(done) {
             server = new SMTPServer({
@@ -72,11 +72,44 @@ describe('SMTP Transport Tests', function() {
                 logger: false
             });
 
-            server.listen(PORT_NUMBER, done);
+            failingServer = new SMTPServer({
+                disabledCommands: ['STARTTLS', 'AUTH'],
+
+                onData(stream) {
+                    stream.on('data', () => false);
+                    stream.on('end', () => {
+                        setTimeout(() => {
+                            this.connections.forEach(socket => socket.close());
+                        }, 150);
+                    });
+                },
+
+                onMailFrom(address, session, callback) {
+                    if (!/@valid.sender/.test(address.address)) {
+                        return callback(new Error('Only user@valid.sender is allowed to send mail'));
+                    }
+                    return callback(); // Accept the address
+                },
+
+                onRcptTo(address, session, callback) {
+                    if (!/@valid.recipient/.test(address.address)) {
+                        return callback(new Error('Only user@valid.recipient is allowed to receive mail'));
+                    }
+                    return callback(); // Accept the address
+                },
+                logger: false
+            });
+
+            server.listen(PORT_NUMBER, err => {
+                if (err) {
+                    return done(err);
+                }
+                failingServer.listen(PORT_NUMBER + 1, done);
+            });
         });
 
         afterEach(function(done) {
-            server.close(done);
+            server.close(() => failingServer.close(done));
         });
 
         it('Should expose version number', function() {
@@ -174,6 +207,39 @@ describe('SMTP Transport Tests', function() {
                 },
                 function(err) {
                     expect(err).to.not.exist;
+                    done();
+                }
+            );
+        });
+
+        it('Should recover unexpeced close during transmission', function(done) {
+            let client = new SMTPTransport('smtp:localhost:' + (PORT_NUMBER + 1) + '?logger=false');
+            let chunks = [],
+                message = new Array(1024).join('teretere, vana kere\n');
+
+            server.on('data', function(connection, chunk) {
+                chunks.push(chunk);
+            });
+
+            server.on('dataReady', function(connection, callback) {
+                let body = Buffer.concat(chunks);
+                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
+                callback(null, true);
+            });
+
+            client.send(
+                {
+                    data: {},
+                    message: new MockBuilder(
+                        {
+                            from: 'test@valid.sender',
+                            to: 'test@valid.recipient'
+                        },
+                        message
+                    )
+                },
+                function(err) {
+                    expect(err).to.exist;
                     done();
                 }
             );
