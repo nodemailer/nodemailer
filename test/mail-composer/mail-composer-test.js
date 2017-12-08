@@ -213,14 +213,14 @@ describe('MailComposer unit tests', function() {
             let str = 'tere tere';
             let data = {
                 text: {
-                    content: new Buffer(str).toString('base64'),
+                    content: Buffer.from(str).toString('base64'),
                     encoding: 'base64'
                 }
             };
 
             let compiler = new MailComposer(data);
             compiler.compile();
-            expect(compiler.message.content).to.deep.equal(new Buffer(str));
+            expect(compiler.message.content).to.deep.equal(Buffer.from(str));
         });
 
         it('should create content node from data url', function() {
@@ -236,7 +236,7 @@ describe('MailComposer unit tests', function() {
             let compiler = new MailComposer(data);
             let mail = compiler.compile();
             expect(mail.messageId()).to.exist;
-            expect(compiler.mail.attachments[0].content).to.deep.equal(new Buffer(str));
+            expect(compiler.mail.attachments[0].content).to.deep.equal(Buffer.from(str));
             expect(compiler.mail.attachments[0].contentType).to.equal('image/png');
         });
 
@@ -698,7 +698,7 @@ describe('MailComposer unit tests', function() {
                 messageId: 'icaltest',
                 icalEvent: {
                     method: 'request',
-                    content: new Buffer('test').toString('hex'),
+                    content: Buffer.from('test').toString('hex'),
                     encoding: 'hex'
                 },
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',

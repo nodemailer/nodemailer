@@ -35,7 +35,7 @@ describe('Base64 Tests', function() {
         });
 
         it('shoud encode Buffer to base64', function() {
-            expect(base64.encode(new Buffer([0x00, 0x01, 0x02, 0x20, 0x03]))).to.equal('AAECIAM=');
+            expect(base64.encode(Buffer.from([0x00, 0x01, 0x02, 0x20, 0x03]))).to.equal('AAECIAM=');
         });
     });
 
@@ -53,7 +53,7 @@ describe('Base64 Tests', function() {
                 lineLength: 9
             });
 
-            let bytes = new Buffer(streamFixture[0]),
+            let bytes = Buffer.from(streamFixture[0]),
                 i = 0,
                 buf = [],
                 buflen = 0;
@@ -80,7 +80,7 @@ describe('Base64 Tests', function() {
                 }
 
                 let ord = bytes[i++];
-                encoder.write(new Buffer([ord]));
+                encoder.write(Buffer.from([ord]));
                 setImmediate(sendNextByte);
             };
 

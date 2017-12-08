@@ -10,7 +10,9 @@
         "type": "git",
         "url": "https://github.com/nodemailer/nodemailer.git"
     },
-    "keywords": ["Nodemailer"],
+    "keywords": [
+        "Nodemailer"
+    ],
     "author": "Andris Reinman",
     "license": "MIT",
     "bugs": {

@@ -626,6 +626,44 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
+        it('should return error for missing credentials', function(done) {
+            expect(client.authenticated).to.be.false;
+            client.login(
+                {
+                    user: 'testuser'
+                },
+                function(err) {
+                    expect(err).to.exist;
+                    expect(client.authenticated).to.be.false;
+                    expect(err.message).to.match(/^Missing credentials/);
+                    expect(err.code).to.equal('EAUTH');
+                    expect(err.response).to.be.undefined;
+                    done();
+                }
+            );
+        });
+
+        it('should return error for incomplete credentials', function(done) {
+            expect(client.authenticated).to.be.false;
+            client.login(
+                {
+                    user: 'testuser',
+                    credentials: {
+                        user: 'testuser'
+                    }
+                },
+                function(err) {
+                    expect(err).to.exist;
+                    expect(client.authenticated).to.be.false;
+                    expect(err.message).to.match(/^Missing credentials/);
+                    expect(err.code).to.equal('EAUTH');
+                    expect(err.response).to.be.undefined;
+                    done();
+                }
+            );
+        });
+
+
         describe('xoauth2 login', function() {
             this.timeout(10 * 1000);
             let x2server;
@@ -1161,7 +1199,7 @@ describe('SMTP-Connection Tests', function() {
 
             it('should send message buffer', function(done) {
                 let chunks = [],
-                    message = new Buffer(new Array(1024).join('teretere, vana kere\n'));
+                    message = Buffer.from(new Array(1024).join('teretere, vana kere\n'));
 
                 server.on('data', function(connection, chunk) {
                     chunks.push(chunk);
@@ -1244,7 +1282,7 @@ function proxyConnect(port, host, destinationPort, destinationHost, callback) {
                 remainder = headers.substr(match.index + match[0].length);
                 headers = headers.substr(0, match.index);
                 if (remainder) {
-                    socket.unshift(new Buffer(remainder, 'binary'));
+                    socket.unshift(Buffer.from(remainder, 'binary'));
                 }
                 // proxy connection is now established
                 return callback(null, socket);
