@@ -34,6 +34,12 @@ If you are running the code in your own machine, then check your antivirus setti
 
 If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer) or revisit the [docs](https://nodemailer.com/about/).
 
+## Sponsors
+
+Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/nodemailer#sponsor)]
+
+<a href="https://opencollective.com/nodemailer/sponsor/0/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/0/avatar.svg"></a>
+
 ### License
 
 Nodemailer is licensed under the **MIT license**

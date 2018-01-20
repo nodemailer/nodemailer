@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 4.4.2 2018-01-20
+
+- Added sponsors section to README
+- enclose encodeURIComponent in try..catch to handle invalid urls
+
 ## 4.4.1 2017-12-08
 
 - Better handling of unexpectedly dropping connections
