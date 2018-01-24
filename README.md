@@ -1,4 +1,5 @@
 # Nodemailer
+[![Backers on Open Collective](https://opencollective.com/nodemailer/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/nodemailer/sponsors/badge.svg)](#sponsors) 
 
 [![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)](https://nodemailer.com/about/)
 
@@ -34,11 +35,37 @@ If you are running the code in your own machine, then check your antivirus setti
 
 If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer) or revisit the [docs](https://nodemailer.com/about/).
 
+
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="graphs/contributors"><img src="https://opencollective.com/nodemailer/contributors.svg?width=890" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/nodemailer#backer)]
+
+<a href="https://opencollective.com/nodemailer#backers" target="_blank"><img src="https://opencollective.com/nodemailer/backers.svg?width=890"></a>
+
+
 ## Sponsors
 
-Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/nodemailer#sponsor)]
+Support this project by becoming a sponsor. Your logo will show up on our README on Github with a link to your website. [[Become a sponsor](https://opencollective.com/nodemailer#sponsor)]
 
 <a href="https://opencollective.com/nodemailer/sponsor/0/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/1/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/2/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/3/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/4/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/5/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/6/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/7/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/8/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/nodemailer/sponsor/9/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/9/avatar.svg"></a>
+
+
 
 ### License
 
