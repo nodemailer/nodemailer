@@ -57,3 +57,6 @@ Complete the following form to have your issue reviewed
 ...
 
 Thanks!
+
+<!-- Love nodemailer? Please consider supporting our collective:
+👉  https://opencollective.com/nodemailer/donate -->

@@ -4,7 +4,8 @@
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
-        "test": "grunt"
+        "test": "grunt",
+        "postinstall": "opencollective postinstall"
     },
     "repository": {
         "type": "git",
@@ -38,5 +39,13 @@
     },
     "engines": {
         "node": ">=6.0.0"
+    },
+    "dependencies": {
+        "opencollective": "^1.0.3"
+    },
+    "collective": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/nodemailer",
+        "logo": "https://opencollective.com/nodemailer/logo.txt"
     }
 }
