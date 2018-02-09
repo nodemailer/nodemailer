@@ -42,4 +42,24 @@ describe('Ethereal Tests', function() {
             });
         });
     });
+
+    it('should cache a created test account', function(done) {
+        nodemailer.createTestAccount((err, account) => {
+            expect(err).to.not.exist;
+            nodemailer.createTestAccount((err, account2) => {
+                expect(err).to.not.exist;
+                expect(account2).to.equal(account);
+                done();
+            });
+        });
+    });
+
+    it('should cache a created test account when using promises', function(done) {
+        nodemailer.createTestAccount().then(account => {
+            nodemailer.createTestAccount().then(account2 => {
+                expect(account2).to.equal(account);
+                done();
+            });
+        });
+    });
 });
