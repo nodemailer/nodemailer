@@ -614,7 +614,7 @@ describe('MimeNode Tests', function() {
                 expect(
                     msg.indexOf(
                         'Content-Disposition: attachment;\r\n' +
-                            ' filename*0*=utf-8\'\'%C6%94------%C6%94------%C6%94------%C6%94;\r\n' +
+                        " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" + // eslint-disable-line
                             ' filename*1*=------%C6%94------%C6%94------%C6%94------.pdf'
                     )
                 ).to.be.gte(0);
@@ -1177,11 +1177,11 @@ describe('MimeNode Tests', function() {
             expect(
                 mb._convertAddresses([
                     {
-                        name: 'O\'Vigala Sass',
+                        name: "O'Vigala Sass", // eslint-disable-line
                         address: 'a@b.c'
                     }
                 ])
-            ).to.equal('O\'Vigala Sass <a@b.c>');
+            ).to.equal("O'Vigala Sass <a@b.c>"); // eslint-disable-line
         });
 
         it('should include name in quotes for special symbols', function() {
@@ -1226,6 +1226,36 @@ describe('MimeNode Tests', function() {
             let mb = new MimeNode();
             let mid = mb._generateMessageId();
             expect(/^<[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@.*>/.test(mid)).to.be.true;
+        });
+    });
+
+    it('should use default header keys', function(done) {
+        let mb = new MimeNode('text/plain');
+        mb.addHeader('test', 'test');
+        mb.addHeader('BEST', 'best');
+
+        mb.build(function(err, msg) {
+            expect(err).to.not.exist;
+            msg = msg.toString();
+            expect(/^Test: test$/m.test(msg));
+            expect(/^Best: best$/m.test(msg));
+            done();
+        });
+    });
+
+    it('should use custom header keys', function(done) {
+        let mb = new MimeNode('text/plain', {
+            normalizeHeaderKey: key => key.toUpperCase()
+        });
+        mb.addHeader('test', 'test');
+        mb.addHeader('BEST', 'best');
+
+        mb.build(function(err, msg) {
+            expect(err).to.not.exist;
+            msg = msg.toString();
+            expect(/^TEST: test$/m.test(msg));
+            expect(/^BEST: best$/m.test(msg));
+            done();
         });
     });
 
