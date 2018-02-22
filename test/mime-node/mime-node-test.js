@@ -1046,6 +1046,20 @@ describe('MimeNode Tests', function() {
                     name: 'test'
                 }
             ]);
+
+            expect(
+                mb._parseAddresses([
+                    {
+                        address: 'root',
+                        name: 'Charlie Root'
+                    }
+                ])
+            ).to.deep.equal([
+                {
+                    address: 'root',
+                    name: 'Charlie Root'
+                }
+            ]);
         });
     });
 
