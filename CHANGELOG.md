@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 4.6.0 2018-02-22
+
+* Support socks module v2 in addition to v1 [e228bcb2]
+* Fixed invalid promise return value when using createTestAccount [5524e627]
+* Allow using local addresses [8f6fa35f]
+
 ## 4.5.0 2018-02-21
 
 * Added new message transport option `normalizeHeaderKey(key)=>normalizedKey` for custom header formatting
