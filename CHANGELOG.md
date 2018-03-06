@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.2 2018-03-06
+
+* When redirecting URL calls then do not include original POST content
+
 ## 4.6.1 2018-03-06
 
 * Fixed Smtp connection freezing, when trying to send after close / quit (twawszczak) [73d3911c]
