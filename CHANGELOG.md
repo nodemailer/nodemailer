@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.1 2018-03-06
+
+* Fixed Smtp connection freezing, when trying to send after close / quit (twawszczak) [73d3911c]
+
 ## 4.6.0 2018-02-22
 
 * Support socks module v2 in addition to v1 [e228bcb2]
