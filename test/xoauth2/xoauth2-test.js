@@ -174,7 +174,7 @@ describe('XOAuth2 tests', function() {
             done();
         });
 
-        xoauth2.getToken(function() {});
+        xoauth2.getToken(false, function() {});
     });
 
     it('should sign payload', function() {

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.3 2018-03-13
+
+* Removed unneeded dependency
+
 ## 4.6.2 2018-03-06
 
 * When redirecting URL calls then do not include original POST content
