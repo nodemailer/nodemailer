@@ -220,10 +220,10 @@ describe('#addressparser', function() {
     });
 
     it('should handle apostrophe in name correctly', function() {
-        let input = 'O\'Neill';
+        let input = 'O\x27Neill';
         let expected = [
             {
-                name: 'O\'Neill',
+                name: 'O\x27Neill',
                 address: ''
             }
         ];

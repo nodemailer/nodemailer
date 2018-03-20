@@ -663,7 +663,6 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
-
         describe('xoauth2 login', function() {
             this.timeout(10 * 1000);
             let x2server;

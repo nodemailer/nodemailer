@@ -147,9 +147,12 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
-                '16078d67ecb4c9954f2568b3bd20e8b5'
-            );
+            expect(
+                crypto
+                    .createHash('md5')
+                    .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
+                    .digest('hex')
+            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
             expect(output.usingCache).to.be.true;
             done();
         });
@@ -191,9 +194,12 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
-                '16078d67ecb4c9954f2568b3bd20e8b5'
-            );
+            expect(
+                crypto
+                    .createHash('md5')
+                    .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
+                    .digest('hex')
+            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
             expect(output.usingCache).to.be.false;
             done();
         });
@@ -251,9 +257,12 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
-                '16078d67ecb4c9954f2568b3bd20e8b5'
-            );
+            expect(
+                crypto
+                    .createHash('md5')
+                    .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
+                    .digest('hex')
+            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
             expect(output.usingCache).to.be.true;
             done();
         });
@@ -296,9 +305,12 @@ teine rida
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
             expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(crypto.createHash('md5').update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop')))).digest('hex')).to.equal(
-                '16078d67ecb4c9954f2568b3bd20e8b5'
-            );
+            expect(
+                crypto
+                    .createHash('md5')
+                    .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
+                    .digest('hex')
+            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
             expect(output.usingCache).to.be.true;
             done();
         });
