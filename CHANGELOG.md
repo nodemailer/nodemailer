@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.4 2018-03-31
+
+* Readded logo author link to README that was accidentally removed a while ago
+
 ## 4.6.3 2018-03-13
 
 * Removed unneeded dependency

@@ -70,3 +70,8 @@ Support this project by becoming a sponsor. Your logo will show up on our README
 ### License
 
 Nodemailer is licensed under the **MIT license**
+
+--------------------------------------------------------------------------------
+
+The Nodemailer logo was designed by [Sven Kristjansen](https://www.behance.net/kristjansen).
+
