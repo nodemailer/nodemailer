@@ -79,7 +79,7 @@ describe('SMTP Transport Tests', function() {
                     stream.on('data', () => false);
                     stream.on('end', () => {
                         setTimeout(() => {
-                            this.connections.forEach(socket => socket.close());
+                            this.connections.forEach(socket => socket._socket.destroy());
                         }, 150);
                     });
                 },

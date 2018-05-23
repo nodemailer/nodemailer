@@ -1,6 +1,6 @@
 {
     "name": "nodemailer",
-    "version": "4.6.4",
+    "version": "4.6.5",
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
@@ -28,11 +28,11 @@
         "libbase64": "^1.0.2",
         "libmime": "^3.1.0",
         "libqp": "^1.1.0",
-        "mocha": "^5.0.5",
+        "mocha": "^5.2.0",
         "proxy": "^0.2.4",
         "proxy-test-server": "^1.0.0",
-        "sinon": "^4.5.0",
-        "smtp-server": "^3.4.2"
+        "sinon": "^5.0.7",
+        "smtp-server": "^3.4.4"
     },
     "engines": {
         "node": ">=6.0.0"
