@@ -1,59 +1,7 @@
-Complete the following form to have your issue reviewed
+Please report only real bugs here.
 
-### 1. Is this a bug in Nodemailer?
- 
- - [ ] Yes
- - [ ] No
- 
-> Note. Non bug issues are closed by default. Head to Stack Overflow for support questions: https://stackoverflow.com/search?q=nodemailer
+If you have trouble setting up Nodemailer then the best place to look for help would be the documentation https://nodemailer.com/
 
-### 2. Is this related to Gmail / Hotmail / Yahoo?
+If you still can't manage it out by yourself, then asking help in Stack Overflow probably works https://stackoverflow.com/search?q=nodemailer
 
- - [ ] Yes
- - [ ] No
- 
- > Note. If you can not log in to Gmail then Gmail is blocking you. These issues are closed by default.
-
-### 3. Is your issue related to SSL/TLS errors?
-
- - [ ] Yes
- - [ ] No
- 
- > Note. Most probably you are trying to connect to a server with a self-signed/expired cert or the server supports only ancient ciphers or you are using an antivirus that intercepts your internet connection. Such issues are closed by default.
-
-### 4. Is your issue related to connection timeouts
-
- - [ ] Yes
- - [ ] No
-
-> Note. Most probably you are firewalled out from the server. Such issues are closed by default.
-
-### 5. Do you get SyntaxError when using Nodemailer?
-
- - [ ] Yes
- - [ ] No
-
-> Note. You are using too old version of Node.js, please upgrade. Such issues are closed by default.
-
-
-### 6. Nodemailer version you are having problems with (eg. v1.3.7)
-
-...
-
-### 7. Node.js version you are using (run `node -v` to see it, eg v5.5.0)
-
-...
-
-### 8. Your operating system (eg. Windows 10, Ubuntu 14.04 etc.)
-
-...
-
-### 9. Nodemailer configuration settings (if applicable)
-
-...
-
-### 10. If possible, include a minimal test case that can be used to verify your issue (link to a gist would be great!)
-
-...
-
-Thanks!
+Issues that can not be reproduced are closed by default, so make sure you include enough information that helps to verify the bug. Including version numbers of affected system (operating system, node version, nodemailer version) helps a lot. A stack trace would be great. And a self contained script that demonstrates the bug would be the best. If you need a working email account for the demo script, then use https://ethereal.email/
