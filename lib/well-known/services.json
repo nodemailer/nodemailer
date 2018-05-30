@@ -25,7 +25,7 @@
 
     "FastMail": {
         "domains": ["fastmail.fm"],
-        "host": "mail.messagingengine.com",
+        "host": "smtp.fastmail.com",
         "port": 465,
         "secure": true
     },
@@ -97,7 +97,8 @@
 
     "Mailgun": {
         "host": "smtp.mailgun.org",
-        "port": 587
+        "port": 465,
+        "secure": true
     },
 
     "Mailjet": {
@@ -125,6 +126,12 @@
         "port": 587
     },
 
+    "One": {
+        "host": "send.one.com",
+        "port": 465,
+        "secure": true
+    },
+
     "OpenMailBox": {
         "aliases": ["OMB", "openmailbox.org"],
         "host": "smtp.openmailbox.org",
@@ -142,6 +149,12 @@
         "aliases": ["PostmarkApp"],
         "host": "smtp.postmarkapp.com",
         "port": 2525
+    },
+
+    "qiye.aliyun": {
+        "host": "smtp.mxhichina.com",
+        "port": "465",
+        "secure": true
     },
 
     "QQ": {
@@ -185,16 +198,19 @@
         "port": 465,
         "secure": true
     },
+
     "SES-US-EAST-1": {
         "host": "email-smtp.us-east-1.amazonaws.com",
         "port": 465,
         "secure": true
     },
+
     "SES-US-WEST-2": {
         "host": "email-smtp.us-west-2.amazonaws.com",
         "port": 465,
         "secure": true
     },
+
     "SES-EU-WEST-1": {
         "host": "email-smtp.eu-west-1.amazonaws.com",
         "port": 465,
@@ -207,6 +223,11 @@
         "host": "smtp.sparkpostmail.com",
         "port": 587,
         "secure": false
+    },
+
+    "Tipimail": {
+        "host": "smtp.tipimail.com",
+        "port": 587
     },
 
     "Yahoo": {
@@ -229,19 +250,16 @@
         "secure": true,
         "authMethod": "LOGIN"
     },
+
     "126": {
         "host": "smtp.126.com",
         "port": 465,
         "secure": true
     },
+
     "163": {
         "host": "smtp.163.com",
         "port": 465,
-        "secure": true
-    },
-    "qiye.aliyun": {
-        "host": "smtp.mxhichina.com",
-        "port": "465",
         "secure": true
     }
 }

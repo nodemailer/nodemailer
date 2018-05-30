@@ -31,8 +31,8 @@
         "mocha": "^5.2.0",
         "proxy": "^0.2.4",
         "proxy-test-server": "^1.0.0",
-        "sinon": "^5.0.7",
-        "smtp-server": "^3.4.4"
+        "sinon": "^5.0.10",
+        "smtp-server": "^3.4.5"
     },
     "engines": {
         "node": ">=6.0.0"
