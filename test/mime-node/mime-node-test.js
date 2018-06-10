@@ -404,7 +404,7 @@ describe('MimeNode Tests', function() {
             mb.build(function(err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
-                expect(/^Subject: =\?UTF-8\?Q\?j=C3=B5geval_istus_k=C3=A4gu\?= metsas$/m.test(msg)).to.be.true;
+                expect(/^Subject: =\?UTF-8\?Q\?j=C3=B5geval_istus_k=C3=A4gu_metsas\?=$/m.test(msg)).to.be.true;
                 done();
             });
         });
@@ -1135,7 +1135,7 @@ describe('MimeNode Tests', function() {
 
         it('should encode non ascii characters', function() {
             let mb = new MimeNode();
-            expect(mb._encodeHeaderValue('x-my', 'test jõgeva value')).to.equal('test =?UTF-8?Q?j=C3=B5geva?= value');
+            expect(mb._encodeHeaderValue('x-my', 'test jõgeva value')).to.equal('=?UTF-8?Q?test_j=C3=B5geva_value?=');
         });
 
         it('should format references', function() {

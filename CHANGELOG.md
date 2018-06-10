@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.6 2018-06-10
+
+*   Fixes mime encoded-word compatibility issue with invalid clients like Zimbra
+
 ## 4.6.5 2018-05-23
 
 *   Fixed broken DKIM stream in Node.js v10
