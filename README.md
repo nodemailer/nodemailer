@@ -1,5 +1,5 @@
 # Nodemailer
-[![Backers on Open Collective](https://opencollective.com/nodemailer/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/nodemailer/sponsors/badge.svg)](#sponsors) 
+[![Backers on Open Collective](https://opencollective.com/nodemailer/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/nodemailer/sponsors/badge.svg)](#sponsors)
 
 [![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)](https://nodemailer.com/about/)
 
@@ -35,7 +35,9 @@ If you are running the code in your own machine, then check your antivirus setti
 
 If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer) or revisit the [docs](https://nodemailer.com/about/).
 
+#### Not Able to send Mail using transport ?
 
+If `createTransport` function is not taking up the path which is '/usr/bin/sendMail', make sure you have sendmail configured in your system. see[https://www.computerhope.com/unix/usendmai.htm](https://www.computerhope.com/unix/usendmai.htm).
 
 ## Contributors
 
