@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.6.7 2018-06-15
+
+*   Added option `skipEncoding` to JSONTransport
+
 ## 4.6.6 2018-06-10
 
 *   Fixes mime encoded-word compatibility issue with invalid clients like Zimbra
