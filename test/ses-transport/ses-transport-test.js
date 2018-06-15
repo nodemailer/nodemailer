@@ -61,14 +61,13 @@ describe('SES Transport Tests', function() {
         transport.sendMail(messageObject, (err, info) => {
             expect(err).to.not.exist;
             expect(info).to.exist;
-            expect(info).to.deep.equal({
-                envelope: {
-                    from: 'andris.reinman@gmail.com',
-                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                },
-                messageId: '<testtest@eu-west-1.amazonses.com>',
-                response: 'testtest'
+            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+            expect(info.envelope).to.deep.equal({
+                from: 'andris.reinman@gmail.com',
+                to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
+            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+            expect(info.response).to.equal('testtest');
             done();
         });
     });
@@ -116,14 +115,13 @@ describe('SES Transport Tests', function() {
         transport.sendMail(messageObject, (err, info) => {
             expect(err).to.not.exist;
             expect(info).to.exist;
-            expect(info).to.deep.equal({
-                envelope: {
-                    from: 'andris.reinman@gmail.com',
-                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                },
-                messageId: '<testtest@eu-west-1.amazonses.com>',
-                response: 'testtest'
+            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+            expect(info.envelope).to.deep.equal({
+                from: 'andris.reinman@gmail.com',
+                to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
+            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+            expect(info.response).to.equal('testtest');
             done();
         });
     });
@@ -172,14 +170,13 @@ describe('SES Transport Tests', function() {
                 finished++;
                 expect(err).to.not.exist;
                 expect(info).to.exist;
-                expect(info).to.deep.equal({
-                    envelope: {
-                        from: 'andris.reinman@gmail.com',
-                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                    },
-                    messageId: '<testtest@eu-west-1.amazonses.com>',
-                    response: 'testtest'
+                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+                expect(info.envelope).to.deep.equal({
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
+                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+                expect(info.response).to.equal('testtest');
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(5000);
@@ -234,14 +231,13 @@ describe('SES Transport Tests', function() {
                 finished++;
                 expect(err).to.not.exist;
                 expect(info).to.exist;
-                expect(info).to.deep.equal({
-                    envelope: {
-                        from: 'andris.reinman@gmail.com',
-                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                    },
-                    messageId: '<testtest@eu-west-1.amazonses.com>',
-                    response: 'testtest'
+                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+                expect(info.envelope).to.deep.equal({
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
+                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+                expect(info.response).to.equal('testtest');
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
@@ -296,14 +292,13 @@ describe('SES Transport Tests', function() {
                 finished++;
                 expect(err).to.not.exist;
                 expect(info).to.exist;
-                expect(info).to.deep.equal({
-                    envelope: {
-                        from: 'andris.reinman@gmail.com',
-                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                    },
-                    messageId: '<testtest@eu-west-1.amazonses.com>',
-                    response: 'testtest'
+                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+                expect(info.envelope).to.deep.equal({
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
+                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+                expect(info.response).to.equal('testtest');
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(12000);
@@ -359,14 +354,14 @@ describe('SES Transport Tests', function() {
                 finished++;
                 expect(err).to.not.exist;
                 expect(info).to.exist;
-                expect(info).to.deep.equal({
-                    envelope: {
-                        from: 'andris.reinman@gmail.com',
-                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                    },
-                    messageId: '<testtest@eu-west-1.amazonses.com>',
-                    response: 'testtest'
+
+                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+                expect(info.envelope).to.deep.equal({
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
+                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+                expect(info.response).to.equal('testtest');
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
@@ -423,14 +418,13 @@ describe('SES Transport Tests', function() {
                 finished++;
                 expect(err).to.not.exist;
                 expect(info).to.exist;
-                expect(info).to.deep.equal({
-                    envelope: {
-                        from: 'andris.reinman@gmail.com',
-                        to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
-                    },
-                    messageId: '<testtest@eu-west-1.amazonses.com>',
-                    response: 'testtest'
+                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
+                expect(info.envelope).to.deep.equal({
+                    from: 'andris.reinman@gmail.com',
+                    to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
+                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
+                expect(info.response).to.equal('testtest');
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
