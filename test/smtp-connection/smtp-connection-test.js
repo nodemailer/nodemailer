@@ -1267,28 +1267,32 @@ describe('SMTP-Connection Tests', function() {
 });
 
 function proxyConnect(port, host, destinationPort, destinationHost, callback) {
-    let socket = net.connect(port, host, function() {
-        socket.write('CONNECT ' + destinationHost + ':' + destinationPort + ' HTTP/1.1\r\n\r\n');
+    let socket = net.connect(
+        port,
+        host,
+        function() {
+            socket.write('CONNECT ' + destinationHost + ':' + destinationPort + ' HTTP/1.1\r\n\r\n');
 
-        let headers = '';
-        let onSocketData = function(chunk) {
-            let match;
-            let remainder;
+            let headers = '';
+            let onSocketData = function(chunk) {
+                let match;
+                let remainder;
 
-            headers += chunk.toString('binary');
-            if ((match = headers.match(/\r\n\r\n/))) {
-                socket.removeListener('data', onSocketData);
-                remainder = headers.substr(match.index + match[0].length);
-                headers = headers.substr(0, match.index);
-                if (remainder) {
-                    socket.unshift(Buffer.from(remainder, 'binary'));
+                headers += chunk.toString('binary');
+                if ((match = headers.match(/\r\n\r\n/))) {
+                    socket.removeListener('data', onSocketData);
+                    remainder = headers.substr(match.index + match[0].length);
+                    headers = headers.substr(0, match.index);
+                    if (remainder) {
+                        socket.unshift(Buffer.from(remainder, 'binary'));
+                    }
+                    // proxy connection is now established
+                    return callback(null, socket);
                 }
-                // proxy connection is now established
-                return callback(null, socket);
-            }
-        };
-        socket.on('data', onSocketData);
-    });
+            };
+            socket.on('data', onSocketData);
+        }
+    );
 
     socket.on('error', function(err) {
         expect(err).to.not.exist;

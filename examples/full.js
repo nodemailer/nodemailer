@@ -85,7 +85,27 @@ nodemailer.createTestAccount((err, account) => {
                 path: __dirname + '/assets/nyan.gif',
                 cid: 'nyan@example.com' // should be as unique as possible
             }
-        ]
+        ],
+
+        list: {
+            // List-Help: <mailto:admin@example.com?subject=help>
+            help: 'admin@example.com?subject=help',
+
+            // List-Unsubscribe: <http://example.com> (Comment)
+            unsubscribe: [
+                {
+                    url: 'http://example.com/unsubscribe',
+                    comment: 'A short note about this url'
+                },
+                'unsubscribe@example.com'
+            ],
+
+            // List-ID: "comment" <example.com>
+            id: {
+                url: 'mylist.example.com',
+                comment: 'This is my awesome list'
+            }
+        }
     };
 
     transporter.sendMail(message, (error, info) => {

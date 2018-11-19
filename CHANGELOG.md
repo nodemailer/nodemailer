@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 4.7.0 2018-11-19
+
+-   Cleaned up List-\* header generation
+-   Fixed 'full' return option for DSN (klaronix) [23b93a3b]
+-   Support promises `for mailcomposer.build()`
+
 ## 4.6.8 2018-08-15
 
 -   Use first IP address from DNS resolution when using a proxy (Limbozz) [d4ca847c]
