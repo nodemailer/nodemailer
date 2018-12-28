@@ -27,7 +27,7 @@ nodemailer.createTestAccount((err, account) => {
                 user: account.user,
                 pass: account.pass
             },
-            logger: false,
+            logger: true,
             debug: false // include SMTP traffic in the logs
         },
         {
