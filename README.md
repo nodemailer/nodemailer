@@ -1,5 +1,6 @@
 # Nodemailer
-[![Backers on Open Collective](https://opencollective.com/nodemailer/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/nodemailer/sponsors/badge.svg)](#sponsors) 
+
+[![Backers on Open Collective](https://opencollective.com/nodemailer/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/nodemailer/sponsors/badge.svg)](#sponsors)
 
 [![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)](https://nodemailer.com/about/)
 
@@ -8,6 +9,10 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 [![NPM](https://nodei.co/npm/nodemailer.png?downloads=true&downloadRank=true&stars=true)](https://nodemailer.com/about/)
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
+
+## Why version bump to 5?
+
+Nodemailer changed from `dns.lookup()` to `dns.resolve` for resolving SMTP hostnames which might be backwards incompatible and thus the version bump. Nodemailer tries first `resolve4()` and if no match is found then `resolve6()` and finally reverts back to `lookup()`. Additionally found DNS results are cached (for 5 minutes). This should make it easier to manage high performance clients that send a lot of messages in parallel.
 
 ## Having an issue?
 
@@ -35,20 +40,16 @@ If you are running the code in your own machine, then check your antivirus setti
 
 If you are having issues with Nodemailer, then the best way to find help would be [Stack Overflow](https://stackoverflow.com/search?q=nodemailer) or revisit the [docs](https://nodemailer.com/about/).
 
-
-
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
 <a href="graphs/contributors"><img src="https://opencollective.com/nodemailer/contributors.svg?width=890" /></a>
-
 
 ## Backers
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/nodemailer#backer)]
 
 <a href="https://opencollective.com/nodemailer#backers" target="_blank"><img src="https://opencollective.com/nodemailer/backers.svg?width=890"></a>
-
 
 ## Sponsors
 
@@ -65,13 +66,10 @@ Support this project by becoming a sponsor. Your logo will show up on our README
 <a href="https://opencollective.com/nodemailer/sponsor/8/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/nodemailer/sponsor/9/website" target="_blank"><img src="https://opencollective.com/nodemailer/sponsor/9/avatar.svg"></a>
 
-
-
 ### License
 
 Nodemailer is licensed under the **MIT license**
 
---------------------------------------------------------------------------------
+---
 
 The Nodemailer logo was designed by [Sven Kristjansen](https://www.behance.net/kristjansen).
-

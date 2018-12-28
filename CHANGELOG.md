@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.0 2018-12-28
+
+-   Start using dns.resolve() instead of dns.lookup() for resolving SMTP hostnames. Might be breaking change on some environments so upgrade with care
+-   Show more logs for renewing OAuth2 tokens, previously it was not possible to see what actually failed
+
 ## 4.7.0 2018-11-19
 
 -   Cleaned up List-\* header generation
