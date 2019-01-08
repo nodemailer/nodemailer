@@ -800,6 +800,56 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
+        describe('custom login', function() {
+            let customClient;
+            beforeEach(function(done) {
+                customClient = new SMTPConnection({
+                    port: PORT_NUMBER,
+                    logger: false,
+                    debug: false,
+                    customAuth: {
+                        mytest: client => {
+                            client.sendCommand('HALLO1 HALLO', (err, response) => {
+                                expect(err).to.not.exist;
+                                expect(response.status).to.equal(500);
+                                client.sendCommand('HALLO2 HALLO', (err, response) => {
+                                    expect(err).to.not.exist;
+                                    expect(response.status).to.equal(500);
+                                    client.resolve();
+                                });
+                            });
+                        }
+                    }
+                });
+
+                customClient.connect(done);
+            });
+
+            afterEach(function(done) {
+                customClient.close();
+                done();
+            });
+
+            it('should login', function(done) {
+                expect(customClient.authenticated).to.be.false;
+                customClient.login(
+                    {
+                        method: 'mytest',
+                        user: 'testuser',
+                        credentials: {
+                            user: 'testuser',
+                            pass: 'testpass'
+                        }
+                    },
+                    function(err) {
+                        expect(err).to.not.exist;
+                        expect(customClient.authenticated).to.be.true;
+                        done();
+                    }
+                );
+            });
+        });
+
         describe('Send without PIPELINING', function() {
             beforeEach(function(done) {
                 client.on('end', function() {

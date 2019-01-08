@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.1 2019-01-09
+
+-   Fixed regression error to support Node versions lower than 6.11
+-   Added expiremental custom authentication support
+
 ## 5.0.0 2018-12-28
 
 -   Start using dns.resolve() instead of dns.lookup() for resolving SMTP hostnames. Might be breaking change on some environments so upgrade with care
