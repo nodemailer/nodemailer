@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.1.1 2019-01-09
+
+-   Added missing option argument for custom auth
+
 ## 5.1.0 2019-01-09
 
 -   Official support for custom authentication methods and examples (examples/custom-auth-async.js and examples/custom-auth-cb.js)
