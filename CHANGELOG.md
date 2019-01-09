@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.1.0 2019-01-09
+
+-   Official support for custom authentication methods and examples (examples/custom-auth-async.js and examples/custom-auth-cb.js)
+
 ## 5.0.1 2019-01-09
 
 -   Fixed regression error to support Node versions lower than 6.11
