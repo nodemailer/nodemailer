@@ -1,5 +1,5 @@
 /* eslint no-unused-expressions:0, no-invalid-this:0, prefer-arrow-callback: 0 */
-/* globals beforeEach, afterEach, describe, it */
+/* globals describe, it */
 
 'use strict';
 

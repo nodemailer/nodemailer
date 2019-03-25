@@ -1,5 +1,5 @@
 /* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals beforeEach, describe, it */
+/* globals beforeEach, afterEach, describe, it */
 
 'use strict';
 
@@ -365,10 +365,7 @@ describe('SMTP Transport Tests', function() {
                 url: 'smtp:testuser:testpass@www.example.com:1234',
                 logger: false,
                 getSocket(options, callback) {
-                    let socket = net.connect(
-                        PORT_NUMBER,
-                        'localhost'
-                    );
+                    let socket = net.connect(PORT_NUMBER, 'localhost');
                     let errHandler = function(err) {
                         callback(err);
                     };
