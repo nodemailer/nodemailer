@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.0.0 2019-03-25
+
+-   SMTPConnection: use removeListener instead of removeAllListeners (xr0master) [ddc4af15]
+    Using removeListener should fix memory leak with Node.js streams
+
 ## 5.1.1 2019-01-09
 
 -   Added missing option argument for custom auth
