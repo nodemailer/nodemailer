@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.1.0 2019-04-06
+
+-   Added new message property `amp` for providing AMP4EMAIL content
+
 ## 6.0.0 2019-03-25
 
 -   SMTPConnection: use removeListener instead of removeAllListeners (xr0master) [ddc4af15]

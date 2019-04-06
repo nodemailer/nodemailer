@@ -88,6 +88,24 @@ describe('MailComposer unit tests', function() {
             compiler._createAlternative.restore();
         });
 
+        it('should create Alternative structure with text, amp and html', function() {
+            let data = {
+                text: 'abc',
+                html: 'def',
+                amp: 'ghi'
+            };
+
+            let compiler = new MailComposer(data);
+            sinon.spy(compiler, '_createAlternative');
+            compiler.compile();
+            expect(compiler._createAlternative.callCount).to.equal(1);
+            expect(compiler._alternatives.length).to.equal(3);
+            expect(compiler._alternatives[0].contentType).to.equal('text/plain');
+            expect(compiler._alternatives[1].contentType).to.equal('text/x-amp-html');
+            expect(compiler._alternatives[2].contentType).to.equal('text/html');
+            compiler._createAlternative.restore();
+        });
+
         it('should create Alternative structure with text, icalEvent and html', function() {
             let data = {
                 text: 'abc',
@@ -324,6 +342,9 @@ describe('MailComposer unit tests', function() {
                 watchHtml: {
                     raw: 'rawwatch'
                 },
+                amp: {
+                    raw: 'rawamp'
+                },
                 messageId: 'rawtest',
                 icalEvent: {
                     raw: 'rawcalendar'
@@ -357,6 +378,8 @@ describe('MailComposer unit tests', function() {
                 'rawtext\r\n' +
                 '----_NmP-test-Part_2\r\n' +
                 'rawwatch\r\n' +
+                '----_NmP-test-Part_2\r\n' +
+                'rawamp\r\n' +
                 '----_NmP-test-Part_2\r\n' +
                 'rawhtml\r\n' +
                 '----_NmP-test-Part_2\r\n' +
