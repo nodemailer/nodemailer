@@ -67,10 +67,7 @@
         "aliases": ["Outlook", "Outlook.com", "Hotmail.com"],
         "domains": ["hotmail.com", "outlook.com"],
         "host": "smtp.live.com",
-        "port": 587,
-        "tls": {
-            "ciphers": "SSLv3"
-        }
+        "port": 587
     },
 
     "iCloud": {

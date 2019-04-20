@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.1.1 2019-04-20
+
+-   Fixed regression bug with missing smtp `authMethod` property
+
 ## 6.1.0 2019-04-06
 
 -   Added new message property `amp` for providing AMP4EMAIL content
