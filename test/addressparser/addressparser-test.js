@@ -154,6 +154,30 @@ describe('#addressparser', function() {
         expect(addressparser(input)).to.deep.equal(expected);
     });
 
+    it('should flatten mixed group correctly', function() {
+        let input = 'Test User <test.user@mail.ee>, Disclosed:andris@tr.ee, andris@example.com;,,,, Undisclosed:; bob@example.com BOB;';
+        let expected = [
+            {
+                address: 'test.user@mail.ee',
+                name: 'Test User'
+            },
+
+            {
+                address: 'andris@tr.ee',
+                name: ''
+            },
+            {
+                address: 'andris@example.com',
+                name: ''
+            },
+            {
+                address: 'bob@example.com',
+                name: 'BOB'
+            }
+        ];
+        expect(addressparser(input, { flatten: true })).to.deep.equal(expected);
+    });
+
     it('semicolon as delimiter should not break group parsing', function() {
         let input = 'Test User <test.user@mail.ee>; Disclosed:andris@tr.ee, andris@example.com;,,,, Undisclosed:; bob@example.com;';
         let expected = [

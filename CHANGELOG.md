@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.0 2019-05-24
+
+-   Added new option for addressparser: `flatten`. If true then ignores group names and returns a single list of all addresses
+
 ## 6.1.1 2019-04-20
 
 -   Fixed regression bug with missing smtp `authMethod` property
