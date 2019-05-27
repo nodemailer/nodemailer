@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.1 2019-05-24
+
+-   No changes. It is the same as 6.2.0 that was accidentally published as 6.2.1 to npm
+
 ## 6.2.0 2019-05-24
 
 -   Added new option for addressparser: `flatten`. If true then ignores group names and returns a single list of all addresses
