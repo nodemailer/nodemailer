@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.3.0 2019-07-14
+
+-   Added new option to pass a set of httpHeaders to be sent when fetching attachments.  See [PR #1034](https://github.com/nodemailer/nodemailer/pull/1034)
+
 ## 6.2.1 2019-05-24
 
 -   No changes. It is the same as 6.2.0 that was accidentally published as 6.2.1 to npm
