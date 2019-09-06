@@ -58,6 +58,17 @@ describe('#addressparser', function() {
         expect(addressparser(input)).to.deep.equal(expected);
     });
 
+    it('should handle whitespace in quoted name correctly', function() {
+        let input = '"reinman, trailspace " <andris@tr.ee>';
+        let expected = [
+            {
+                name: 'reinman, trailspace ',
+                address: 'andris@tr.ee'
+            }
+        ];
+        expect(addressparser(input)).to.deep.equal(expected);
+    });
+
     it('should handle quoted semicolons correctly', function() {
         let input = '"reinman; andris" <andris@tr.ee>';
         let expected = [
