@@ -330,7 +330,9 @@ describe('SMTP Pool Tests', function() {
                     )
                 },
                 function(err) {
-                    expect(err).to.not.exist;
+                    if (err) {
+                        expect(err.message).to.equal("Connection closed unexpectedly");
+                    }
                     callback();
                 }
             );
