@@ -49,7 +49,6 @@ describe('SMTP-Connection Tests', function() {
                     stream.on('data', function() {});
                     stream.on('end', callback);
                 },
-                logger: false
             });
 
             insecureServer = new SMTPServer({
@@ -214,7 +213,7 @@ describe('SMTP-Connection Tests', function() {
             client.on('end', done);
         });
 
-        it('should receive end after STARTTLS', function(done) {
+        it('should close connection after STARTTLS', function(done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER,
                 logger: false
@@ -228,7 +227,7 @@ describe('SMTP-Connection Tests', function() {
             });
 
             client.on('error', function(err) {
-                expect(err).to.not.exist;
+                expect(err.message).to.equal("Connection closed unexpectedly");
             });
 
             client.on('end', done);
