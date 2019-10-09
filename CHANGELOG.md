@@ -1,8 +1,14 @@
 # CHANGELOG
 
+## 6.3.1 2019-10-09
+
+-   Ignore "end" events because it might be "error" after it (dex4er) [72bade9]
+-   Set username and password on the connection proxy object correctly (UsamaAshraf) [250b1a8]
+-   Support more DNS errors (madarche) [2391aa4]
+
 ## 6.3.0 2019-07-14
 
--   Added new option to pass a set of httpHeaders to be sent when fetching attachments.  See [PR #1034](https://github.com/nodemailer/nodemailer/pull/1034)
+-   Added new option to pass a set of httpHeaders to be sent when fetching attachments. See [PR #1034](https://github.com/nodemailer/nodemailer/pull/1034)
 
 ## 6.2.1 2019-05-24
 
