@@ -43,7 +43,7 @@ If you are having issues with Nodemailer, then the best way to find help would b
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="graphs/contributors"><img src="https://opencollective.com/nodemailer/contributors.svg?width=890" /></a>
+<a href="https://github.com/nodemailer/nodemailer/graphs/contributors"><img src="https://opencollective.com/nodemailer/contributors.svg?width=890" /></a>
 
 ## Backers
 
