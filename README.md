@@ -18,11 +18,11 @@ Nodemailer changed from `dns.lookup()` to `dns.resolve` for resolving SMTP hostn
 
 #### First review the docs
 
-Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer.com/about/)
+Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer.com/about/).
 
 #### Nodemailer throws a SyntaxError for "..."
 
-You are using older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator
+You are using older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator.
 
 #### I'm having issues with Gmail
 
@@ -30,7 +30,7 @@ Gmail either works well or it does not work at all. It is probably easier to swi
 
 #### I get ETIMEDOUT errors
 
-Check your firewall settings. Timeout usually occurs when you try to open a connection to a port that is firewalled either on the server or on your machine
+Check your firewall settings. Timeout usually occurs when you try to open a connection to a port that is firewalled either on the server or on your machine.
 
 #### I get TLS errors
 
