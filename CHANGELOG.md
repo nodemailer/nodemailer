@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.4.0 2019-12-04
+
+-   Do not use auth if server does not advertise AUTH support [f419b09d]
+-   add dns.CONNREFUSED (Hiroyuki Okada) [5c4c8ca8]
+
 ## 6.3.1 2019-10-09
 
 -   Ignore "end" events because it might be "error" after it (dex4er) [72bade9]
