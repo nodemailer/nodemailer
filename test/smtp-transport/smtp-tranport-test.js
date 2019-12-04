@@ -152,7 +152,7 @@ describe('SMTP Transport Tests', function() {
             );
         });
 
-        it('Should fail auth', function(done) {
+        it('Should not fail auth', function(done) {
             let client = new SMTPTransport({
                 port: PORT_NUMBER,
                 auth: {
@@ -173,7 +173,7 @@ describe('SMTP Transport Tests', function() {
                     )
                 },
                 function(err) {
-                    expect(err.code).to.equal('EAUTH');
+                    expect(err).to.not.exist;
                     done();
                 }
             );
