@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.1 2019-12-07
+
+-   Fix processing server output with unterminated responses
+
 ## 6.4.0 2019-12-04
 
 -   Do not use auth if server does not advertise AUTH support [f419b09d]
