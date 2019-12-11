@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.2 2019-12-11
+
+-   Fixed bug where array item was used with a potentially empty array
+
 ## 6.4.1 2019-12-07
 
 -   Fix processing server output with unterminated responses
