@@ -8,10 +8,6 @@ Send e-mails from Node.js – easy as cake! 🍰✉️
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
-## Why version bump to 5?
-
-Nodemailer changed from `dns.lookup()` to `dns.resolve` for resolving SMTP hostnames which might be backwards incompatible and thus the version bump. Nodemailer tries first `resolve4()` and if no match is found then `resolve6()` and finally reverts back to `lookup()`. Additionally found DNS results are cached (for 5 minutes). This should make it easier to manage high performance clients that send a lot of messages in parallel.
-
 ## Having an issue?
 
 #### First review the docs
@@ -24,7 +20,7 @@ You are using older Node.js version than v6.0. Upgrade Node.js to get support fo
 
 #### I'm having issues with Gmail
 
-Gmail either works well or it does not work at all. It is probably easier to switch to an alternative service instead of fixing issues with Gmail. If Gmail does not work for you then don't use it.
+Gmail either works well or it does not work at all. It is probably easier to switch to an alternative service instead of fixing issues with Gmail. If Gmail does not work for you then don't use it. Read more about it [here](https://nodemailer.com/usage/using-gmail/).
 
 #### I get ETIMEDOUT errors
 
@@ -32,7 +28,8 @@ Check your firewall settings. Timeout usually occurs when you try to open a conn
 
 #### I get TLS errors
 
-If you are running the code in your own machine, then check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
+* If you are running the code in your own machine, then check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
+* Latest Node versions allow only TLS versions 1.2 and higher, some servers might still use TLS 1.1 or lower. Check Node.js docs how to get correct TLS support for your app.
 
 #### I have a different problem
 
