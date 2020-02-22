@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.3 2020-02-22
+
+-   Added an option to specify max number of requeues when connection closes unexpectedly (Igor Sechyn) [8a927f5a]
+
 ## 6.4.2 2019-12-11
 
 -   Fixed bug where array item was used with a potentially empty array
