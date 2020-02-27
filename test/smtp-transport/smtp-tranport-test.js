@@ -179,6 +179,34 @@ describe('SMTP Transport Tests', function() {
             );
         });
 
+        it('Should fail auth if forceAuth=true', function(done) {
+            let client = new SMTPTransport({
+                port: PORT_NUMBER,
+                auth: {
+                    user: 'zzz'
+                },
+                forceAuth: true,
+                logger: false
+            });
+
+            client.send(
+                {
+                    data: {},
+                    message: new MockBuilder(
+                        {
+                            from: 'test@valid.sender',
+                            to: 'test@valid.recipient'
+                        },
+                        'message'
+                    )
+                },
+                function(err) {
+                    expect(err.code).to.equal('EAUTH');
+                    done();
+                }
+            );
+        });
+
         it('Should send mail', function(done) {
             let client = new SMTPTransport('smtp:localhost:' + PORT_NUMBER + '?logger=false');
             let chunks = [],
