@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.4 2020-03-01
+
+-   Add `options.forceAuth` for SMTP (Patrick Malouin) [a27ed2f7]
+
 ## 6.4.3 2020-02-22
 
 -   Added an option to specify max number of requeues when connection closes unexpectedly (Igor Sechyn) [8a927f5a]
