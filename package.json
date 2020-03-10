@@ -1,10 +1,11 @@
 {
     "name": "nodemailer",
-    "version": "6.4.4",
+    "version": "6.4.5",
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
-        "test": "grunt"
+        "test": "grunt",
+        "postinstall": "node -e \"try{require('./postinstall')}catch(e){}\""
     },
     "repository": {
         "type": "git",
@@ -35,7 +36,7 @@
         "nodemailer-ntlm-auth": "1.0.1",
         "proxy": "1.0.1",
         "proxy-test-server": "1.0.0",
-        "sinon": "9.0.0",
+        "sinon": "9.0.1",
         "smtp-server": "3.5.0"
     },
     "engines": {
