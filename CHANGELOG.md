@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.6 2020-03-20
+
+-   fix: `requeueAttempts=n` should requeue `n` times (Patrick Malouin) [a27ed2f7]
+
 ## 6.4.4 2020-03-01
 
 -   Add `options.forceAuth` for SMTP (Patrick Malouin) [a27ed2f7]
