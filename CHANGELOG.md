@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.4.7 2020-05-28
+
+-   Always set charset=utf-8 for Content-Type headers
+-   Catch error whn using invalid crypto.sign input
+
 ## 6.4.6 2020-03-20
 
 -   fix: `requeueAttempts=n` should requeue `n` times (Patrick Malouin) [a27ed2f7]
