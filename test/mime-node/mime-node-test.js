@@ -14,13 +14,13 @@ const expect = chai.expect;
 
 chai.config.includeStack = true;
 
-describe('MimeNode Tests', function() {
-    it('should create MimeNode object', function() {
+describe('MimeNode Tests', function () {
+    it('should create MimeNode object', function () {
         expect(new MimeNode()).to.exist;
     });
 
-    describe('#createChild', function() {
-        it('should create child', function() {
+    describe('#createChild', function () {
+        it('should create child', function () {
             let mb = new MimeNode('multipart/mixed');
 
             let child = mb.createChild('multipart/mixed');
@@ -37,8 +37,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#appendChild', function() {
-        it('should append child node', function() {
+    describe('#appendChild', function () {
+        it('should append child node', function () {
             let mb = new MimeNode('multipart/mixed');
 
             let child = new MimeNode('text/plain');
@@ -50,8 +50,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#replace', function() {
-        it('should replace node', function() {
+    describe('#replace', function () {
+        it('should replace node', function () {
             let mb = new MimeNode(),
                 child = mb.createChild('text/plain'),
                 replacement = new MimeNode('image/png');
@@ -63,8 +63,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#remove', function() {
-        it('should remove node', function() {
+    describe('#remove', function () {
+        it('should remove node', function () {
             let mb = new MimeNode(),
                 child = mb.createChild('text/plain');
 
@@ -74,8 +74,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#setHeader', function() {
-        it('should set header', function() {
+    describe('#setHeader', function () {
+        it('should set header', function () {
             let mb = new MimeNode();
 
             mb.setHeader('key', 'value');
@@ -121,7 +121,7 @@ describe('MimeNode Tests', function() {
             ]);
         });
 
-        it('should set multiple headers with the same key', function() {
+        it('should set multiple headers with the same key', function () {
             let mb = new MimeNode();
 
             mb.setHeader('key', ['value1', 'value2', 'value3']);
@@ -134,8 +134,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#addHeader', function() {
-        it('should add header', function() {
+    describe('#addHeader', function () {
+        it('should add header', function () {
             let mb = new MimeNode();
 
             mb.addHeader('key', 'value1');
@@ -185,7 +185,7 @@ describe('MimeNode Tests', function() {
             ]);
         });
 
-        it('should set multiple headers with the same key', function() {
+        it('should set multiple headers with the same key', function () {
             let mb = new MimeNode();
             mb.addHeader('key', ['value1', 'value2', 'value3']);
             expect(mb._headers).to.deep.equal([
@@ -205,8 +205,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#getHeader', function() {
-        it('should return first matching header value', function() {
+    describe('#getHeader', function () {
+        it('should return first matching header value', function () {
             let mb = new MimeNode();
             mb._headers = [
                 {
@@ -223,16 +223,16 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#setContent', function() {
-        it('should set the contents for a node', function() {
+    describe('#setContent', function () {
+        it('should set the contents for a node', function () {
             let mb = new MimeNode();
             mb.setContent('abc');
             expect(mb.content).to.equal('abc');
         });
     });
 
-    describe('#build', function() {
-        it('should build root node', function(done) {
+    describe('#build', function () {
+        it('should build root node', function (done) {
             let mb = new MimeNode('text/plain')
                     .setHeader({
                         date: '12345',
@@ -248,7 +248,7 @@ describe('MimeNode Tests', function() {
                     '\r\n' +
                     'Hello world!\r\n';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -256,12 +256,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should build child node', function(done) {
+        it('should build child node', function (done) {
             let mb = new MimeNode('multipart/mixed'),
                 childNode = mb.createChild('text/plain').setContent('Hello world!'),
                 expected = 'Content-Type: text/plain\r\nContent-Transfer-Encoding: 7bit\r\n\r\nHello world!\r\n';
 
-            childNode.build(function(err, msg) {
+            childNode.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -269,7 +269,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should build multipart node', function(done) {
+        it('should build multipart node', function (done) {
             let mb = new MimeNode('multipart/mixed', {
                     baseBoundary: 'test'
                 }).setHeader({
@@ -291,7 +291,7 @@ describe('MimeNode Tests', function() {
 
             mb.createChild('text/plain').setContent('Hello world!');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -299,11 +299,11 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should build root with generated headers', function(done) {
+        it('should build root with generated headers', function (done) {
             let mb = new MimeNode('text/plain');
             mb.hostname = 'abc';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Date:\s/m.test(msg)).to.be.true;
@@ -313,7 +313,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not include bcc missing in output, but in envelope', function(done) {
+        it('should not include bcc missing in output, but in envelope', function (done) {
             let mb = new MimeNode('text/plain').setHeader({
                 from: 'sender@example.com',
                 to: 'receiver@example.com',
@@ -326,7 +326,7 @@ describe('MimeNode Tests', function() {
                 to: ['receiver@example.com', 'bcc@example.com']
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^From: sender@example.com$/m.test(msg)).to.be.true;
@@ -336,7 +336,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should include bcc missing in output and in envelope', function(done) {
+        it('should include bcc missing in output and in envelope', function (done) {
             let mb = new MimeNode('text/plain', {
                 keepBcc: true
             }).setHeader({
@@ -351,7 +351,7 @@ describe('MimeNode Tests', function() {
                 to: ['receiver@example.com', 'bcc@example.com']
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^From: sender@example.com$/m.test(msg)).to.be.true;
@@ -361,7 +361,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should use set envelope', function(done) {
+        it('should use set envelope', function (done) {
             let mb = new MimeNode('text/plain')
                 .setHeader({
                     from: 'sender@example.com',
@@ -386,7 +386,7 @@ describe('MimeNode Tests', function() {
                 }
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^From: sender@example.com$/m.test(msg)).to.be.true;
@@ -396,12 +396,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should have unicode subject', function(done) {
+        it('should have unicode subject', function (done) {
             let mb = new MimeNode('text/plain').setHeader({
                 subject: 'jõgeval istus kägu metsas'
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Subject: =\?UTF-8\?Q\?j=C3=B5geval_istus_k=C3=A4gu_metsas\?=$/m.test(msg)).to.be.true;
@@ -409,12 +409,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should have unicode subject with strange characters', function(done) {
+        it('should have unicode subject with strange characters', function (done) {
             let mb = new MimeNode('text/plain').setHeader({
                 subject: 'ˆ¸ÁÌÓıÏˇÁÛ^¸\\ÁıˆÌÁÛØ^\\˜Û˝™ˇıÓ¸^\\˜ﬁ^\\·\\˜Ø^£˜#ﬁ^\\£ﬁ^\\£ﬁ^\\'
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg.match(/\bSubject: [^\r]*\r\n( [^\r]*\r\n)*/)[0]).to.equal(
@@ -424,10 +424,10 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should keep 7bit text as is', function(done) {
+        it('should keep 7bit text as is', function (done) {
             let mb = new MimeNode('text/plain').setContent('tere tere');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/\r\n\r\ntere tere\r\n$/.test(msg)).to.be.true;
@@ -437,14 +437,14 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should prefer base64', function(done) {
+        it('should prefer base64', function (done) {
             let mb = new MimeNode('text/plain')
                 .setHeader({
                     subject: 'õõõõ'
                 })
                 .setContent('õõõõõõõõ');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
 
@@ -460,7 +460,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should force quoted-printable', function(done) {
+        it('should force quoted-printable', function (done) {
             let mb = new MimeNode('text/plain', {
                 textEncoding: 'quoted-printable'
             })
@@ -469,7 +469,7 @@ describe('MimeNode Tests', function() {
                 })
                 .setContent('õõõõõõõõ');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
 
@@ -486,10 +486,10 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should prefer quoted-printable', function(done) {
+        it('should prefer quoted-printable', function (done) {
             let mb = new MimeNode('text/plain').setContent('ooooooooõ');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
 
@@ -505,12 +505,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not flow text', function(done) {
+        it('should not flow text', function (done) {
             let mb = new MimeNode('text/plain').setContent(
                 'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0'
             );
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
 
@@ -528,12 +528,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not flow html', function(done) {
+        it('should not flow html', function (done) {
             let mb = new MimeNode('text/html').setContent(
                 'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0'
             );
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Content-Type: text\/html$/m.test(msg)).to.be.true;
@@ -550,12 +550,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should use 7bit for html', function(done) {
+        it('should use 7bit for html', function (done) {
             let mb = new MimeNode('text/html').setContent(
                 'a b c d e f g h i j k l m o p\r\nq r s t u w x y z 1 2 3 4 5 6\r\n7 8 9 0 a b c d e f g h i j k\r\nl m o p q r s t u w x y z\r\n1 2 3 4 5 6 7 8 9 0'
             );
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Content-Type: text\/html$/m.test(msg)).to.be.true;
@@ -572,12 +572,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should fetch ascii filename', function(done) {
+        it('should fetch ascii filename', function (done) {
             let mb = new MimeNode('text/plain', {
                 filename: 'jogeva.txt'
             }).setContent('jogeva');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/\r\n\r\njogeva\r\n$/.test(msg)).to.be.true;
@@ -588,12 +588,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should set unicode filename', function(done) {
+        it('should set unicode filename', function (done) {
             let mb = new MimeNode('text/plain', {
                 filename: 'jõgeva.txt'
             }).setContent('jõgeva');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Content-Type: text\/plain; charset=utf-8;/m.test(msg)).to.be.true;
@@ -603,12 +603,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should set dashed filename', function(done) {
+        it('should set dashed filename', function (done) {
             let mb = new MimeNode('text/plain', {
                 filename: 'Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------.pdf'
             }).setContent('jõgeva');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(
@@ -622,12 +622,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should encode filename with a space', function(done) {
+        it('should encode filename with a space', function (done) {
             let mb = new MimeNode('text/plain', {
                 filename: 'document a.test.pdf'
             }).setContent('jõgeva');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Content-Type: text\/plain; charset=utf-8;/m.test(msg)).to.be.true;
@@ -637,12 +637,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should detect content type from filename', function(done) {
+        it('should detect content type from filename', function (done) {
             let mb = new MimeNode(false, {
                 filename: 'jogeva.zip'
             }).setContent('jogeva');
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Content-Type: application\/zip;/m.test(msg)).to.be.true;
@@ -650,7 +650,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should convert address objects', function(done) {
+        it('should convert address objects', function (done) {
             let mb = new MimeNode(false).setHeader({
                 from: [
                     {
@@ -671,7 +671,7 @@ describe('MimeNode Tests', function() {
                 to: ['safewithme.testuser@xn--jgeva-dua.com']
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^From: =\?UTF-8\?Q\?the_safewithme_=C3=B5_testuser\?=$/m.test(msg)).to.be.true;
@@ -681,7 +681,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should skip empty header', function(done) {
+        it('should skip empty header', function (done) {
             let mb = new MimeNode('text/plain')
                     .setHeader({
                         a: 'b',
@@ -702,7 +702,7 @@ describe('MimeNode Tests', function() {
                     '\r\n' +
                     'Hello world!\r\n';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -710,7 +710,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not process prepared headers', function(done) {
+        it('should not process prepared headers', function (done) {
             let mb = new MimeNode('text/plain')
                     .setHeader({
                         unprepared: {
@@ -747,7 +747,7 @@ describe('MimeNode Tests', function() {
                     '\r\n' +
                     'Hello world!\r\n';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -755,7 +755,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should set default transfer encoding for application content', function(done) {
+        it('should set default transfer encoding for application content', function (done) {
             let mb = new MimeNode('application/x-my-stuff')
                     .setHeader({
                         date: '12345',
@@ -771,7 +771,7 @@ describe('MimeNode Tests', function() {
                     '\r\n' +
                     'SGVsbG8gd29ybGQh\r\n';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -779,7 +779,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not set transfer encoding for multipart content', function(done) {
+        it('should not set transfer encoding for multipart content', function (done) {
             let mb = new MimeNode('multipart/global')
                     .setHeader({
                         date: '12345',
@@ -798,7 +798,7 @@ describe('MimeNode Tests', function() {
 
             mb.boundary = 'abc';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -806,7 +806,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should not set transfer encoding for message/ content', function(done) {
+        it('should not set transfer encoding for message/ content', function (done) {
             let mb = new MimeNode('message/rfc822')
                     .setHeader({
                         date: '12345',
@@ -815,7 +815,7 @@ describe('MimeNode Tests', function() {
                     .setContent('Hello world!'),
                 expected = 'Content-Type: message/rfc822\r\nDate: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\n\r\nHello world!\r\n';
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -823,12 +823,12 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should use from domain for message-id', function(done) {
+        it('should use from domain for message-id', function (done) {
             let mb = new MimeNode('text/plain').setHeader({
                 from: 'test@example.com'
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Message-ID: <[0-9a-f-]+@example\.com>$/m.test(msg)).to.be.true;
@@ -836,10 +836,10 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should fallback to hostname for message-id', function(done) {
+        it('should fallback to hostname for message-id', function (done) {
             let mb = new MimeNode('text/plain');
             mb.hostname = 'abc';
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^Message-ID: <[0-9a-f-]+@abc>$/m.test(msg)).to.be.true;
@@ -848,8 +848,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#getEnvelope', function() {
-        it('should get envelope', function() {
+    describe('#getEnvelope', function () {
+        it('should get envelope', function () {
             expect(
                 new MimeNode()
                     .addHeader({
@@ -887,8 +887,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#messageId', function() {
-        it('should create and return message-Id', function() {
+    describe('#messageId', function () {
+        it('should create and return message-Id', function () {
             let mail = new MimeNode().addHeader({
                 from: 'From <from@example.com>'
             });
@@ -899,8 +899,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#getAddresses', function() {
-        it('should get address object', function() {
+    describe('#getAddresses', function () {
+        it('should get address object', function () {
             expect(
                 new MimeNode()
                     .addHeader({
@@ -1008,8 +1008,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_parseAddresses', function() {
-        it('should normalize header key', function() {
+    describe('#_parseAddresses', function () {
+        it('should normalize header key', function () {
             let mb = new MimeNode();
 
             expect(mb._parseAddresses('test address@example.com')).to.deep.equal([
@@ -1063,8 +1063,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_normalizeHeaderKey', function() {
-        it('should normalize header key', function() {
+    describe('#_normalizeHeaderKey', function () {
+        it('should normalize header key', function () {
             let mb = new MimeNode();
 
             expect(mb._normalizeHeaderKey('key')).to.equal('Key');
@@ -1078,8 +1078,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_handleContentType', function() {
-        it('should do nothing on non multipart', function() {
+    describe('#_handleContentType', function () {
+        it('should do nothing on non multipart', function () {
             let mb = new MimeNode();
             expect(mb.boundary).to.not.exist;
             mb._handleContentType({
@@ -1089,7 +1089,7 @@ describe('MimeNode Tests', function() {
             expect(mb.multipart).to.be.false;
         });
 
-        it('should use provided boundary', function() {
+        it('should use provided boundary', function () {
             let mb = new MimeNode();
             expect(mb.boundary).to.not.exist;
             mb._handleContentType({
@@ -1102,7 +1102,7 @@ describe('MimeNode Tests', function() {
             expect(mb.multipart).to.equal('mixed');
         });
 
-        it('should generate boundary', function() {
+        it('should generate boundary', function () {
             let mb = new MimeNode();
             sinon.stub(mb, '_generateBoundary').returns('def');
 
@@ -1118,8 +1118,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_generateBoundary ', function() {
-        it('should genereate boundary string', function() {
+    describe('#_generateBoundary ', function () {
+        it('should genereate boundary string', function () {
             let mb = new MimeNode();
             mb._nodeId = 'abc';
             mb.rootNode.baseBoundary = 'def';
@@ -1127,29 +1127,29 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_encodeHeaderValue', function() {
-        it('should do noting if possible', function() {
+    describe('#_encodeHeaderValue', function () {
+        it('should do noting if possible', function () {
             let mb = new MimeNode();
             expect(mb._encodeHeaderValue('x-my', 'test value')).to.equal('test value');
         });
 
-        it('should encode non ascii characters', function() {
+        it('should encode non ascii characters', function () {
             let mb = new MimeNode();
             expect(mb._encodeHeaderValue('x-my', 'test jõgeva value')).to.equal('=?UTF-8?Q?test_j=C3=B5geva_value?=');
         });
 
-        it('should format references', function() {
+        it('should format references', function () {
             let mb = new MimeNode();
             expect(mb._encodeHeaderValue('references', 'abc def')).to.equal('<abc> <def>');
             expect(mb._encodeHeaderValue('references', ['abc', 'def'])).to.equal('<abc> <def>');
         });
 
-        it('should format message-id', function() {
+        it('should format message-id', function () {
             let mb = new MimeNode();
             expect(mb._encodeHeaderValue('message-id', 'abc')).to.equal('<abc>');
         });
 
-        it('should format addresses', function() {
+        it('should format addresses', function () {
             let mb = new MimeNode();
             expect(
                 mb._encodeHeaderValue('from', {
@@ -1160,8 +1160,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_convertAddresses', function() {
-        it('should convert address object to a string', function() {
+    describe('#_convertAddresses', function () {
+        it('should convert address object to a string', function () {
             let mb = new MimeNode();
             expect(
                 mb._convertAddresses([
@@ -1186,7 +1186,7 @@ describe('MimeNode Tests', function() {
             ).to.equal('=?UTF-8?Q?J=C3=B5geva_Ants?= <ants@xn--jgeva-dua.ee>, Composers:"Bach, Sebastian" <sebu@example.com>, Mozzie <mozart@example.com>;');
         });
 
-        it('should keep ascii name as is', function() {
+        it('should keep ascii name as is', function () {
             let mb = new MimeNode();
             expect(
                 mb._convertAddresses([
@@ -1198,7 +1198,7 @@ describe('MimeNode Tests', function() {
             ).to.equal("O'Vigala Sass <a@b.c>"); // eslint-disable-line
         });
 
-        it('should include name in quotes for special symbols', function() {
+        it('should include name in quotes for special symbols', function () {
             let mb = new MimeNode();
             expect(
                 mb._convertAddresses([
@@ -1210,7 +1210,7 @@ describe('MimeNode Tests', function() {
             ).to.equal('"Sass, Vigala" <a@b.c>');
         });
 
-        it('should escape quotes', function() {
+        it('should escape quotes', function () {
             let mb = new MimeNode();
             expect(
                 mb._convertAddresses([
@@ -1222,7 +1222,7 @@ describe('MimeNode Tests', function() {
             ).to.equal('"\\"Vigala Sass\\"" <a@b.c>');
         });
 
-        it('should mime encode unicode names', function() {
+        it('should mime encode unicode names', function () {
             let mb = new MimeNode();
             expect(
                 mb._convertAddresses([
@@ -1235,20 +1235,20 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#_generateMessageId', function() {
-        it('should generate uuid-looking message-id', function() {
+    describe('#_generateMessageId', function () {
+        it('should generate uuid-looking message-id', function () {
             let mb = new MimeNode();
             let mid = mb._generateMessageId();
             expect(/^<[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@.*>/.test(mid)).to.be.true;
         });
     });
 
-    it('should use default header keys', function(done) {
+    it('should use default header keys', function (done) {
         let mb = new MimeNode('text/plain');
         mb.addHeader('test', 'test');
         mb.addHeader('BEST', 'best');
 
-        mb.build(function(err, msg) {
+        mb.build(function (err, msg) {
             expect(err).to.not.exist;
             msg = msg.toString();
             expect(/^Test: test$/m.test(msg));
@@ -1257,14 +1257,14 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    it('should use custom header keys', function(done) {
+    it('should use custom header keys', function (done) {
         let mb = new MimeNode('text/plain', {
             normalizeHeaderKey: key => key.toUpperCase()
         });
         mb.addHeader('test', 'test');
         mb.addHeader('BEST', 'best');
 
-        mb.build(function(err, msg) {
+        mb.build(function (err, msg) {
             expect(err).to.not.exist;
             msg = msg.toString();
             expect(/^TEST: test$/m.test(msg));
@@ -1273,18 +1273,18 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('Attachment streaming', function() {
+    describe('Attachment streaming', function () {
         let port = 10337;
         let server;
 
-        beforeEach(function(done) {
-            server = http.createServer(function(req, res) {
+        beforeEach(function (done) {
+            server = http.createServer(function (req, res) {
                 res.writeHead(200, {
                     'Content-Type': 'text/plain'
                 });
                 let data = Buffer.from(new Array(1024 + 1).join('ä'), 'utf-8');
                 let i = 0;
-                let sendByte = function() {
+                let sendByte = function () {
                     if (i >= data.length) {
                         return res.end();
                     }
@@ -1298,16 +1298,16 @@ describe('MimeNode Tests', function() {
             server.listen(port, done);
         });
 
-        afterEach(function(done) {
+        afterEach(function (done) {
             server.close(done);
         });
 
-        it('should pipe URL as an attachment', function(done) {
+        it('should pipe URL as an attachment', function (done) {
             let mb = new MimeNode('text/plain').setContent({
                 href: 'http://localhost:' + port
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^=C3=A4/m.test(msg)).to.be.true;
@@ -1315,37 +1315,37 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should reject URL attachment', function(done) {
+        it('should reject URL attachment', function (done) {
             let mb = new MimeNode('text/plain', {
                 disableUrlAccess: true
             }).setContent({
                 href: 'http://localhost:' + port
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.exist;
                 expect(msg).to.not.exist;
                 done();
             });
         });
 
-        it('should return an error on invalid url', function(done) {
+        it('should return an error on invalid url', function (done) {
             let mb = new MimeNode('text/plain').setContent({
                 href: 'http://__should_not_exist:58888'
             });
 
-            mb.build(function(err) {
+            mb.build(function (err) {
                 expect(err).to.exist;
                 done();
             });
         });
 
-        it('should pipe file as an attachment', function(done) {
+        it('should pipe file as an attachment', function (done) {
             let mb = new MimeNode('application/octet-stream').setContent({
                 path: __dirname + '/fixtures/attachment.bin'
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(/^w7VrdmEK$/m.test(msg)).to.be.true;
@@ -1353,64 +1353,64 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should reject file as an attachment', function(done) {
+        it('should reject file as an attachment', function (done) {
             let mb = new MimeNode('application/octet-stream', {
                 disableFileAccess: true
             }).setContent({
                 path: __dirname + '/fixtures/attachment.bin'
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.exist;
                 expect(msg).to.not.exist;
                 done();
             });
         });
 
-        it('should return an error on invalid file path', function(done) {
+        it('should return an error on invalid file path', function (done) {
             let mb = new MimeNode('text/plain').setContent({
                 href: '/ASfsdfsdf/Sdgsgdfg/SDFgdfgdfg'
             });
 
-            mb.build(function(err) {
+            mb.build(function (err) {
                 expect(err).to.exist;
                 done();
             });
         });
 
-        it('should return a error for an errored stream', function(done) {
+        it('should return a error for an errored stream', function (done) {
             let s = new PassThrough();
             let mb = new MimeNode('text/plain').setContent(s);
 
             s.write('abc');
             s.emit('error', new Error('Stream error'));
 
-            setTimeout(function() {
-                mb.build(function(err) {
+            setTimeout(function () {
+                mb.build(function (err) {
                     expect(err).to.exist;
                     done();
                 });
             }, 100);
         });
 
-        it('should return a stream error', function(done) {
+        it('should return a stream error', function (done) {
             let s = new PassThrough();
             let mb = new MimeNode('text/plain').setContent(s);
 
-            mb.build(function(err) {
+            mb.build(function (err) {
                 expect(err).to.exist;
                 done();
             });
 
             s.write('abc');
-            setTimeout(function() {
+            setTimeout(function () {
                 s.emit('error', new Error('Stream error'));
             }, 100);
         });
     });
 
-    describe('#transform', function() {
-        it('should pipe through provided stream', function(done) {
+    describe('#transform', function () {
+        it('should pipe through provided stream', function (done) {
             let mb = new MimeNode('text/plain')
                 .setHeader({
                     date: '12345',
@@ -1429,7 +1429,7 @@ describe('MimeNode Tests', function() {
 
             // Transform stream that replaces all spaces with tabs
             let transform = new Transform();
-            transform._transform = function(chunk, encoding, done) {
+            transform._transform = function (chunk, encoding, done) {
                 if (encoding !== 'buffer') {
                     chunk = Buffer.from(chunk, encoding);
                 }
@@ -1444,7 +1444,7 @@ describe('MimeNode Tests', function() {
 
             mb.transform(transform);
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -1453,8 +1453,8 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('#processFunc', function() {
-        it('should pipe through provided process function', function(done) {
+    describe('#processFunc', function () {
+        it('should pipe through provided process function', function (done) {
             let mb = new MimeNode('text/plain')
                 .setHeader({
                     date: '12345',
@@ -1473,7 +1473,7 @@ describe('MimeNode Tests', function() {
 
             // Transform stream that replaces all spaces with tabs
             let transform = new Transform();
-            transform._transform = function(chunk, encoding, done) {
+            transform._transform = function (chunk, encoding, done) {
                 if (encoding !== 'buffer') {
                     chunk = Buffer.from(chunk, encoding);
                 }
@@ -1491,7 +1491,7 @@ describe('MimeNode Tests', function() {
                 return transform;
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -1500,12 +1500,12 @@ describe('MimeNode Tests', function() {
         });
     });
 
-    describe('Raw content', function() {
-        it('should return pregenerated content', function(done) {
+    describe('Raw content', function () {
+        it('should return pregenerated content', function (done) {
             let expected = new Array(100).join('Test\n');
             let mb = new MimeNode('text/plain').setRaw(expected);
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -1513,7 +1513,7 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should return pregenerated content for a child node', function(done) {
+        it('should return pregenerated content for a child node', function (done) {
             let expected = new Array(100).join('Test\n');
             let mb = new MimeNode('multipart/mixed', {
                 baseBoundary: 'test'
@@ -1524,7 +1524,7 @@ describe('MimeNode Tests', function() {
             let child = mb.createChild();
             child.setRaw(expected);
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(
@@ -1542,16 +1542,16 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should return pregenerated content from a stream', function(done) {
+        it('should return pregenerated content from a stream', function (done) {
             let expected = new Array(100).join('Test\n');
             let raw = new PassThrough();
             let mb = new MimeNode('text/plain').setRaw(raw);
 
-            setImmediate(function() {
+            setImmediate(function () {
                 raw.end(expected);
             });
 
-            mb.build(function(err, msg) {
+            mb.build(function (err, msg) {
                 expect(err).to.not.exist;
                 msg = msg.toString();
                 expect(msg).to.equal(expected);
@@ -1559,28 +1559,28 @@ describe('MimeNode Tests', function() {
             });
         });
 
-        it('should catch error from a raw stream 1', function(done) {
+        it('should catch error from a raw stream 1', function (done) {
             let raw = new PassThrough();
             let mb = new MimeNode('text/plain').setRaw(raw);
 
             raw.emit('error', new Error('Stream error'));
 
-            mb.build(function(err) {
+            mb.build(function (err) {
                 expect(err).to.exist;
                 done();
             });
         });
 
-        it('should catch error from a raw stream 2', function(done) {
+        it('should catch error from a raw stream 2', function (done) {
             let raw = new PassThrough();
             let mb = new MimeNode('text/plain').setRaw(raw);
 
-            mb.build(function(err) {
+            mb.build(function (err) {
                 expect(err).to.exist;
                 done();
             });
 
-            setImmediate(function() {
+            setImmediate(function () {
                 raw.emit('error', new Error('Stream error'));
             });
         });
