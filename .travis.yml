@@ -1,10 +1,9 @@
 language: node_js
 sudo: false
 node_js:
-    - 8
     - 10
     - 12
-    - node
+    - 14
 notifications:
     email:
         - andris@kreata.ee
