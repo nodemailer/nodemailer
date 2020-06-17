@@ -258,6 +258,36 @@ describe('MailComposer unit tests', function () {
             expect(compiler.mail.attachments[0].contentType).to.equal('image/png');
         });
 
+        it('should not treat invalid content-type as multipart', function () {
+            let data = {
+                from: {
+                    name: 'sender name',
+                    address: 'sender@example.com'
+                },
+                to: [
+                    {
+                        address: 'andris@ethereal.email'
+                    }
+                ],
+                subject: 'Hello world!',
+                text: 'Test message',
+                attachments: [
+                    {
+                        contentType: 'other',
+                        content: Buffer.from('tere').toString('base64'),
+                        encoding: 'base64'
+                    }
+                ]
+            };
+
+            let compiler = new MailComposer(data);
+            let mail = compiler.compile();
+            let attachmentHeaders = mail.childNodes[1].buildHeaders();
+
+            // attachment header must not contain mutipart header
+            expect(attachmentHeaders.indexOf('boundary=')).to.lt(0);
+        });
+
         it('should create the same output', function (done) {
             let data = {
                 text: 'abc',

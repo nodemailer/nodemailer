@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.10 2020-06-17
+
+-   Fixed RFC822 output for MailComposer when using invalid content-type value. Mostly relevant if message attachments have stragne content-type values set.
+
 ## 6.4.7 2020-05-28
 
 -   Always set charset=utf-8 for Content-Type headers
