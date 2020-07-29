@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.11 2020-07-29
+
+-   Fixed escape sequence handling in address parsing
+
 ## 6.4.10 2020-06-17
 
 -   Fixed RFC822 output for MailComposer when using invalid content-type value. Mostly relevant if message attachments have stragne content-type values set.

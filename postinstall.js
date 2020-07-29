@@ -17,14 +17,24 @@ Thank you for using Nodemailer for your email sending needs! While Nodemailer it
 > Ethereal Email ( https://ethereal.email/ ) is an email testing service that accepts all your test emails
 `;
 
+const footer = `Don't like this message?
+There's a Github Sponsors goal to remove it
+https://github.com/sponsors/andris9
+`;
+
 const secs = 4;
 
 const formatCentered = (row, columns) => {
-    if (columns <= row.length) {
-        return row;
-    }
+    return row
+        .split(/\r?\n/)
+        .map(row => {
+            if (columns <= row.length) {
+                return row;
+            }
 
-    return ' '.repeat(Math.round(columns / 2 - row.length / 2)) + row;
+            return ' '.repeat(Math.round(columns / 2 - row.length / 2)) + row;
+        })
+        .join('\n');
 };
 
 const formatRow = (row, columns) => {
@@ -59,10 +69,14 @@ const wrapText = text => {
     let columns = Number(process.stdout.columns) || 80;
     columns = Math.min(columns, 80) - 1;
 
-    return (formatCentered(title, columns) + '\n' + text)
-        .split('\n')
-        .flatMap(row => formatRow(row, columns))
-        .join('\n');
+    return (
+        (formatCentered(title, columns) + '\n' + text)
+            .split('\n')
+            .flatMap(row => formatRow(row, columns))
+            .join('\n') +
+        '\n' +
+        formatCentered(footer, columns)
+    );
 };
 
 const banner = wrapText(text)
