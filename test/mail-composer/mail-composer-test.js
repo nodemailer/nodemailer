@@ -640,6 +640,49 @@ describe('MailComposer unit tests', function () {
             });
         });
 
+        it('should encode filename', function (done) {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        content: 'test',
+                        filename: '"test" it is.txt'
+                    }
+                ]
+            };
+
+            let expected =
+                '' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                'abc\r\n-' +
+                '---_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; name="=?UTF-8?Q?=22test=22_it_is=2Etxt?="\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: attachment;\r\n' +
+                " filename*0*=utf-8''%22test%22%20it%20is.txt\r\n" +
+                '\r\n' +
+                'dGVzdA==\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build(function (err, message) {
+                expect(err).to.not.exist;
+                expect(message.toString()).to.equal(expected);
+                done();
+            });
+        });
+
         it('should keep plaintext for attachment', function (done) {
             let data = {
                 text: 'abc',

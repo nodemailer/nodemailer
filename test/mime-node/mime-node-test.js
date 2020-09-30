@@ -614,7 +614,7 @@ describe('MimeNode Tests', function () {
                 expect(
                     msg.indexOf(
                         'Content-Disposition: attachment;\r\n' +
-                        " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" + // eslint-disable-line
+                            " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" + // eslint-disable-line
                             ' filename*1*=------%C6%94------%C6%94------%C6%94------.pdf'
                     )
                 ).to.be.gte(0);

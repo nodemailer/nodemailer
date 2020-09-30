@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.4.12 2020-09-30
+
+-   Better handling of attadhment filenames that include quote symbols
+-   Includes all information from the oath2 error response in the error message (Normal Gaussian) [1787f227]
+
 ## 6.4.11 2020-07-29
 
 -   Fixed escape sequence handling in address parsing
