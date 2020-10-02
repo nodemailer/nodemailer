@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.13 2020-10-02
+
+-   Fix normalizeHeaderKey method for single node messages
+
 ## 6.4.12 2020-09-30
 
 -   Better handling of attadhment filenames that include quote symbols
