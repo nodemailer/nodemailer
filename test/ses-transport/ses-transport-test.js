@@ -30,6 +30,7 @@ describe('SES Transport Tests', function() {
                 config: {
                     region: 'eu-west-1'
                 },
+                // Prevent tests from actually sending mail by mocking sendRawEmail
                 sendRawEmail: (message, cb) => {
                     setImmediate(() => {
                         cb(null, {
