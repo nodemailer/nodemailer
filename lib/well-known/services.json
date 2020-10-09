@@ -22,6 +22,12 @@
         "host": "smtp.dynect.net",
         "port": 25
     },
+    
+    "Ethereal": {
+        "aliases": ["ethereal.email"],
+        "host": "smtp.ethereal.email"   
+        "port": 587
+    }
 
     "FastMail": {
         "domains": ["fastmail.fm"],
