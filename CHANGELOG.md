@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.14 2020-10-14
+
+-   Disabled postinstall script
+
 ## 6.4.13 2020-10-02
 
 -   Fix normalizeHeaderKey method for single node messages
