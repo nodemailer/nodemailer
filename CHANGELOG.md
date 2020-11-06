@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.15 2020-11-06
+
+-   Minor changes in header key casing
+
 ## 6.4.14 2020-10-14
 
 -   Disabled postinstall script
