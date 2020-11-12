@@ -10,8 +10,8 @@ const chai = require('chai');
 const expect = chai.expect;
 chai.config.includeStack = true;
 
-describe('JSON Transport Tests', function() {
-    it('should return an JSON string', function(done) {
+describe('JSON Transport Tests', function () {
+    it('should return an JSON string', function (done) {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
@@ -88,7 +88,7 @@ describe('JSON Transport Tests', function() {
         });
     });
 
-    it('should return an JSON string for calendar event', function(done) {
+    it('should return an JSON string for calendar event', function (done) {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });

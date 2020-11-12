@@ -24,20 +24,20 @@ let PROXY_PORT_NUMBER = 9999;
 let LMTP_PORT_NUMBER = 8396;
 let XOAUTH_PORT = 8497;
 
-describe('SMTP-Connection Tests', function() {
-    describe('Version test', function() {
-        it('Should expose version number', function() {
+describe('SMTP-Connection Tests', function () {
+    describe('Version test', function () {
+        it('Should expose version number', function () {
             let client = new SMTPConnection();
             expect(client.version).to.equal(packageData.version);
         });
     });
 
-    describe('Connection tests', function() {
+    describe('Connection tests', function () {
         let server, insecureServer, invalidServer, secureServer, httpProxy;
 
-        beforeEach(function(done) {
+        beforeEach(function (done) {
             server = new SMTPServer({
-                onAuth: function(auth, session, callback) {
+                onAuth: function (auth, session, callback) {
                     if (auth.username !== 'testuser' || auth.password !== 'testpass') {
                         return callback(new Error('Invalid username or password'));
                     }
@@ -45,17 +45,17 @@ describe('SMTP-Connection Tests', function() {
                         user: 123
                     });
                 },
-                onData: function(stream, session, callback) {
-                    stream.on('data', function() {});
+                onData: function (stream, session, callback) {
+                    stream.on('data', function () {});
                     stream.on('end', callback);
                 }
             });
 
             insecureServer = new SMTPServer({
                 disabledCommands: ['STARTTLS', 'AUTH'],
-                onData: function(stream, session, callback) {
+                onData: function (stream, session, callback) {
                     let err = false;
-                    stream.on('data', function(chunk) {
+                    stream.on('data', function (chunk) {
                         if (err || session.use8BitMime) {
                             return;
                         }
@@ -65,18 +65,18 @@ describe('SMTP-Connection Tests', function() {
                             }
                         }
                     });
-                    stream.on('end', function() {
+                    stream.on('end', function () {
                         callback(err, false);
                     });
                 },
                 logger: false
             });
 
-            invalidServer = net.createServer(function() {});
+            invalidServer = net.createServer(function () {});
 
             secureServer = new SMTPServer({
                 secure: true,
-                onAuth: function(auth, session, callback) {
+                onAuth: function (auth, session, callback) {
                     if (auth.username !== 'testuser' || auth.password !== 'testpass') {
                         return callback(new Error('Invalid username or password'));
                     }
@@ -84,8 +84,8 @@ describe('SMTP-Connection Tests', function() {
                         user: 123
                     });
                 },
-                onData: function(stream, session, callback) {
-                    stream.on('data', function() {});
+                onData: function (stream, session, callback) {
+                    stream.on('data', function () {});
                     stream.on('end', callback);
                 },
                 logger: false
@@ -93,10 +93,10 @@ describe('SMTP-Connection Tests', function() {
 
             httpProxy = new HttpConnectProxy();
 
-            server.listen(PORT_NUMBER, function() {
-                invalidServer.listen(PORT_NUMBER + 1, function() {
-                    secureServer.listen(PORT_NUMBER + 2, function() {
-                        insecureServer.listen(PORT_NUMBER + 3, function() {
+            server.listen(PORT_NUMBER, function () {
+                invalidServer.listen(PORT_NUMBER + 1, function () {
+                    secureServer.listen(PORT_NUMBER + 2, function () {
+                        insecureServer.listen(PORT_NUMBER + 3, function () {
                             httpProxy.listen(PROXY_PORT_NUMBER, done);
                         });
                     });
@@ -104,11 +104,11 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
-        afterEach(function(done) {
-            server.close(function() {
-                invalidServer.close(function() {
-                    secureServer.close(function() {
-                        insecureServer.close(function() {
+        afterEach(function (done) {
+            server.close(function () {
+                invalidServer.close(function () {
+                    secureServer.close(function () {
+                        insecureServer.close(function () {
                             httpProxy.close(done);
                         });
                     });
@@ -116,44 +116,44 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
-        it('should connect to unsecure server', function(done) {
+        it('should connect to unsecure server', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 ignoreTLS: true,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.false;
                 client.close();
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should connect to a server and upgrade with STARTTLS', function(done) {
+        it('should connect to a server and upgrade with STARTTLS', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.true;
                 client.close();
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should connect to a server and upgrade with forced STARTTLS', function(done) {
+        it('should connect to a server and upgrade with forced STARTTLS', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER,
                 requireTLS: true,
@@ -161,19 +161,19 @@ describe('SMTP-Connection Tests', function() {
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.true;
                 client.close();
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should connect to a server and try to upgrade STARTTLS', function(done) {
+        it('should connect to a server and try to upgrade STARTTLS', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 logger: false,
@@ -181,127 +181,127 @@ describe('SMTP-Connection Tests', function() {
                 opportunisticTLS: true
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.false;
                 client.close();
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should try upgrade with STARTTLS where not advertised', function(done) {
+        it('should try upgrade with STARTTLS where not advertised', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 requireTLS: true,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 // should not run
                 expect(false).to.be.true;
                 client.close();
             });
 
-            client.once('error', function(err) {
+            client.once('error', function (err) {
                 expect(err).to.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should close connection after STARTTLS', function(done) {
+        it('should close connection after STARTTLS', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.true;
-                server.connections.forEach(function(conn) {
+                server.connections.forEach(function (conn) {
                     conn.close();
                 });
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err.message).to.equal('Connection closed unexpectedly');
             });
 
             client.on('end', done);
         });
 
-        it('should connect to a secure server', function(done) {
+        it('should connect to a secure server', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 2,
                 secure: true,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.true;
                 client.close();
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should emit error for invalid port', function(done) {
+        it('should emit error for invalid port', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 10,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 // should not run
                 expect(false).to.be.true;
                 client.close();
             });
 
-            client.once('error', function(err) {
+            client.once('error', function (err) {
                 expect(err).to.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should emit error for too large port', function(done) {
+        it('should emit error for too large port', function (done) {
             let client = new SMTPConnection({
                 port: 999999999,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 // should not run
                 expect(false).to.be.true;
                 client.close();
             });
 
-            client.once('error', function(err) {
+            client.once('error', function (err) {
                 expect(err).to.exist;
             });
 
             client.on('end', done);
         });
 
-        it('should emit inactivity timeout error', function(done) {
+        it('should emit inactivity timeout error', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER,
                 socketTimeout: 100,
                 logger: false
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 // do nothing
             });
 
-            client.once('error', function(err) {
+            client.once('error', function (err) {
                 expect(err).to.exist;
                 expect(err.code).to.equal('ETIMEDOUT');
             });
@@ -309,15 +309,15 @@ describe('SMTP-Connection Tests', function() {
             client.on('end', done);
         });
 
-        it('should connect through proxy', function(done) {
-            let runTest = function(socket) {
+        it('should connect through proxy', function (done) {
+            let runTest = function (socket) {
                 let client = new SMTPConnection({
                     logger: false,
                     port: PORT_NUMBER,
                     connection: socket
                 });
 
-                client.connect(function() {
+                client.connect(function () {
                     expect(client.secure).to.be.true;
                     client.login(
                         {
@@ -327,7 +327,7 @@ describe('SMTP-Connection Tests', function() {
                                 pass: 'testpass'
                             }
                         },
-                        function(err) {
+                        function (err) {
                             expect(err).to.not.exist;
                             expect(client.authenticated).to.be.true;
                             client.close();
@@ -335,21 +335,21 @@ describe('SMTP-Connection Tests', function() {
                     );
                 });
 
-                client.on('error', function(err) {
+                client.on('error', function (err) {
                     expect(err).to.not.exist;
                 });
 
                 client.on('end', done);
             };
 
-            proxyConnect(PROXY_PORT_NUMBER, '127.0.0.1', PORT_NUMBER, '127.0.0.1', function(err, socket) {
+            proxyConnect(PROXY_PORT_NUMBER, '127.0.0.1', PORT_NUMBER, '127.0.0.1', function (err, socket) {
                 expect(err).to.not.exist;
                 runTest(socket);
             });
         });
 
-        it('should connect through proxy to secure server', function(done) {
-            let runTest = function(socket) {
+        it('should connect through proxy to secure server', function (done) {
+            let runTest = function (socket) {
                 let client = new SMTPConnection({
                     logger: false,
                     port: PORT_NUMBER + 2,
@@ -357,7 +357,7 @@ describe('SMTP-Connection Tests', function() {
                     connection: socket
                 });
 
-                client.connect(function() {
+                client.connect(function () {
                     expect(client.secure).to.be.true;
                     client.login(
                         {
@@ -367,7 +367,7 @@ describe('SMTP-Connection Tests', function() {
                                 pass: 'testpass'
                             }
                         },
-                        function(err) {
+                        function (err) {
                             expect(err).to.not.exist;
                             expect(client.authenticated).to.be.true;
                             client.close();
@@ -375,50 +375,45 @@ describe('SMTP-Connection Tests', function() {
                     );
                 });
 
-                client.on('error', function(err) {
+                client.on('error', function (err) {
                     expect(err).to.not.exist;
                 });
 
                 client.on('end', done);
             };
 
-            proxyConnect(PROXY_PORT_NUMBER, '127.0.0.1', PORT_NUMBER + 2, '127.0.0.1', function(err, socket) {
+            proxyConnect(PROXY_PORT_NUMBER, '127.0.0.1', PORT_NUMBER + 2, '127.0.0.1', function (err, socket) {
                 expect(err).to.not.exist;
                 runTest(socket);
             });
         });
 
-        it('should send to unsecure server', function(done) {
+        it('should send to unsecure server', function (done) {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 ignoreTLS: true,
                 logger: false
             });
 
-            client.on('error', function(err) {
+            client.on('error', function (err) {
                 expect(err).to.not.exist;
             });
 
-            client.connect(function() {
+            client.connect(function () {
                 expect(client.secure).to.be.false;
 
                 let chunks = [],
                     fname = __dirname + '/../../LICENSE',
                     message = fs.readFileSync(fname, 'utf-8');
 
-                server.on('data', function(connection, chunk) {
+                server.on('data', function (connection, chunk) {
                     chunks.push(chunk);
                 });
 
                 server.removeAllListeners('dataReady');
-                server.on('dataReady', function(connection, callback) {
+                server.on('dataReady', function (connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(
-                        message
-                            .toString()
-                            .trim()
-                            .replace(/\n/g, '\r\n')
-                    );
+                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
                     callback(null, 'ABC1');
                 });
 
@@ -428,7 +423,7 @@ describe('SMTP-Connection Tests', function() {
                         to: 'test@valid.recipient'
                     },
                     fs.createReadStream(fname),
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         client.close();
                     }
@@ -439,7 +434,7 @@ describe('SMTP-Connection Tests', function() {
         });
     });
 
-    describe('Login tests', function() {
+    describe('Login tests', function () {
         this.timeout(10 * 1000);
 
         let server,
@@ -448,16 +443,16 @@ describe('SMTP-Connection Tests', function() {
             lmtpClient,
             testtoken = 'testtoken';
 
-        beforeEach(function(done) {
+        beforeEach(function (done) {
             server = new SMTPServer({
                 authMethods: ['PLAIN', 'XOAUTH2'],
                 disabledCommands: ['STARTTLS'],
 
                 size: 100 * 1024,
 
-                onData: function(stream, session, callback) {
+                onData: function (stream, session, callback) {
                     let err = false;
-                    stream.on('data', function(chunk) {
+                    stream.on('data', function (chunk) {
                         if (err || session.use8BitMime) {
                             return;
                         }
@@ -467,12 +462,12 @@ describe('SMTP-Connection Tests', function() {
                             }
                         }
                     });
-                    stream.on('end', function() {
+                    stream.on('end', function () {
                         callback(err, false);
                     });
                 },
 
-                onAuth: function(auth, session, callback) {
+                onAuth: function (auth, session, callback) {
                     if (auth.method !== 'XOAUTH2') {
                         if (auth.username !== 'testuser' || auth.password !== 'testpass') {
                             return callback(new Error('Invalid username or password'));
@@ -490,7 +485,7 @@ describe('SMTP-Connection Tests', function() {
                         user: 123
                     });
                 },
-                onMailFrom: function(address, session, callback) {
+                onMailFrom: function (address, session, callback) {
                     if (address.args && parseInt(address.args.SIZE, 10) > 50 * 1024) {
                         return callback(new Error('452 Insufficient channel storage: ' + address.address));
                     }
@@ -513,7 +508,7 @@ describe('SMTP-Connection Tests', function() {
 
                     return callback(); // Accept the address
                 },
-                onRcptTo: function(address, session, callback) {
+                onRcptTo: function (address, session, callback) {
                     if (!/@valid.recipient/.test(address.address)) {
                         return callback(new Error('Only user@valid.recipient is allowed to receive mail'));
                     }
@@ -529,10 +524,10 @@ describe('SMTP-Connection Tests', function() {
                 lmtp: true,
                 disabledCommands: ['STARTTLS', 'AUTH'],
 
-                onData: function(stream, session, callback) {
-                    stream.on('data', function() {});
-                    stream.on('end', function() {
-                        let response = session.envelope.rcptTo.map(function(rcpt, i) {
+                onData: function (stream, session, callback) {
+                    stream.on('data', function () {});
+                    stream.on('end', function () {
+                        let response = session.envelope.rcptTo.map(function (rcpt, i) {
                             if (i % 2) {
                                 return '<' + rcpt.address + '> Accepted';
                             } else {
@@ -542,13 +537,13 @@ describe('SMTP-Connection Tests', function() {
                         callback(null, response);
                     });
                 },
-                onMailFrom: function(address, session, callback) {
+                onMailFrom: function (address, session, callback) {
                     if (!/@valid.sender/.test(address.address)) {
                         return callback(new Error('Only user@valid.sender is allowed to send mail'));
                     }
                     return callback(); // Accept the address
                 },
-                onRcptTo: function(address, session, callback) {
+                onRcptTo: function (address, session, callback) {
                     if (!/@valid.recipient/.test(address.address)) {
                         return callback(new Error('Only user@valid.recipient is allowed to receive mail'));
                     }
@@ -570,24 +565,24 @@ describe('SMTP-Connection Tests', function() {
                 debug: false
             });
 
-            server.listen(PORT_NUMBER, function() {
-                lmtpServer.listen(LMTP_PORT_NUMBER, function() {
-                    client.connect(function() {
+            server.listen(PORT_NUMBER, function () {
+                lmtpServer.listen(LMTP_PORT_NUMBER, function () {
+                    client.connect(function () {
                         lmtpClient.connect(done);
                     });
                 });
             });
         });
 
-        afterEach(function(done) {
+        afterEach(function (done) {
             client.close();
             lmtpClient.close();
-            server.close(function() {
+            server.close(function () {
                 lmtpServer.close(done);
             });
         });
 
-        it('should login', function(done) {
+        it('should login', function (done) {
             expect(client.authenticated).to.be.false;
             client.login(
                 {
@@ -597,7 +592,7 @@ describe('SMTP-Connection Tests', function() {
                         pass: 'testpass'
                     }
                 },
-                function(err) {
+                function (err) {
                     expect(err).to.not.exist;
                     expect(client.authenticated).to.be.true;
                     done();
@@ -605,7 +600,7 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
-        it('should return error for invalid login', function(done) {
+        it('should return error for invalid login', function (done) {
             expect(client.authenticated).to.be.false;
             client.login(
                 {
@@ -615,7 +610,7 @@ describe('SMTP-Connection Tests', function() {
                         pass: 'invalid'
                     }
                 },
-                function(err) {
+                function (err) {
                     expect(err).to.exist;
                     expect(client.authenticated).to.be.false;
                     expect(err.code).to.equal('EAUTH');
@@ -625,13 +620,13 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
-        it('should return error for missing credentials', function(done) {
+        it('should return error for missing credentials', function (done) {
             expect(client.authenticated).to.be.false;
             client.login(
                 {
                     user: 'testuser'
                 },
-                function(err) {
+                function (err) {
                     expect(err).to.exist;
                     expect(client.authenticated).to.be.false;
                     expect(err.message).to.match(/^Missing credentials/);
@@ -642,7 +637,7 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
-        it('should return error for incomplete credentials', function(done) {
+        it('should return error for incomplete credentials', function (done) {
             expect(client.authenticated).to.be.false;
             client.login(
                 {
@@ -651,7 +646,7 @@ describe('SMTP-Connection Tests', function() {
                         user: 'testuser'
                     }
                 },
-                function(err) {
+                function (err) {
                     expect(err).to.exist;
                     expect(client.authenticated).to.be.false;
                     expect(err.message).to.match(/^Missing credentials/);
@@ -662,14 +657,14 @@ describe('SMTP-Connection Tests', function() {
             );
         });
 
-        describe('xoauth2 login', function() {
+        describe('xoauth2 login', function () {
             this.timeout(10 * 1000);
             let x2server;
 
-            beforeEach(function(done) {
+            beforeEach(function (done) {
                 x2server = xoauth2Server({
                     port: XOAUTH_PORT,
-                    onUpdate: function(username, accessToken) {
+                    onUpdate: function (username, accessToken) {
                         testtoken = accessToken;
                     }.bind(this)
                 });
@@ -679,11 +674,11 @@ describe('SMTP-Connection Tests', function() {
                 x2server.start(done);
             });
 
-            afterEach(function(done) {
+            afterEach(function (done) {
                 x2server.stop(done);
             });
 
-            it('should login with xoauth2 string', function(done) {
+            it('should login with xoauth2 string', function (done) {
                 expect(client.authenticated).to.be.false;
                 client.login(
                     {
@@ -694,7 +689,7 @@ describe('SMTP-Connection Tests', function() {
                             accessToken: testtoken
                         })
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         expect(client.authenticated).to.be.true;
                         done();
@@ -702,7 +697,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should return error for invalid xoauth2 string token', function(done) {
+            it('should return error for invalid xoauth2 string token', function (done) {
                 expect(client.authenticated).to.be.false;
                 client.login(
                     {
@@ -713,7 +708,7 @@ describe('SMTP-Connection Tests', function() {
                             accessToken: 'invalid'
                         })
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.exist;
                         expect(client.authenticated).to.be.false;
                         expect(err.code).to.equal('EAUTH');
@@ -722,7 +717,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should login with xoauth2 object', function(done) {
+            it('should login with xoauth2 object', function (done) {
                 expect(client.authenticated).to.be.false;
                 client.login(
                     {
@@ -737,7 +732,7 @@ describe('SMTP-Connection Tests', function() {
                             accessUrl: 'http://localhost:' + XOAUTH_PORT
                         })
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         expect(client.authenticated).to.be.true;
                         done();
@@ -745,7 +740,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should fail with xoauth2 object', function(done) {
+            it('should fail with xoauth2 object', function (done) {
                 expect(client.authenticated).to.be.false;
                 client.login(
                     {
@@ -760,7 +755,7 @@ describe('SMTP-Connection Tests', function() {
                             accessUrl: 'http://localhost:' + XOAUTH_PORT
                         })
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.exist;
                         expect(client.authenticated).to.be.false;
                         done();
@@ -768,7 +763,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should fail with invalid xoauth2 response', function(done) {
+            it('should fail with invalid xoauth2 response', function (done) {
                 expect(client.authenticated).to.be.false;
 
                 let oauth2 = new XOAuth2({
@@ -788,7 +783,7 @@ describe('SMTP-Connection Tests', function() {
                         user: 'testuser',
                         oauth2
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.exist;
                         expect(client.authenticated).to.be.false;
 
@@ -799,9 +794,9 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
-        describe('custom login', function() {
+        describe('custom login', function () {
             let customClient;
-            beforeEach(function(done) {
+            beforeEach(function (done) {
                 customClient = new SMTPConnection({
                     port: PORT_NUMBER,
                     logger: false,
@@ -824,12 +819,12 @@ describe('SMTP-Connection Tests', function() {
                 customClient.connect(done);
             });
 
-            afterEach(function(done) {
+            afterEach(function (done) {
                 customClient.close();
                 done();
             });
 
-            it('should login', function(done) {
+            it('should login', function (done) {
                 expect(customClient.authenticated).to.be.false;
                 customClient.login(
                     {
@@ -840,7 +835,7 @@ describe('SMTP-Connection Tests', function() {
                             pass: 'testpass'
                         }
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         expect(customClient.authenticated).to.be.true;
                         done();
@@ -849,9 +844,9 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
-        describe('Send without PIPELINING', function() {
-            beforeEach(function(done) {
-                client.on('end', function() {
+        describe('Send without PIPELINING', function () {
+            beforeEach(function (done) {
+                client.on('end', function () {
                     client = new SMTPConnection({
                         port: PORT_NUMBER,
                         logger: false,
@@ -859,7 +854,7 @@ describe('SMTP-Connection Tests', function() {
                     });
                     // disable PIPELINING
                     server.options.hidePIPELINING = true;
-                    client.connect(function() {
+                    client.connect(function () {
                         client.login(
                             {
                                 user: 'testuser',
@@ -868,7 +863,7 @@ describe('SMTP-Connection Tests', function() {
                                     pass: 'testpass'
                                 }
                             },
-                            function(err) {
+                            function (err) {
                                 expect(err).to.not.exist;
                                 // enable PIPELINING
                                 server.options.hidePIPELINING = false;
@@ -880,14 +875,14 @@ describe('SMTP-Connection Tests', function() {
                 client.close();
             });
 
-            it('should send only to valid recipients without PIPELINING', function(done) {
+            it('should send only to valid recipients without PIPELINING', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test1@valid.recipient', 'test2@invalid.recipient', 'test3@valid.recipient']
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
@@ -905,8 +900,8 @@ describe('SMTP-Connection Tests', function() {
             });
         });
 
-        describe('Send messages', function() {
-            beforeEach(function(done) {
+        describe('Send messages', function () {
+            beforeEach(function (done) {
                 client.login(
                     {
                         user: 'testuser',
@@ -915,21 +910,21 @@ describe('SMTP-Connection Tests', function() {
                             pass: 'testpass'
                         }
                     },
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         done();
                     }
                 );
             });
 
-            it('should send message', function(done) {
+            it('should send message', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: 'test@valid.recipient'
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
@@ -944,14 +939,14 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should send multiple messages', function(done) {
+            it('should send multiple messages', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: 'test@valid.recipient'
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
@@ -961,7 +956,7 @@ describe('SMTP-Connection Tests', function() {
                             messageSize: info.messageSize,
                             response: '250 OK: message queued'
                         });
-                        client.reset(function(err) {
+                        client.reset(function (err) {
                             expect(err).to.not.exist;
 
                             client.send(
@@ -970,7 +965,7 @@ describe('SMTP-Connection Tests', function() {
                                     to: 'test2@valid.recipient'
                                 },
                                 'test2',
-                                function(err, info) {
+                                function (err, info) {
                                     expect(err).to.not.exist;
                                     expect(info).to.deep.equal({
                                         accepted: ['test2@valid.recipient'],
@@ -988,14 +983,14 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should send only to valid recipients', function(done) {
+            it('should send only to valid recipients', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test1@valid.recipient', 'test2@invalid.recipient', 'test3@valid.recipient']
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
@@ -1012,14 +1007,14 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should reject all recipients', function(done) {
+            it('should reject all recipients', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test1@invalid.recipient', 'test2@invalid.recipient', 'test3@invalid.recipient']
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.exist;
                         expect(info).to.not.exist;
                         expect(err.rejected).to.deep.equal(['test1@invalid.recipient', 'test2@invalid.recipient', 'test3@invalid.recipient']);
@@ -1029,7 +1024,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should reject too large SIZE arguments', function(done) {
+            it('should reject too large SIZE arguments', function (done) {
                 client.send(
                     {
                         from: 'test2@valid.sender',
@@ -1037,7 +1032,7 @@ describe('SMTP-Connection Tests', function() {
                         size: 1024 * 1024
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.exist;
                         expect(info).to.not.exist;
                         done();
@@ -1045,7 +1040,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should reject too large message', function(done) {
+            it('should reject too large message', function (done) {
                 client.send(
                     {
                         from: 'test2@valid.sender',
@@ -1053,7 +1048,7 @@ describe('SMTP-Connection Tests', function() {
                         size: 70 * 1024
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.exist;
                         expect(info).to.not.exist;
                         done();
@@ -1061,7 +1056,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should declare SIZE', function(done) {
+            it('should declare SIZE', function (done) {
                 client.send(
                     {
                         from: 'test2@valid.sender',
@@ -1069,7 +1064,7 @@ describe('SMTP-Connection Tests', function() {
                         size: 10 * 1024
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test2@valid.recipient'],
@@ -1084,7 +1079,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('lmtp should send only to valid recipients', function(done) {
+            it('lmtp should send only to valid recipients', function (done) {
                 lmtpClient.send(
                     {
                         from: 'test@valid.sender',
@@ -1098,7 +1093,7 @@ describe('SMTP-Connection Tests', function() {
                         ]
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info.accepted).to.deep.equal(['test3@valid.recipient', 'test5@valid.recipient']);
                         expect(info.rejected).to.deep.equal([
@@ -1113,14 +1108,14 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should send using SMTPUTF8', function(done) {
+            it('should send using SMTPUTF8', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test1@valid.recipient', 'test2@invalid.recipient', 'test3õ@valid.recipient']
                     },
                     'test',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
@@ -1136,7 +1131,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should send using 8BITMIME', function(done) {
+            it('should send using 8BITMIME', function (done) {
                 client.send(
                     {
                         use8BitMime: true,
@@ -1144,7 +1139,7 @@ describe('SMTP-Connection Tests', function() {
                         to: ['test1@valid.recipient', 'test2@invalid.recipient', 'test3õ@valid.recipient']
                     },
                     'õõõõ',
-                    function(err, info) {
+                    function (err, info) {
                         expect(err).to.not.exist;
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
@@ -1160,7 +1155,7 @@ describe('SMTP-Connection Tests', function() {
                 );
             });
 
-            it('should receive error for 8-bit content without 8BITMIME declaration', function(done) {
+            it('should receive error for 8-bit content without 8BITMIME declaration', function (done) {
                 client.send(
                     {
                         use8BitMime: false,
@@ -1168,65 +1163,65 @@ describe('SMTP-Connection Tests', function() {
                         to: ['test1@valid.recipient', 'test2@invalid.recipient', 'test3õ@valid.recipient']
                     },
                     'õõõõ',
-                    function(err) {
+                    function (err) {
                         expect(/8 bit content not allowed/.test(err.message)).to.be.true;
                         done();
                     }
                 );
             });
 
-            it('should return error for invalidly formatted recipients', function(done) {
+            it('should return error for invalidly formatted recipients', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test@valid.recipient', '"address\r\n with folding"@valid.recipient']
                     },
                     'test',
-                    function(err) {
+                    function (err) {
                         expect(/^Invalid recipient/.test(err.message)).to.be.true;
                         done();
                     }
                 );
             });
 
-            it('should return error for no valid recipients', function(done) {
+            it('should return error for no valid recipients', function (done) {
                 client.send(
                     {
                         from: 'test@valid.sender',
                         to: ['test1@invalid.recipient', 'test2@invalid.recipient', 'test3@invalid.recipient']
                     },
                     'test',
-                    function(err) {
+                    function (err) {
                         expect(err).to.exist;
                         done();
                     }
                 );
             });
 
-            it('should return error for invalid sender', function(done) {
+            it('should return error for invalid sender', function (done) {
                 client.send(
                     {
                         from: 'test@invalid.sender',
                         to: 'test@valid.recipient'
                     },
                     'test',
-                    function(err) {
+                    function (err) {
                         expect(err).to.exist;
                         done();
                     }
                 );
             });
 
-            it('should send message string', function(done) {
+            it('should send message string', function (done) {
                 let chunks = [],
                     message = new Array(1024).join('teretere, vana kere\n');
 
-                server.on('data', function(connection, chunk) {
+                server.on('data', function (connection, chunk) {
                     chunks.push(chunk);
                 });
 
                 server.removeAllListeners('dataReady');
-                server.on('dataReady', function(connection, callback) {
+                server.on('dataReady', function (connection, callback) {
                     let body = Buffer.concat(chunks);
                     expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
                     callback(null, 'ABC1');
@@ -1238,30 +1233,25 @@ describe('SMTP-Connection Tests', function() {
                         to: 'test@valid.recipient'
                     },
                     message,
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         done();
                     }
                 );
             });
 
-            it('should send message buffer', function(done) {
+            it('should send message buffer', function (done) {
                 let chunks = [],
                     message = Buffer.from(new Array(1024).join('teretere, vana kere\n'));
 
-                server.on('data', function(connection, chunk) {
+                server.on('data', function (connection, chunk) {
                     chunks.push(chunk);
                 });
 
                 server.removeAllListeners('dataReady');
-                server.on('dataReady', function(connection, callback) {
+                server.on('dataReady', function (connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(
-                        message
-                            .toString()
-                            .trim()
-                            .replace(/\n/g, '\r\n')
-                    );
+                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
                     callback(null, 'ABC1');
                 });
 
@@ -1271,31 +1261,26 @@ describe('SMTP-Connection Tests', function() {
                         to: 'test@valid.recipient'
                     },
                     message,
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         done();
                     }
                 );
             });
 
-            it('should send message stream', function(done) {
+            it('should send message stream', function (done) {
                 let chunks = [],
                     fname = __dirname + '/../../LICENSE',
                     message = fs.readFileSync(fname, 'utf-8');
 
-                server.on('data', function(connection, chunk) {
+                server.on('data', function (connection, chunk) {
                     chunks.push(chunk);
                 });
 
                 server.removeAllListeners('dataReady');
-                server.on('dataReady', function(connection, callback) {
+                server.on('dataReady', function (connection, callback) {
                     let body = Buffer.concat(chunks);
-                    expect(body.toString()).to.equal(
-                        message
-                            .toString()
-                            .trim()
-                            .replace(/\n/g, '\r\n')
-                    );
+                    expect(body.toString()).to.equal(message.toString().trim().replace(/\n/g, '\r\n'));
                     callback(null, 'ABC1');
                 });
 
@@ -1305,7 +1290,7 @@ describe('SMTP-Connection Tests', function() {
                         to: 'test@valid.recipient'
                     },
                     fs.createReadStream(fname),
-                    function(err) {
+                    function (err) {
                         expect(err).to.not.exist;
                         done();
                     }
@@ -1316,11 +1301,11 @@ describe('SMTP-Connection Tests', function() {
 });
 
 function proxyConnect(port, host, destinationPort, destinationHost, callback) {
-    let socket = net.connect(port, host, function() {
+    let socket = net.connect(port, host, function () {
         socket.write('CONNECT ' + destinationHost + ':' + destinationPort + ' HTTP/1.1\r\n\r\n');
 
         let headers = '';
-        let onSocketData = function(chunk) {
+        let onSocketData = function (chunk) {
             let match;
             let remainder;
 
@@ -1339,7 +1324,7 @@ function proxyConnect(port, host, destinationPort, destinationHost, callback) {
         socket.on('data', onSocketData);
     });
 
-    socket.on('error', function(err) {
+    socket.on('error', function (err) {
         expect(err).to.not.exist;
     });
 }

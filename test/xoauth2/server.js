@@ -6,7 +6,7 @@ const http = require('http');
 const crypto = require('crypto');
 const querystring = require('querystring');
 
-module.exports = function(options) {
+module.exports = function (options) {
     return new OAuthServer(options);
 };
 
@@ -19,7 +19,7 @@ function OAuthServer(options) {
     this.options.expiresIn = Number(this.options.expiresIn) || 3600;
 }
 
-OAuthServer.prototype.addUser = function(username, refreshToken) {
+OAuthServer.prototype.addUser = function (username, refreshToken) {
     let user = {
         username,
         refreshToken: refreshToken || crypto.randomBytes(10).toString('base64')
@@ -31,7 +31,7 @@ OAuthServer.prototype.addUser = function(username, refreshToken) {
     return this.generateAccessToken(user.refreshToken);
 };
 
-OAuthServer.prototype.generateAccessToken = function(refreshToken) {
+OAuthServer.prototype.generateAccessToken = function (refreshToken) {
     let username = this.tokens[refreshToken];
     let accessToken = crypto.randomBytes(10).toString('base64');
 
@@ -55,7 +55,7 @@ OAuthServer.prototype.generateAccessToken = function(refreshToken) {
     };
 };
 
-OAuthServer.prototype.validateAccessToken = function(username, accessToken) {
+OAuthServer.prototype.validateAccessToken = function (username, accessToken) {
     if (!this.users[username] || this.users[username].accessToken !== accessToken || this.users[username].expiresIn < Date.now()) {
         return false;
     } else {
@@ -63,7 +63,7 @@ OAuthServer.prototype.validateAccessToken = function(username, accessToken) {
     }
 };
 
-OAuthServer.prototype.start = function(callback) {
+OAuthServer.prototype.start = function (callback) {
     this.server = http.createServer((req, res) => {
         let data = [];
         let datalen = 0;
@@ -92,6 +92,6 @@ OAuthServer.prototype.start = function(callback) {
     this.server.listen(this.options.port, callback);
 };
 
-OAuthServer.prototype.stop = function(callback) {
+OAuthServer.prototype.stop = function (callback) {
     this.server.close(callback);
 };

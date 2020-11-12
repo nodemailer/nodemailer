@@ -11,27 +11,27 @@ const Cookies = require('../../lib/fetch/cookies');
 
 chai.config.includeStack = true;
 
-describe('Cookie Tests', function() {
+describe('Cookie Tests', function () {
     let biskviit;
 
-    beforeEach(function() {
+    beforeEach(function () {
         biskviit = new Cookies();
     });
 
-    describe('#getPath', function() {
-        it('should return root path', function() {
+    describe('#getPath', function () {
+        it('should return root path', function () {
             expect(biskviit.getPath('/')).to.equal('/');
             expect(biskviit.getPath('')).to.equal('/');
             expect(biskviit.getPath('/index.php')).to.equal('/');
         });
 
-        it('should return without file', function() {
+        it('should return without file', function () {
             expect(biskviit.getPath('/path/to/file')).to.equal('/path/to/');
         });
     });
 
-    describe('#isExpired', function() {
-        it('should match expired cookie', function() {
+    describe('#isExpired', function () {
+        it('should match expired cookie', function () {
             expect(
                 biskviit.isExpired({
                     name: 'a',
@@ -58,8 +58,8 @@ describe('Cookie Tests', function() {
         });
     });
 
-    describe('#compare', function() {
-        it('should match similar cookies', function() {
+    describe('#compare', function () {
+        it('should match similar cookies', function () {
             expect(
                 biskviit.compare(
                     {
@@ -157,8 +157,8 @@ describe('Cookie Tests', function() {
         });
     });
 
-    describe('#add', function() {
-        it('should append new cookie', function() {
+    describe('#add', function () {
+        it('should append new cookie', function () {
             expect(biskviit.cookies.length).to.equal(0);
             biskviit.add({
                 name: 'zzz',
@@ -174,7 +174,7 @@ describe('Cookie Tests', function() {
             expect(biskviit.cookies[0].value).to.equal('abc');
         });
 
-        it('should update existing cookie', function() {
+        it('should update existing cookie', function () {
             expect(biskviit.cookies.length).to.equal(0);
             biskviit.add({
                 name: 'zzz',
@@ -200,8 +200,8 @@ describe('Cookie Tests', function() {
         });
     });
 
-    describe('#match', function() {
-        it('should check if a cookie matches particular domain and path', function() {
+    describe('#match', function () {
+        it('should check if a cookie matches particular domain and path', function () {
             let cookie = {
                 name: 'zzz',
                 value: 'abc',
@@ -215,7 +215,7 @@ describe('Cookie Tests', function() {
             expect(biskviit.match(cookie, 'http://example.com/bef/')).to.be.false;
         });
 
-        it('should check if a cookie matches particular domain and path', function() {
+        it('should check if a cookie matches particular domain and path', function () {
             let cookie = {
                 name: 'zzz',
                 value: 'abc',
@@ -229,7 +229,7 @@ describe('Cookie Tests', function() {
             expect(biskviit.match(cookie, 'http://example.com/bef/')).to.be.false;
         });
 
-        it('should check if a cookie is secure', function() {
+        it('should check if a cookie is secure', function () {
             let cookie = {
                 name: 'zzz',
                 value: 'abc',
@@ -244,8 +244,8 @@ describe('Cookie Tests', function() {
         });
     });
 
-    describe('#parse', function() {
-        it('should parse Set-Cookie value', function() {
+    describe('#parse', function () {
+        it('should parse Set-Cookie value', function () {
             expect(biskviit.parse('theme=plain')).to.deep.equal({
                 name: 'theme',
                 value: 'plain'
@@ -262,7 +262,7 @@ describe('Cookie Tests', function() {
             });
         });
 
-        it('should ignore invalid expire header', function() {
+        it('should ignore invalid expire header', function () {
             expect(biskviit.parse('theme=plain; Expires=Wed, 13 Jan 2021 22:23:01 GMT')).to.deep.equal({
                 name: 'theme',
                 value: 'plain',
@@ -276,8 +276,8 @@ describe('Cookie Tests', function() {
         });
     });
 
-    describe('Listing', function() {
-        beforeEach(function() {
+    describe('Listing', function () {
+        beforeEach(function () {
             biskviit.cookies = [
                 {
                     name: 'ssid1',
@@ -327,8 +327,8 @@ describe('Cookie Tests', function() {
             ];
         });
 
-        describe('#list', function() {
-            it('should return matching cookies for an URL', function() {
+        describe('#list', function () {
+            it('should return matching cookies for an URL', function () {
                 expect(biskviit.list('https://www.foo.com')).to.deep.equal([
                     {
                         name: 'ssid1',
@@ -352,15 +352,15 @@ describe('Cookie Tests', function() {
             });
         });
 
-        describe('#get', function() {
-            it('should return matching cookies for an URL', function() {
+        describe('#get', function () {
+            it('should return matching cookies for an URL', function () {
                 expect(biskviit.get('https://www.foo.com')).to.equal('ssid1=Ap4P….GTEq1; ssid4=Ap4P….GTEq4');
             });
         });
     });
 
-    describe('#set', function() {
-        it('should set cookie', function() {
+    describe('#set', function () {
+        it('should set cookie', function () {
             // short
             biskviit.set('theme=plain', 'https://foo.com/');
             // long
@@ -378,7 +378,7 @@ describe('Cookie Tests', function() {
             biskviit.set('expired_1=date; Expires=1999-01-01 01:01:01 GMT', 'https://foo.com/');
 
             expect(
-                biskviit.cookies.map(function(cookie) {
+                biskviit.cookies.map(function (cookie) {
                     delete cookie.expires;
                     return cookie;
                 })

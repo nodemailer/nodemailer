@@ -11,8 +11,8 @@ let RelaxedBody = require('../../lib/dkim/relaxed-body');
 
 chai.config.includeStack = true;
 
-describe('DKIM RelaxedBody Tests', function() {
-    it('Should calculate body hash byte by byte', function(done) {
+describe('DKIM RelaxedBody Tests', function () {
+    it('Should calculate body hash byte by byte', function (done) {
         fs.readFile(__dirname + '/fixtures/message1.eml', 'utf-8', (err, message) => {
             expect(err).to.not.exist;
 
@@ -46,7 +46,7 @@ describe('DKIM RelaxedBody Tests', function() {
         });
     });
 
-    it('Should calculate body hash all at once', function(done) {
+    it('Should calculate body hash all at once', function (done) {
         fs.readFile(__dirname + '/fixtures/message1.eml', 'utf-8', (err, message) => {
             expect(err).to.not.exist;
 

@@ -15,8 +15,8 @@ chai.config.includeStack = true;
 const PROXY_PORT = 3128;
 const TARGET_PORT = 3129;
 
-describe('HTTP Proxy Client Tests', function() {
-    it('should connect to a socket through proxy', function(done) {
+describe('HTTP Proxy Client Tests', function () {
+    it('should connect to a socket through proxy', function (done) {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -38,7 +38,7 @@ describe('HTTP Proxy Client Tests', function() {
             });
         });
     });
-    it('should connect to a socket through proxy with auth', function(done) {
+    it('should connect to a socket through proxy with auth', function (done) {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -64,7 +64,7 @@ describe('HTTP Proxy Client Tests', function() {
         });
     });
 
-    it('should should fail auth', function(done) {
+    it('should should fail auth', function (done) {
         let smtpServer = new SMTPServer({
             logger: false
         });

@@ -31,8 +31,8 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 -----END PUBLIC KEY-----`;
 */
 
-describe('DKIM Sign Tests', function() {
-    it('should create relaxed headers', function() {
+describe('DKIM Sign Tests', function () {
+    it('should create relaxed headers', function () {
         let headerLines = [
             {
                 key: 'a',
@@ -49,7 +49,7 @@ describe('DKIM Sign Tests', function() {
         });
     });
 
-    it('should skip specific headers', function() {
+    it('should skip specific headers', function () {
         let headerLines = [
             {
                 key: 'a',
@@ -74,7 +74,7 @@ describe('DKIM Sign Tests', function() {
         });
     });
 
-    it('should sign headers', function() {
+    it('should sign headers', function () {
         let headerLines = [
             {
                 key: 'from',
@@ -101,7 +101,7 @@ describe('DKIM Sign Tests', function() {
         );
     });
 
-    it('should sign headers for unicode domain', function() {
+    it('should sign headers for unicode domain', function () {
         let headerLines = [
             {
                 key: 'from',

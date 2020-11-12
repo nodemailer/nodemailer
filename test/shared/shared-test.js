@@ -13,9 +13,9 @@ const zlib = require('zlib');
 
 chai.config.includeStack = true;
 
-describe('Shared Funcs Tests', function() {
-    describe('Logger tests', function() {
-        it('Should create a logger', function() {
+describe('Shared Funcs Tests', function () {
+    describe('Logger tests', function () {
+        it('Should create a logger', function () {
             expect(
                 typeof shared.getLogger({
                     logger: false
@@ -30,8 +30,8 @@ describe('Shared Funcs Tests', function() {
         });
     });
 
-    describe('Connection url parser tests', function() {
-        it('Should parse connection url', function() {
+    describe('Connection url parser tests', function () {
+        it('Should parse connection url', function () {
             let url = 'smtps://user:pass@localhost:123?tls.rejectUnauthorized=false&name=horizon';
             expect(shared.parseConnectionUrl(url)).to.deep.equal({
                 secure: true,
@@ -48,7 +48,7 @@ describe('Shared Funcs Tests', function() {
             });
         });
 
-        it('should not choke on special symbols in auth', function() {
+        it('should not choke on special symbols in auth', function () {
             let url = 'smtps://user%40gmail.com:%3Apasswith%25Char@smtp.gmail.com';
             expect(shared.parseConnectionUrl(url)).to.deep.equal({
                 secure: true,
@@ -61,12 +61,12 @@ describe('Shared Funcs Tests', function() {
         });
     });
 
-    describe('Resolver tests', function() {
+    describe('Resolver tests', function () {
         let port = 10337;
         let server;
 
-        beforeEach(function(done) {
-            server = http.createServer(function(req, res) {
+        beforeEach(function (done) {
+            server = http.createServer(function (req, res) {
                 if (/redirect/.test(req.url)) {
                     res.writeHead(302, {
                         Location: 'http://localhost:' + port + '/message.html'
@@ -92,37 +92,37 @@ describe('Shared Funcs Tests', function() {
             server.listen(port, done);
         });
 
-        afterEach(function(done) {
+        afterEach(function (done) {
             server.close(done);
         });
 
-        it('should set text from html string', function(done) {
+        it('should set text from html string', function (done) {
             let mail = {
                 data: {
                     html: '<p>Tere, tere</p><p>vana kere!</p>\n'
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.equal('<p>Tere, tere</p><p>vana kere!</p>\n');
                 done();
             });
         });
 
-        it('should set text from html buffer', function(done) {
+        it('should set text from html buffer', function (done) {
             let mail = {
                 data: {
                     html: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(mail.data.html);
                 done();
             });
         });
 
-        it('should set text from a html file', function(done) {
+        it('should set text from a html file', function (done) {
             let mail = {
                 data: {
                     html: {
@@ -130,14 +130,14 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from an html url', function(done) {
+        it('should set text from an html url', function (done) {
             let mail = {
                 data: {
                     html: {
@@ -145,14 +145,14 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from redirecting url', function(done) {
+        it('should set text from redirecting url', function (done) {
             let mail = {
                 data: {
                     html: {
@@ -160,14 +160,14 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from gzipped url', function(done) {
+        it('should set text from gzipped url', function (done) {
             let mail = {
                 data: {
                     html: {
@@ -175,20 +175,20 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from a html stream', function(done) {
+        it('should set text from a html stream', function (done) {
             let mail = {
                 data: {
                     html: fs.createReadStream(__dirname + '/fixtures/message.html')
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(mail).to.deep.equal({
                     data: {
@@ -200,7 +200,7 @@ describe('Shared Funcs Tests', function() {
             });
         });
 
-        it('should return an error', function(done) {
+        it('should return an error', function (done) {
             let mail = {
                 data: {
                     html: {
@@ -208,13 +208,13 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err) {
+            shared.resolveContent(mail.data, 'html', function (err) {
                 expect(err).to.exist;
                 done();
             });
         });
 
-        it('should return encoded string as buffer', function(done) {
+        it('should return encoded string as buffer', function (done) {
             let str = '<p>Tere, tere</p><p>vana kere!</p>\n';
             let mail = {
                 data: {
@@ -224,15 +224,15 @@ describe('Shared Funcs Tests', function() {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function(err, value) {
+            shared.resolveContent(mail.data, 'html', function (err, value) {
                 expect(err).to.not.exist;
                 expect(value).to.deep.equal(Buffer.from(str));
                 done();
             });
         });
 
-        describe('data uri tests', function() {
-            it('should resolve with mime type and base64', function(done) {
+        describe('data uri tests', function () {
+            it('should resolve with mime type and base64', function (done) {
                 let mail = {
                     data: {
                         attachment: {
@@ -241,7 +241,7 @@ describe('Shared Funcs Tests', function() {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function(err, value) {
+                shared.resolveContent(mail.data, 'attachment', function (err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(
                         Buffer.from(
@@ -253,7 +253,7 @@ describe('Shared Funcs Tests', function() {
                 });
             });
 
-            it('should resolve with mime type and plaintext', function(done) {
+            it('should resolve with mime type and plaintext', function (done) {
                 let mail = {
                     data: {
                         attachment: {
@@ -261,14 +261,14 @@ describe('Shared Funcs Tests', function() {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function(err, value) {
+                shared.resolveContent(mail.data, 'attachment', function (err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(Buffer.from('tere tere'));
                     done();
                 });
             });
 
-            it('should resolve with plaintext', function(done) {
+            it('should resolve with plaintext', function (done) {
                 let mail = {
                     data: {
                         attachment: {
@@ -276,14 +276,14 @@ describe('Shared Funcs Tests', function() {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function(err, value) {
+                shared.resolveContent(mail.data, 'attachment', function (err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(Buffer.from('tere tere'));
                     done();
                 });
             });
 
-            it('should resolve with mime type, charset and base64', function(done) {
+            it('should resolve with mime type, charset and base64', function (done) {
                 let mail = {
                     data: {
                         attachment: {
@@ -292,7 +292,7 @@ describe('Shared Funcs Tests', function() {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function(err, value) {
+                shared.resolveContent(mail.data, 'attachment', function (err, value) {
                     expect(err).to.not.exist;
                     expect(value).to.deep.equal(
                         Buffer.from(
@@ -306,8 +306,8 @@ describe('Shared Funcs Tests', function() {
         });
     });
 
-    describe('#assign tests', function() {
-        it('should assign multiple objects to target', function() {
+    describe('#assign tests', function () {
+        it('should assign multiple objects to target', function () {
             let target = {
                 a: 1,
                 b: 2,
@@ -336,24 +336,24 @@ describe('Shared Funcs Tests', function() {
         });
     });
 
-    describe('#encodeXText tests', function() {
-        it('should not encode atom', function() {
+    describe('#encodeXText tests', function () {
+        it('should not encode atom', function () {
             expect(shared.encodeXText('teretere')).to.equal('teretere');
         });
 
-        it('should not encode email', function() {
+        it('should not encode email', function () {
             expect(shared.encodeXText('andris.reinman@gmail.com')).to.equal('andris.reinman@gmail.com');
         });
 
-        it('should encode space', function() {
+        it('should encode space', function () {
             expect(shared.encodeXText('tere tere')).to.equal('tere+20tere');
         });
 
-        it('should encode unicode', function() {
+        it('should encode unicode', function () {
             expect(shared.encodeXText('tere tõre')).to.equal('tere+20t+C3+B5re');
         });
 
-        it('should encode low codes', function() {
+        it('should encode low codes', function () {
             expect(shared.encodeXText('tere t\tre')).to.equal('tere+20t+09re');
         });
     });

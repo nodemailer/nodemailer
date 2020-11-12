@@ -34,10 +34,10 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 -----END PUBLIC KEY-----`;
 */
 
-describe('DKIM Tests', function() {
+describe('DKIM Tests', function () {
     this.timeout(100 * 1000); // eslint-disable-line
 
-    it('should sign message', function(done) {
+    it('should sign message', function (done) {
         let message = `From: saatja aadress
 To: Saaja aadress
 Subject: pealkiri
@@ -110,7 +110,7 @@ teine rida
         writeNext();
     });
 
-    it('should sign large message using cache dir', function(done) {
+    it('should sign large message using cache dir', function (done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -158,7 +158,7 @@ teine rida
         });
     });
 
-    it('should sign large message without cache dir', function(done) {
+    it('should sign large message without cache dir', function (done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -205,7 +205,7 @@ teine rida
         });
     });
 
-    it('should emit cache error', function(done) {
+    it('should emit cache error', function (done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -220,7 +220,7 @@ teine rida
         });
     });
 
-    it('should sign large message as Buffer', function(done) {
+    it('should sign large message as Buffer', function (done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -268,7 +268,7 @@ teine rida
         });
     });
 
-    it('should sign large message as String', function(done) {
+    it('should sign large message as String', function (done) {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',

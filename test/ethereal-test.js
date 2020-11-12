@@ -8,9 +8,9 @@ const chai = require('chai');
 const expect = chai.expect;
 chai.config.includeStack = true;
 
-describe('Ethereal Tests', function() {
+describe('Ethereal Tests', function () {
     this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
-    it('should create an account and send a message', function(done) {
+    it('should create an account and send a message', function (done) {
         // Generate SMTP service account from ethereal.email
         nodemailer.createTestAccount((err, account) => {
             expect(err).to.not.exist;
@@ -43,7 +43,7 @@ describe('Ethereal Tests', function() {
         });
     });
 
-    it('should cache a created test account', function(done) {
+    it('should cache a created test account', function (done) {
         nodemailer.createTestAccount((err, account) => {
             expect(err).to.not.exist;
             nodemailer.createTestAccount((err, account2) => {
@@ -54,7 +54,7 @@ describe('Ethereal Tests', function() {
         });
     });
 
-    it('should cache a created test account when using promises', function(done) {
+    it('should cache a created test account when using promises', function (done) {
         nodemailer.createTestAccount().then(account => {
             nodemailer.createTestAccount().then(account2 => {
                 expect(account2).to.equal(account);

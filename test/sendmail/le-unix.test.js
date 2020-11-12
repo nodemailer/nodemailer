@@ -9,8 +9,8 @@ const expect = chai.expect;
 
 chai.config.includeStack = true;
 
-describe('Sendmail Unix Newlines', function() {
-    it('should rewrite all linebreaks (byte by byte)', function(done) {
+describe('Sendmail Unix Newlines', function () {
+    it('should rewrite all linebreaks (byte by byte)', function (done) {
         let source = 'tere tere\nteine rida\nkolmas rida\r\nneljas rida\r\nviies rida\n kuues rida';
 
         let chunks = [];
@@ -34,7 +34,7 @@ describe('Sendmail Unix Newlines', function() {
         setImmediate(writeNextByte);
     });
 
-    it('should rewrite all linebreaks (all at once)', function(done) {
+    it('should rewrite all linebreaks (all at once)', function (done) {
         let source = 'tere tere\nteine rida\nkolmas rida\r\nneljas rida\r\nviies rida\n kuues rida';
 
         let chunks = [];
