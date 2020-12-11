@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.4.17 2020-12-11
+
+-   Allow mixing attachments with caendar alternatives
+
+## 6.4.16 2020-11-12
+
+-   Applied updated prettier formating rules
+
 ## 6.4.15 2020-11-06
 
 -   Minor changes in header key casing

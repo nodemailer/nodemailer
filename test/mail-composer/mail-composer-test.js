@@ -413,6 +413,8 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_2\r\n' +
                 'rawhtml\r\n' +
                 '----_NmP-test-Part_2\r\n' +
+                'rawcalendar\r\n' +
+                '----_NmP-test-Part_2\r\n' +
                 'rawalternative\r\n' +
                 '----_NmP-test-Part_2--\r\n' +
                 '\r\n' +
