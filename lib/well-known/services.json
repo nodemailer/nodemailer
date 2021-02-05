@@ -148,6 +148,12 @@
         "secure": false
     },
 
+    "OhMySMTP": {
+        "host": "smtp.ohmysmtp.com",
+        "port": 587,
+        "secure": false
+    },
+
     "Postmark": {
         "aliases": ["PostmarkApp"],
         "host": "smtp.postmarkapp.com",
