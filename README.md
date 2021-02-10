@@ -4,6 +4,8 @@
 
 Send e-mails from Node.js – easy as cake! 🍰✉️
 
+> Sponsored by [Forward Email](https://forwardemail.net/?ref=nodemailer) &ndash; free email forwarding + custom domains + 100% open-source!
+
 [![NPM](https://nodei.co/npm/nodemailer.png?downloads=true&downloadRank=true&stars=true)](https://nodemailer.com/about/)
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
