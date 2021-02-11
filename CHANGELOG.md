@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.4.18 2021-02-11
+
+-   Updated README
+
 ## 6.4.17 2020-12-11
 
 -   Allow mixing attachments with caendar alternatives
