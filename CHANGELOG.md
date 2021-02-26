@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.5.0 2021-02-26
+
+-   Pass through textEncoding to subnodes
+-   Added support for AWS SES v3 SDK
+-   Fixed tests
+
 ## 6.4.18 2021-02-11
 
 -   Updated README

@@ -31,12 +31,18 @@ describe('SES Transport Tests', function () {
                     region: 'eu-west-1'
                 },
                 // Prevent tests from actually sending mail by mocking sendRawEmail
-                sendRawEmail: (message, cb) => {
-                    setImmediate(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    });
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setImmediate(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                });
+                            });
+                        }
+                    };
                 }
             }
         });
@@ -79,15 +85,23 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    expect(message.RawMessage.Data.toString()).to.include('h=from:subject:to:cc:mime-version:content-type;');
-                    setImmediate(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    });
+
+                sendRawEmail(message) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                expect(message.RawMessage.Data.toString()).to.include('h=from:subject:to:cc:mime-version:content-type;');
+                                setImmediate(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                });
+                            });
+                        }
+                    };
                 }
             },
+
             dkim: {
                 domainName: 'node.ee',
                 keySelector: 'dkim',
@@ -134,12 +148,18 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    setTimeout(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    }, 100);
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                }, 100);
+                            });
+                        }
+                    };
                 }
             }
         });
@@ -195,12 +215,18 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    setTimeout(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    }, 100);
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                }, 100);
+                            });
+                        }
+                    };
                 }
             }
         });
@@ -256,12 +282,18 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    setTimeout(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    }, 3000);
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                }, 3000);
+                            });
+                        }
+                    };
                 }
             }
         });
@@ -318,12 +350,18 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    setTimeout(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    }, 100);
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                }, 100);
+                            });
+                        }
+                    };
                 }
             }
         });
@@ -381,12 +419,18 @@ describe('SES Transport Tests', function () {
                 config: {
                     region: 'eu-west-1'
                 },
-                sendRawEmail: (message, cb) => {
-                    setTimeout(() => {
-                        cb(null, {
-                            MessageId: 'testtest'
-                        });
-                    }, 100);
+                sendRawEmail(/*message*/) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    resolve({
+                                        MessageId: 'testtest'
+                                    });
+                                }, 100);
+                            });
+                        }
+                    };
                 }
             }
         });

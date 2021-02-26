@@ -251,22 +251,22 @@ describe('Cookie Tests', function () {
                 value: 'plain'
             });
 
-            expect(biskviit.parse('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Secure; HttpOnly')).to.deep.equal({
+            expect(biskviit.parse('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly')).to.deep.equal({
                 name: 'ssid',
                 value: 'Ap4P….GTEq',
                 domain: '.foo.com',
                 path: '/',
                 httponly: true,
                 secure: true,
-                expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
             });
         });
 
         it('should ignore invalid expire header', function () {
-            expect(biskviit.parse('theme=plain; Expires=Wed, 13 Jan 2021 22:23:01 GMT')).to.deep.equal({
+            expect(biskviit.parse('theme=plain; Expires=Wed, 13 Jan 2031 22:23:01 GMT')).to.deep.equal({
                 name: 'theme',
                 value: 'plain',
-                expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
             });
 
             expect(biskviit.parse('theme=plain; Expires=ZZZZZZZZ GMT')).to.deep.equal({
@@ -286,7 +286,7 @@ describe('Cookie Tests', function () {
                     path: '/',
                     httponly: true,
                     secure: true,
-                    expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                    expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                 },
                 {
                     name: 'ssid2',
@@ -304,7 +304,7 @@ describe('Cookie Tests', function () {
                     path: '/',
                     httponly: true,
                     secure: true,
-                    expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                    expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                 },
                 {
                     name: 'ssid4',
@@ -313,7 +313,7 @@ describe('Cookie Tests', function () {
                     path: '/',
                     httponly: true,
                     secure: true,
-                    expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                    expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                 },
                 {
                     name: 'ssid5',
@@ -322,7 +322,7 @@ describe('Cookie Tests', function () {
                     path: '/',
                     httponly: true,
                     secure: true,
-                    expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                    expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                 }
             ];
         });
@@ -337,7 +337,7 @@ describe('Cookie Tests', function () {
                         path: '/',
                         httponly: true,
                         secure: true,
-                        expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                        expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                     },
                     {
                         name: 'ssid4',
@@ -346,7 +346,7 @@ describe('Cookie Tests', function () {
                         path: '/',
                         httponly: true,
                         secure: true,
-                        expires: new Date('Wed, 13 Jan 2021 22:23:01 GMT')
+                        expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
                     }
                 ]);
             });
@@ -364,9 +364,9 @@ describe('Cookie Tests', function () {
             // short
             biskviit.set('theme=plain', 'https://foo.com/');
             // long
-            biskviit.set('SSID=Ap4P….GTEq; Domain=foo.com; Path=/test; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Secure; HttpOnly', 'https://foo.com/');
+            biskviit.set('SSID=Ap4P….GTEq; Domain=foo.com; Path=/test; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly', 'https://foo.com/');
             // subdomains
-            biskviit.set('SSID=Ap4P….GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Secure; HttpOnly', 'https://www.foo.com/');
+            biskviit.set('SSID=Ap4P….GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly', 'https://www.foo.com/');
             // invalid cors
             biskviit.set('invalid_1=cors; domain=example.com', 'https://foo.com/');
             biskviit.set('invalid_2=cors; domain=www.foo.com', 'https://foo.com/');
