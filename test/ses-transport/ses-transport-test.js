@@ -79,6 +79,130 @@ describe('SES Transport Tests', function () {
         });
     });
 
+    it('should verify ses configuration using AWS SES JavaScript SDK v2', function (done) {
+        let transport = nodemailer.createTransport({
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                // Prevent tests from actually sending mail by mocking sendRawEmail
+                sendRawEmail(message, callback) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setImmediate(() => {
+                                    callback(null, message);
+                                    return resolve();
+                                });
+                            });
+                        }
+                    };
+                }
+            }
+        });
+
+        transport.verify()
+            .then(info => {
+                expect(info).to.exist;
+                expect(info).to.equal(true);
+                done();
+            });
+    });
+
+    it('should verify ses configuration using AWS SES JavaScript SDK v2, with supplied callback', function (done) {
+        let transport = nodemailer.createTransport({
+            SES: {
+                config: {
+                    region: 'eu-west-1'
+                },
+                // Prevent tests from actually sending mail by mocking sendRawEmail
+                sendRawEmail(message, callback) {
+                    return {
+                        promise() {
+                            return new Promise(resolve => {
+                                setImmediate(() => {
+                                    callback(null, message);
+                                    return resolve();
+                                });
+                            });
+                        }
+                    };
+                }
+            }
+        });
+
+        transport.verify((err, info) => {
+            expect(err).to.not.exist;
+            expect(info).to.exist;
+            expect(info).to.equal(true);
+            done();
+        });
+    });
+
+    it('should verify ses configuration using AWS SES JavaScript SDK v3', function (done) {
+        let transport = nodemailer.createTransport({
+            SES: {
+                ses: {
+                    config: {
+                        region: 'eu-west-1'
+                    },
+                    // Prevent tests from actually sending mail by mocking send method
+                    send(message, callback) {
+                        return new Promise(resolve => {
+                            setImmediate(() => {
+                                callback(null, message);
+                                return resolve();
+                            });
+                        });
+                    },
+                },
+                aws: {
+                    /* eslint-disable */
+                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
+                },
+            }
+        });
+
+        transport.verify()
+            .then(info => {
+                expect(info).to.exist;
+                expect(info).to.equal(true);
+                done();
+            });
+    });
+
+    it('should verify ses configuration using AWS SES JavaScript SDK v3, with supplied callback', function (done) {
+        let transport = nodemailer.createTransport({
+            SES: {
+                ses: {
+                    config: {
+                        region: 'eu-west-1'
+                    },
+                    // Prevent tests from actually sending mail by mocking send method
+                    send(message, callback) {
+                        return new Promise(resolve => {
+                            setImmediate(() => {
+                                callback(null, message);
+                                return resolve();
+                            });
+                        });
+                    },
+                },
+                aws: {
+                    /* eslint-disable */
+                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
+                },
+            }
+        });
+
+        transport.verify((err, info) => {
+            expect(err).to.not.exist;
+            expect(info).to.exist;
+            expect(info).to.equal(true);
+            done();
+        });
+    });
+
     it('should sign message with DKIM', function (done) {
         let transport = nodemailer.createTransport({
             SES: {
