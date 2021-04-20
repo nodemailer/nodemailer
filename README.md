@@ -1,10 +1,12 @@
 # Nodemailer
 
+
 [![Nodemailer](https://raw.githubusercontent.com/nodemailer/nodemailer/master/assets/nm_logo_200x136.png)](https://nodemailer.com/about/)
 
 > Sponsored by [Forward Email](https://forwardemail.net/?ref=nodemailer) &ndash; free email forwarding + custom domains + 100% open-source!
 
 Send e-mails from Node.js – easy as cake! 🍰✉️
+Sponsor by Roniel De Gozo
 
 [![NPM](https://nodei.co/npm/nodemailer.png?downloads=true&downloadRank=true&stars=true)](https://nodemailer.com/about/)
 
