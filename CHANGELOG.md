@@ -3,6 +3,7 @@
 ## 6.6.0 2021-04-28
 
 -   Added new option `newline` for MailComposer
+-   aws ses connection verification (Ognjen Jevremovic)
 
 ## 6.5.0 2021-02-26
 
