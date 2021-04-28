@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.6.0 2021-04-28
+
+-   Added new option `newline` for MailComposer
+
 ## 6.5.0 2021-02-26
 
 -   Pass through textEncoding to subnodes

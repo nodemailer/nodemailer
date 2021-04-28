@@ -9,7 +9,8 @@ const mailOptions = {
         from: 'Daemon <deamon@kreata.ee>',
         to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>'
     },
-    text: 'Test message'
+    text: 'Test\n 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ö\r\nsage',
+    newline: '\r\n'
 };
 
 async function main() {

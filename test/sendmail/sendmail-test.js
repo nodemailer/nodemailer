@@ -11,6 +11,7 @@ const PassThrough = require('stream').PassThrough;
 const EventEmitter = require('events').EventEmitter;
 const sinon = require('sinon');
 const SendmailTransport = require('../../lib/sendmail-transport');
+const MailComposer = require('../../lib/mail-composer');
 chai.config.includeStack = true;
 
 class MockBuilder {
@@ -68,18 +69,16 @@ describe('Sendmail Transport Tests', function () {
         client.send(
             {
                 data: {},
-                message: new MockBuilder(
-                    {
-                        from: 'test@valid.sender',
-                        to: 'test@valid.recipient'
-                    },
-                    'message\r\nline 2'
-                )
+                message: new MailComposer({
+                    from: 'test@valid.sender',
+                    to: 'test@valid.recipient',
+                    newline: '\n',
+                    raw: Buffer.from('message\r\nline 2')
+                }).compile()
             },
-            function (err, data) {
+            function (err) {
                 expect(err).to.not.exist;
-                expect(data.messageId).to.equal('<test>');
-                expect(output).to.equal('message\nline 2');
+                expect(output).to.equal('message\nline 2\n');
                 client._spawn.restore();
                 done();
             }

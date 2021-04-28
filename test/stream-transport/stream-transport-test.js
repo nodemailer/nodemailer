@@ -5,35 +5,9 @@
 
 const chai = require('chai');
 const expect = chai.expect;
-const PassThrough = require('stream').PassThrough;
 const StreamTransport = require('../../lib/stream-transport');
+const MailComposer = require('../../lib/mail-composer');
 chai.config.includeStack = true;
-
-class MockBuilder {
-    constructor(envelope, message, messageId) {
-        this.envelope = envelope;
-        this.rawMessage = message;
-        this.mid = messageId || '<test>';
-    }
-
-    getEnvelope() {
-        return this.envelope;
-    }
-
-    messageId() {
-        return this.mid;
-    }
-
-    createReadStream() {
-        let stream = new PassThrough();
-        setImmediate(() => stream.end(this.rawMessage));
-        return stream;
-    }
-
-    getHeader() {
-        return 'teretere';
-    }
-}
 
 describe('Stream Transport Tests', function () {
     this.timeout(10000); // eslint-disable-line no-invalid-this
@@ -53,23 +27,20 @@ describe('Stream Transport Tests', function () {
             client.send(
                 {
                     data: {},
-                    message: new MockBuilder(
-                        {
-                            from: 'test@valid.sender',
-                            to: 'test@valid.recipient'
-                        },
-                        message
-                    )
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        newline: '\n',
+                        raw: Buffer.from(message)
+                    }).compile()
                 },
                 function (err, info) {
                     expect(err).to.not.exist;
 
                     expect(info.envelope).to.deep.equal({
                         from: 'test@valid.sender',
-                        to: 'test@valid.recipient'
+                        to: ['test@valid.recipient']
                     });
-
-                    expect(info.messageId).to.equal('<test>');
 
                     info.message.on('data', function (chunk) {
                         chunks.push(chunk);
@@ -94,13 +65,12 @@ describe('Stream Transport Tests', function () {
             client.send(
                 {
                     data: {},
-                    message: new MockBuilder(
-                        {
-                            from: 'test@valid.sender',
-                            to: 'test@valid.recipient'
-                        },
-                        message
-                    )
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        newline: '\r\n',
+                        raw: Buffer.from(message)
+                    }).compile()
                 },
                 function (err, info) {
                     expect(err).to.not.exist;
@@ -129,17 +99,15 @@ describe('Stream Transport Tests', function () {
             client.send(
                 {
                     data: {},
-                    message: new MockBuilder(
-                        {
-                            from: 'test@valid.sender',
-                            to: 'test@valid.recipient'
-                        },
-                        message
-                    )
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        newline: '\n',
+                        raw: Buffer.from(message)
+                    }).compile()
                 },
                 function (err, info) {
                     expect(err).to.not.exist;
-
                     expect(info.message.toString()).to.equal(message.replace(/\r\n/g, '\n'));
                     done();
                 }
@@ -156,13 +124,12 @@ describe('Stream Transport Tests', function () {
             client.send(
                 {
                     data: {},
-                    message: new MockBuilder(
-                        {
-                            from: 'test@valid.sender',
-                            to: 'test@valid.recipient'
-                        },
-                        message
-                    )
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        newline: '\r\n',
+                        raw: Buffer.from(message)
+                    }).compile()
                 },
                 function (err, info) {
                     expect(err).to.not.exist;

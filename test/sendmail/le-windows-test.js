@@ -3,7 +3,7 @@
 
 'use strict';
 
-const LeWindows = require('../../lib/sendmail-transport/le-windows');
+const LeWindows = require('../../lib/mime-node/le-windows');
 const chai = require('chai');
 const expect = chai.expect;
 
