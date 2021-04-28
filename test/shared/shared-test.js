@@ -200,6 +200,30 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
+        it('should set content from a stream and preserve other properties', function (done) {
+            let mail = {
+                data: {
+                    attachment: {
+                        filename: 'message.html',
+                        content: fs.createReadStream(__dirname + '/fixtures/message.html')
+                    }
+                }
+            };
+            shared.resolveContent(mail.data, 'attachment', function (err, value) {
+                expect(err).to.not.exist;
+                expect(mail).to.deep.equal({
+                    data: {
+                        attachment: {
+                            filename: 'message.html',
+                            content: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
+                        }
+                    }
+                });
+                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                done();
+            });
+        });
+
         it('should return an error', function (done) {
             let mail = {
                 data: {
