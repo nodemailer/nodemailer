@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.6.1 2021-05-23
+
+-   Fixed address formatting issue where newlines in an email address, if provided via address object, were not properly removed. Reported by tmazeika (#1289)
+
 ## 6.6.0 2021-04-28
 
 -   Added new option `newline` for MailComposer
