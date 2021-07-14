@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.6.3 2021-07-14
+
+-   Do not show passwords in SMTP transaction logs. All passwords used in logging are replaced by `"/* secret */"`
+
 ## 6.6.1 2021-05-23
 
 -   Fixed address formatting issue where newlines in an email address, if provided via address object, were not properly removed. Reported by tmazeika (#1289)

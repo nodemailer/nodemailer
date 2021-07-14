@@ -28,7 +28,7 @@ nodemailer.createTestAccount((err, account) => {
                 pass: account.pass
             },
             logger: true,
-            debug: false // include SMTP traffic in the logs
+            transactionLog: true // include SMTP traffic in the logs
         },
         {
             // default message fields
