@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.6.5 2021-09-23
+
+-   Replaced Object.values() and Array.flat() with polyfills to allow using Nodemailer in Node v6+
+
 ## 6.6.4 2021-09-22
 
 -   Better compatibility with IPv6-only SMTP hosts (oxzi)
