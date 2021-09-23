@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.6.4 2021-09-22
+
+-   Better compatibility with IPv6-only SMTP hosts (oxzi)
+-   Fix ses verify for sdk v3 (hannesvdvreken)
+-   Added SECURITY.txt for contact info
+
 ## 6.6.3 2021-07-14
 
 -   Do not show passwords in SMTP transaction logs. All passwords used in logging are replaced by `"/* secret */"`
