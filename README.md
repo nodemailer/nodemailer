@@ -10,6 +10,8 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 ## Having an issue?
 
+> Nodemailer supports all Node.js versions starting from Node.js@v6.0.0. Existing test suite does not support such old Node.js versions so all features are not actually tested. From time to time some regression bugs might occur because of this.
+
 #### First review the docs
 
 Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer.com/about/).

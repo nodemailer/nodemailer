@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.7.0 2021-10-11
+
+-   Updated DNS resolving logic. If there are multiple responses for a A/AAAA record, then loop these randomly instead of only caching the first one
+
 ## 6.6.5 2021-09-23
 
 -   Replaced Object.values() and Array.flat() with polyfills to allow using Nodemailer in Node v6+

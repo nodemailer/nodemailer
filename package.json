@@ -1,6 +1,6 @@
 {
     "name": "nodemailer",
-    "version": "6.6.5",
+    "version": "6.7.0",
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
@@ -20,8 +20,8 @@
     },
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
-        "@aws-sdk/client-ses": "3.33.0",
-        "aws-sdk": "2.993.0",
+        "@aws-sdk/client-ses": "3.36.0",
+        "aws-sdk": "2.1004.0",
         "bunyan": "1.8.15",
         "chai": "4.3.4",
         "eslint-config-nodemailer": "1.2.0",
@@ -33,7 +33,7 @@
         "libbase64": "1.2.1",
         "libmime": "5.0.0",
         "libqp": "1.1.0",
-        "mocha": "9.1.1",
+        "mocha": "9.1.2",
         "nodemailer-ntlm-auth": "1.0.1",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
