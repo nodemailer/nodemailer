@@ -144,16 +144,12 @@ describe('SES Transport Tests', function () {
                 },
                 // Prevent tests from actually sending mail by mocking sendRawEmail
                 sendRawEmail(message, callback) {
-                    return {
-                        promise() {
-                            return new Promise(resolve => {
-                                setImmediate(() => {
-                                    callback(null, message);
-                                    return resolve();
-                                });
-                            });
-                        }
-                    };
+                    return new Promise(resolve => {
+                        setImmediate(() => {
+                            callback(null, message);
+                            return resolve();
+                        });
+                    });
                 }
             }
         });
@@ -174,16 +170,12 @@ describe('SES Transport Tests', function () {
                 },
                 // Prevent tests from actually sending mail by mocking sendRawEmail
                 sendRawEmail(message, callback) {
-                    return {
-                        promise() {
-                            return new Promise(resolve => {
-                                setImmediate(() => {
-                                    callback(null, message);
-                                    return resolve();
-                                });
-                            });
-                        }
-                    };
+                    return new Promise(resolve => {
+                        setImmediate(() => {
+                            callback(null, message);
+                            return resolve();
+                        });
+                    });
                 }
             }
         });
