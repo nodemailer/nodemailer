@@ -5,23 +5,24 @@ let nodemailer = require('nodemailer');
 /* --- Select AWS SDK version by uncommenting correct version --- */
 
 let aws = require('@aws-sdk/client-ses');
-//let aws = require('aws-sdk');
 
 /* --- Change these values to test --- */
 
-const AWS_ACCESS_KEY_ID = '...';
-const AWS_SECRET_ACCESS_KEY = '...';
+const AWS_ACCESS_KEY_ID = 'access-key';
+const AWS_SECRET_ACCESS_KEY = 'access-secret';
+
 const FROM_ADDRESS = 'andris.reinman@gmail.com';
 const TO_ADDRESS = 'andris@kreata.ee';
 
 /* --- no need to change below this line when testing --- */
 
-process.env.AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID;
-process.env.AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY;
-
 const ses = new aws.SES({
     apiVersion: '2010-12-01',
-    region: 'us-east-1'
+    region: 'us-east-1',
+    credentials: {
+        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        accessKeyId: AWS_ACCESS_KEY_ID
+    }
 });
 
 // create Nodemailer SES transporter
