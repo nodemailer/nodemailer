@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.7.2 2021-11-26
+
+-   Fix proxies for account verification
+
 ## 6.7.1 2021-11-15
 
 -   fix verify on ses-transport (stanofsky)
