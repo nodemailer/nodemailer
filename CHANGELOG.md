@@ -81,7 +81,7 @@
 ## 6.4.7 2020-05-28
 
 -   Always set charset=utf-8 for Content-Type headers
--   Catch error whn using invalid crypto.sign input
+-   Catch error when using invalid crypto.sign input
 
 ## 6.4.6 2020-03-20
 
