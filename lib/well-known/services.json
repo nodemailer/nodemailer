@@ -85,6 +85,7 @@
     
     "Infomaniak": {
         "host": "mail.infomaniak.com",
+        "domains": ["ik.me", "ikmail.com", "etik.com"],
         "port": 587,
     },
 
