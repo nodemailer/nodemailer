@@ -82,6 +82,11 @@
         "host": "smtp.mail.me.com",
         "port": 587
     },
+    
+    "Infomaniak": {
+        "host": "mail.infomaniak.com",
+        "port": 587,
+    },
 
     "mail.ee": {
         "host": "smtp.mail.ee"
