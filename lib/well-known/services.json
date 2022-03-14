@@ -226,6 +226,12 @@
         "secure": true
     },
 
+    "AmazonWorkMail": {
+        "host": "smtp.mail.us-east-1.awsapps.com",
+        "port": 465,
+        "secure": true
+    },
+
     "Sparkpost": {
         "aliases": ["SparkPost", "SparkPost Mail"],
         "domains": ["sparkpost.com"],
