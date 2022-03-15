@@ -72,7 +72,7 @@
     "Hotmail": {
         "aliases": ["Outlook", "Outlook.com", "Hotmail.com"],
         "domains": ["hotmail.com", "outlook.com"],
-        "host": "smtp.live.com",
+        "host": "smtp-mail.outlook.com",
         "port": 587
     },
 
