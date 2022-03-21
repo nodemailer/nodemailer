@@ -8,3 +8,5 @@ assignees: ''
 ---
 
 Please file only reproducible bugs. Everything else will get ignored.
+
+See the FAQ for existing known issues [here](https://github.com/nodemailer/nodemailer#having-an-issue) before you submit a new one.
