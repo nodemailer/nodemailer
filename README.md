@@ -35,13 +35,24 @@ It's either a firewall issue, or your SMTP server blocks authentication attempts
 #### I get TLS errors
 
 -   If you are running the code on your machine, check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
--   Latest Node versions allow only TLS versions 1.2 and higher. Some servers might still use TLS 1.1 or lower. Check Node.js docs on how to get correct TLS support for your app.
--   You might have the wrong value for the `secure` option. This is `true` _only_ for port 465. For every other port, it should be `false`. Setting `secure` to `false` does not mean that Nodemailer would not use TLS. Nodemailer would still try to upgrade the connection to use TLS if the server supports it.
--   Older Node versions do not support the newest Let's Encrypt certificates. Either set `tls.rejectUnauthorized` to `false` or upgrade your Node version
+-   Latest Node versions allow only TLS versions 1.2 and higher. Some servers might still use TLS 1.1 or lower. Check Node.js docs on how to get correct TLS support for your app. You can change this with [tls.minVersion](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tls_tls_createsecurecontext_options) option
+-   You might have the wrong value for the `secure` option. This should be set to `true` only for port 465. For every other port, it should be `false`. Setting it to `false` does not mean that Nodemailer would not use TLS. Nodemailer would still try to upgrade the connection to use TLS if the server supports it.
+-   Older Node versions do not fully support the certificate chain of the newest Let's Encrypt certificates. Either set [tls.rejectUnauthorized](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tlsconnectoptions-callback) to `false` to skip chain verification or upgrade your Node version
+
+```
+let configOptions = {
+    host: "smtp.example.com",
+    port: 587,
+    tls: {
+        rejectUnauthorized: true,
+        minVersion: "TLSv1.2"
+    }
+}
+```
 
 #### I have issues with DNS / hosts file
 
-Nodemailer uses `dns.resolve4()` and `dns.resolve6()` to resolve hostname into an IP address. If both calls fail, then Nodemailer will fall back to `dns.lookup()`. If this does not work for you, you can hard code the IP address into the configuration. In that case, Nodemailer would not perform any DNS lookups.
+Node.js uses [c-ares](https://nodejs.org/en/docs/meta/topics/dependencies/#c-ares) to resolve domain names, not the DNS library provided by the system, so if you have some custom DNS routing set up, it might be ignored. Nodemailer runs [dns.resolve4()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve4hostname-options-callback) and [dns.resolve6()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve6hostname-options-callback) to resolve hostname into an IP address. If both calls fail, then Nodemailer will fall back to [dns.lookup()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnslookuphostname-options-callback). If this does not work for you, you can hard code the IP address into the configuration like shown below. In that case, Nodemailer would not perform any DNS lookups.
 
 ```
 let configOptions = {
@@ -54,6 +65,10 @@ let configOptions = {
     }
 }
 ```
+
+#### I have an issue with TypeScript types
+
+Nodemailer has official support for Node.js only. For anything related to TypeScript, you need to directly contact the authors of the [type definitions](https://www.npmjs.com/package/@types/nodemailer).
 
 #### I have a different problem
 
