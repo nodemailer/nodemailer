@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.7.3 2022-03-21
+
+-   Typo fixes
+-   Added stale issue automation fir Github
+-   Add Infomaniak config to well known service (popod)
+-   Update Outlook/Hotmail host in well known services (popod)
+-   fix: DSN recipient gets ignored (KornKalle)
+
 ## 6.7.2 2021-11-26
 
 -   Fix proxies for account verification
