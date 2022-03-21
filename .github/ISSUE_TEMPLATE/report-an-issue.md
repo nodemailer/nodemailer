@@ -7,4 +7,4 @@ assignees: ''
 
 ---
 
-Please file only bugs here. Support and feature requests might get closed without a response.
+Please file only reproducible bugs. Everything else will get ignored.
