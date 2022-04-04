@@ -11,6 +11,12 @@
         "host": "smtp.aol.com",
         "port": 587
     },
+    
+    "Bluewin": {
+        "host": "smtpauths.bluewin.ch",
+        "domains": ["bluewin.ch"],
+        "port": 465
+    },
 
     "DebugMail": {
         "host": "debugmail.io",
