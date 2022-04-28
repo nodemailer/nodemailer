@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.7.4 2022-04-29
+
+-   Ensure compatibility with Node 18
+-   Replaced Travis with Github Actions
+
 ## 6.7.3 2022-03-21
 
 -   Typo fixes
