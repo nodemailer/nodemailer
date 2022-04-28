@@ -15,6 +15,8 @@ const expect = chai.expect;
 chai.config.includeStack = true;
 
 describe('MimeNode Tests', function () {
+    this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
+
     it('should create MimeNode object', function () {
         expect(new MimeNode()).to.exist;
     });

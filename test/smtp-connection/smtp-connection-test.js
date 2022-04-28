@@ -25,6 +25,8 @@ let LMTP_PORT_NUMBER = 8396;
 let XOAUTH_PORT = 8497;
 
 describe('SMTP-Connection Tests', function () {
+    this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
+
     describe('Version test', function () {
         it('Should expose version number', function () {
             let client = new SMTPConnection();

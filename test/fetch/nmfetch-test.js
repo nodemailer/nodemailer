@@ -7,7 +7,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 //let http = require('http');
-const fetch = require('../../lib/fetch');
+const nmfetch = require('../../lib/fetch');
 const http = require('http');
 const https = require('https');
 const zlib = require('zlib');
@@ -67,7 +67,9 @@ const httpsOptions = {
         '-----END CERTIFICATE-----'
 };
 
-describe('Fetch Tests', function () {
+describe('NMFetch Tests', function () {
+    this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
+
     let httpServer, httpsServer;
 
     beforeEach(function (done) {
@@ -206,7 +208,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should fetch HTTP data', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT);
+        let req = nmfetch('http://localhost:' + HTTP_PORT);
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -218,7 +220,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should fetch HTTPS data', function (done) {
-        let req = fetch('https://localhost:' + HTTPS_PORT);
+        let req = nmfetch('https://localhost:' + HTTPS_PORT);
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -230,7 +232,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should fetch HTTP data with redirects', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/redirect3');
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -242,7 +244,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for too many redirects', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/redirect6');
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect6');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -255,7 +257,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should fetch HTTP data with custom redirect limit', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/redirect3', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3', {
             maxRedirects: 3
         });
         let buf = [];
@@ -269,7 +271,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for custom redirect limit', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/redirect3', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3', {
             maxRedirects: 2
         });
         let buf = [];
@@ -284,7 +286,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return disable redirects', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/redirect1', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect1', {
             maxRedirects: 0
         });
         let buf = [];
@@ -299,7 +301,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should unzip compressed HTTP data', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/gzip');
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/gzip');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -311,7 +313,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for unresolved host', function (done) {
-        let req = fetch('http://asfhaskhhgbjdsfhgbsdjgk');
+        let req = nmfetch('http://asfhaskhhgbjdsfhgbsdjgk');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -324,7 +326,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for invalid status', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/invalid');
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/invalid');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -337,7 +339,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should allow invalid status', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/invalid', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/invalid', {
             allowErrorResponse: true
         });
         let buf = [];
@@ -355,7 +357,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for invalid url', function (done) {
-        let req = fetch('http://localhost:99999999/');
+        let req = nmfetch('http://localhost:99999999/');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -368,7 +370,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return timeout error', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/forever', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/forever', {
             timeout: 1000
         });
         let buf = [];
@@ -383,7 +385,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should handle basic HTTP auth', function (done) {
-        let req = fetch('http://user:pass@localhost:' + HTTP_PORT + '/auth');
+        let req = nmfetch('http://user:pass@localhost:' + HTTP_PORT + '/auth');
         let buf = [];
         req.on('data', function (chunk) {
             buf.push(chunk);
@@ -397,7 +399,7 @@ describe('Fetch Tests', function () {
     if (!/^0\.10\./.test(process.versions.node)) {
         // disabled for node 0.10
         it('should return error for invalid protocol', function (done) {
-            let req = fetch('http://localhost:' + HTTPS_PORT);
+            let req = nmfetch('http://localhost:' + HTTPS_PORT);
             let buf = [];
             req.on('data', function (chunk) {
                 buf.push(chunk);
@@ -411,7 +413,7 @@ describe('Fetch Tests', function () {
     }
 
     it('should set cookie value', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/cookie', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/cookie', {
             cookie: 'test=pest'
         });
         let buf = [];
@@ -425,7 +427,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should set user agent', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/ua', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/ua', {
             userAgent: 'nodemailer-fetch'
         });
         let buf = [];
@@ -439,7 +441,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should post data', function (done) {
-        let req = fetch('http://localhost:' + HTTP_PORT + '/post', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/post', {
             method: 'post',
             body: {
                 hello: 'world 😭',
@@ -460,7 +462,7 @@ describe('Fetch Tests', function () {
         let body = new PassThrough();
         let data = Buffer.from('hello=world%20%F0%9F%98%AD&another=value');
 
-        let req = fetch('http://localhost:' + HTTP_PORT + '/post', {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/post', {
             method: 'post',
             body
         });
@@ -487,7 +489,7 @@ describe('Fetch Tests', function () {
     });
 
     it('should return error for invalid cert', function (done) {
-        let req = fetch('https://localhost:' + HTTPS_PORT, {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
             tls: {
                 rejectUnauthorized: true
             }

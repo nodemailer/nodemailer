@@ -14,6 +14,8 @@ const zlib = require('zlib');
 chai.config.includeStack = true;
 
 describe('Shared Funcs Tests', function () {
+    this.timeout(100 * 1000); // eslint-disable-line no-invalid-this
+
     describe('Logger tests', function () {
         it('Should create a logger', function () {
             expect(
@@ -436,11 +438,12 @@ describe('Shared Funcs Tests', function () {
                     expect(new Error('too many tries')).to.not.exist;
                     return done();
                 }
+
                 if (found.size === 3) {
                     return done();
                 }
 
-                shared.resolveHostname({ host: 'ipv4.multi.dev.ethereal.email' }, (err, result) => {
+                shared.resolveHostname({ host: 'ipv4.multi.dev.ethereal.email', dnsTtl: 1 }, (err, result) => {
                     expect(err).to.not.exist;
 
                     expect(result.servername).to.equal('ipv4.multi.dev.ethereal.email');
@@ -448,7 +451,7 @@ describe('Shared Funcs Tests', function () {
 
                     found.add(result.host);
 
-                    resolveNext();
+                    setTimeout(resolveNext, 10);
                 });
             };
 
