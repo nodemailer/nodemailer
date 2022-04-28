@@ -91,16 +91,16 @@ describe('SES Transport Tests', function () {
                         return new Promise(resolve => {
                             setImmediate(() => resolve(message));
                         });
-                    },
+                    }
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {
+                    SendRawEmailCommand: function (/*message*/) {
                         return {
-                            MessageId: 'testtest',
-                        }
+                            MessageId: 'testtest'
+                        };
                     }
-                },
+                }
             }
         });
 
@@ -154,12 +154,11 @@ describe('SES Transport Tests', function () {
             }
         });
 
-        transport.verify()
-            .then(info => {
-                expect(info).to.exist;
-                expect(info).to.equal(true);
-                done();
-            });
+        transport.verify().then(info => {
+            expect(info).to.exist;
+            expect(info).to.equal(true);
+            done();
+        });
     });
 
     it('should verify ses configuration using AWS SES JavaScript SDK v2, with supplied callback', function (done) {
@@ -203,21 +202,22 @@ describe('SES Transport Tests', function () {
                                 return resolve();
                             });
                         });
-                    },
+                    }
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
-        transport.verify()
-            .then(info => {
-                expect(info).to.exist;
-                expect(info).to.equal(true);
-                done();
-            });
+        transport.verify().then(info => {
+            expect(info).to.exist;
+            expect(info).to.equal(true);
+            done();
+        });
     });
 
     it('should verify ses configuration using AWS SES JavaScript SDK v3, with supplied callback', function (done) {
@@ -235,12 +235,14 @@ describe('SES Transport Tests', function () {
                                 return resolve();
                             });
                         });
-                    },
+                    }
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -333,11 +335,11 @@ describe('SES Transport Tests', function () {
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(message) {
+                    SendRawEmailCommand: function (message) {
                         expect(message.RawMessage.Data.toString()).to.include('h=from:subject:to:cc:mime-version:content-type;');
                         return message;
                     }
-                },
+                }
             },
 
             dkim: {
@@ -466,8 +468,10 @@ describe('SES Transport Tests', function () {
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -575,7 +579,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -598,12 +602,14 @@ describe('SES Transport Tests', function () {
                                 });
                             }, 100);
                         });
-                    },
+                    }
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -644,7 +650,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -711,7 +717,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(12000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -738,8 +744,10 @@ describe('SES Transport Tests', function () {
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -780,7 +788,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(12000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -849,7 +857,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -877,8 +885,10 @@ describe('SES Transport Tests', function () {
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -920,7 +930,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -989,7 +999,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
@@ -1024,8 +1034,10 @@ describe('SES Transport Tests', function () {
                 },
                 aws: {
                     /* eslint-disable */
-                    SendRawEmailCommand: function(/*message*/) {/* Constructor */}
-                },
+                    SendRawEmailCommand: function (/*message*/) {
+                        /* Constructor */
+                    }
+                }
             }
         });
 
@@ -1067,7 +1079,7 @@ describe('SES Transport Tests', function () {
 
                 if (total === finished) {
                     expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(15000);
+                    expect(Date.now() - start).to.be.lte(20000);
                     return done();
                 }
             });
