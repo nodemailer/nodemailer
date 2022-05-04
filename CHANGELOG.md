@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.7.5 2022-05-04
+
+-   No changes, pushing a new README to npmjs.org
+
 ## 6.7.4 2022-04-29
 
 -   Ensure compatibility with Node 18
