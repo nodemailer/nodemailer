@@ -8,9 +8,15 @@ Send emails from Node.js – easy as cake! 🍰✉️
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
-## Having an issue?
+---
 
-> Nodemailer supports all Node.js versions starting from Node.js@v6.0.0. The existing test suite does not support such old Node.js versions, so all features are not tested. From time to time, some regression bugs might occur because of this.
+> Check out **[EmailEngine](https://emailengine.app/?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link)** – a self-hosted email gateway that allows making **REST requests against IMAP and SMTP servers**. EmailEngine also sends webhooks whenever something changes on the registered accounts.\
+> \
+> Using the email accounts registered with EmailEngine, you can receive and [send emails](https://emailengine.app/sending-emails?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link). EmailEngine supports OAuth2, delayed sends, opens and clicks tracking, bounce detection, etc. All on top of regular email accounts without an external MTA service.
+
+---
+
+## Having an issue?
 
 #### First review the docs
 
@@ -18,7 +24,7 @@ Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer
 
 #### Nodemailer throws a SyntaxError for "..."
 
-You are using an older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator.
+You are using an older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator. Nodemailer supports all Node.js versions starting from Node.js@v6.0.0.
 
 #### I'm having issues with Gmail
 
