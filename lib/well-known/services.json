@@ -188,8 +188,8 @@
     },
 
     "SendCloud": {
-        "host": "smtpcloud.sohu.com",
-        "port": 25
+        "host": "smtp.sendcloud.net",
+        "port": 2525
     },
 
     "SendGrid": {
