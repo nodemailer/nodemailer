@@ -272,6 +272,20 @@ describe('SMTP Transport Tests', function () {
                 }
             );
         });
+
+        it('Should verify connection without credentials with success', function (done) {
+            let client = new SMTPTransport({
+                url: 'smtp://localhost:' + PORT_NUMBER,
+                forceAuth: true,
+                logger: false
+            });
+
+            client.verify(function (err, success) {
+                expect(err).to.not.exist;
+                expect(success).to.be.true;
+                done();
+            });
+        });
     });
 
     describe('Authenticated sender tests', function () {
@@ -372,6 +386,34 @@ describe('SMTP Transport Tests', function () {
             client.verify(function (err, success) {
                 expect(err).to.not.exist;
                 expect(success).to.be.true;
+                done();
+            });
+        });
+
+        it('Should verify connection without credentials with success', function (done) {
+            let client = new SMTPTransport({
+                url: 'smtp://localhost:' + PORT_NUMBER,
+                logger: false
+            });
+
+            client.verify(function (err, success) {
+                expect(err).to.not.exist;
+                expect(success).to.be.true;
+                done();
+            });
+        });
+
+        it('Should not verify connection without credentials', function (done) {
+            let client = new SMTPTransport({
+                host: 'localhost',
+                port: PORT_NUMBER,
+                forceAuth: true,
+                logger: false
+            });
+
+            client.verify(function (err) {
+                expect(err).to.exist;
+                expect(err.code).to.equal('NoAuth');
                 done();
             });
         });

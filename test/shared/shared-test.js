@@ -536,5 +536,62 @@ describe('Shared Funcs Tests', function () {
                 done();
             });
         });
+
+        it('should fail resolving a single internal IPv4 entry', function (done) {
+            // ensure that there is a single Ipv4 interface "available"
+            Object.keys(shared.networkInterfaces).forEach(key => {
+                delete shared.networkInterfaces[key];
+            });
+
+            shared.networkInterfaces.lo = [
+                {
+                    address: '127.0.0.1',
+                    netmask: '255.0.0.0',
+                    family: 'IPv4',
+                    mac: '00:00:00:00:00:00',
+                    internal: true,
+                    cidr: '127.0.0.1/8'
+                }
+            ];
+
+            shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, err => {
+                expect(err).to.exist;
+                done();
+            });
+        });
+
+        it('should succeed resolving a single internal IPv4 entry', function (done) {
+            // ensure that there is a single Ipv4 interface "available"
+            Object.keys(shared.networkInterfaces).forEach(key => {
+                delete shared.networkInterfaces[key];
+            });
+
+            shared.networkInterfaces.lo = [
+                {
+                    address: '127.0.0.1',
+                    netmask: '255.0.0.0',
+                    family: 'IPv4',
+                    mac: '00:00:00:00:00:00',
+                    internal: true,
+                    cidr: '127.0.0.1/8'
+                }
+            ];
+
+            shared.resolveHostname(
+                {
+                    host: 'ipv4.single.dev.ethereal.email',
+                    allowInternalNetworkInterfaces: true
+                },
+                (err, result) => {
+                    expect(err).to.not.exist;
+                    expect(result).to.deep.equal({
+                        servername: 'ipv4.single.dev.ethereal.email',
+                        host: '54.36.85.114',
+                        cached: false
+                    });
+                    done();
+                }
+            );
+        });
     });
 });
