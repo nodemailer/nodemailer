@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.7.7 2022-07-06
+
+-   Resolver fixes
+
 ## 6.7.5 2022-05-04
 
 -   No changes, pushing a new README to npmjs.org

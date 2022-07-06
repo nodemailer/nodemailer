@@ -16,6 +16,8 @@ const PROXY_PORT = 3128;
 const TARGET_PORT = 3129;
 
 describe('HTTP Proxy Client Tests', function () {
+    this.timeout(10 * 1000); // eslint-disable-line no-invalid-this
+
     it('should connect to a socket through proxy', function (done) {
         let smtpServer = new SMTPServer({
             logger: false
@@ -81,6 +83,23 @@ describe('HTTP Proxy Client Tests', function () {
 
                     smtpServer.close(() => setImmediate(done) && proxyServer.close());
                 });
+            });
+        });
+    });
+
+    it('should should fail with timeout', function (done) {
+        let proxyServer = proxy(http.createServer());
+        proxyServer.authenticate = (req, cb) => {
+            cb(null, req.headers['proxy-authorization'] === 'Basic dGVzdDpwZXN0');
+        };
+        proxyServer.listen(PROXY_PORT, () => {
+            httpProxyClient.timeout = 5 * 1000;
+            httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, 12345, '141.94.68.31', (err, socket) => {
+                expect(err).to.exist;
+                expect(socket).to.not.exist;
+                expect(err.code).to.equal('ETIMEDOUT');
+
+                setImmediate(done) && proxyServer.close();
             });
         });
     });
