@@ -16,6 +16,10 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 ---
 
+This project is supported by [Forward Email](https://forwardemail.net) – the 100% open-source and privacy-focused email service.
+
+---
+
 ## Having an issue?
 
 #### First review the docs
