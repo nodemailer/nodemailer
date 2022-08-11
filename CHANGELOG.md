@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.7.8 2022-08-11
+
+-   Allow to use multiple Reply-To addresses
+
 ## 6.7.7 2022-07-06
 
 -   Resolver fixes
