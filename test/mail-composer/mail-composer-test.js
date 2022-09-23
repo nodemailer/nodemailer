@@ -881,5 +881,34 @@ describe('MailComposer unit tests', function () {
                 done();
             });
         });
+
+        
+        it('should throw an error if any attachment has null content', function (done) {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        headers: {
+                            'X-Test-1': 12345,
+                            'X-Test-2': 'ÕÄÖÜ',
+                            'X-Test-3': ['foo', 'bar']
+                        },
+                        content: null,
+                        filename: 'test.txt',
+                        contentTransferEncoding: false
+                    }
+                ]
+            };
+
+
+            let mail = new MailComposer(data).compile();
+            mail.build(function (err) {
+                expect(err).to.exist;
+                done();
+            });
+        });
     });
 });
