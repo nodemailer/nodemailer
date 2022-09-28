@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.8.0 2022-09-28
+
+-   Add DNS timeout (huksley)
+-   add dns.REFUSED (lucagianfelici)
+
 ## 6.7.8 2022-08-11
 
 -   Allow to use multiple Reply-To addresses

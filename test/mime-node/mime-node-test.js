@@ -1371,7 +1371,7 @@ describe('MimeNode Tests', function () {
 
         it('should return an error on invalid file path', function (done) {
             let mb = new MimeNode('text/plain').setContent({
-                href: '/ASfsdfsdf/Sdgsgdfg/SDFgdfgdfg'
+                path: '/ASfsdfsdf/Sdgsgdfg/SDFgdfgdfg'
             });
 
             mb.build(function (err) {
