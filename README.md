@@ -20,6 +20,10 @@ This project is supported by [Forward Email](https://forwardemail.net) – the 1
 
 ---
 
+This project is supported by [Opensense](https://www.opensense.com) - The beautiful email signature management company for Office 365 and Google Workspace.
+
+---
+
 ## Having an issue?
 
 #### First review the docs
