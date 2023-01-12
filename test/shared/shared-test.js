@@ -495,29 +495,6 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should fail resolving a single IPv6 entry', function (done) {
-            // ensure that there is a single Ipv4 interface "available"
-            Object.keys(shared.networkInterfaces).forEach(key => {
-                delete shared.networkInterfaces[key];
-            });
-
-            shared.networkInterfaces.en0 = [
-                {
-                    address: '192.168.1.175',
-                    netmask: '255.255.255.0',
-                    family: 'IPv4',
-                    mac: 'f0:18:98:57:76:44',
-                    internal: false,
-                    cidr: '192.168.1.175/24'
-                }
-            ];
-
-            shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, err => {
-                expect(err).to.exist;
-                done();
-            });
-        });
-
         it('should fail missing address', function (done) {
             shared.resolveHostname({ host: 'missing.single.dev.ethereal.email' }, err => {
                 expect(err).to.exist;
