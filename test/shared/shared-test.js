@@ -554,8 +554,13 @@ describe('Shared Funcs Tests', function () {
                 }
             ];
 
-            shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, err => {
-                expect(err).to.exist;
+            shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
+                expect(err).to.not.exist;
+                expect(result).to.deep.equal({
+                    servername: 'ipv4.single.dev.ethereal.email',
+                    host: 'ipv4.single.dev.ethereal.email',
+                    cached: false
+                });
                 done();
             });
         });

@@ -889,6 +889,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
+                            ehlo: ['8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             rejectedErrors: info.rejectedErrors,
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
@@ -931,6 +932,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
                             rejected: [],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
                             messageSize: info.messageSize,
@@ -953,6 +955,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test@valid.recipient'],
                             rejected: [],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
                             messageSize: info.messageSize,
@@ -972,6 +975,7 @@ describe('SMTP-Connection Tests', function () {
                                     expect(info).to.deep.equal({
                                         accepted: ['test2@valid.recipient'],
                                         rejected: [],
+                                        ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                                         envelopeTime: info.envelopeTime,
                                         messageTime: info.messageTime,
                                         messageSize: info.messageSize,
@@ -997,6 +1001,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             rejectedErrors: info.rejectedErrors,
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
@@ -1071,6 +1076,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test2@valid.recipient'],
                             rejected: [],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
                             messageSize: info.messageSize,
@@ -1122,6 +1128,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             rejectedErrors: info.rejectedErrors,
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,
@@ -1146,6 +1153,7 @@ describe('SMTP-Connection Tests', function () {
                         expect(info).to.deep.equal({
                             accepted: ['test1@valid.recipient', 'test3õ@valid.recipient'],
                             rejected: ['test2@invalid.recipient'],
+                            ehlo: ['PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH PLAIN XOAUTH2', 'SIZE 102400'],
                             rejectedErrors: info.rejectedErrors,
                             envelopeTime: info.envelopeTime,
                             messageTime: info.messageTime,

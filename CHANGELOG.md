@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.9.0 2023-01-12
+
+-   Do not throw if failed to resolve IPv4 addresses
+-   Include EHLO extensions in the send response
+-   fix sendMail function: callback should be optional
+
 ## 6.8.0 2022-09-28
 
 -   Add DNS timeout (huksley)
