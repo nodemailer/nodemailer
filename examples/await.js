@@ -30,7 +30,7 @@ async function main() {
             // default message fields
 
             // sender info
-            from: 'Pangalink <no-reply@pangalink.net>',
+            from: `<${account.user}>`,
             headers: {
                 'X-Laziness-level': 1000 // just an example header, no need to use this
             }
@@ -40,7 +40,7 @@ async function main() {
     // Message object
     let message = {
         // Comma separated list of recipients
-        to: 'Andris Reinman <andris.reinman@gmail.com>',
+        to: 'Andris Reinman <andris@ethereal.email>',
 
         // Subject of the message
         subject: 'Nodemailer is unicode friendly ✔',
