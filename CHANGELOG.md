@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.9.1 2023-01-27
+
+-   Fix base64 encoding for emoji bytes in encoded words
+
 ## 6.9.0 2023-01-12
 
 -   Do not throw if failed to resolve IPv4 addresses
