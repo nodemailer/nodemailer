@@ -414,14 +414,14 @@ describe('Shared Funcs Tests', function () {
                 expect(err).to.not.exist;
                 expect(result).to.deep.equal({
                     servername: 'ipv4.single.dev.ethereal.email',
-                    host: '54.36.85.114',
+                    host: '95.216.108.161',
                     cached: false
                 });
                 shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
                     expect(err).to.not.exist;
                     expect(result).to.deep.equal({
                         servername: 'ipv4.single.dev.ethereal.email',
-                        host: '54.36.85.114',
+                        host: '95.216.108.161',
                         cached: true
                     });
                     done();
@@ -480,14 +480,14 @@ describe('Shared Funcs Tests', function () {
                 expect(err).to.not.exist;
                 expect(result).to.deep.equal({
                     servername: 'ipv6.single.dev.ethereal.email',
-                    host: '2001:41d0:304:200::baa9',
+                    host: '2a01:4f9:3051:4501::2',
                     cached: false
                 });
                 shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, (err, result) => {
                     expect(err).to.not.exist;
                     expect(result).to.deep.equal({
                         servername: 'ipv6.single.dev.ethereal.email',
-                        host: '2001:41d0:304:200::baa9',
+                        host: '2a01:4f9:3051:4501::2',
                         cached: true
                     });
                     done();
@@ -568,7 +568,7 @@ describe('Shared Funcs Tests', function () {
                     expect(err).to.not.exist;
                     expect(result).to.deep.equal({
                         servername: 'ipv4.single.dev.ethereal.email',
-                        host: '54.36.85.114',
+                        host: '95.216.108.161',
                         cached: false
                     });
                     done();

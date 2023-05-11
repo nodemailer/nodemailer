@@ -94,7 +94,8 @@ describe('HTTP Proxy Client Tests', function () {
         };
         proxyServer.listen(PROXY_PORT, () => {
             httpProxyClient.timeout = 5 * 1000;
-            httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, 12345, '141.94.68.31', (err, socket) => {
+            // using kreata.ee (178.33.49.65) as the destination. This port is not allowed by firewall so it times out
+            httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, 12345, '178.33.49.65', (err, socket) => {
                 expect(err).to.exist;
                 expect(socket).to.not.exist;
                 expect(err.code).to.equal('ETIMEDOUT');

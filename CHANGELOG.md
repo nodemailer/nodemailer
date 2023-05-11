@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.9.2 2023-05-11
+
+-   Fix uncaught exception on invalid attachment content payload
+
 ## 6.9.1 2023-01-27
 
 -   Fix base64 encoding for emoji bytes in encoded words
