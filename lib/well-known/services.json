@@ -42,6 +42,14 @@
         "secure": true
     },
 
+    "Forward Email": {
+        "aliases": ["FE", "ForwardEmail"],
+        "domains": ["forwardemail.net"],
+        "host": "smtp.forwardemail.net",
+        "port": 465,
+        "secure": true
+    },
+
     "GandiMail": {
         "aliases": ["Gandi", "Gandi Mail"],
         "host": "mail.gandi.net",
