@@ -1,5 +1,5 @@
 /* eslint no-unused-expressions:0, no-invalid-this:0, no-var: 0, prefer-arrow-callback: 0, object-shorthand: 0 */
-/* globals afterEach, beforeEach, describe, it */
+/* globals afterEach, beforeEach, before, after, describe, it */
 
 'use strict';
 
@@ -35,16 +35,16 @@ describe('SMTP-Connection Tests', function () {
     });
 
     describe('Connection tests', function () {
-        let server, insecureServer, invalidServer, secureServer, httpProxy;
+        let server, insecureServer, invalidServer, secureServer, disconnectingServer, httpProxy;
 
-        beforeEach(function (done) {
+        before(function (done) {
             server = new SMTPServer({
                 onAuth: function (auth, session, callback) {
                     if (auth.username !== 'testuser' || auth.password !== 'testpass') {
                         return callback(new Error('Invalid username or password'));
                     }
                     callback(null, {
-                        user: 123
+                        user: auth.username
                     });
                 },
                 onData: function (stream, session, callback) {
@@ -83,12 +83,26 @@ describe('SMTP-Connection Tests', function () {
                         return callback(new Error('Invalid username or password'));
                     }
                     callback(null, {
-                        user: 123
+                        user: auth.username
                     });
                 },
                 onData: function (stream, session, callback) {
                     stream.on('data', function () {});
                     stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            disconnectingServer = new SMTPServer({
+                disabledCommands: ['STARTTLS', 'AUTH'],
+                onConnect(sess, callback) {
+                    setTimeout(() => {
+                        for (const conn of this.connections) {
+                            conn._socket.write('454 4.3.0 Try again later\r\n');
+                            conn._socket.destroy();
+                        }
+                    }, 20);
+                    callback();
                 },
                 logger: false
             });
@@ -99,19 +113,23 @@ describe('SMTP-Connection Tests', function () {
                 invalidServer.listen(PORT_NUMBER + 1, function () {
                     secureServer.listen(PORT_NUMBER + 2, function () {
                         insecureServer.listen(PORT_NUMBER + 3, function () {
-                            httpProxy.listen(PROXY_PORT_NUMBER, done);
+                            disconnectingServer.listen(PORT_NUMBER + 4, function () {
+                                httpProxy.listen(PROXY_PORT_NUMBER, done);
+                            });
                         });
                     });
                 });
             });
         });
 
-        afterEach(function (done) {
+        after(function (done) {
             server.close(function () {
                 invalidServer.close(function () {
                     secureServer.close(function () {
                         insecureServer.close(function () {
-                            httpProxy.close(done);
+                            disconnectingServer.close(function () {
+                                httpProxy.close(done);
+                            });
                         });
                     });
                 });
@@ -150,6 +168,25 @@ describe('SMTP-Connection Tests', function () {
 
             client.on('error', function (err) {
                 expect(err).to.not.exist;
+            });
+
+            client.on('end', done);
+        });
+
+        it('should connect and be rejected', function (done) {
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 4,
+                logger: false,
+                debug: false,
+                transactionLog: false
+            });
+
+            client.connect(function () {
+                expect(client.secure).to.be.false;
+            });
+
+            client.on('error', function (err) {
+                expect(err).to.exist;
             });
 
             client.on('end', done);
@@ -484,7 +521,7 @@ describe('SMTP-Connection Tests', function () {
                         });
                     }
                     callback(null, {
-                        user: 123
+                        user: auth.username
                     });
                 },
                 onMailFrom: function (address, session, callback) {
