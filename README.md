@@ -90,7 +90,7 @@ If you are having issues with Nodemailer, then the best way to find help would b
 
 ### License
 
-Nodemailer is licensed under the **MIT license**
+Nodemailer is licensed under the **MIT No Attribution license**
 
 ---
 
