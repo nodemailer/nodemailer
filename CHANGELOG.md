@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.9.3 2023-05-29
+
+-   Specified license identifier (was defined as MIT, actual value MIT-0)
+-   If SMTP server disconnects with a message, process it and include as part of the response error
+
 ## 6.9.2 2023-05-11
 
 -   Fix uncaught exception on invalid attachment content payload
