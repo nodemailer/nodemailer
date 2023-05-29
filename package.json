@@ -14,7 +14,7 @@
         "Nodemailer"
     ],
     "author": "Andris Reinman",
-    "license": "MIT",
+    "license": "MIT-0",
     "bugs": {
         "url": "https://github.com/nodemailer/nodemailer/issues"
     },
