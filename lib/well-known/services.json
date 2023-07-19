@@ -11,7 +11,7 @@
         "host": "smtp.aol.com",
         "port": 587
     },
-    
+
     "Bluewin": {
         "host": "smtpauths.bluewin.ch",
         "domains": ["bluewin.ch"],
@@ -212,7 +212,8 @@
     },
 
     "SendinBlue": {
-        "host": "smtp-relay.sendinblue.com",
+        "aliases": ["Brevo"],
+        "host": "smtp-relay.brevo.com",
         "port": 587
     },
 

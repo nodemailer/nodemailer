@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.9.4 2023-07-19
+
+-   Renamed SendinBlue to Brevo
+
 ## 6.9.3 2023-05-29
 
 -   Specified license identifier (was defined as MIT, actual value MIT-0)
