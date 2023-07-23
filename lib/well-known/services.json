@@ -5,7 +5,14 @@
         "secure": true,
         "authMethod": "LOGIN"
     },
-
+    
+    "Aliyun": {
+        "domains": ["aliyun.com"],
+        "host": "smtp.aliyun.com",
+        "port": 465,
+        "secure": true
+    },
+    
     "AOL": {
         "domains": ["aol.com"],
         "host": "smtp.aol.com",
