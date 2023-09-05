@@ -3,5 +3,4 @@ npm-debug.log
 .DS_Store
 test/dkim/cache/message.*
 .npmrc
-package-lock*
 examples/test-send.js

@@ -20,12 +20,12 @@
     },
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
-        "@aws-sdk/client-ses": "3.370.0",
-        "aws-sdk": "2.1417.0",
+        "@aws-sdk/client-ses": "3.405.0",
+        "aws-sdk": "2.1450.0",
         "bunyan": "1.8.15",
-        "chai": "4.3.7",
+        "chai": "4.3.8",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "8.8.0",
+        "eslint-config-prettier": "9.0.0",
         "grunt": "1.6.1",
         "grunt-cli": "1.4.3",
         "grunt-eslint": "24.3.0",
@@ -38,7 +38,7 @@
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
         "sinon": "15.2.0",
-        "smtp-server": "3.12.0"
+        "smtp-server": "3.13.0"
     },
     "engines": {
         "node": ">=6.0.0"
