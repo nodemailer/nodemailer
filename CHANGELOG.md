@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.5](https://github.com/nodemailer/nodemailer/compare/v6.9.4...v6.9.5) (2023-09-06)
+
+
+### Bug Fixes
+
+* **license:** Updated license year ([da4744e](https://github.com/nodemailer/nodemailer/commit/da4744e491f3a68f4f68e4073684370592630e01))
+
 ## 6.9.4 2023-07-19
 
 -   Renamed SendinBlue to Brevo
