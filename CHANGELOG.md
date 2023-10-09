@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [6.9.6](https://github.com/nodemailer/nodemailer/compare/v6.9.5...v6.9.6) (2023-10-09)
+
+
+### Bug Fixes
+
+* **inline:** Use 'inline' as the default Content Dispostion value for embedded images ([db32c93](https://github.com/nodemailer/nodemailer/commit/db32c93fefee527bcc239f13056e5d9181a4d8af))
+* **tests:** Removed Node v12 from test matrix as it is not compatible with the test framework anymore ([7fe0a60](https://github.com/nodemailer/nodemailer/commit/7fe0a608ed6bcb70dc6b2de543ebfc3a30abf984))
+
 ## [6.9.5](https://github.com/nodemailer/nodemailer/compare/v6.9.4...v6.9.5) (2023-09-06)
 
 
