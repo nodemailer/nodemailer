@@ -1,6 +1,6 @@
 'use strict';
 
-let nodemailer = require('nodemailer');
+let nodemailer = require('../lib/nodemailer');
 
 /* --- Select AWS SDK version by uncommenting correct version --- */
 
