@@ -881,6 +881,22 @@ describe('SMTP-Connection Tests', function () {
                     }
                 );
             });
+
+            it('should login without pass', function (done) {
+                expect(customClient.authenticated).to.be.false;
+                customClient.login(
+                    {
+                        method: 'mytest',
+                        apiUser: 'aaaa',
+                        apiKey: 'testkey'
+                    },
+                    function (err) {
+                        expect(err).to.not.exist;
+                        expect(customClient.authenticated).to.be.true;
+                        done();
+                    }
+                );
+            });
         });
 
         describe('Send without PIPELINING', function () {
