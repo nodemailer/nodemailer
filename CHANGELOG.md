@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.7](https://github.com/nodemailer/nodemailer/compare/v6.9.6...v6.9.7) (2023-10-22)
+
+
+### Bug Fixes
+
+* **customAuth:** Do not require user and pass to be set for custom authentication schemes (fixes [#1584](https://github.com/nodemailer/nodemailer/issues/1584)) ([41d482c](https://github.com/nodemailer/nodemailer/commit/41d482c3f01e26111b06f3e46351b193db3fb5cb))
+
 ## [6.9.6](https://github.com/nodemailer/nodemailer/compare/v6.9.5...v6.9.6) (2023-10-09)
 
 
