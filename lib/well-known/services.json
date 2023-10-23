@@ -120,6 +120,11 @@
         "secure": true
     },
 
+    "Mailcatch.app": {
+        "host": "sandbox-smtp.mailcatch.app",
+        "port": 2525
+    },
+
     "Maildev": {
         "port": 1025,
         "ignoreTLS": true
