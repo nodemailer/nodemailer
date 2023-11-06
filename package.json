@@ -22,7 +22,6 @@
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
         "@aws-sdk/client-ses": "3.433.0",
-        "aws-sdk": "2.1478.0",
         "bunyan": "1.8.15",
         "chai": "4.3.10",
         "eslint-config-nodemailer": "1.2.0",
