@@ -2,8 +2,6 @@
 
 let nodemailer = require('../lib/nodemailer');
 
-/* --- Select AWS SDK version by uncommenting correct version --- */
-
 let aws = require('@aws-sdk/client-ses');
 
 /* --- Change these values to test --- */
