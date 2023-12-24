@@ -1,42 +1,37 @@
-/* eslint no-unused-expressions:0, no-invalid-this:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const wellKnown = require('../../lib/well-known');
 
-chai.config.includeStack = true;
-
-describe('Well-Known Services Tests', function () {
-    describe('#wellKnown', function () {
-        it('Should find by key', function () {
-            expect(wellKnown('Gmail')).to.deep.equal({
+describe('Well-Known Services Tests', () => {
+    describe('#wellKnown', () => {
+        it('Should find by key', () => {
+            assert.deepStrictEqual(wellKnown('Gmail'), {
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
             });
         });
 
-        it('Should find by alias', function () {
-            expect(wellKnown('Google Mail')).to.deep.equal({
+        it('Should find by alias', () => {
+            assert.deepStrictEqual(wellKnown('Google Mail'), {
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
             });
         });
 
-        it('Should find by domain', function () {
-            expect(wellKnown('GoogleMail.com')).to.deep.equal({
+        it('Should find by domain', () => {
+            assert.deepStrictEqual(wellKnown('GoogleMail.com'), {
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
             });
         });
 
-        it('Should find no match', function () {
-            expect(wellKnown('zzzzzz')).to.be.false;
+        it('Should find no match', () => {
+            assert.strictEqual(wellKnown('zzzzzz'), false);
         });
     });
 });

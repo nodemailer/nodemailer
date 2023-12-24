@@ -1,14 +1,9 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 
 let sign = require('../../lib/dkim/sign');
-
-chai.config.includeStack = true;
 
 const privateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIBywIBAAJhANCx7ncKUfQ8wBUYmMqq6ky8rBB0NL8knBf3+uA7q/CSxpX6sQ8N
@@ -31,8 +26,8 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 -----END PUBLIC KEY-----`;
 */
 
-describe('DKIM Sign Tests', function () {
-    it('should create relaxed headers', function () {
+describe('DKIM Sign Tests', () => {
+    it('should create relaxed headers', () => {
         let headerLines = [
             {
                 key: 'a',
@@ -43,13 +38,13 @@ describe('DKIM Sign Tests', function () {
                 line: 'B: Y\t\r\n\tZ  '
             }
         ];
-        expect(sign.relaxedHeaders(headerLines, 'a:b:c:d')).to.deep.equal({
+        assert.deepStrictEqual(sign.relaxedHeaders(headerLines, 'a:b:c:d'), {
             headers: 'a:X\r\nb:Y Z\r\n',
             fieldNames: 'a:b'
         });
     });
 
-    it('should skip specific headers', function () {
+    it('should skip specific headers', () => {
         let headerLines = [
             {
                 key: 'a',
@@ -68,13 +63,13 @@ describe('DKIM Sign Tests', function () {
                 line: 'D: X'
             }
         ];
-        expect(sign.relaxedHeaders(headerLines, 'a:b:c:d', 'a:c')).to.deep.equal({
+        assert.deepStrictEqual(sign.relaxedHeaders(headerLines, 'a:b:c:d', 'a:c'), {
             headers: 'b:Y Z\r\nd:X\r\n',
             fieldNames: 'b:d'
         });
     });
 
-    it('should sign headers', function () {
+    it('should sign headers', () => {
         let headerLines = [
             {
                 key: 'from',
@@ -96,12 +91,13 @@ describe('DKIM Sign Tests', function () {
             keySelector: 'dkim',
             privateKey
         });
-        expect(dkimField.replace(/\r?\n\s*/g, '').replace(/\s+/g, '')).to.equal(
+        assert.strictEqual(
+            dkimField.replace(/\r?\n\s*/g, '').replace(/\s+/g, ''),
             'DKIM-Signature:v=1;a=rsa-sha256;c=relaxed/relaxed;d=node.ee;q=dns/txt;s=dkim;bh=z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=;h=from:to;b=pVd+Dp+EjmYBcc1AWlBAP4ESpuAJ2WMS4gbxWLoeUZ1vZRodVN7K9UXvcCsLuqjJktCZMN2+8dyEUaYW2VIcxg4sVBCS1wqB/tqYZ/gxXLnG2/nZf4fyD2vxltJP4pDL'
         );
     });
 
-    it('should sign headers for unicode domain', function () {
+    it('should sign headers for unicode domain', () => {
         let headerLines = [
             {
                 key: 'from',
@@ -118,7 +114,8 @@ describe('DKIM Sign Tests', function () {
             keySelector: 'dkim',
             privateKey
         });
-        expect(dkimField.replace(/\r?\n\s*/g, '').replace(/\s+/g, '')).to.equal(
+        assert.strictEqual(
+            dkimField.replace(/\r?\n\s*/g, '').replace(/\s+/g, ''),
             'DKIM-Signature:v=1;a=rsa-sha256;c=relaxed/relaxed;d=xn--mriaad-polteism-zvbj.info;q=dns/txt;s=dkim;bh=z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=;h=from:to;b=oBJ1MkwEkftfXa2AK4Expjp2xgIcAR43SVrftSEHVQ6F1SlGjP3EKP+cn/hLkhUel3rY0icthk/myDu6uhTBmM6DMtzIBW/7uQd6q9hfgaiYnw5Iew2tZc4TzBEYSdKi'
         );
     });

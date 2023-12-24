@@ -1,24 +1,17 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const http = require('http');
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
+const http = require('node:http');
 const proxy = require('proxy');
 const httpProxyClient = require('../../lib/smtp-connection/http-proxy-client');
 const SMTPServer = require('smtp-server').SMTPServer;
-const chai = require('chai');
-const expect = chai.expect;
-
-chai.config.includeStack = true;
 
 const PROXY_PORT = 3128;
 const TARGET_PORT = 3129;
 
-describe('HTTP Proxy Client Tests', function () {
-    this.timeout(10 * 1000); // eslint-disable-line no-invalid-this
-
-    it('should connect to a socket through proxy', function (done) {
+describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
+    it('should connect to a socket through proxy', (t, done) => {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -27,9 +20,9 @@ describe('HTTP Proxy Client Tests', function () {
             let proxyServer = proxy(http.createServer());
             proxyServer.listen(PROXY_PORT, () => {
                 httpProxyClient('http://localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
-                    expect(err).to.not.exist;
+                    assert.ok(!err);
                     socket.once('data', chunk => {
-                        expect(/^220[ -]/.test(chunk.toString())).to.be.true;
+                        assert.strictEqual(/^220[ -]/.test(chunk.toString()), true);
                         socket.end();
                         socket.on('close', () => {
                             socket.destroy();
@@ -40,7 +33,7 @@ describe('HTTP Proxy Client Tests', function () {
             });
         });
     });
-    it('should connect to a socket through proxy with auth', function (done) {
+    it('should connect to a socket through proxy with auth', (t, done) => {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -52,9 +45,9 @@ describe('HTTP Proxy Client Tests', function () {
             };
             proxyServer.listen(PROXY_PORT, () => {
                 httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
-                    expect(err).to.not.exist;
+                    assert.ok(!err);
                     socket.once('data', chunk => {
-                        expect(/^220[ -]/.test(chunk.toString())).to.be.true;
+                        assert.strictEqual(/^220[ -]/.test(chunk.toString()), true);
                         socket.end();
                         socket.on('close', () => {
                             socket.destroy();
@@ -66,7 +59,7 @@ describe('HTTP Proxy Client Tests', function () {
         });
     });
 
-    it('should should fail auth', function (done) {
+    it('should should fail auth', (t, done) => {
         let smtpServer = new SMTPServer({
             logger: false
         });
@@ -78,8 +71,8 @@ describe('HTTP Proxy Client Tests', function () {
             };
             proxyServer.listen(PROXY_PORT, () => {
                 httpProxyClient('http://test:kest@localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
-                    expect(err).to.exist;
-                    expect(socket).to.not.exist;
+                    assert.ok(err);
+                    assert.ok(!socket);
 
                     smtpServer.close(() => setImmediate(done) && proxyServer.close());
                 });
@@ -87,7 +80,7 @@ describe('HTTP Proxy Client Tests', function () {
         });
     });
 
-    it('should should fail with timeout', function (done) {
+    it('should should fail with timeout', (t, done) => {
         let proxyServer = proxy(http.createServer());
         proxyServer.authenticate = (req, cb) => {
             cb(null, req.headers['proxy-authorization'] === 'Basic dGVzdDpwZXN0');
@@ -96,9 +89,9 @@ describe('HTTP Proxy Client Tests', function () {
             httpProxyClient.timeout = 5 * 1000;
             // using kreata.ee (178.33.49.65) as the destination. This port is not allowed by firewall so it times out
             httpProxyClient('http://test:pest@localhost:' + PROXY_PORT, 12345, '178.33.49.65', (err, socket) => {
-                expect(err).to.exist;
-                expect(socket).to.not.exist;
-                expect(err.code).to.equal('ETIMEDOUT');
+                assert.ok(err);
+                assert.ok(!socket);
+                assert.strictEqual(err.code, 'ETIMEDOUT');
 
                 setImmediate(done) && proxyServer.close();
             });

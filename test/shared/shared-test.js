@@ -1,41 +1,36 @@
-/* eslint no-unused-expressions:0, no-invalid-this:0, prefer-arrow-callback: 0 */
-/* globals beforeEach, afterEach, describe, it, before */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it, before, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
 const shared = require('../../lib/shared');
 
 const http = require('http');
 const fs = require('fs');
 const zlib = require('zlib');
 
-chai.config.includeStack = true;
-
-describe('Shared Funcs Tests', function () {
-    this.timeout(100 * 1000); // eslint-disable-line no-invalid-this
-
-    describe('Logger tests', function () {
-        it('Should create a logger', function () {
-            expect(
+describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
+    describe('Logger tests', () => {
+        it('Should create a logger', () => {
+            assert.strictEqual(
                 typeof shared.getLogger({
                     logger: false
-                })
-            ).to.equal('object');
-            expect(
+                }),
+                'object'
+            );
+            assert.strictEqual(
                 typeof shared.getLogger({
                     logger: true
-                })
-            ).to.equal('object');
-            expect(typeof shared.getLogger()).to.equal('object');
+                }),
+                'object'
+            );
+            assert.strictEqual(typeof shared.getLogger(), 'object');
         });
     });
 
-    describe('Connection url parser tests', function () {
-        it('Should parse connection url', function () {
+    describe('Connection url parser tests', () => {
+        it('Should parse connection url', () => {
             let url = 'smtps://user:pass@localhost:123?tls.rejectUnauthorized=false&name=horizon';
-            expect(shared.parseConnectionUrl(url)).to.deep.equal({
+            assert.deepStrictEqual(shared.parseConnectionUrl(url), {
                 secure: true,
                 port: 123,
                 host: 'localhost',
@@ -50,9 +45,9 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should not choke on special symbols in auth', function () {
+        it('should not choke on special symbols in auth', () => {
             let url = 'smtps://user%40gmail.com:%3Apasswith%25Char@smtp.gmail.com';
-            expect(shared.parseConnectionUrl(url)).to.deep.equal({
+            assert.deepStrictEqual(shared.parseConnectionUrl(url), {
                 secure: true,
                 host: 'smtp.gmail.com',
                 auth: {
@@ -63,12 +58,12 @@ describe('Shared Funcs Tests', function () {
         });
     });
 
-    describe('Resolver tests', function () {
+    describe('Resolver tests', () => {
         let port = 10337;
         let server;
 
-        beforeEach(function (done) {
-            server = http.createServer(function (req, res) {
+        beforeEach((t, done) => {
+            server = http.createServer((req, res) => {
                 if (/redirect/.test(req.url)) {
                     res.writeHead(302, {
                         Location: 'http://localhost:' + port + '/message.html'
@@ -94,37 +89,37 @@ describe('Shared Funcs Tests', function () {
             server.listen(port, done);
         });
 
-        afterEach(function (done) {
+        afterEach((t, done) => {
             server.close(done);
         });
 
-        it('should set text from html string', function (done) {
+        it('should set text from html string', (t, done) => {
             let mail = {
                 data: {
                     html: '<p>Tere, tere</p><p>vana kere!</p>\n'
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.equal('<p>Tere, tere</p><p>vana kere!</p>\n');
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.strictEqual(value, '<p>Tere, tere</p><p>vana kere!</p>\n');
                 done();
             });
         });
 
-        it('should set text from html buffer', function (done) {
+        it('should set text from html buffer', (t, done) => {
             let mail = {
                 data: {
                     html: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(mail.data.html);
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, mail.data.html);
                 done();
             });
         });
 
-        it('should set text from a html file', function (done) {
+        it('should set text from a html file', (t, done) => {
             let mail = {
                 data: {
                     html: {
@@ -132,14 +127,14 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from an html url', function (done) {
+        it('should set text from an html url', (t, done) => {
             let mail = {
                 data: {
                     html: {
@@ -147,14 +142,14 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from redirecting url', function (done) {
+        it('should set text from redirecting url', (t, done) => {
             let mail = {
                 data: {
                     html: {
@@ -162,14 +157,14 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from gzipped url', function (done) {
+        it('should set text from gzipped url', (t, done) => {
             let mail = {
                 data: {
                     html: {
@@ -177,32 +172,32 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set text from a html stream', function (done) {
+        it('should set text from a html stream', (t, done) => {
             let mail = {
                 data: {
                     html: fs.createReadStream(__dirname + '/fixtures/message.html')
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(mail).to.deep.equal({
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(mail, {
                     data: {
                         html: Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n')
                     }
                 });
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should set content from a stream and preserve other properties', function (done) {
+        it('should set content from a stream and preserve other properties', (t, done) => {
             let mail = {
                 data: {
                     attachment: {
@@ -211,9 +206,9 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'attachment', function (err, value) {
-                expect(err).to.not.exist;
-                expect(mail).to.deep.equal({
+            shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(mail, {
                     data: {
                         attachment: {
                             filename: 'message.html',
@@ -221,12 +216,12 @@ describe('Shared Funcs Tests', function () {
                         }
                     }
                 });
-                expect(value).to.deep.equal(Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
+                assert.deepStrictEqual(value, Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n'));
                 done();
             });
         });
 
-        it('should return an error', function (done) {
+        it('should return an error', (t, done) => {
             let mail = {
                 data: {
                     html: {
@@ -234,13 +229,13 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err) {
-                expect(err).to.exist;
+            shared.resolveContent(mail.data, 'html', err => {
+                assert.ok(err);
                 done();
             });
         });
 
-        it('should return encoded string as buffer', function (done) {
+        it('should return encoded string as buffer', (t, done) => {
             let str = '<p>Tere, tere</p><p>vana kere!</p>\n';
             let mail = {
                 data: {
@@ -250,15 +245,15 @@ describe('Shared Funcs Tests', function () {
                     }
                 }
             };
-            shared.resolveContent(mail.data, 'html', function (err, value) {
-                expect(err).to.not.exist;
-                expect(value).to.deep.equal(Buffer.from(str));
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(value, Buffer.from(str));
                 done();
             });
         });
 
-        describe('data uri tests', function () {
-            it('should resolve with mime type and base64', function (done) {
+        describe('data uri tests', () => {
+            it('should resolve with mime type and base64', (t, done) => {
                 let mail = {
                     data: {
                         attachment: {
@@ -266,9 +261,10 @@ describe('Shared Funcs Tests', function () {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function (err, value) {
-                    expect(err).to.not.exist;
-                    expect(value).to.deep.equal(
+                shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                    assert.ok(!err);
+                    assert.deepStrictEqual(
+                        value,
                         Buffer.from(
                             'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
                             'base64'
@@ -278,7 +274,7 @@ describe('Shared Funcs Tests', function () {
                 });
             });
 
-            it('should resolve with mime type and plaintext', function (done) {
+            it('should resolve with mime type and plaintext', (t, done) => {
                 let mail = {
                     data: {
                         attachment: {
@@ -286,14 +282,14 @@ describe('Shared Funcs Tests', function () {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function (err, value) {
-                    expect(err).to.not.exist;
-                    expect(value).to.deep.equal(Buffer.from('tere tere'));
+                shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                    assert.ok(!err);
+                    assert.deepStrictEqual(value, Buffer.from('tere tere'));
                     done();
                 });
             });
 
-            it('should resolve with plaintext', function (done) {
+            it('should resolve with plaintext', (t, done) => {
                 let mail = {
                     data: {
                         attachment: {
@@ -301,14 +297,14 @@ describe('Shared Funcs Tests', function () {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function (err, value) {
-                    expect(err).to.not.exist;
-                    expect(value).to.deep.equal(Buffer.from('tere tere'));
+                shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                    assert.ok(!err);
+                    assert.deepStrictEqual(value, Buffer.from('tere tere'));
                     done();
                 });
             });
 
-            it('should resolve with mime type, charset and base64', function (done) {
+            it('should resolve with mime type, charset and base64', (t, done) => {
                 let mail = {
                     data: {
                         attachment: {
@@ -316,9 +312,10 @@ describe('Shared Funcs Tests', function () {
                         }
                     }
                 };
-                shared.resolveContent(mail.data, 'attachment', function (err, value) {
-                    expect(err).to.not.exist;
-                    expect(value).to.deep.equal(
+                shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                    assert.ok(!err);
+                    assert.deepStrictEqual(
+                        value,
                         Buffer.from(
                             'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
                             'base64'
@@ -330,8 +327,8 @@ describe('Shared Funcs Tests', function () {
         });
     });
 
-    describe('#assign tests', function () {
-        it('should assign multiple objects to target', function () {
+    describe('#assign tests', () => {
+        it('should assign multiple objects to target', () => {
             let target = {
                 a: 1,
                 b: 2,
@@ -349,7 +346,7 @@ describe('Shared Funcs Tests', function () {
             };
 
             shared.assign(target, arg1, arg2);
-            expect(target).to.deep.equal({
+            assert.deepStrictEqual(target, {
                 a: 1,
                 b: 5,
                 c: 3,
@@ -360,43 +357,43 @@ describe('Shared Funcs Tests', function () {
         });
     });
 
-    describe('#encodeXText tests', function () {
-        it('should not encode atom', function () {
-            expect(shared.encodeXText('teretere')).to.equal('teretere');
+    describe('#encodeXText tests', () => {
+        it('should not encode atom', () => {
+            assert.strictEqual(shared.encodeXText('teretere'), 'teretere');
         });
 
-        it('should not encode email', function () {
-            expect(shared.encodeXText('andris.reinman@gmail.com')).to.equal('andris.reinman@gmail.com');
+        it('should not encode email', () => {
+            assert.strictEqual(shared.encodeXText('andris.reinman@gmail.com'), 'andris.reinman@gmail.com');
         });
 
-        it('should encode space', function () {
-            expect(shared.encodeXText('tere tere')).to.equal('tere+20tere');
+        it('should encode space', () => {
+            assert.strictEqual(shared.encodeXText('tere tere'), 'tere+20tere');
         });
 
-        it('should encode unicode', function () {
-            expect(shared.encodeXText('tere tõre')).to.equal('tere+20t+C3+B5re');
+        it('should encode unicode', () => {
+            assert.strictEqual(shared.encodeXText('tere tõre'), 'tere+20t+C3+B5re');
         });
 
-        it('should encode low codes', function () {
-            expect(shared.encodeXText('tere t\tre')).to.equal('tere+20t+09re');
+        it('should encode low codes', () => {
+            assert.strictEqual(shared.encodeXText('tere t\tre'), 'tere+20t+09re');
         });
     });
 
-    describe('#resolveHostname tests', function () {
+    describe('#resolveHostname tests', () => {
         let networkInterfaces;
 
-        before(function (done) {
+        before((t, done) => {
             networkInterfaces = JSON.parse(JSON.stringify(shared.networkInterfaces));
             done();
         });
 
-        beforeEach(function (done) {
+        beforeEach((t, done) => {
             shared.dnsCache.clear();
 
             done();
         });
 
-        afterEach(function (done) {
+        afterEach((t, done) => {
             // reset network interfaces
             Object.keys(shared.networkInterfaces).forEach(key => {
                 delete shared.networkInterfaces[key];
@@ -405,21 +402,20 @@ describe('Shared Funcs Tests', function () {
             Object.keys(networkInterfaces).forEach(key => {
                 shared.networkInterfaces[key] = networkInterfaces[key];
             });
-
             done();
         });
 
-        it('should resolve a single IPv4 entry', function (done) {
+        it('should resolve a single IPv4 entry', (t, done) => {
             shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
                     servername: 'ipv4.single.dev.ethereal.email',
                     host: '95.216.108.161',
                     cached: false
                 });
                 shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
-                    expect(err).to.not.exist;
-                    expect(result).to.deep.equal({
+                    assert.ok(!err);
+                    assert.deepStrictEqual(result, {
                         servername: 'ipv4.single.dev.ethereal.email',
                         host: '95.216.108.161',
                         cached: true
@@ -429,13 +425,13 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should resolve multiple IPv4 entries', function (done) {
+        it('should resolve multiple IPv4 entries', (t, done) => {
             let found = new Set();
             let count = 0;
 
             let resolveNext = () => {
                 if (count++ > 100) {
-                    expect(new Error('too many tries')).to.not.exist;
+                    assert.ok(!new Error('too many tries'));
                     return done();
                 }
 
@@ -444,10 +440,10 @@ describe('Shared Funcs Tests', function () {
                 }
 
                 shared.resolveHostname({ host: 'ipv4.multi.dev.ethereal.email', dnsTtl: 1 }, (err, result) => {
-                    expect(err).to.not.exist;
+                    assert.ok(!err);
 
-                    expect(result.servername).to.equal('ipv4.multi.dev.ethereal.email');
-                    expect(result.host).to.exist;
+                    assert.strictEqual(result.servername, 'ipv4.multi.dev.ethereal.email');
+                    assert.ok(result.host);
 
                     found.add(result.host);
 
@@ -458,7 +454,7 @@ describe('Shared Funcs Tests', function () {
             resolveNext();
         });
 
-        it('should resolve a single IPv6 entry', function (done) {
+        it('should resolve a single IPv6 entry', (t, done) => {
             // ensure that there is a single Ipv6 interface "available"
             Object.keys(shared.networkInterfaces).forEach(key => {
                 delete shared.networkInterfaces[key];
@@ -477,15 +473,15 @@ describe('Shared Funcs Tests', function () {
             ];
 
             shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, (err, result) => {
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
                     servername: 'ipv6.single.dev.ethereal.email',
                     host: '2a01:4f9:3051:4501::2',
                     cached: false
                 });
                 shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, (err, result) => {
-                    expect(err).to.not.exist;
-                    expect(result).to.deep.equal({
+                    assert.ok(!err);
+                    assert.deepStrictEqual(result, {
                         servername: 'ipv6.single.dev.ethereal.email',
                         host: '2a01:4f9:3051:4501::2',
                         cached: true
@@ -495,17 +491,17 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should fail missing address', function (done) {
+        it('should fail missing address', (t, done) => {
             shared.resolveHostname({ host: 'missing.single.dev.ethereal.email' }, err => {
-                expect(err).to.exist;
+                assert.ok(err);
                 done();
             });
         });
 
-        it('should return provided IP', function (done) {
+        it('should return provided IP', (t, done) => {
             shared.resolveHostname({ host: '1.2.3.4', servername: 'example.com' }, (err, result) => {
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
                     servername: 'example.com',
                     host: '1.2.3.4',
                     cached: false
@@ -514,7 +510,7 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should fail resolving a single internal IPv4 entry', function (done) {
+        it('should fail resolving a single internal IPv4 entry', (t, done) => {
             // ensure that there is a single Ipv4 interface "available"
             Object.keys(shared.networkInterfaces).forEach(key => {
                 delete shared.networkInterfaces[key];
@@ -532,8 +528,8 @@ describe('Shared Funcs Tests', function () {
             ];
 
             shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
                     servername: 'ipv4.single.dev.ethereal.email',
                     host: 'ipv4.single.dev.ethereal.email',
                     cached: false
@@ -542,7 +538,7 @@ describe('Shared Funcs Tests', function () {
             });
         });
 
-        it('should succeed resolving a single internal IPv4 entry', function (done) {
+        it('should succeed resolving a single internal IPv4 entry', (t, done) => {
             // ensure that there is a single Ipv4 interface "available"
             Object.keys(shared.networkInterfaces).forEach(key => {
                 delete shared.networkInterfaces[key];
@@ -565,8 +561,8 @@ describe('Shared Funcs Tests', function () {
                     allowInternalNetworkInterfaces: true
                 },
                 (err, result) => {
-                    expect(err).to.not.exist;
-                    expect(result).to.deep.equal({
+                    assert.ok(!err);
+                    assert.deepStrictEqual(result, {
                         servername: 'ipv4.single.dev.ethereal.email',
                         host: '95.216.108.161',
                         cached: false

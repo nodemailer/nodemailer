@@ -4,5 +4,6 @@ examples
 .eslintrc
 .gitignore
 .travis.yml
-Gruntfile.js
+.c8rc.json
 .github/
+coverage/

@@ -1,25 +1,19 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const StreamTransport = require('../../lib/stream-transport');
 const MailComposer = require('../../lib/mail-composer');
-chai.config.includeStack = true;
 
-describe('Stream Transport Tests', function () {
-    this.timeout(10000); // eslint-disable-line no-invalid-this
-
-    it('Should expose version number', function () {
+describe('Stream Transport Tests', { timeout: 10000 }, () => {
+    it('Should expose version number', () => {
         let client = new StreamTransport();
-        expect(client.name).to.exist;
-        expect(client.version).to.exist;
+        assert.ok(client.name);
+        assert.ok(client.version);
     });
 
-    describe('Send as stream', function () {
-        it('Should send mail using unix newlines', function (done) {
+    describe('Send as stream', () => {
+        it('Should send mail using unix newlines', (t, done) => {
             let client = new StreamTransport();
             let chunks = [],
                 message = new Array(100).join('teretere\r\nvana kere\r\n');
@@ -34,28 +28,28 @@ describe('Stream Transport Tests', function () {
                         raw: Buffer.from(message)
                     }).compile()
                 },
-                function (err, info) {
-                    expect(err).to.not.exist;
+                (err, info) => {
+                    assert.ok(!err);
 
-                    expect(info.envelope).to.deep.equal({
+                    assert.deepStrictEqual(info.envelope, {
                         from: 'test@valid.sender',
                         to: ['test@valid.recipient']
                     });
 
-                    info.message.on('data', function (chunk) {
+                    info.message.on('data', chunk => {
                         chunks.push(chunk);
                     });
 
-                    info.message.on('end', function () {
+                    info.message.on('end', () => {
                         let body = Buffer.concat(chunks);
-                        expect(body.toString()).to.equal(message.replace(/\r\n/g, '\n'));
+                        assert.strictEqual(body.toString(), message.replace(/\r\n/g, '\n'));
                         done();
                     });
                 }
             );
         });
 
-        it('Should send mail using windows newlines', function (done) {
+        it('Should send mail using windows newlines', (t, done) => {
             let client = new StreamTransport({
                 newline: 'windows'
             });
@@ -72,16 +66,16 @@ describe('Stream Transport Tests', function () {
                         raw: Buffer.from(message)
                     }).compile()
                 },
-                function (err, info) {
-                    expect(err).to.not.exist;
+                (err, info) => {
+                    assert.ok(!err);
 
-                    info.message.on('data', function (chunk) {
+                    info.message.on('data', chunk => {
                         chunks.push(chunk);
                     });
 
-                    info.message.on('end', function () {
+                    info.message.on('end', () => {
                         let body = Buffer.concat(chunks);
-                        expect(body.toString()).to.equal(message.replace(/\n/g, '\r\n'));
+                        assert.strictEqual(body.toString(), message.replace(/\n/g, '\r\n'));
                         done();
                     });
                 }
@@ -89,8 +83,8 @@ describe('Stream Transport Tests', function () {
         });
     });
 
-    describe('Send as buffer', function () {
-        it('Should send mail using unix newlines', function (done) {
+    describe('Send as buffer', () => {
+        it('Should send mail using unix newlines', (t, done) => {
             let client = new StreamTransport({
                 buffer: true
             });
@@ -106,15 +100,15 @@ describe('Stream Transport Tests', function () {
                         raw: Buffer.from(message)
                     }).compile()
                 },
-                function (err, info) {
-                    expect(err).to.not.exist;
-                    expect(info.message.toString()).to.equal(message.replace(/\r\n/g, '\n'));
+                (err, info) => {
+                    assert.ok(!err);
+                    assert.strictEqual(info.message.toString(), message.replace(/\r\n/g, '\n'));
                     done();
                 }
             );
         });
 
-        it('Should send mail using windows newlines', function (done) {
+        it('Should send mail using windows newlines', (t, done) => {
             let client = new StreamTransport({
                 newline: 'windows',
                 buffer: true
@@ -131,10 +125,10 @@ describe('Stream Transport Tests', function () {
                         raw: Buffer.from(message)
                     }).compile()
                 },
-                function (err, info) {
-                    expect(err).to.not.exist;
+                (err, info) => {
+                    assert.ok(!err);
 
-                    expect(info.message.toString()).to.equal(message.replace(/\n/g, '\r\n'));
+                    assert.strictEqual(info.message.toString(), message.replace(/\n/g, '\r\n'));
                     done();
                 }
             );

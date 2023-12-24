@@ -1,18 +1,13 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 
 //let http = require('http');
 const MessageParser = require('../../lib/dkim/message-parser');
 
-chai.config.includeStack = true;
-
-describe('DKIM MessageParser Tests', function () {
-    it('should extract header and body', function (done) {
+describe('DKIM MessageParser Tests', () => {
+    it('should extract header and body', (t, done) => {
         let parser = new MessageParser();
         let message = `From: saatja aadress
 To: Saaja aadress
@@ -36,14 +31,14 @@ teine rida
         parser.on('end', () => {
             end = true;
             let body = Buffer.concat(chunks).toString();
-            expect(body).to.equal('tere tere\nteine rida\n');
+            assert.strictEqual(body, 'tere tere\nteine rida\n');
             if (headers) {
                 return done();
             }
         });
 
         parser.on('headers', data => {
-            expect(data).to.deep.equal([
+            assert.deepStrictEqual(data, [
                 // fix auto format
                 {
                     key: 'from',

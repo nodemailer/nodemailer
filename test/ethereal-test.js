@@ -1,20 +1,15 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
 const nodemailer = require('../lib/nodemailer');
-const chai = require('chai');
-const expect = chai.expect;
-chai.config.includeStack = true;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 
-describe('Ethereal Tests', function () {
-    this.timeout(50 * 1000); // eslint-disable-line no-invalid-this
-    it('should create an account and send a message', function (done) {
+describe('Ethereal Tests', { timeout: 50 * 1000 }, () => {
+    it('should create an account and send a message', (t, done) => {
         // Generate SMTP service account from ethereal.email
         nodemailer.createTestAccount((err, account) => {
-            expect(err).to.not.exist;
-            expect(account.user).to.exist;
+            assert.ok(!err);
+            assert.ok(account.user);
 
             let transporter = nodemailer.createTransport({
                 host: account.smtp.host,
@@ -36,28 +31,28 @@ describe('Ethereal Tests', function () {
             };
 
             transporter.sendMail(message, (err, info) => {
-                expect(err).to.not.exist;
-                expect(nodemailer.getTestMessageUrl(info)).to.include('ethereal');
+                assert.ok(!err);
+                assert.ok(nodemailer.getTestMessageUrl(info).includes('ethereal'));
                 done();
             });
         });
     });
 
-    it('should cache a created test account', function (done) {
+    it('should cache a created test account', (t, done) => {
         nodemailer.createTestAccount((err, account) => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
             nodemailer.createTestAccount((err, account2) => {
-                expect(err).to.not.exist;
-                expect(account2).to.equal(account);
+                assert.ok(!err);
+                assert.strictEqual(account2, account);
                 done();
             });
         });
     });
 
-    it('should cache a created test account when using promises', function (done) {
+    it('should cache a created test account when using promises', (t, done) => {
         nodemailer.createTestAccount().then(account => {
             nodemailer.createTestAccount().then(account2 => {
-                expect(account2).to.equal(account);
+                assert.strictEqual(account2, account);
                 done();
             });
         });

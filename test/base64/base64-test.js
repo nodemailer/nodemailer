@@ -1,18 +1,13 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const libbase64 = require('libbase64');
 const base64 = require('../../lib/base64');
-const chai = require('chai');
-const expect = chai.expect;
 const crypto = require('crypto');
 const fs = require('fs');
 
-chai.config.includeStack = true;
-
-describe('Base64 Tests', function () {
+describe('Base64 Tests', () => {
     let encodeFixtures = [
         ['abcd= ÕÄÖÜ', 'YWJjZD0gw5XDhMOWw5w='],
         ['foo bar  ', 'Zm9vIGJhciAg'],
@@ -27,28 +22,28 @@ describe('Base64 Tests', function () {
         'MTIzNDU2N\r\nzg5MDEyMz\r\nQ1Njc4ICA\r\n5MA0Kw7XD\r\npMO2w7zDt\r\ncOkw7bDvM\r\nO1w6TDtsO\r\n8w7XDpMO2\r\nw7zDtcOkw\r\n7bDvMO1w6\r\nTDtsO8w7X\r\nDpMO2w7zD\r\ntcOkw7bDv\r\nCBhbm90aG\r\nVyIGxpbmU\r\ngPT09IA=='
     ];
 
-    describe('#encode', function () {
-        it('shoud encode UTF-8 string to base64', function () {
-            encodeFixtures.forEach(function (test) {
-                expect(base64.encode(test[0])).to.equal(test[1]);
+    describe('#encode', () => {
+        it('shoud encode UTF-8 string to base64', () => {
+            encodeFixtures.forEach(test => {
+                assert.strictEqual(base64.encode(test[0]), test[1]);
             });
         });
 
-        it('shoud encode Buffer to base64', function () {
-            expect(base64.encode(Buffer.from([0x00, 0x01, 0x02, 0x20, 0x03]))).to.equal('AAECIAM=');
+        it('shoud encode Buffer to base64', () => {
+            assert.strictEqual(base64.encode(Buffer.from([0x00, 0x01, 0x02, 0x20, 0x03])), 'AAECIAM=');
         });
     });
 
-    describe('#wrap', function () {
-        it('should wrap long base64 encoded lines', function () {
-            wrapFixtures.forEach(function (test) {
-                expect(base64.wrap(test[0], 20)).to.equal(test[1]);
+    describe('#wrap', () => {
+        it('should wrap long base64 encoded lines', () => {
+            wrapFixtures.forEach(test => {
+                assert.strictEqual(base64.wrap(test[0], 20), test[1]);
             });
         });
     });
 
-    describe('base64 Streams', function () {
-        it('should transform incoming bytes to base64', function (done) {
+    describe('base64 Streams', () => {
+        it('should transform incoming bytes to base64', (t, done) => {
             let encoder = new base64.Encoder({
                 lineLength: 9
             });
@@ -58,23 +53,23 @@ describe('Base64 Tests', function () {
                 buf = [],
                 buflen = 0;
 
-            encoder.on('data', function (chunk) {
+            encoder.on('data', chunk => {
                 buf.push(chunk);
                 buflen += chunk.length;
             });
 
-            encoder.on('end', function (chunk) {
+            encoder.on('end', chunk => {
                 if (chunk) {
                     buf.push(chunk);
                     buflen += chunk.length;
                 }
                 buf = Buffer.concat(buf, buflen);
 
-                expect(buf.toString()).to.equal(streamFixture[1]);
+                assert.strictEqual(buf.toString(), streamFixture[1]);
                 done();
             });
 
-            let sendNextByte = function () {
+            let sendNextByte = () => {
                 if (i >= bytes.length) {
                     return encoder.end();
                 }
@@ -87,7 +82,7 @@ describe('Base64 Tests', function () {
             sendNextByte();
         });
 
-        it('should transform incoming bytes to base64 and back', function (done) {
+        it('should transform incoming bytes to base64 and back', (t, done) => {
             let decoder = new libbase64.Decoder();
             let encoder = new base64.Encoder();
             let file = fs.createReadStream(__dirname + '/fixtures/alice.txt');
@@ -97,21 +92,21 @@ describe('Base64 Tests', function () {
 
             file.pipe(encoder).pipe(decoder);
 
-            file.on('data', function (chunk) {
+            file.on('data', chunk => {
                 fhash.update(chunk);
             });
 
-            file.on('end', function () {
+            file.on('end', () => {
                 fhash = fhash.digest('hex');
             });
 
-            decoder.on('data', function (chunk) {
+            decoder.on('data', chunk => {
                 dhash.update(chunk);
             });
 
-            decoder.on('end', function () {
+            decoder.on('end', () => {
                 dhash = dhash.digest('hex');
-                expect(fhash).to.equal(dhash);
+                assert.strictEqual(fhash, dhash);
                 done();
             });
         });

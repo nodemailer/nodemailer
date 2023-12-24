@@ -1,23 +1,18 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const LeUnix = require('../../lib/mime-node/le-unix');
-const chai = require('chai');
-const expect = chai.expect;
 
-chai.config.includeStack = true;
-
-describe('Sendmail Unix Newlines', function () {
-    it('should rewrite all linebreaks (byte by byte)', function (done) {
+describe('Sendmail Unix Newlines', () => {
+    it('should rewrite all linebreaks (byte by byte)', (t, done) => {
         let source = 'tere tere\nteine rida\nkolmas rida\r\nneljas rida\r\nviies rida\n kuues rida';
 
         let chunks = [];
         let out = new LeUnix();
         out.on('data', chunk => chunks.push(chunk));
         out.on('end', () => {
-            expect(Buffer.concat(chunks).toString()).to.equal(source.replace(/\r?\n/g, '\n'));
+            assert.strictEqual(Buffer.concat(chunks).toString(), source.replace(/\r?\n/g, '\n'));
             done();
         });
 
@@ -34,14 +29,14 @@ describe('Sendmail Unix Newlines', function () {
         setImmediate(writeNextByte);
     });
 
-    it('should rewrite all linebreaks (all at once)', function (done) {
+    it('should rewrite all linebreaks (all at once)', (t, done) => {
         let source = 'tere tere\nteine rida\nkolmas rida\r\nneljas rida\r\nviies rida\n kuues rida';
 
         let chunks = [];
         let out = new LeUnix();
         out.on('data', chunk => chunks.push(chunk));
         out.on('end', () => {
-            expect(Buffer.concat(chunks).toString()).to.equal(source.replace(/\r?\n/g, '\n'));
+            assert.strictEqual(Buffer.concat(chunks).toString(), source.replace(/\r?\n/g, '\n'));
             done();
         });
 

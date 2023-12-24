@@ -1,16 +1,11 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0, no-undefined: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const addressparser = require('../../lib/addressparser');
-const expect = chai.expect;
 
-chai.config.includeStack = true;
-
-describe('#addressparser', function () {
-    it('should handle single address correctly', function () {
+describe('#addressparser', () => {
+    it('should handle single address correctly', () => {
         let input = 'andris@tr.ee';
         let expected = [
             {
@@ -18,10 +13,10 @@ describe('#addressparser', function () {
                 name: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle multiple addresses correctly', function () {
+    it('should handle multiple addresses correctly', () => {
         let input = 'andris@tr.ee, andris@example.com';
         let expected = [
             {
@@ -33,10 +28,10 @@ describe('#addressparser', function () {
                 name: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle unquoted name correctly', function () {
+    it('should handle unquoted name correctly', () => {
         let input = 'andris <andris@tr.ee>';
         let expected = [
             {
@@ -44,10 +39,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle quoted name correctly', function () {
+    it('should handle quoted name correctly', () => {
         let input = '"reinman, andris" <andris@tr.ee>';
         let expected = [
             {
@@ -55,10 +50,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle quoted semicolons correctly', function () {
+    it('should handle quoted semicolons correctly', () => {
         let input = '"reinman; andris" <andris@tr.ee>';
         let expected = [
             {
@@ -66,10 +61,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle unquoted name, unquoted address correctly', function () {
+    it('should handle unquoted name, unquoted address correctly', () => {
         let input = 'andris andris@tr.ee';
         let expected = [
             {
@@ -77,10 +72,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle emtpy group correctly', function () {
+    it('should handle emtpy group correctly', () => {
         let input = 'Undisclosed:;';
         let expected = [
             {
@@ -88,10 +83,10 @@ describe('#addressparser', function () {
                 group: []
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle address group correctly', function () {
+    it('should handle address group correctly', () => {
         let input = 'Disclosed:andris@tr.ee, andris@example.com;';
         let expected = [
             {
@@ -108,10 +103,10 @@ describe('#addressparser', function () {
                 ]
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle semicolon as a delimiter', function () {
+    it('should handle semicolon as a delimiter', () => {
         let input = 'andris@tr.ee; andris@example.com;';
         let expected = [
             {
@@ -123,10 +118,10 @@ describe('#addressparser', function () {
                 name: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle mixed group correctly', function () {
+    it('should handle mixed group correctly', () => {
         let input = 'Test User <test.user@mail.ee>, Disclosed:andris@tr.ee, andris@example.com;,,,, Undisclosed:;';
         let expected = [
             {
@@ -151,10 +146,10 @@ describe('#addressparser', function () {
                 group: []
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should flatten mixed group correctly', function () {
+    it('should flatten mixed group correctly', () => {
         let input = 'Test User <test.user@mail.ee>, Disclosed:andris@tr.ee, andris@example.com;,,,, Undisclosed:; bob@example.com BOB;';
         let expected = [
             {
@@ -175,10 +170,10 @@ describe('#addressparser', function () {
                 name: 'BOB'
             }
         ];
-        expect(addressparser(input, { flatten: true })).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input, { flatten: true }), expected);
     });
 
-    it('semicolon as delimiter should not break group parsing', function () {
+    it('semicolon as delimiter should not break group parsing', () => {
         let input = 'Test User <test.user@mail.ee>; Disclosed:andris@tr.ee, andris@example.com;,,,, Undisclosed:; bob@example.com;';
         let expected = [
             {
@@ -207,10 +202,10 @@ describe('#addressparser', function () {
                 name: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle name from comment correctly', function () {
+    it('should handle name from comment correctly', () => {
         let input = 'andris@tr.ee (andris)';
         let expected = [
             {
@@ -218,10 +213,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle skip comment correctly', function () {
+    it('should handle skip comment correctly', () => {
         let input = 'andris@tr.ee (reinman) andris';
         let expected = [
             {
@@ -229,10 +224,10 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle missing address correctly', function () {
+    it('should handle missing address correctly', () => {
         let input = 'andris';
         let expected = [
             {
@@ -240,10 +235,10 @@ describe('#addressparser', function () {
                 address: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle apostrophe in name correctly', function () {
+    it('should handle apostrophe in name correctly', () => {
         let input = 'O\x27Neill';
         let expected = [
             {
@@ -251,10 +246,10 @@ describe('#addressparser', function () {
                 address: ''
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle particularily bad input, unescaped colon correctly', function () {
+    it('should handle particularily bad input, unescaped colon correctly', () => {
         let input = 'FirstName Surname-WithADash :: Company <firstname@company.com>';
         let expected = [
             {
@@ -272,11 +267,11 @@ describe('#addressparser', function () {
                 ]
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
     // should not change an invalid email to valid email
-    it('should handle invalid email address correctly', function () {
+    it('should handle invalid email address correctly', () => {
         let input = 'name@address.com@address2.com';
         let expected = [
             {
@@ -284,10 +279,10 @@ describe('#addressparser', function () {
                 address: 'name@address.com@address2.com'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle unexpected <', function () {
+    it('should handle unexpected <', () => {
         let input = 'reinman > andris < test <andris@tr.ee>';
         let expected = [
             {
@@ -295,12 +290,12 @@ describe('#addressparser', function () {
                 address: 'andris@tr.ee'
             }
         ];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle escapes', function () {
+    it('should handle escapes', () => {
         let input = '"Firstname \\" \\\\\\, Lastname \\(Test\\)" test@example.com';
         let expected = [{ address: 'test@example.com', name: 'Firstname " \\, Lastname (Test)' }];
-        expect(addressparser(input)).to.deep.equal(expected);
+        assert.deepStrictEqual(addressparser(input), expected);
     });
 });
