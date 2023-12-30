@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.8](https://github.com/nodemailer/nodemailer/compare/v6.9.7...v6.9.8) (2023-12-30)
+
+
+### Bug Fixes
+
+* **punycode:** do not use native punycode module ([b4d0e0c](https://github.com/nodemailer/nodemailer/commit/b4d0e0c7cc4b15bc4d9e287f91d1bcaca87508b0))
+
 ## [6.9.7](https://github.com/nodemailer/nodemailer/compare/v6.9.6...v6.9.7) (2023-10-22)
 
 
