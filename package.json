@@ -4,8 +4,8 @@
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
-        "test": "node --test --test-concurrency=1 'test/**/*.test.js' 'test/**/*-test.js'",
-        "test:coverage": "c8 node --test --test-concurrency=1 'test/**/*.test.js' 'test/**/*-test.js'",
+        "test": "node --test --test-concurrency=1 test/**/*.test.js test/**/*-test.js",
+        "test:coverage": "c8 node --test --test-concurrency=1 test/**/*.test.js test/**/*-test.js",
         "lint": "eslint .",
         "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install"
     },
