@@ -8,21 +8,10 @@ Send emails from Node.js – easy as cake! 🍰✉️
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
----
-
+> [!TIP]
 > Check out **[EmailEngine](https://emailengine.app/?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link)** – a self-hosted email gateway that allows making **REST requests against IMAP and SMTP servers**. EmailEngine also sends webhooks whenever something changes on the registered accounts.\
 > \
 > Using the email accounts registered with EmailEngine, you can receive and [send emails](https://emailengine.app/sending-emails?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link). EmailEngine supports OAuth2, delayed sends, opens and clicks tracking, bounce detection, etc. All on top of regular email accounts without an external MTA service.
-
----
-
-This project is supported by [Forward Email](https://forwardemail.net) – the 100% open-source and privacy-focused email service.
-
----
-
-This project is supported by [Opensense](https://www.opensense.com) - The beautiful email signature management company for Office 365 and Google Workspace.
-
----
 
 ## Having an issue?
 
