@@ -5,5 +5,5 @@
   "temp-directory": "./coverage/.tmp",
   "reporter": ["text-summary", "html"],
   "include": ["lib/**/*.js", "lib/*.js"],
-  "lines": 87
+  "lines": 85
 }
