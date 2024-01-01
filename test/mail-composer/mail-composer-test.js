@@ -1,22 +1,16 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const MailComposer = require('../../lib/mail-composer');
-const sinon = require('sinon');
-const expect = chai.expect;
 
-chai.config.includeStack = true;
-
-describe('MailComposer unit tests', function () {
-    it('should create new MailComposer', function () {
-        expect(new MailComposer({})).to.exist;
+describe('MailComposer unit tests', () => {
+    it('should create new MailComposer', () => {
+        assert.ok(new MailComposer({}));
     });
 
-    describe('#compile', function () {
-        it('should use Mixed structure with text and attachment', function () {
+    describe('#compile', () => {
+        it('should use Mixed structure with text and attachment', (t) => {
             let data = {
                 text: 'abc',
                 attachments: [
@@ -27,13 +21,13 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createMixed');
+            const fn = t.mock.method(compiler, '_createMixed');
             compiler.compile();
-            expect(compiler._createMixed.callCount).to.equal(1);
-            compiler._createMixed.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should use Mixed structure with multiple attachments', function () {
+        it('should use Mixed structure with multiple attachments', (t) => {
             let data = {
                 attachments: [
                     {
@@ -46,31 +40,29 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createMixed');
+            const fn = t.mock.method(compiler, '_createMixed');
             compiler.compile();
-            expect(compiler._createMixed.callCount).to.equal(1);
-            compiler._createMixed.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text and html', function () {
+        it('should create Alternative structure with text and html', (t) => {
             let data = {
                 text: 'abc',
                 html: 'def'
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
+            const fn = t.mock.method(compiler, '_createAlternative');
             compiler.compile();
-            expect(compiler._createAlternative.callCount).to.equal(1);
-
-            expect(compiler._alternatives.length).to.equal(2);
-            expect(compiler._alternatives[0].contentType).to.equal('text/plain; charset=utf-8');
-            expect(compiler._alternatives[1].contentType).to.equal('text/html; charset=utf-8');
-
-            compiler._createAlternative.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            assert.strictEqual(compiler._alternatives.length, 2);
+            assert.strictEqual(compiler._alternatives[0].contentType, 'text/plain; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[1].contentType, 'text/html; charset=utf-8');
+            t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, watchHtml and html', function () {
+        it('should create Alternative structure with text, watchHtml and html', (t) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -78,17 +70,17 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
+            const fn = t.mock.method(compiler, '_createAlternative');
             compiler.compile();
-            expect(compiler._createAlternative.callCount).to.equal(1);
-            expect(compiler._alternatives.length).to.equal(3);
-            expect(compiler._alternatives[0].contentType).to.equal('text/plain; charset=utf-8');
-            expect(compiler._alternatives[1].contentType).to.equal('text/watch-html; charset=utf-8');
-            expect(compiler._alternatives[2].contentType).to.equal('text/html; charset=utf-8');
-            compiler._createAlternative.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            assert.strictEqual(compiler._alternatives.length, 3);
+            assert.strictEqual(compiler._alternatives[0].contentType, 'text/plain; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[1].contentType, 'text/watch-html; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[2].contentType, 'text/html; charset=utf-8');
+            t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, amp and html', function () {
+        it('should create Alternative structure with text, amp and html', (t) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -96,17 +88,17 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
+            const fn = t.mock.method(compiler, '_createAlternative');
             compiler.compile();
-            expect(compiler._createAlternative.callCount).to.equal(1);
-            expect(compiler._alternatives.length).to.equal(3);
-            expect(compiler._alternatives[0].contentType).to.equal('text/plain; charset=utf-8');
-            expect(compiler._alternatives[1].contentType).to.equal('text/x-amp-html; charset=utf-8');
-            expect(compiler._alternatives[2].contentType).to.equal('text/html; charset=utf-8');
-            compiler._createAlternative.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            assert.strictEqual(compiler._alternatives.length, 3);
+            assert.strictEqual(compiler._alternatives[0].contentType, 'text/plain; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[1].contentType, 'text/x-amp-html; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[2].contentType, 'text/html; charset=utf-8');
+            t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, icalEvent and html', function () {
+        it('should create Alternative structure with text, icalEvent and html', (t) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -114,17 +106,17 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
+            const fn = t.mock.method(compiler, '_createAlternative');
             compiler.compile();
-            expect(compiler._createAlternative.callCount).to.equal(1);
-            expect(compiler._alternatives.length).to.equal(3);
-            expect(compiler._alternatives[0].contentType).to.equal('text/plain; charset=utf-8');
-            expect(compiler._alternatives[1].contentType).to.equal('text/html; charset=utf-8');
-            expect(compiler._alternatives[2].contentType).to.equal('text/calendar; charset=utf-8; method=PUBLISH');
-            compiler._createAlternative.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            assert.strictEqual(compiler._alternatives.length, 3);
+            assert.strictEqual(compiler._alternatives[0].contentType, 'text/plain; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[1].contentType, 'text/html; charset=utf-8');
+            assert.strictEqual(compiler._alternatives[2].contentType, 'text/calendar; charset=utf-8; method=PUBLISH');
+            t.mock.restoreAll();
         });
 
-        it('should create Alternative structure using encoded icalEvent', function (done) {
+        it('should create Alternative structure using encoded icalEvent', (t, done) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -137,23 +129,25 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
-            compiler.compile().build(function (err, message) {
-                expect(err).to.not.exist;
+            t.mock.method(compiler, '_createAlternative');
+            compiler.compile().build((err, message) => {
+                assert.ok(!err);
                 let msg = message.toString();
-                expect(
-                    msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n')
-                ).to.be.gte(0);
-                expect(
+                assert.ok(
+                    msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n') >=
+                        0
+                );
+                assert.ok(
                     msg.indexOf(
                         '\r\ndGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRl\r\ncmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZSB0ZXJlIHRlcmUgdGVyZQ==\r\n'
-                    )
-                ).to.be.gte(0);
+                    ) >= 0
+                );
+                t.mock.restoreAll();
                 done();
             });
         });
 
-        it('should create Alternative structure with text, html and cid attachment', function () {
+        it('should create Alternative structure with text, html and cid attachment', (t) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -170,13 +164,13 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createAlternative');
+            const fn = t.mock.method(compiler, '_createAlternative');
             compiler.compile();
-            expect(compiler._createAlternative.callCount).to.equal(1);
-            compiler._createAlternative.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should create Related structure with html and cid attachment', function () {
+        it('should create Related structure with html and cid attachment', (t) => {
             let data = {
                 html: 'def',
                 attachments: [
@@ -192,25 +186,25 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createRelated');
+            const fn = t.mock.method(compiler, '_createRelated');
             compiler.compile();
-            expect(compiler._createRelated.callCount).to.equal(1);
-            compiler._createRelated.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should create content node with only text', function () {
+        it('should create content node with only text', (t) => {
             let data = {
                 text: 'def'
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createContentNode');
+            const fn = t.mock.method(compiler, '_createContentNode');
             compiler.compile();
-            expect(compiler._createContentNode.callCount).to.equal(1);
-            compiler._createContentNode.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should create content node with only an attachment', function () {
+        it('should create content node with only an attachment', (t) => {
             let data = {
                 attachments: [
                     {
@@ -221,13 +215,13 @@ describe('MailComposer unit tests', function () {
             };
 
             let compiler = new MailComposer(data);
-            sinon.spy(compiler, '_createContentNode');
+            const fn = t.mock.method(compiler, '_createContentNode');
             compiler.compile();
-            expect(compiler._createContentNode.callCount).to.equal(1);
-            compiler._createContentNode.restore();
+            assert.strictEqual(fn.mock.callCount(), 1);
+            t.mock.restoreAll();
         });
 
-        it('should create content node with encoded buffer', function () {
+        it('should create content node with encoded buffer', () => {
             let str = 'tere tere';
             let data = {
                 text: {
@@ -238,10 +232,10 @@ describe('MailComposer unit tests', function () {
 
             let compiler = new MailComposer(data);
             compiler.compile();
-            expect(compiler.message.content).to.deep.equal(Buffer.from(str));
+            assert.deepStrictEqual(compiler.message.content, Buffer.from(str));
         });
 
-        it('should create content node from data url', function () {
+        it('should create content node from data url', () => {
             let str = 'tere tere';
             let data = {
                 attachments: [
@@ -253,12 +247,12 @@ describe('MailComposer unit tests', function () {
 
             let compiler = new MailComposer(data);
             let mail = compiler.compile();
-            expect(mail.messageId()).to.exist;
-            expect(compiler.mail.attachments[0].content).to.deep.equal(Buffer.from(str));
-            expect(compiler.mail.attachments[0].contentType).to.equal('image/png');
+            assert.ok(mail.messageId());
+            assert.deepStrictEqual(compiler.mail.attachments[0].content, Buffer.from(str));
+            assert.strictEqual(compiler.mail.attachments[0].contentType, 'image/png');
         });
 
-        it('should not treat invalid content-type as multipart', function () {
+        it('should not treat invalid content-type as multipart', () => {
             let data = {
                 from: {
                     name: 'sender name',
@@ -285,10 +279,10 @@ describe('MailComposer unit tests', function () {
             let attachmentHeaders = mail.childNodes[1].buildHeaders();
 
             // attachment header must not contain mutipart header
-            expect(attachmentHeaders.indexOf('boundary=')).to.lt(0);
+            assert.ok(attachmentHeaders.indexOf('boundary=') < 0);
         });
 
-        it('should create the same output', function (done) {
+        it('should create the same output', (t, done) => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -327,15 +321,15 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            expect(mail.messageId()).to.equal('<zzzzzz>');
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            assert.strictEqual(mail.messageId(), '<zzzzzz>');
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should use raw input for the message', function (done) {
+        it('should use raw input for the message', (t, done) => {
             let data = {
                 raw: 'test test test\r\n',
                 envelope: {
@@ -347,18 +341,18 @@ describe('MailComposer unit tests', function () {
             let expected = 'test test test\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(mail.getEnvelope()).to.deep.equal({
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(mail.getEnvelope(), {
                     from: 'deamon@kreata.ee',
                     to: ['mailer@kreata.ee', 'mailer2@kreata.ee']
                 });
-                expect(message.toString()).to.equal(expected);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should use raw input for different parts', function (done) {
+        it('should use raw input for different parts', (t, done) => {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -425,14 +419,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should discard BCC', function (done) {
+        it('should discard BCC', (t, done) => {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -455,14 +449,14 @@ describe('MailComposer unit tests', function () {
                 'def\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should autodetect text encoding', function (done) {
+        it('should autodetect text encoding', (t, done) => {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -487,14 +481,14 @@ describe('MailComposer unit tests', function () {
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should use quoted-printable text encoding', function (done) {
+        it('should use quoted-printable text encoding', (t, done) => {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -520,14 +514,14 @@ describe('MailComposer unit tests', function () {
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should use base64 text encoding', function (done) {
+        it('should use base64 text encoding', (t, done) => {
             let data = {
                 from: 'ÄÄÄÄ test1@example.com',
                 to: 'AAAÄ test2@example.com',
@@ -552,14 +546,14 @@ describe('MailComposer unit tests', function () {
                 'ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should keep BCC', function (done) {
+        it('should keep BCC', (t, done) => {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -584,14 +578,14 @@ describe('MailComposer unit tests', function () {
 
             let mail = new MailComposer(data).compile();
             mail.keepBcc = true;
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should set headers for attachment', function (done) {
+        it('should set headers for attachment', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -635,14 +629,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should encode filename', function (done) {
+        it('should encode filename', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -678,14 +672,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should keep plaintext for attachment', function (done) {
+        it('should keep plaintext for attachment', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -730,14 +724,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should ignore attachment filename', function (done) {
+        it('should ignore attachment filename', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -782,14 +776,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should add ical alternative', function (done) {
+        it('should add ical alternative', (t, done) => {
             let data = {
                 from: 'test1@example.com',
                 to: 'test2@example.com',
@@ -838,14 +832,14 @@ describe('MailComposer unit tests', function () {
                 '----_NmP-test-Part_1--\r\n';
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.equal(expected);
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
                 done();
             });
         });
 
-        it('should use load attachment from file', function (done) {
+        it('should use load attachment from file', (t, done) => {
             let data = {
                 text: 'abc',
                 attachments: [
@@ -856,14 +850,14 @@ describe('MailComposer unit tests', function () {
             };
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.not.exist;
-                expect(message.toString()).to.include('w7VrdmEK');
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.ok(message.toString().includes('w7VrdmEK'));
                 done();
             });
         });
 
-        it('should not load attachment from file', function (done) {
+        it('should not load attachment from file', (t, done) => {
             let data = {
                 text: 'abc',
                 attachments: [
@@ -875,9 +869,9 @@ describe('MailComposer unit tests', function () {
             };
 
             let mail = new MailComposer(data).compile();
-            mail.build(function (err, message) {
-                expect(err).to.exist;
-                expect(message).to.not.exist;
+            mail.build((err, message) => {
+                assert.ok(err);
+                assert.ok(!message);
                 done();
             });
         });

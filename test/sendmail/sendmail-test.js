@@ -1,18 +1,13 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const PassThrough = require('stream').PassThrough;
 const EventEmitter = require('events').EventEmitter;
-const sinon = require('sinon');
 const SendmailTransport = require('../../lib/sendmail-transport');
 const MailComposer = require('../../lib/mail-composer');
-chai.config.includeStack = true;
 
 class MockBuilder {
     constructor(envelope, message, messageId) {
@@ -40,14 +35,14 @@ class MockBuilder {
     }
 }
 
-describe('Sendmail Transport Tests', function () {
-    it('Should expose version number', function () {
+describe('Sendmail Transport Tests', () => {
+    it('Should expose version number', () => {
         let client = new SendmailTransport();
-        expect(client.name).to.exist;
-        expect(client.version).to.exist;
+        assert.ok(client.name);
+        assert.ok(client.version);
     });
 
-    it('Should send message', function (done) {
+    it('Should send message', (t, done) => {
         let client = new SendmailTransport();
 
         let stubbedSpawn = new EventEmitter();
@@ -55,16 +50,16 @@ describe('Sendmail Transport Tests', function () {
         stubbedSpawn.stdout = new PassThrough();
 
         let output = '';
-        stubbedSpawn.stdin.on('data', function (chunk) {
+        stubbedSpawn.stdin.on('data', chunk => {
             output += chunk.toString();
         });
 
-        stubbedSpawn.stdin.on('end', function () {
+        stubbedSpawn.stdin.on('end', () => {
             stubbedSpawn.emit('close', 0);
             stubbedSpawn.emit('exit', 0);
         });
 
-        sinon.stub(client, '_spawn').returns(stubbedSpawn);
+        t.mock.method(client, '_spawn', () => stubbedSpawn);
 
         client.send(
             {
@@ -76,16 +71,16 @@ describe('Sendmail Transport Tests', function () {
                     raw: Buffer.from('message\r\nline 2')
                 }).compile()
             },
-            function (err) {
-                expect(err).to.not.exist;
-                expect(output).to.equal('message\nline 2\n');
-                client._spawn.restore();
+            err => {
+                assert.ok(!err);
+                assert.strictEqual(output, 'message\nline 2\n');
+                t.mock.restoreAll();
                 done();
             }
         );
     });
 
-    it('Should reject message', function (done) {
+    it('Should reject message', (t, done) => {
         let client = new SendmailTransport();
 
         let stubbedSpawn = new EventEmitter();
@@ -93,16 +88,16 @@ describe('Sendmail Transport Tests', function () {
         stubbedSpawn.stdout = new PassThrough();
 
         let output = '';
-        stubbedSpawn.stdin.on('data', function (chunk) {
+        stubbedSpawn.stdin.on('data', chunk => {
             output += chunk.toString();
         });
 
-        stubbedSpawn.stdin.on('end', function () {
+        stubbedSpawn.stdin.on('end', () => {
             stubbedSpawn.emit('close', 0);
             stubbedSpawn.emit('exit', 0);
         });
 
-        sinon.stub(client, '_spawn').returns(stubbedSpawn);
+        t.mock.method(client, '_spawn', () => stubbedSpawn);
 
         client.send(
             {
@@ -115,17 +110,17 @@ describe('Sendmail Transport Tests', function () {
                     'message\r\nline 2'
                 )
             },
-            function (err, data) {
-                expect(err).to.exist;
-                expect(data).to.not.exist;
-                expect(output).to.equal('');
-                client._spawn.restore();
+            (err, data) => {
+                assert.ok(err);
+                assert.ok(!data);
+                assert.strictEqual(output, '');
+                t.mock.restoreAll();
                 done();
             }
         );
     });
 
-    it('Should return an error', function (done) {
+    it('Should return an error', (t, done) => {
         let client = new SendmailTransport();
 
         let stubbedSpawn = new EventEmitter();
@@ -134,12 +129,12 @@ describe('Sendmail Transport Tests', function () {
 
         stubbedSpawn.stdin.on('data', () => false);
 
-        stubbedSpawn.stdin.on('end', function () {
+        stubbedSpawn.stdin.on('end', () => {
             stubbedSpawn.emit('close', 127);
             stubbedSpawn.emit('exit', 127);
         });
 
-        sinon.stub(client, '_spawn').returns(stubbedSpawn);
+        t.mock.method(client, '_spawn', () => stubbedSpawn);
 
         client.send(
             {
@@ -152,10 +147,10 @@ describe('Sendmail Transport Tests', function () {
                     'message\r\nline 2'
                 )
             },
-            function (err, data) {
-                expect(err).to.exist;
-                expect(data).to.not.exist;
-                client._spawn.restore();
+            (err, data) => {
+                assert.ok(err);
+                assert.ok(!data);
+                t.mock.restoreAll();
                 done();
             }
         );

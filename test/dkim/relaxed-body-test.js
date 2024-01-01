@@ -1,20 +1,15 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 
 let fs = require('fs');
 let RelaxedBody = require('../../lib/dkim/relaxed-body');
 
-chai.config.includeStack = true;
-
-describe('DKIM RelaxedBody Tests', function () {
-    it('Should calculate body hash byte by byte', function (done) {
+describe('DKIM RelaxedBody Tests', () => {
+    it('Should calculate body hash byte by byte', (t, done) => {
         fs.readFile(__dirname + '/fixtures/message1.eml', 'utf-8', (err, message) => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
 
             message = message.replace(/\r?\n/g, '\r\n');
             message = message.split('\r\n\r\n');
@@ -29,7 +24,7 @@ describe('DKIM RelaxedBody Tests', function () {
             });
 
             s.on('hash', hash => {
-                expect(hash).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
+                assert.strictEqual(hash, 'D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
                 done();
             });
 
@@ -46,9 +41,9 @@ describe('DKIM RelaxedBody Tests', function () {
         });
     });
 
-    it('Should calculate body hash all at once', function (done) {
+    it('Should calculate body hash all at once', (t, done) => {
         fs.readFile(__dirname + '/fixtures/message1.eml', 'utf-8', (err, message) => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
 
             message = message.replace(/\r?\n/g, '\r\n');
             message = message.split('\r\n\r\n');
@@ -63,7 +58,7 @@ describe('DKIM RelaxedBody Tests', function () {
             });
 
             s.on('hash', hash => {
-                expect(hash).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
+                assert.strictEqual(hash, 'D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
                 done();
             });
 

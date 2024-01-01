@@ -1,17 +1,12 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
-const path = require('path');
-const crypto = require('crypto');
-const fs = require('fs');
-const PassThrough = require('stream').PassThrough;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const PassThrough = require('node:stream').PassThrough;
 const DKIM = require('../../lib/dkim');
-
-chai.config.includeStack = true;
 
 const privateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIBywIBAAJhANCx7ncKUfQ8wBUYmMqq6ky8rBB0NL8knBf3+uA7q/CSxpX6sQ8N
@@ -34,10 +29,8 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 -----END PUBLIC KEY-----`;
 */
 
-describe('DKIM Tests', function () {
-    this.timeout(100 * 1000); // eslint-disable-line
-
-    it('should sign message', function (done) {
+describe('DKIM Tests', { timeout: 100 * 1000 }, () => {
+    it('should sign message', (t, done) => {
         let message = `From: saatja aadress
 To: Saaja aadress
 Subject: pealkiri
@@ -79,7 +72,8 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message).to.equal(
+            assert.strictEqual(
+                message,
                 'DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=node.ee; q=dns/txt;\r\n' +
                     ' s=dkim; bh=h2JdEKA6yVYSGuI3DQCDlg2KL+96GxA7Yw7owvsYDUM=;\r\n' +
                     ' h=from:subject:message-id:to;\r\n' +
@@ -110,7 +104,7 @@ teine rida
         writeNext();
     });
 
-    it('should sign large message using cache dir', function (done) {
+    it('should sign large message using cache dir', (t, done) => {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -120,7 +114,7 @@ teine rida
 
         let output = dkim.sign(fs.createReadStream(__dirname + '/fixtures/large.eml'));
         output.on('error', err => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
             done();
         });
 
@@ -146,19 +140,20 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(
+            assert.ok(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=') >= 0);
+            assert.strictEqual(
                 crypto
                     .createHash('md5')
                     .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
-                    .digest('hex')
-            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
-            expect(output.usingCache).to.be.true;
+                    .digest('hex'),
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
+            assert.ok(output.usingCache);
             done();
         });
     });
 
-    it('should sign large message without cache dir', function (done) {
+    it('should sign large message without cache dir', (t, done) => {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -167,7 +162,7 @@ teine rida
 
         let output = dkim.sign(fs.createReadStream(__dirname + '/fixtures/large.eml'));
         output.on('error', err => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
             done();
         });
 
@@ -193,19 +188,20 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(
+            assert.ok(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=') >= 0);
+            assert.strictEqual(
                 crypto
                     .createHash('md5')
                     .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
-                    .digest('hex')
-            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
-            expect(output.usingCache).to.be.false;
+                    .digest('hex'),
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
+            assert.strictEqual(output.usingCache, false);
             done();
         });
     });
 
-    it('should emit cache error', function (done) {
+    it('should emit cache error', (t, done) => {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -215,12 +211,12 @@ teine rida
 
         let output = dkim.sign(fs.createReadStream(__dirname + '/fixtures/large.eml'));
         output.on('error', err => {
-            expect(err).to.exist;
+            assert.ok(err);
             done();
         });
     });
 
-    it('should sign large message as Buffer', function (done) {
+    it('should sign large message as Buffer', (t, done) => {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -230,7 +226,7 @@ teine rida
 
         let output = dkim.sign(fs.readFileSync(__dirname + '/fixtures/large.eml'));
         output.on('error', err => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
             done();
         });
 
@@ -256,19 +252,20 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(
+            assert.ok(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=') >= 0);
+            assert.strictEqual(
                 crypto
                     .createHash('md5')
                     .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
-                    .digest('hex')
-            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
-            expect(output.usingCache).to.be.true;
+                    .digest('hex'),
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
+            assert.ok(output.usingCache);
             done();
         });
     });
 
-    it('should sign large message as String', function (done) {
+    it('should sign large message as String', (t, done) => {
         let dkim = new DKIM({
             domainName: 'node.ee',
             keySelector: 'dkim',
@@ -278,7 +275,7 @@ teine rida
 
         let output = dkim.sign(fs.readFileSync(__dirname + '/fixtures/large.eml', 'utf-8'));
         output.on('error', err => {
-            expect(err).to.not.exist;
+            assert.ok(!err);
             done();
         });
 
@@ -304,14 +301,15 @@ teine rida
 
         output.on('end', () => {
             let message = Buffer.concat(chunks).toString();
-            expect(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=')).is.gte(0);
-            expect(
+            assert.ok(message.indexOf('bh=ST+2Z7mCDd8CPa6pWbCWnFBLKyl8/I5d0JCaEQub550=') >= 0);
+            assert.strictEqual(
                 crypto
                     .createHash('md5')
                     .update(Buffer.from(message.substr(message.indexOf('X-Zone-Loop'))))
-                    .digest('hex')
-            ).to.equal('16078d67ecb4c9954f2568b3bd20e8b5');
-            expect(output.usingCache).to.be.true;
+                    .digest('hex'),
+                '16078d67ecb4c9954f2568b3bd20e8b5'
+            );
+            assert.ok(output.usingCache);
             done();
         });
     });

@@ -8,7 +8,7 @@ jobs:
     test:
         strategy:
             matrix:
-                node: [14.x, 16.x, 18.x, 20.x]
+                node: [18.x, 20.x]
                 os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
@@ -18,4 +18,5 @@ jobs:
               with:
                   node-version: ${{ matrix.node }}
             - run: npm install
-            - run: npm test
+            - run: npm run lint
+            - run: npm run test:coverage

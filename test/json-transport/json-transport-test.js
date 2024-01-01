@@ -1,17 +1,13 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const nodemailer = require('../../lib/nodemailer');
-const chai = require('chai');
-const expect = chai.expect;
-chai.config.includeStack = true;
 
-describe('JSON Transport Tests', function () {
-    it('should return an JSON string', function (done) {
+describe('JSON Transport Tests', () => {
+    it('should return an JSON string', (t, done) => {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
@@ -38,9 +34,9 @@ describe('JSON Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(JSON.parse(info.message)).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            assert.deepStrictEqual(JSON.parse(info.message), {
                 from: {
                     address: 'andris.reinman@gmail.com',
                     name: 'Andris Reinman'
@@ -88,7 +84,7 @@ describe('JSON Transport Tests', function () {
         });
     });
 
-    it('should return an JSON string for calendar event', function (done) {
+    it('should return an JSON string for calendar event', (t, done) => {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
@@ -108,9 +104,9 @@ describe('JSON Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(JSON.parse(info.message)).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            assert.deepStrictEqual(JSON.parse(info.message), {
                 from: {
                     address: 'andris.reinman@gmail.com',
                     name: 'Andris Reinman'

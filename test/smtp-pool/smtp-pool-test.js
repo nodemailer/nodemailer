@@ -1,20 +1,15 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals beforeEach, afterEach, describe, it */
-
 'use strict';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const net = require('net');
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const net = require('node:net');
+const PassThrough = require('node:stream').PassThrough;
 const SMTPPool = require('../../lib/smtp-pool');
 const SMTPServer = require('smtp-server').SMTPServer;
-const PassThrough = require('stream').PassThrough;
-chai.config.includeStack = true;
 
 const PORT_NUMBER = 8397;
-
 class MockBuilder {
     constructor(envelope, message, messageId) {
         this.envelope = envelope;
@@ -41,18 +36,16 @@ class MockBuilder {
     }
 }
 
-describe('SMTP Pool Tests', function () {
-    this.timeout(100 * 1000); //eslint-disable-line no-invalid-this
-
+describe('SMTP Pool Tests', () => {
     let server;
 
-    beforeEach(function (done) {
+    beforeEach((t, done) => {
         server = new SMTPServer({
             authMethods: ['PLAIN', 'XOAUTH2'],
             disabledCommands: ['STARTTLS'],
 
             onData(stream, session, callback) {
-                stream.on('data', function () {});
+                stream.on('data', () => {});
                 stream.on('end', callback);
             },
 
@@ -90,31 +83,33 @@ describe('SMTP Pool Tests', function () {
                 }
             },
             logger: false
-        });
+        })
 
         server.listen(PORT_NUMBER, done);
     });
 
-    afterEach(function (done) {
-        server.close(done);
+    afterEach((t, done) => {
+        server.close(() => {
+            process.nextTick(() => done());
+        });
     });
 
-    it('Should expose version number', function () {
+    it('Should expose version number', () => {
         let pool = new SMTPPool();
-        expect(pool.name).to.exist;
-        expect(pool.version).to.exist;
+        assert.ok(pool.name);
+        assert.ok(pool.version);
     });
 
-    it('Should detect wellknown data', function () {
+    it('Should detect wellknown data', () => {
         let pool = new SMTPPool({
             service: 'google mail'
         });
-        expect(pool.options.host).to.equal('smtp.gmail.com');
-        expect(pool.options.port).to.equal(465);
-        expect(pool.options.secure).to.be.true;
+        assert.strictEqual(pool.options.host, 'smtp.gmail.com');
+        assert.strictEqual(pool.options.port, 465);
+        assert.strictEqual(pool.options.secure, true);
     });
 
-    it('should send mail', function (done) {
+    it('should send mail', (t, done) => {
         let pool = new SMTPPool({
             port: PORT_NUMBER,
             auth: {
@@ -129,12 +124,12 @@ describe('SMTP Pool Tests', function () {
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -150,26 +145,26 @@ describe('SMTP Pool Tests', function () {
                     message
                 )
             },
-            function (err) {
-                expect(err).to.not.exist;
+            (err) => {
+                assert.ok(!err);
                 pool.close();
                 done();
             }
         );
     });
 
-    it('should send multiple mails', function (done) {
+    it('should send multiple mails', (t, done) => {
         let pool = new SMTPPool('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?logger=false');
         let message = new Array(10 * 1024).join('teretere, vana kere\n');
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -186,8 +181,8 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                (err) => {
+                    assert.ok(!err);
                     callback();
                 }
             );
@@ -195,17 +190,17 @@ describe('SMTP Pool Tests', function () {
 
         let total = 100;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             let sent = 0;
 
             if (++returned === total) {
-                expect(pool._connections.length).to.be.above(1);
-                pool._connections.forEach(function (conn) {
-                    expect(conn.messages).to.be.above(1);
+                assert.ok(pool._connections.length > 1);
+                pool._connections.forEach(conn => {
+                    assert.ok(conn.messages > 1);
                     sent += conn.messages;
                 });
 
-                expect(sent).to.be.equal(total);
+                assert.strictEqual(sent, total);
 
                 pool.close();
                 return done();
@@ -216,7 +211,7 @@ describe('SMTP Pool Tests', function () {
         }
     });
 
-    it('should tolerate connection errors', function (done) {
+    it('should tolerate connection errors', (t, done) => {
         let pool = new SMTPPool({
             port: PORT_NUMBER,
             auth: {
@@ -229,12 +224,12 @@ describe('SMTP Pool Tests', function () {
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -254,11 +249,11 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
+                (err) => {
                     if (isErr) {
-                        expect(err).to.exist;
+                        assert.ok(err);
                     } else {
-                        expect(err).to.not.exist;
+                        assert.ok(!err);
                     }
 
                     callback();
@@ -268,7 +263,7 @@ describe('SMTP Pool Tests', function () {
 
         let total = 100;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             if (++returned === total) {
                 pool.close();
                 return done();
@@ -279,7 +274,7 @@ describe('SMTP Pool Tests', function () {
         }
     });
 
-    it('should tolerate idle connections and re-assign messages to other connections', function (done) {
+    it('should tolerate idle connections and re-assign messages to other connections', (t, done) => {
         let pool = new SMTPPool({
             port: PORT_NUMBER,
             auth: {
@@ -297,19 +292,19 @@ describe('SMTP Pool Tests', function () {
         server.onData = function (stream, session, callback) {
             let callCallback = true;
 
-            stream.on('data', function () {
+            stream.on('data', () => {
                 // If we hit half the messages, simulate the server closing connections
                 // that are open for long time
                 if (!killedConnections && sentMessages === total / 2) {
                     killedConnections = true;
                     callCallback = false;
-                    server.connections.forEach(function (connection) {
+                    server.connections.forEach(connection => {
                         connection._socket.end();
                     });
                 }
             });
 
-            stream.on('end', function () {
+            stream.on('end', () => {
                 if (callCallback) {
                     sentMessages += 1;
                     return callback();
@@ -329,9 +324,9 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
+                (err) => {
                     if (err) {
-                        expect(err.message).to.equal('Connection closed unexpectedly');
+                        assert.strictEqual(err.message, 'Connection closed unexpectedly');
                     }
                     callback();
                 }
@@ -342,7 +337,7 @@ describe('SMTP Pool Tests', function () {
         // When we wait a bit.. the server will kill the "idle" connections
         // so that we can ensure the pool will handle it properly
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             returned++;
 
             if (returned === total) {
@@ -362,7 +357,7 @@ describe('SMTP Pool Tests', function () {
         sendHalfBulk();
     });
 
-    it('should call back with connection errors to senders having messages in flight', function (done) {
+    it('should call back with connection errors to senders having messages in flight', (t, done) => {
         let pool = new SMTPPool({
             maxConnections: 1,
             socketTimeout: 200,
@@ -386,8 +381,8 @@ describe('SMTP Pool Tests', function () {
                     message
                 )
             },
-            function (err) {
-                expect(err).not.to.exist;
+            (err) => {
+                assert.ok(!err);
             }
         );
 
@@ -402,26 +397,26 @@ describe('SMTP Pool Tests', function () {
                     message
                 )
             },
-            function (err) {
-                expect(err).to.exist;
+            (err) => {
+                assert.ok(err);
                 pool.close();
                 done();
             }
         );
     });
 
-    it('should not send more then allowed for one connection', function (done) {
+    it('should not send more then allowed for one connection', (t, done) => {
         let pool = new SMTPPool('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?maxConnections=1&maxMessages=5&logger=false');
         let message = new Array(10 * 1024).join('teretere, vana kere\n');
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -438,8 +433,8 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                (err) => {
+                    assert.ok(!err);
                     callback();
                 }
             );
@@ -447,10 +442,10 @@ describe('SMTP Pool Tests', function () {
 
         let total = 100;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             if (++returned === total) {
-                expect(pool._connections.length).to.be.equal(1);
-                expect(pool._connections[0].messages).to.be.below(6);
+                assert.strictEqual(pool._connections.length, 1);
+                assert.ok(pool._connections[0].messages < 6);
                 pool.close();
                 return done();
             }
@@ -460,7 +455,7 @@ describe('SMTP Pool Tests', function () {
         }
     });
 
-    it('should send multiple mails with rate limit', function (done) {
+    it('should send multiple mails with rate limit', (t, done) => {
         let pool = new SMTPPool({
             port: PORT_NUMBER,
             auth: {
@@ -476,12 +471,12 @@ describe('SMTP Pool Tests', function () {
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -498,8 +493,8 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                (err) => {
+                    assert.ok(!err);
                     callback();
                 }
             );
@@ -507,10 +502,10 @@ describe('SMTP Pool Tests', function () {
 
         let total = 5000;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             if (++returned === total) {
                 let endTime = Date.now();
-                expect(endTime - startTime).to.be.at.least(24000);
+                assert.ok(endTime - startTime >= 24000);
 
                 pool.close();
                 return done();
@@ -518,7 +513,7 @@ describe('SMTP Pool Tests', function () {
         };
 
         let i = 0;
-        let send = function () {
+        let send = () => {
             if (i++ >= total) {
                 return;
             }
@@ -529,18 +524,18 @@ describe('SMTP Pool Tests', function () {
         send();
     });
 
-    it('should return pending messages once closed', function (done) {
+    it('should return pending messages once closed', (t, done) => {
         let pool = new SMTPPool('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?maxConnections=1&logger=false');
         let message = new Array(10 * 1024).join('teretere, vana kere\n');
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -557,8 +552,8 @@ describe('SMTP Pool Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.exist;
+                (err) => {
+                    assert.ok(err);
                     callback();
                 }
             );
@@ -566,7 +561,7 @@ describe('SMTP Pool Tests', function () {
 
         let total = 100;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             if (++returned === total) {
                 return done();
             }
@@ -577,18 +572,18 @@ describe('SMTP Pool Tests', function () {
         pool.close();
     });
 
-    it('should emit idle for free slots in the pool', function (done) {
+    it('should emit idle for free slots in the pool', (t, done) => {
         let pool = new SMTPPool('smtp://testuser:testpass@localhost:' + PORT_NUMBER + '/?logger=false');
         let message = new Array(10 * 1024).join('teretere, vana kere\n');
 
         server.onData = function (stream, session, callback) {
             let chunks = [];
-            stream.on('data', function (chunk) {
+            stream.on('data', chunk => {
                 chunks.push(chunk);
             });
-            stream.on('end', function () {
+            stream.on('end', () => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
                 callback();
             });
         };
@@ -611,7 +606,7 @@ describe('SMTP Pool Tests', function () {
 
         let total = 100;
         let returned = 0;
-        let cb = function () {
+        let cb = () => {
             if (++returned === total) {
                 pool.close();
                 return done();
@@ -619,15 +614,15 @@ describe('SMTP Pool Tests', function () {
         };
 
         let i = 0;
-        pool.on('idle', function () {
-            setTimeout(function () {
+        pool.on('idle', () => {
+            setTimeout(() => {
                 while (i < total && pool.isIdle()) {
                     i++;
                     sendMessage(cb);
                 }
                 if (i > 50) {
                     // kill all connections. We should still end up with the same amount of callbacks
-                    setImmediate(function () {
+                    setImmediate(() => {
                         for (let j = 5 - 1; j >= 0; j--) {
                             if (pool._connections[j] && pool._connections[j].connection) {
                                 pool._connections[j].connection._socket.emit('error', new Error('TESTERROR'));
@@ -639,17 +634,17 @@ describe('SMTP Pool Tests', function () {
         });
     });
 
-    it('Should login and send mail using proxied socket', function (done) {
+    it('Should login and send mail using proxied socket', (t, done) => {
         let pool = new SMTPPool({
             url: 'smtp:testuser:testpass@www.example.com:1234',
             logger: false,
             getSocket(options, callback) {
                 let socket = net.connect(PORT_NUMBER, 'localhost');
-                let errHandler = function (err) {
+                let errHandler = (err) => {
                     callback(err);
                 };
                 socket.on('error', errHandler);
-                socket.on('connect', function () {
+                socket.on('connect', () => {
                     socket.removeListener('error', errHandler);
                     callback(null, {
                         connection: socket
@@ -660,13 +655,13 @@ describe('SMTP Pool Tests', function () {
         let chunks = [],
             message = new Array(1024).join('teretere, vana kere\n');
 
-        server.on('data', function (connection, chunk) {
+        server.on('data', (connection, chunk) => {
             chunks.push(chunk);
         });
 
-        server.on('dataReady', function (connection, callback) {
+        server.on('dataReady', (connection, callback) => {
             let body = Buffer.concat(chunks);
-            expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n') + '\r\n');
+            assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n') + '\r\n');
             callback(null, true);
         });
 
@@ -681,36 +676,36 @@ describe('SMTP Pool Tests', function () {
                     message
                 )
             },
-            function (err) {
-                expect(err).to.not.exist;
+            (err) => {
+                assert.ok(!err);
                 pool.close();
                 return done();
             }
         );
     });
 
-    it('Should verify connection with success', function (done) {
+    it('Should verify connection with success', (t, done) => {
         let client = new SMTPPool({
             url: 'smtp:testuser:testpass@localhost:' + PORT_NUMBER,
             logger: false
         });
 
-        client.verify(function (err, success) {
-            expect(err).to.not.exist;
-            expect(success).to.be.true;
+        client.verify((err, success) => {
+            assert.ok(!err);
+            assert.strictEqual(success, true);
             client.close();
             done();
         });
     });
 
-    it('Should not verify connection', function (done) {
+    it('Should not verify connection', (t, done) => {
         let client = new SMTPPool({
             url: 'smtp:testuser:testpass@localhost:999' + PORT_NUMBER,
             logger: false
         });
 
-        client.verify(function (err) {
-            expect(err).to.exist;
+        client.verify((err) => {
+            assert.ok(err);
             client.close();
             done();
         });

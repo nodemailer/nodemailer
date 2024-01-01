@@ -4,7 +4,9 @@
     "description": "Easy as cake e-mail sending from your Node.js applications",
     "main": "lib/nodemailer.js",
     "scripts": {
-        "test": "grunt --trace-warnings",
+        "test": "node --test --test-concurrency=1 test/**/*.test.js test/**/*-test.js",
+        "test:coverage": "c8 node --test --test-concurrency=1 test/**/*.test.js test/**/*-test.js",
+        "lint": "eslint .",
         "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install"
     },
     "repository": {
@@ -23,21 +25,16 @@
     "devDependencies": {
         "@aws-sdk/client-ses": "3.484.0",
         "bunyan": "1.8.15",
-        "chai": "4.3.10",
+        "c8": "^8.0.1",
+        "eslint": "^8.56.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "9.1.0",
-        "grunt": "1.6.1",
-        "grunt-cli": "1.4.3",
-        "grunt-eslint": "24.3.0",
-        "grunt-mocha-test": "0.13.3",
         "libbase64": "1.2.1",
         "libmime": "5.2.1",
         "libqp": "2.0.1",
-        "mocha": "10.2.0",
         "nodemailer-ntlm-auth": "1.0.4",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
-        "sinon": "17.0.1",
         "smtp-server": "3.13.0"
     },
     "engines": {

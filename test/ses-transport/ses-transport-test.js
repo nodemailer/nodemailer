@@ -1,12 +1,8 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals describe, it */
-
 'use strict';
 
 const nodemailer = require('../../lib/nodemailer');
-const chai = require('chai');
-const expect = chai.expect;
-chai.config.includeStack = true;
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 
 const privateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIBywIBAAJhANCx7ncKUfQ8wBUYmMqq6ky8rBB0NL8knBf3+uA7q/CSxpX6sQ8N
@@ -21,10 +17,8 @@ cmDrj/7jJHb+ykFNb7GaEkiSYqzUjKkfpweBDYECMFJUyzuuFJAjq3BXmGJlyykQ
 TweUw+zMVdSXjO+FCPcYNi6CP1t1KoESzGKBVoqA/g==
 -----END RSA PRIVATE KEY-----`;
 
-describe('SES Transport Tests', function () {
-    this.timeout(90 * 1000); // eslint-disable-line no-invalid-this
-
-    it('should return MessageId, using AWS SES JavaScript SDK v2', function (done) {
+describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
+    it('should return MessageId, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -66,20 +60,21 @@ describe('SES Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-            expect(info.envelope).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            const keys = Object.keys(info);
+            assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+            assert.deepStrictEqual(info.envelope, {
                 from: 'andris.reinman@gmail.com',
                 to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
-            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-            expect(info.response).to.equal('testtest');
+            assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+            assert.strictEqual(info.response, 'testtest');
             done();
         });
     });
 
-    it('should return MessageId, using AWS SES JavaScript SDK v3', function (done) {
+    it('should return MessageId, using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 ses: {
@@ -123,20 +118,21 @@ describe('SES Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-            expect(info.envelope).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            const keys = Object.keys(info);
+            assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+            assert.deepStrictEqual(info.envelope, {
                 from: 'andris.reinman@gmail.com',
                 to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
-            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-            expect(info.response).to.equal('testtest');
+            assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+            assert.strictEqual(info.response, 'testtest');
             done();
         });
     });
 
-    it('should verify ses configuration using AWS SES JavaScript SDK v2', function (done) {
+    it('should verify ses configuration using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -155,13 +151,13 @@ describe('SES Transport Tests', function () {
         });
 
         transport.verify().then(info => {
-            expect(info).to.exist;
-            expect(info).to.equal(true);
+            assert.ok(info);
+            assert.strictEqual(info, true);
             done();
         });
     });
 
-    it('should verify ses configuration using AWS SES JavaScript SDK v2, with supplied callback', function (done) {
+    it('should verify ses configuration using AWS SES JavaScript SDK v2, with supplied callback', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -180,14 +176,14 @@ describe('SES Transport Tests', function () {
         });
 
         transport.verify((err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.equal(true);
+            assert.ok(!err);
+            assert.ok(info);
+            assert.strictEqual(info, true);
             done();
         });
     });
 
-    it('should verify ses configuration using AWS SES JavaScript SDK v3', function (done) {
+    it('should verify ses configuration using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 ses: {
@@ -214,13 +210,13 @@ describe('SES Transport Tests', function () {
         });
 
         transport.verify().then(info => {
-            expect(info).to.exist;
-            expect(info).to.equal(true);
+            assert.ok(info);
+            assert.strictEqual(info, true);
             done();
         });
     });
 
-    it('should verify ses configuration using AWS SES JavaScript SDK v3, with supplied callback', function (done) {
+    it('should verify ses configuration using AWS SES JavaScript SDK v3, with supplied callback', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 ses: {
@@ -247,14 +243,14 @@ describe('SES Transport Tests', function () {
         });
 
         transport.verify((err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.equal(true);
+            assert.ok(!err);
+            assert.ok(info);
+            assert.strictEqual(info, true);
             done();
         });
     });
 
-    it('should sign message with DKIM, using AWS SES JavaScript SDK v2', function (done) {
+    it('should sign message with DKIM, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 config: {
@@ -265,7 +261,7 @@ describe('SES Transport Tests', function () {
                     return {
                         promise() {
                             return new Promise(resolve => {
-                                expect(message.RawMessage.Data.toString()).to.include('h=from:subject:to:cc:mime-version:content-type;');
+                                assert.ok(message.RawMessage.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;'));
                                 setImmediate(() => {
                                     resolve({
                                         MessageId: 'testtest'
@@ -303,20 +299,21 @@ describe('SES Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-            expect(info.envelope).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            const keys = Object.keys(info);
+            assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+            assert.deepStrictEqual(info.envelope, {
                 from: 'andris.reinman@gmail.com',
                 to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
-            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-            expect(info.response).to.equal('testtest');
+            assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+            assert.strictEqual(info.response, 'testtest');
             done();
         });
     });
 
-    it('should sign message with DKIM, using AWS SES JavaScript SDK v3', function (done) {
+    it('should sign message with DKIM, using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
                 ses: {
@@ -336,7 +333,7 @@ describe('SES Transport Tests', function () {
                 aws: {
                     /* eslint-disable */
                     SendRawEmailCommand: function (message) {
-                        expect(message.RawMessage.Data.toString()).to.include('h=from:subject:to:cc:mime-version:content-type;');
+                        assert.ok(message.RawMessage.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;'));
                         return message;
                     }
                 }
@@ -368,20 +365,21 @@ describe('SES Transport Tests', function () {
         };
 
         transport.sendMail(messageObject, (err, info) => {
-            expect(err).to.not.exist;
-            expect(info).to.exist;
-            expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-            expect(info.envelope).to.deep.equal({
+            assert.ok(!err);
+            assert.ok(info);
+            const keys = Object.keys(info);
+            assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+            assert.deepStrictEqual(info.envelope, {
                 from: 'andris.reinman@gmail.com',
                 to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
             });
-            expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-            expect(info.response).to.equal('testtest');
+            assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+            assert.strictEqual(info.response, 'testtest');
             done();
         });
     });
 
-    it('should limit parallel connections, using AWS SES JavaScript SDK v2', function (done) {
+    it('should limit parallel connections, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             maxConnections: 2,
             SES: {
@@ -429,26 +427,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(5000);
-                    expect(Date.now() - start).to.be.lte(10000);
+                    assert.ok(Date.now() - start >= 5000);
+                    assert.ok(Date.now() - start <= 10000);
                     return done();
                 }
             });
         }
     });
 
-    it('should limit parallel connections, using AWS SES JavaScript SDK v3', function (done) {
+    it('should limit parallel connections, using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             maxConnections: 2,
             SES: {
@@ -500,26 +499,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(5000);
-                    expect(Date.now() - start).to.be.lte(10000);
+                    assert.ok(Date.now() - start >= 5000);
+                    assert.ok(Date.now() - start <= 10000);
                     return done();
                 }
             });
         }
     });
 
-    it('should rate limit messages, using AWS SES JavaScript SDK v2', function (done) {
+    it('should rate limit messages, using AWS SES JavaScript SDK v2', async () => {
         let transport = nodemailer.createTransport({
             sendingRate: 10,
             SES: {
@@ -565,28 +565,28 @@ describe('SES Transport Tests', function () {
                 ]
             };
 
-            transport.sendMail(messageObject, (err, info) => {
+            await transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
-                    return done();
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                 }
             });
         }
     });
 
-    it('should rate limit messages, using AWS SES JavaScript SDK v3', function (done) {
+    it('should rate limit messages, using AWS SES JavaScript SDK v3', async () => {
         let transport = nodemailer.createTransport({
             sendingRate: 10,
             SES: {
@@ -636,28 +636,28 @@ describe('SES Transport Tests', function () {
                 ]
             };
 
-            transport.sendMail(messageObject, (err, info) => {
+            await transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
-                    return done();
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                 }
             });
         }
     });
 
-    it('should rate limit long messages, using AWS SES JavaScript SDK v2', function (done) {
+    it('should rate limit long messages, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 30,
             SES: {
@@ -705,26 +705,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(12000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 12000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });
         }
     });
 
-    it('should rate limit long messages, using AWS SES JavaScript SDK v3', function (done) {
+    it('should rate limit long messages, using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 30,
             SES: {
@@ -776,26 +777,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(12000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 12000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });
         }
     });
 
-    it('should rate limit messages and connections, using AWS SES JavaScript SDK v2', function (done) {
+    it('should rate limit messages and connections, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -844,27 +846,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });
         }
     });
 
-    it('should rate limit messages and connections, using AWS SES JavaScript SDK v3', function (done) {
+    it('should rate limit messages and connections, using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -917,27 +919,27 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });
         }
     });
 
-    it('detect sending slots on idle events, , using AWS SES JavaScript SDK v2', function (done) {
+    it('detect sending slots on idle events, , using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -987,19 +989,20 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });
@@ -1013,7 +1016,7 @@ describe('SES Transport Tests', function () {
         });
     });
 
-    it('detect sending slots on idle events, , using AWS SES JavaScript SDK v3', function (done) {
+    it('detect sending slots on idle events, , using AWS SES JavaScript SDK v3', (t, done) => {
         let transport = nodemailer.createTransport({
             sendingRate: 100,
             maxConnections: 1,
@@ -1067,19 +1070,20 @@ describe('SES Transport Tests', function () {
 
             transport.sendMail(messageObject, (err, info) => {
                 finished++;
-                expect(err).to.not.exist;
-                expect(info).to.exist;
-                expect(info).to.have.keys('envelope', 'messageId', 'response', 'raw');
-                expect(info.envelope).to.deep.equal({
+                assert.ok(!err);
+                assert.ok(info);
+                const keys = Object.keys(info);
+                assert.ok(['envelope', 'messageId', 'response', 'raw'].every(key => keys.includes(key)));
+                assert.deepStrictEqual(info.envelope, {
                     from: 'andris.reinman@gmail.com',
                     to: ['andris@kreata.ee', 'andris@nodemailer.com', 'info@nodemailer.com']
                 });
-                expect(info.messageId).to.equal('<testtest@eu-west-1.amazonses.com>');
-                expect(info.response).to.equal('testtest');
+                assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
+                assert.strictEqual(info.response, 'testtest');
 
                 if (total === finished) {
-                    expect(Date.now() - start).to.be.gte(10000);
-                    expect(Date.now() - start).to.be.lte(20000);
+                    assert.ok(Date.now() - start >= 10000);
+                    assert.ok(Date.now() - start <= 20000);
                     return done();
                 }
             });

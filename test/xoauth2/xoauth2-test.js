@@ -1,26 +1,19 @@
-/* eslint no-unused-expressions:0, no-invalid-this:0, prefer-arrow-callback: 0, object-shorthand: 0 */
-/* globals afterEach, beforeEach, describe, it */
-
 'use strict';
 
-const chai = require('chai');
-const expect = chai.expect;
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
 const XOAuth2 = require('../../lib/xoauth2');
 const mockServer = require('./server');
 
-chai.config.includeStack = true;
-
-describe('XOAuth2 tests', function () {
-    this.timeout(10000);
-
+describe('XOAuth2 tests', { timeout: 10000 }, () => {
     let server;
     let users = {};
     let XOAUTH_PORT = 8993;
 
-    beforeEach(function (done) {
+    beforeEach((t, done) => {
         server = mockServer({
             port: XOAUTH_PORT,
-            onUpdate: function (username, accessToken) {
+            onUpdate: (username, accessToken) => {
                 users[username] = accessToken;
             }
         });
@@ -28,11 +21,11 @@ describe('XOAuth2 tests', function () {
         server.start(done);
     });
 
-    afterEach(function (done) {
+    afterEach((t, done) => {
         server.stop(done);
     });
 
-    it('should get an existing access token', function (done) {
+    it('should get an existing access token', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -43,24 +36,24 @@ describe('XOAuth2 tests', function () {
             timeout: 3600
         });
 
-        xoauth2.getToken(false, function (err, accessToken) {
-            expect(err).to.not.exist;
-            expect(accessToken).to.equal('abc');
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(!err);
+            assert.strictEqual(accessToken, 'abc');
             done();
         });
     });
 
-    it('should convert access token to XOAuth2 token', function () {
+    it('should convert access token to XOAuth2 token', () => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             accessToken: 'abc'
         });
 
-        expect(xoauth2.buildXOAuth2Token()).to.equal('dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyIGFiYwEB');
-        expect(xoauth2.buildXOAuth2Token('bbb')).to.equal('dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyIGJiYgEB');
+        assert.strictEqual(xoauth2.buildXOAuth2Token(), 'dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyIGFiYwEB');
+        assert.strictEqual(xoauth2.buildXOAuth2Token('bbb'), 'dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyIGJiYgEB');
     });
 
-    it('should get an existing access token, no timeout', function (done) {
+    it('should get an existing access token, no timeout', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -70,14 +63,14 @@ describe('XOAuth2 tests', function () {
             accessToken: 'abc'
         });
 
-        xoauth2.getToken(false, function (err, accessToken) {
-            expect(err).to.not.exist;
-            expect(accessToken).to.equal('abc');
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(!err);
+            assert.strictEqual(accessToken, 'abc');
             done();
         });
     });
 
-    it('should generate a fresh access token', function (done) {
+    it('should generate a fresh access token', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -87,14 +80,14 @@ describe('XOAuth2 tests', function () {
             timeout: 3600
         });
 
-        xoauth2.getToken(false, function (err, accessToken) {
-            expect(err).to.not.exist;
-            expect(accessToken).to.equal(users['test@example.com']);
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(!err);
+            assert.strictEqual(accessToken, users['test@example.com']);
             done();
         });
     });
 
-    it('should generate a fresh access token with custom method', function (done) {
+    it('should generate a fresh access token with custom method', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -107,14 +100,14 @@ describe('XOAuth2 tests', function () {
             }
         });
 
-        xoauth2.getToken(false, function (err, accessToken) {
-            expect(err).to.not.exist;
-            expect(accessToken).to.equal('zzz');
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(!err);
+            assert.strictEqual(accessToken, 'zzz');
             done();
         });
     });
 
-    it('should fail generating a fresh access token with custom method', function (done) {
+    it('should fail generating a fresh access token with custom method', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -127,14 +120,14 @@ describe('XOAuth2 tests', function () {
             }
         });
 
-        xoauth2.getToken(false, function (err, accessToken) {
-            expect(err).to.exist;
-            expect(accessToken).to.not.exist;
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(err);
+            assert.ok(!accessToken);
             done();
         });
     });
 
-    it('should generate a fresh access token after timeout', function (done) {
+    it('should generate a fresh access token after timeout', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -145,16 +138,16 @@ describe('XOAuth2 tests', function () {
             timeout: 1
         });
 
-        setTimeout(function () {
-            xoauth2.getToken(false, function (err, accessToken) {
-                expect(err).to.not.exist;
-                expect(accessToken).to.equal(users['test@example.com']);
+        setTimeout(() => {
+            xoauth2.getToken(false, (err, accessToken) => {
+                assert.ok(!err);
+                assert.strictEqual(accessToken, users['test@example.com']);
                 done();
             });
         }, 3000);
     });
 
-    it('should emit access token update', function (done) {
+    it('should emit access token update', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             clientId: '{Client ID}',
@@ -164,9 +157,9 @@ describe('XOAuth2 tests', function () {
             timeout: 3600
         });
 
-        xoauth2.once('token', function (tokenData) {
-            expect(tokenData.expires).to.be.gte(Date.now() + 3000 * 1000);
-            expect(tokenData).to.deep.equal({
+        xoauth2.once('token', tokenData => {
+            assert.ok(tokenData.expires >= Date.now() + 3000 * 1000);
+            assert.deepStrictEqual(tokenData, {
                 user: 'test@example.com',
                 accessToken: users['test@example.com'],
                 expires: tokenData.expires
@@ -174,10 +167,10 @@ describe('XOAuth2 tests', function () {
             done();
         });
 
-        xoauth2.getToken(false, function () {});
+        xoauth2.getToken(false, () => {});
     });
 
-    it('should sign payload', function () {
+    it('should sign payload', () => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             serviceClient: '{Client ID}',
@@ -212,11 +205,10 @@ describe('XOAuth2 tests', function () {
                 'rIcetQpfrJ1cAqz6Ng0pD0mh77vQ13WG1BBmDFa2A9BuzLoBituf4g==\n' +
                 '-----END RSA PRIVATE KEY-----'
         });
-        expect(
+        assert.strictEqual(
             xoauth2.jwtSignRS256({
                 some: 'payload'
-            })
-        ).to.equal(
+            }),
             'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.yBo28P5qE8t8yMkN0hC6uWstUAGh8RGW-zLe1NHdtit8ZVlAEdnhXbZvjGEfDWjOeWe1aZ2eZ65i83awWsx02G9HDsI1xMOFTHpviSHLIWnOf1D2hqJxm0On9zYRjd6oFxuRlmJtI9PIDlMJltG7K3leqReLLC6ZOAYL1Au0WY5swdG2eA6Oi83BTEckLj9c-0TYYRYtyRSG9o298Iuc8JL2KhrAbM8d62JgAPuI3hN_NgEtxs36bidt3SHbuWSszAdt1lHR-bFCZ-kXy_DAGlGiYRHRNyvsLR_q_v4GhV2oVi3WSPR816UhHrTryA0NlbanACb8T22bJGRQ708m_g'
         );
     });

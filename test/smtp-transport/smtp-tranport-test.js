@@ -1,20 +1,15 @@
-/* eslint no-unused-expressions:0, prefer-arrow-callback: 0 */
-/* globals beforeEach, afterEach, describe, it */
-
 'use strict';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const chai = require('chai');
-const net = require('net');
-const expect = chai.expect;
-const PassThrough = require('stream').PassThrough;
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const net = require('node:net');
+const PassThrough = require('node:stream').PassThrough;
 const SMTPTransport = require('../../lib/smtp-transport');
 const SMTPServer = require('smtp-server').SMTPServer;
-chai.config.includeStack = true;
 
 const PORT_NUMBER = 8397;
-
 class MockBuilder {
     constructor(envelope, message, messageId) {
         this.envelope = envelope;
@@ -41,18 +36,16 @@ class MockBuilder {
     }
 }
 
-describe('SMTP Transport Tests', function () {
-    this.timeout(10000); // eslint-disable-line no-invalid-this
-
-    describe('Anonymous sender tests', function () {
+describe('SMTP Transport Tests', { timeout: 10000 }, () => {
+    describe('Anonymous sender tests', () => {
         let server, failingServer;
 
-        beforeEach(function (done) {
+        beforeEach((t, done) => {
             server = new SMTPServer({
                 disabledCommands: ['STARTTLS', 'AUTH'],
 
                 onData(stream, session, callback) {
-                    stream.on('data', function () {});
+                    stream.on('data', () => {});
                     stream.on('end', callback);
                 },
 
@@ -108,27 +101,27 @@ describe('SMTP Transport Tests', function () {
             });
         });
 
-        afterEach(function (done) {
+        afterEach((t, done) => {
             server.close(() => failingServer.close(done));
         });
 
-        it('Should expose version number', function () {
+        it('Should expose version number', () => {
             let client = new SMTPTransport();
-            expect(client.name).to.exist;
-            expect(client.version).to.exist;
+            assert.ok(client.name);
+            assert.ok(client.version);
         });
 
-        it('Should detect wellknown data', function () {
+        it('Should detect wellknown data', () => {
             let client = new SMTPTransport({
                 service: 'google mail',
                 logger: false
             });
-            expect(client.options.host).to.equal('smtp.gmail.com');
-            expect(client.options.port).to.equal(465);
-            expect(client.options.secure).to.be.true;
+            assert.strictEqual(client.options.host, 'smtp.gmail.com');
+            assert.strictEqual(client.options.port, 465);
+            assert.strictEqual(client.options.secure, true);
         });
 
-        it('Should fail envelope', function (done) {
+        it('Should fail envelope', (t, done) => {
             let client = new SMTPTransport({
                 port: PORT_NUMBER,
                 logger: false
@@ -145,14 +138,14 @@ describe('SMTP Transport Tests', function () {
                         'test'
                     )
                 },
-                function (err) {
-                    expect(err.code).to.equal('EENVELOPE');
+                err => {
+                    assert.strictEqual(err.code, 'EENVELOPE');
                     done();
                 }
             );
         });
 
-        it('Should not fail auth', function (done) {
+        it('Should not fail auth', (t, done) => {
             let client = new SMTPTransport({
                 port: PORT_NUMBER,
                 auth: {
@@ -172,14 +165,14 @@ describe('SMTP Transport Tests', function () {
                         'message'
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                err => {
+                    assert.ok(!err);
                     done();
                 }
             );
         });
 
-        it('Should fail auth if forceAuth=true', function (done) {
+        it('Should fail auth if forceAuth=true', (t, done) => {
             let client = new SMTPTransport({
                 port: PORT_NUMBER,
                 auth: {
@@ -200,25 +193,25 @@ describe('SMTP Transport Tests', function () {
                         'message'
                     )
                 },
-                function (err) {
-                    expect(err.code).to.equal('EAUTH');
+                err => {
+                    assert.strictEqual(err.code, 'EAUTH');
                     done();
                 }
             );
         });
 
-        it('Should send mail', function (done) {
+        it('Should send mail', (t, done) => {
             let client = new SMTPTransport('smtp:localhost:' + PORT_NUMBER + '?logger=false');
             let chunks = [],
                 message = new Array(1024).join('teretere, vana kere\n');
 
-            server.on('data', function (connection, chunk) {
+            server.on('data', (connection, chunk) => {
                 chunks.push(chunk);
             });
 
-            server.on('dataReady', function (connection, callback) {
+            server.on('dataReady', (connection, callback) => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n'));
                 callback(null, true);
             });
 
@@ -233,25 +226,25 @@ describe('SMTP Transport Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                err => {
+                    assert.ok(!err);
                     done();
                 }
             );
         });
 
-        it('Should recover unexpeced close during transmission', function (done) {
+        it('Should recover unexpeced close during transmission', (t, done) => {
             let client = new SMTPTransport('smtp:localhost:' + (PORT_NUMBER + 1) + '?logger=false');
             let chunks = [],
                 message = new Array(1024).join('teretere, vana kere\n');
 
-            server.on('data', function (connection, chunk) {
+            server.on('data', (connection, chunk) => {
                 chunks.push(chunk);
             });
 
-            server.on('dataReady', function (connection, callback) {
+            server.on('dataReady', (connection, callback) => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n'));
                 callback(null, true);
             });
 
@@ -266,38 +259,38 @@ describe('SMTP Transport Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.exist;
+                err => {
+                    assert.ok(err);
                     done();
                 }
             );
         });
 
-        it('Should verify connection without credentials with success', function (done) {
+        it('Should verify connection without credentials with success', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp://localhost:' + PORT_NUMBER,
                 forceAuth: true,
                 logger: false
             });
 
-            client.verify(function (err, success) {
-                expect(err).to.not.exist;
-                expect(success).to.be.true;
+            client.verify((err, success) => {
+                assert.ok(!err);
+                assert.strictEqual(success, true);
                 done();
             });
         });
     });
 
-    describe('Authenticated sender tests', function () {
+    describe('Authenticated sender tests', () => {
         let server;
 
-        beforeEach(function (done) {
+        beforeEach((t, done) => {
             server = new SMTPServer({
                 authMethods: ['PLAIN', 'XOAUTH2'],
                 disabledCommands: ['STARTTLS'],
 
                 onData(stream, session, callback) {
-                    stream.on('data', function () {});
+                    stream.on('data', () => {});
                     stream.on('end', callback);
                 },
 
@@ -337,11 +330,11 @@ describe('SMTP Transport Tests', function () {
             server.listen(PORT_NUMBER, done);
         });
 
-        afterEach(function (done) {
+        afterEach((t, done) => {
             server.close(done);
         });
 
-        it('Should login and send mail', function (done) {
+        it('Should login and send mail', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp:testuser:testpass@localhost:' + PORT_NUMBER,
                 logger: false
@@ -349,13 +342,13 @@ describe('SMTP Transport Tests', function () {
             let chunks = [],
                 message = new Array(1024).join('teretere, vana kere\n');
 
-            server.on('data', function (connection, chunk) {
+            server.on('data', (connection, chunk) => {
                 chunks.push(chunk);
             });
 
-            server.on('dataReady', function (connection, callback) {
+            server.on('dataReady', (connection, callback) => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n'));
                 callback(null, true);
             });
 
@@ -370,40 +363,40 @@ describe('SMTP Transport Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                err => {
+                    assert.ok(!err);
                     done();
                 }
             );
         });
 
-        it('Should verify connection with success', function (done) {
+        it('Should verify connection with success', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp:testuser:testpass@localhost:' + PORT_NUMBER,
                 logger: false
             });
 
-            client.verify(function (err, success) {
-                expect(err).to.not.exist;
-                expect(success).to.be.true;
+            client.verify((err, success) => {
+                assert.ok(!err);
+                assert.strictEqual(success, true);
                 done();
             });
         });
 
-        it('Should verify connection without credentials with success', function (done) {
+        it('Should verify connection without credentials with success', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp://localhost:' + PORT_NUMBER,
                 logger: false
             });
 
-            client.verify(function (err, success) {
-                expect(err).to.not.exist;
-                expect(success).to.be.true;
+            client.verify((err, success) => {
+                assert.ok(!err);
+                assert.strictEqual(success, true);
                 done();
             });
         });
 
-        it('Should not verify connection without credentials', function (done) {
+        it('Should not verify connection without credentials', (t, done) => {
             let client = new SMTPTransport({
                 host: 'localhost',
                 port: PORT_NUMBER,
@@ -411,36 +404,36 @@ describe('SMTP Transport Tests', function () {
                 logger: false
             });
 
-            client.verify(function (err) {
-                expect(err).to.exist;
-                expect(err.code).to.equal('NoAuth');
+            client.verify(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'NoAuth');
                 done();
             });
         });
 
-        it('Should not verify connection', function (done) {
+        it('Should not verify connection', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp:testuser:testpass@localhost:999' + PORT_NUMBER,
                 logger: false
             });
 
-            client.verify(function (err) {
-                expect(err).to.exist;
+            client.verify(err => {
+                assert.ok(err);
                 done();
             });
         });
 
-        it('Should login and send mail using proxied socket', function (done) {
+        it('Should login and send mail using proxied socket', (t, done) => {
             let client = new SMTPTransport({
                 url: 'smtp:testuser:testpass@www.example.com:1234',
                 logger: false,
                 getSocket(options, callback) {
                     let socket = net.connect(PORT_NUMBER, 'localhost');
-                    let errHandler = function (err) {
+                    let errHandler = err => {
                         callback(err);
                     };
                     socket.on('error', errHandler);
-                    socket.on('connect', function () {
+                    socket.on('connect', () => {
                         socket.removeListener('error', errHandler);
                         callback(null, {
                             connection: socket
@@ -451,13 +444,13 @@ describe('SMTP Transport Tests', function () {
             let chunks = [],
                 message = new Array(1024).join('teretere, vana kere\n');
 
-            server.on('data', function (connection, chunk) {
+            server.on('data', (connection, chunk) => {
                 chunks.push(chunk);
             });
 
-            server.on('dataReady', function (connection, callback) {
+            server.on('dataReady', (connection, callback) => {
                 let body = Buffer.concat(chunks);
-                expect(body.toString()).to.equal(message.trim().replace(/\n/g, '\r\n'));
+                assert.strictEqual(body.toString(), message.trim().replace(/\n/g, '\r\n'));
                 callback(null, true);
             });
 
@@ -472,8 +465,8 @@ describe('SMTP Transport Tests', function () {
                         message
                     )
                 },
-                function (err) {
-                    expect(err).to.not.exist;
+                err => {
+                    assert.ok(!err);
                     done();
                 }
             );
