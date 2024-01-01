@@ -25,8 +25,8 @@
     "devDependencies": {
         "@aws-sdk/client-ses": "3.484.0",
         "bunyan": "1.8.15",
-        "c8": "^8.0.1",
-        "eslint": "^8.56.0",
+        "c8": "8.0.1",
+        "eslint": "8.56.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "9.1.0",
         "libbase64": "1.2.1",
