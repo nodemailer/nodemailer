@@ -80,7 +80,7 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
         });
     });
 
-    it('should should fail with timeout', (t, done) => {
+    it('should fail with timeout', (t, done) => {
         let proxyServer = proxy(http.createServer());
         proxyServer.authenticate = (req, cb) => {
             cb(null, req.headers['proxy-authorization'] === 'Basic dGVzdDpwZXN0');

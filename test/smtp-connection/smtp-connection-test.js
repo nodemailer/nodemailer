@@ -423,7 +423,8 @@ describe('SMTP-Connection Tests', () => {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 ignoreTLS: true,
-                logger: false
+                logger: true,
+                debug: true
             });
 
             client.on('error', err => {
