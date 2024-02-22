@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [6.9.9](https://github.com/nodemailer/nodemailer/compare/v6.9.8...v6.9.9) (2024-02-01)
+
+
+### Bug Fixes
+
+* **security:** Fix issues described in GHSA-9h6g-pr28-7cqp. Do not use eternal matching pattern if only a few occurences are expected ([dd8f5e8](https://github.com/nodemailer/nodemailer/commit/dd8f5e8a4ddc99992e31df76bcff9c590035cd4a))
+* **tests:** Use native node test runner, added code coverage support, removed grunt ([#1604](https://github.com/nodemailer/nodemailer/issues/1604)) ([be45c1b](https://github.com/nodemailer/nodemailer/commit/be45c1b299d012358d69247019391a02734d70af))
+
 ## [6.9.8](https://github.com/nodemailer/nodemailer/compare/v6.9.7...v6.9.8) (2023-12-30)
 
 
