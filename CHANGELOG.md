@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [6.9.10](https://github.com/nodemailer/nodemailer/compare/v6.9.9...v6.9.10) (2024-02-22)
+
+
+### Bug Fixes
+
+* **data-uri:** Do not use regular expressions for parsing data URI schemes ([12e65e9](https://github.com/nodemailer/nodemailer/commit/12e65e975d80efe6bafe6de4590829b3b5ebb492))
+* **data-uri:** Moved all data-uri regexes to use the non-regex parseDataUri method ([edd5dfe](https://github.com/nodemailer/nodemailer/commit/edd5dfe5ce9b725f8b8ae2830797f65b2a2b0a33))
+
 ## [6.9.9](https://github.com/nodemailer/nodemailer/compare/v6.9.8...v6.9.9) (2024-02-01)
 
 
