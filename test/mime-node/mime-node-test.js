@@ -234,11 +234,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     })
                     .setContent('Hello world!'),
                 expected =
-                    'Content-Type: text/plain\r\n' +
                     'Date: 12345\r\n' +
                     'Message-ID: <67890>\r\n' +
                     'Content-Transfer-Encoding: 7bit\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
                     '\r\n' +
                     'Hello world!\r\n';
 
@@ -271,10 +271,10 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     'message-id': '67890'
                 }),
                 expected =
-                    'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                     'Date: 12345\r\n' +
                     'Message-ID: <67890>\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                     '\r\n' +
                     '----_NmP-test-Part_1\r\n' +
                     'Content-Type: text/plain\r\n' +
@@ -691,12 +691,12 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     })
                     .setContent('Hello world!'),
                 expected =
-                    'Content-Type: text/plain\r\n' +
                     'A: b\r\n' +
                     'Date: zzz\r\n' +
                     'Message-ID: <67890>\r\n' +
                     'Content-Transfer-Encoding: 7bit\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
                     '\r\n' +
                     'Hello world!\r\n';
 
@@ -727,7 +727,6 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     })
                     .setContent('Hello world!'),
                 expected =
-                    'Content-Type: text/plain\r\n' +
                     // long folded value
                     'Unprepared: a ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
                     ' ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
@@ -742,6 +741,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     'Message-ID: <67890>\r\n' +
                     'Content-Transfer-Encoding: 7bit\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
                     '\r\n' +
                     'Hello world!\r\n';
 
@@ -761,11 +761,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     })
                     .setContent('Hello world!'),
                 expected =
-                    'Content-Type: application/x-my-stuff\r\n' +
                     'Date: 12345\r\n' +
                     'Message-ID: <67890>\r\n' +
                     'Content-Transfer-Encoding: base64\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: application/x-my-stuff\r\n' +
                     '\r\n' +
                     'SGVsbG8gd29ybGQh\r\n';
 
@@ -785,10 +785,10 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     })
                     .setContent('Hello world!'),
                 expected =
-                    'Content-Type: multipart/global; boundary=abc\r\n' +
                     'Date: 12345\r\n' +
                     'Message-ID: <67890>\r\n' +
                     'MIME-Version: 1.0\r\n' +
+                    'Content-Type: multipart/global; boundary=abc\r\n' +
                     '\r\n' +
                     'Hello world!\r\n' +
                     '--abc--' +
@@ -811,7 +811,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                         'message-id': '67890'
                     })
                     .setContent('Hello world!'),
-                expected = 'Content-Type: message/rfc822\r\nDate: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\n\r\nHello world!\r\n';
+                expected = 'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
 
             mb.build((err, msg) => {
                 assert.ok(!err);
@@ -1428,11 +1428,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 .setContent('Hello world!');
 
             let expected =
-                'Content-Type:\ttext/plain\r\n' +
                 'Date:\t12345\r\n' +
                 'Message-ID:\t<67890>\r\n' +
                 'Content-Transfer-Encoding:\t7bit\r\n' +
                 'MIME-Version:\t1.0\r\n' +
+                'Content-Type:\ttext/plain\r\n' +
                 '\r\n' +
                 'Hello\tworld!\r\n';
 
@@ -1472,11 +1472,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 .setContent('Hello world!');
 
             let expected =
-                'Content-Type:\ttext/plain\r\n' +
                 'Date:\t12345\r\n' +
                 'Message-ID:\t<67890>\r\n' +
                 'Content-Transfer-Encoding:\t7bit\r\n' +
                 'MIME-Version:\t1.0\r\n' +
+                'Content-Type:\ttext/plain\r\n' +
                 '\r\n' +
                 'Hello\tworld!\r\n';
 
@@ -1538,10 +1538,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 msg = msg.toString();
                 assert.strictEqual(
                     msg,
-                    'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
-                        'Date: 12345\r\n' +
+
+                    'Date: 12345\r\n' +
                         'Message-ID: <67890>\r\n' +
                         'MIME-Version: 1.0\r\n' +
+                        'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                         '\r\n' +
                         '----_NmP-test-Part_1\r\n' +
                         expected +

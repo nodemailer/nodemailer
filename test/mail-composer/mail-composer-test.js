@@ -10,7 +10,7 @@ describe('MailComposer unit tests', () => {
     });
 
     describe('#compile', () => {
-        it('should use Mixed structure with text and attachment', (t) => {
+        it('should use Mixed structure with text and attachment', t => {
             let data = {
                 text: 'abc',
                 attachments: [
@@ -27,7 +27,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should use Mixed structure with multiple attachments', (t) => {
+        it('should use Mixed structure with multiple attachments', t => {
             let data = {
                 attachments: [
                     {
@@ -46,7 +46,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text and html', (t) => {
+        it('should create Alternative structure with text and html', t => {
             let data = {
                 text: 'abc',
                 html: 'def'
@@ -62,7 +62,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, watchHtml and html', (t) => {
+        it('should create Alternative structure with text, watchHtml and html', t => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -80,7 +80,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, amp and html', (t) => {
+        it('should create Alternative structure with text, amp and html', t => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -98,7 +98,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create Alternative structure with text, icalEvent and html', (t) => {
+        it('should create Alternative structure with text, icalEvent and html', t => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -147,7 +147,7 @@ describe('MailComposer unit tests', () => {
             });
         });
 
-        it('should create Alternative structure with text, html and cid attachment', (t) => {
+        it('should create Alternative structure with text, html and cid attachment', t => {
             let data = {
                 text: 'abc',
                 html: 'def',
@@ -170,7 +170,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create Related structure with html and cid attachment', (t) => {
+        it('should create Related structure with html and cid attachment', t => {
             let data = {
                 html: 'def',
                 attachments: [
@@ -192,7 +192,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create content node with only text', (t) => {
+        it('should create content node with only text', t => {
             let data = {
                 text: 'def'
             };
@@ -204,7 +204,7 @@ describe('MailComposer unit tests', () => {
             t.mock.restoreAll();
         });
 
-        it('should create content node with only an attachment', (t) => {
+        it('should create content node with only an attachment', t => {
             let data = {
                 attachments: [
                     {
@@ -300,13 +300,13 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_1"\r\n' +
                 'X-Processed: =?UTF-8?Q?a_really_long_header_or_value_with_non-a?=\r\n' +
                 ' =?UTF-8?Q?scii_characters_=F0=9F=91=AE?=\r\n' +
                 'X-Unprocessed: a really long header or value with non-ascii characters 👮\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -388,12 +388,12 @@ describe('MailComposer unit tests', () => {
             };
 
             let expected =
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
                 'Message-ID: <rawtest>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_2"\r\n' +
@@ -438,13 +438,13 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
                 '\r\n' +
                 'def\r\n';
 
@@ -468,7 +468,6 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?B?w4TDhMOEw4Q=?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?Q?AAA=C3=84?= <test2@example.com>\r\n' +
                 'Subject: =?UTF-8?Q?def_=C3=84=C3=84=C3=84=C3=84_foo_AAA?=\r\n' +
@@ -477,6 +476,7 @@ describe('MailComposer unit tests', () => {
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'Content-Transfer-Encoding: quoted-printable\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
                 '\r\n' +
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
@@ -501,7 +501,6 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?Q?=C3=84=C3=84=C3=84=C3=84?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?Q?AAA=C3=84?= <test2@example.com>\r\n' +
                 'Subject: =?UTF-8?Q?def_=C3=84=C3=84=C3=84=C3=84_foo_AAA?=\r\n' +
@@ -510,6 +509,7 @@ describe('MailComposer unit tests', () => {
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'Content-Transfer-Encoding: quoted-printable\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
                 '\r\n' +
                 'def =C3=84=C3=84=C3=84=C3=84 foo AAA=C3=84\r\n';
 
@@ -534,7 +534,6 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: =?UTF-8?B?w4TDhMOEw4Q=?= <test1@example.com>\r\n' +
                 'To: =?UTF-8?B?QUFBw4Q=?= <test2@example.com>\r\n' +
                 'Subject: =?UTF-8?B?ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==?=\r\n' +
@@ -542,6 +541,7 @@ describe('MailComposer unit tests', () => {
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'Content-Transfer-Encoding: base64\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
                 '\r\n' +
                 'ZGVmIMOEw4TDhMOEIGZvbyBBQUHDhA==\r\n';
 
@@ -565,7 +565,6 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: text/plain; charset=utf-8\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
                 'Bcc: test3@example.com\r\n' +
@@ -573,6 +572,7 @@ describe('MailComposer unit tests', () => {
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'Content-Transfer-Encoding: 7bit\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
                 '\r\n' +
                 'def\r\n';
 
@@ -606,10 +606,10 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -652,10 +652,10 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -701,10 +701,10 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -751,10 +751,10 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'Message-ID: <zzzzzz>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -801,12 +801,12 @@ describe('MailComposer unit tests', () => {
 
             let expected =
                 '' +
-                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 'From: test1@example.com\r\n' +
                 'To: test2@example.com\r\n' +
                 'Message-ID: <icaltest>\r\n' +
                 'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
                 'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
                 '\r\n' +
                 '----_NmP-test-Part_1\r\n' +
                 'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_2"\r\n' +
