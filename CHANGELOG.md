@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.11](https://github.com/nodemailer/nodemailer/compare/v6.9.10...v6.9.11) (2024-02-29)
+
+
+### Bug Fixes
+
+* **headers:** Ensure that Content-type is the bottom header ([c7cf97e](https://github.com/nodemailer/nodemailer/commit/c7cf97e5ecc83f8eee773359951df995c9945446))
+
 ## [6.9.10](https://github.com/nodemailer/nodemailer/compare/v6.9.9...v6.9.10) (2024-02-22)
 
 
