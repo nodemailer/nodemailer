@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.12](https://github.com/nodemailer/nodemailer/compare/v6.9.11...v6.9.12) (2024-03-08)
+
+
+### Bug Fixes
+
+* **message-generation:** Escape single quote in address names ([4ae5fad](https://github.com/nodemailer/nodemailer/commit/4ae5fadeaac70ba91abf529fcaae65f829a39101))
+
 ## [6.9.11](https://github.com/nodemailer/nodemailer/compare/v6.9.10...v6.9.11) (2024-02-29)
 
 
