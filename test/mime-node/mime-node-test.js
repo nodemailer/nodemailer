@@ -1196,11 +1196,24 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(
                 mb._convertAddresses([
                     {
+                        name: 'O Vigala Sass', // eslint-disable-line
+                        address: 'a@b.c'
+                    }
+                ]),
+                'O Vigala Sass <a@b.c>'
+            ); // eslint-disable-line
+        });
+
+        it('should encode single quote', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
                         name: "O'Vigala Sass", // eslint-disable-line
                         address: 'a@b.c'
                     }
                 ]),
-                "O'Vigala Sass <a@b.c>"
+                '"O\'Vigala Sass" <a@b.c>'
             ); // eslint-disable-line
         });
 

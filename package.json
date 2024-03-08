@@ -23,7 +23,7 @@
     },
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
-        "@aws-sdk/client-ses": "3.523.0",
+        "@aws-sdk/client-ses": "3.529.1",
         "bunyan": "1.8.15",
         "c8": "9.1.0",
         "eslint": "8.57.0",
@@ -35,7 +35,7 @@
         "nodemailer-ntlm-auth": "1.0.4",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
-        "smtp-server": "3.13.2"
+        "smtp-server": "3.13.3"
     },
     "engines": {
         "node": ">=6.0.0"
