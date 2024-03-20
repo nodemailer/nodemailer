@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.13](https://github.com/nodemailer/nodemailer/compare/v6.9.12...v6.9.13) (2024-03-20)
+
+
+### Bug Fixes
+
+* **tls:** Ensure servername for SMTP ([d66fdd3](https://github.com/nodemailer/nodemailer/commit/d66fdd3dccacc4bc79d697fe9009204cc8d4bde0))
+
 ## [6.9.12](https://github.com/nodemailer/nodemailer/compare/v6.9.11...v6.9.12) (2024-03-08)
 
 
