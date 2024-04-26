@@ -57,6 +57,14 @@
         "secure": true
     },
 
+    "Feishu Mail": {
+        "aliases": ["Feishu", "FeishuMail"],
+        "domains": ["www.feishu.cn"],
+        "host": "smtp.feishu.cn",
+        "port": 465,
+        "secure": true
+    },
+
     "GandiMail": {
         "aliases": ["Gandi", "Gandi Mail"],
         "host": "mail.gandi.net",
