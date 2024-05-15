@@ -117,7 +117,10 @@
         "domains": ["ik.me", "ikmail.com", "etik.com"],
         "port": 587
     },
-
+    "Loopia": {
+        "host": "mailcluster.loopia.se",
+        "port": 465
+    },
     "mail.ee": {
         "host": "smtp.mail.ee"
     },
