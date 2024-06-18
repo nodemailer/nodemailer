@@ -155,8 +155,8 @@
     },
 
     "Mailtrap": {
-        "host": "smtp.mailtrap.io",
-        "port": 2525
+        "host": "live.smtp.mailtrap.io",
+        "port": 587
     },
 
     "Mandrill": {
