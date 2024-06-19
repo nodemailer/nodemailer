@@ -13,7 +13,7 @@ describe('Stream Transport Tests', { timeout: 10000 }, () => {
     });
 
     describe('Send as stream', () => {
-        it('Should send mail using unix newlines', (t, done) => {
+        it('Should send mail using unix newlines 1', (t, done) => {
             let client = new StreamTransport();
             let chunks = [],
                 message = new Array(100).join('teretere\r\nvana kere\r\n');
@@ -25,6 +25,42 @@ describe('Stream Transport Tests', { timeout: 10000 }, () => {
                         from: 'test@valid.sender',
                         to: 'test@valid.recipient',
                         newline: '\n',
+                        raw: Buffer.from(message)
+                    }).compile()
+                },
+                (err, info) => {
+                    assert.ok(!err);
+
+                    assert.deepStrictEqual(info.envelope, {
+                        from: 'test@valid.sender',
+                        to: ['test@valid.recipient']
+                    });
+
+                    info.message.on('data', chunk => {
+                        chunks.push(chunk);
+                    });
+
+                    info.message.on('end', () => {
+                        let body = Buffer.concat(chunks);
+                        assert.strictEqual(body.toString(), message.replace(/\r\n/g, '\n'));
+                        done();
+                    });
+                }
+            );
+        });
+
+        it('Should send mail using unix newlines 2', (t, done) => {
+            let client = new StreamTransport();
+            let chunks = [],
+                message = new Array(100).join('teretere\r\nvana kere\r\n');
+
+            client.send(
+                {
+                    data: {},
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        newline: 'unix',
                         raw: Buffer.from(message)
                     }).compile()
                 },
