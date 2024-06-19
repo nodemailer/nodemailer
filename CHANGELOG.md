@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [6.9.14](https://github.com/nodemailer/nodemailer/compare/v6.9.13...v6.9.14) (2024-06-19)
+
+
+### Bug Fixes
+
+* **api:** Added support for Ethereal authentication ([56b2205](https://github.com/nodemailer/nodemailer/commit/56b22052a98de9e363f6c4d26d1512925349c3f3))
+* **services.json:** Add Email Services Provider Feishu Mail (CN) ([#1648](https://github.com/nodemailer/nodemailer/issues/1648)) ([e9e9ecc](https://github.com/nodemailer/nodemailer/commit/e9e9ecc99b352948a912868c7912b280a05178c6))
+* **services.json:** update Mailtrap host and port in well known ([#1652](https://github.com/nodemailer/nodemailer/issues/1652)) ([fc2c9ea](https://github.com/nodemailer/nodemailer/commit/fc2c9ea0b4c4f4e514143d2a138c9a23095fc827))
+* **well-known-services:** Add Loopia in well known services ([#1655](https://github.com/nodemailer/nodemailer/issues/1655)) ([21a28a1](https://github.com/nodemailer/nodemailer/commit/21a28a18fc9fdf8e0e86ddd846e54641395b2cb6))
+
 ## [6.9.13](https://github.com/nodemailer/nodemailer/compare/v6.9.12...v6.9.13) (2024-03-20)
 
 
