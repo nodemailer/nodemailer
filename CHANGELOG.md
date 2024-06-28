@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.15](https://github.com/nodemailer/nodemailer/compare/v6.9.14...v6.9.15) (2024-06-28)
+
+
+### Bug Fixes
+
+* Fix memory leak ([#1667](https://github.com/nodemailer/nodemailer/issues/1667)) ([baa28f6](https://github.com/nodemailer/nodemailer/commit/baa28f659641a4bc30360633673d851618f8e8bd))
+
 ## [6.9.14](https://github.com/nodemailer/nodemailer/compare/v6.9.13...v6.9.14) (2024-06-19)
 
 
