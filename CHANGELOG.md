@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [6.9.15](https://github.com/nodemailer/nodemailer/compare/v6.9.14...v6.9.15) (2024-08-08)
+
+
+### Bug Fixes
+
+* Fix memory leak ([#1667](https://github.com/nodemailer/nodemailer/issues/1667)) ([baa28f6](https://github.com/nodemailer/nodemailer/commit/baa28f659641a4bc30360633673d851618f8e8bd))
+* **mime:** Added GeoJSON closes [#1637](https://github.com/nodemailer/nodemailer/issues/1637) ([#1665](https://github.com/nodemailer/nodemailer/issues/1665)) ([79b8293](https://github.com/nodemailer/nodemailer/commit/79b8293ad557d36f066b4675e649dd80362fd45b))
+
 ## [6.9.14](https://github.com/nodemailer/nodemailer/compare/v6.9.13...v6.9.14) (2024-06-19)
 
 
