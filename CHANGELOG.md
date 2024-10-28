@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.9.16](https://github.com/nodemailer/nodemailer/compare/v6.9.15...v6.9.16) (2024-10-28)
+
+
+### Bug Fixes
+
+* **addressparser:** Correctly detect if user local part is attached to domain part ([f2096c5](https://github.com/nodemailer/nodemailer/commit/f2096c51b92a69ecfbcc15884c28cb2c2f00b826))
+
 ## [6.9.15](https://github.com/nodemailer/nodemailer/compare/v6.9.14...v6.9.15) (2024-08-08)
 
 
