@@ -298,4 +298,15 @@ describe('#addressparser', () => {
         let expected = [{ address: 'test@example.com', name: 'Firstname " \\, Lastname (Test)' }];
         assert.deepStrictEqual(addressparser(input), expected);
     });
+
+    it('should handle quoted usernames', () => {
+        let input = '"test@subdomain.com"@example.com';
+        let expected = [
+            {
+                address: 'test@subdomain.com@example.com',
+                name: ''
+            }
+        ];
+        assert.deepStrictEqual(addressparser(input), expected);
+    });
 });
