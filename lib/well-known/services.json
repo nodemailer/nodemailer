@@ -306,6 +306,14 @@
         "secure": true
     },
 
+    "Seznam": {
+        "aliases": ["Seznam Email"],
+        "domains": ["seznam.cz", "email.cz", "post.cz", "spoluzaci.cz"],
+        "host": "smtp.seznam.cz",
+        "port": 465,
+        "secure": true
+    },
+
     "Sparkpost": {
         "aliases": ["SparkPost", "SparkPost Mail"],
         "domains": ["sparkpost.com"],
