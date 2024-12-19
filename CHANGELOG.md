@@ -59,7 +59,7 @@
 
 ### Bug Fixes
 
-* **security:** Fix issues described in GHSA-9h6g-pr28-7cqp. Do not use eternal matching pattern if only a few occurences are expected ([dd8f5e8](https://github.com/nodemailer/nodemailer/commit/dd8f5e8a4ddc99992e31df76bcff9c590035cd4a))
+* **security:** Fix issues described in GHSA-9h6g-pr28-7cqp. Do not use eternal matching pattern if only a few occurrences are expected ([dd8f5e8](https://github.com/nodemailer/nodemailer/commit/dd8f5e8a4ddc99992e31df76bcff9c590035cd4a))
 * **tests:** Use native node test runner, added code coverage support, removed grunt ([#1604](https://github.com/nodemailer/nodemailer/issues/1604)) ([be45c1b](https://github.com/nodemailer/nodemailer/commit/be45c1b299d012358d69247019391a02734d70af))
 
 ## [6.9.8](https://github.com/nodemailer/nodemailer/compare/v6.9.7...v6.9.8) (2023-12-30)
@@ -81,7 +81,7 @@
 
 ### Bug Fixes
 
-* **inline:** Use 'inline' as the default Content Dispostion value for embedded images ([db32c93](https://github.com/nodemailer/nodemailer/commit/db32c93fefee527bcc239f13056e5d9181a4d8af))
+* **inline:** Use 'inline' as the default Content disposition value for embedded images ([db32c93](https://github.com/nodemailer/nodemailer/commit/db32c93fefee527bcc239f13056e5d9181a4d8af))
 * **tests:** Removed Node v12 from test matrix as it is not compatible with the test framework anymore ([7fe0a60](https://github.com/nodemailer/nodemailer/commit/7fe0a608ed6bcb70dc6b2de543ebfc3a30abf984))
 
 ## [6.9.5](https://github.com/nodemailer/nodemailer/compare/v6.9.4...v6.9.5) (2023-09-06)
@@ -191,11 +191,11 @@
 
 ## 6.4.17 2020-12-11
 
--   Allow mixing attachments with caendar alternatives
+-   Allow mixing attachments with calendar alternatives
 
 ## 6.4.16 2020-11-12
 
--   Applied updated prettier formating rules
+-   Applied updated prettier formatting rules
 
 ## 6.4.15 2020-11-06
 
@@ -220,7 +220,7 @@
 
 ## 6.4.10 2020-06-17
 
--   Fixed RFC822 output for MailComposer when using invalid content-type value. Mostly relevant if message attachments have stragne content-type values set.
+-   Fixed RFC822 output for MailComposer when using invalid content-type value. Mostly relevant if message attachments have strange content-type values set.
 
 ## 6.4.7 2020-05-28
 
@@ -294,7 +294,7 @@
 ## 5.0.1 2019-01-09
 
 -   Fixed regression error to support Node versions lower than 6.11
--   Added expiremental custom authentication support
+-   Added experimental custom authentication support
 
 ## 5.0.0 2018-12-28
 
@@ -327,7 +327,7 @@
 
 ## 4.6.4 2018-03-31
 
--   Readded logo author link to README that was accidentally removed a while ago
+-   re-added logo author link to README that was accidentally removed a while ago
 
 ## 4.6.3 2018-03-13
 
@@ -366,7 +366,7 @@
 
 ## 4.3.1 2017-10-25
 
--   Fixed a confict with Electron.js where timers do not have unref method
+-   Fixed a conflict with Electron.js where timers do not have unref method
 
 ## 4.3.0 2017-10-23
 
@@ -427,7 +427,7 @@
 
 ## v3.1.2 2017-02-17
 
--   Added missing error handlers for Sendmail, SES and Stream transports. If a messages contained an invalid URL as attachment then these transports threw an uncatched error
+-   Added missing error handlers for Sendmail, SES and Stream transports. If a messages contained an invalid URL as attachment then these transports threw an uncaught error
 
 ## v3.1.1 2017-02-13
 
@@ -663,7 +663,7 @@ Added new method `resolveContent()` to get the html/text/attachment content as a
 
 ## v1.0.4 2014-07-23
 
-Bugfix release. HTML node was instered twice if the message consisted of a HTML content (but no text content) + at least one attachment with CID + at least one attachment without CID. In this case the HTML node was inserted both to the root level multipart/mixed section and to the multipart/related sub section
+Bugfix release. HTML node was inserted twice if the message consisted of a HTML content (but no text content) + at least one attachment with CID + at least one attachment without CID. In this case the HTML node was inserted both to the root level multipart/mixed section and to the multipart/related sub section
 
 ## v1.0.3 2014-07-16
 
@@ -800,7 +800,7 @@ Total rewrite. See migration guide here: <http://www.andrisreinman.com/nodemaile
 ## v0.5.5 2013-10-30
 
 -   bumped version to v0.5.5
--   Updated mailcomposer dependnecy version to 0.2.3
+-   Updated mailcomposer dependency version to 0.2.3
 -   Remove legacy code - node v0.4 is not supported anymore anyway
 -   Use hostname (autodetected or from the options.name property) for Message-Id instead of "Nodemailer" (helps a bit when messages are identified as spam)
 -   Added maxMessages info to README
