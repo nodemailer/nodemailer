@@ -203,6 +203,14 @@
         "port": 2525
     },
 
+    "Proton": {
+        "aliases": ["ProtonMail", "Proton.me", "Protonmail.com", "Protonmail.ch"],
+        "domains": ["proton.me", "protonmail.com", "pm.me", "protonmail.ch"],
+        "host": "smtp.protonmail.ch",
+        "port": 587,
+        "requireTLS": true
+    },
+
     "qiye.aliyun": {
         "host": "smtp.mxhichina.com",
         "port": "465",
