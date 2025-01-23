@@ -5,6 +5,7 @@ module.exports = {
         'proxy',
 
         // API changes
-        'eslint'
+        'eslint',
+        'eslint-config-prettier'
     ]
 };
