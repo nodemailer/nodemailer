@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [6.10.0](https://github.com/nodemailer/nodemailer/compare/v6.9.16...v6.10.0) (2025-01-23)
+
+
+### Features
+
+* **services:** add Seznam email service configuration ([#1695](https://github.com/nodemailer/nodemailer/issues/1695)) ([d1ae0a8](https://github.com/nodemailer/nodemailer/commit/d1ae0a86883ba6011a49a5bbdf076098e2e3637a))
+
+
+### Bug Fixes
+
+* **proxy:** Set error and timeout errors for proxied sockets ([aa0c99c](https://github.com/nodemailer/nodemailer/commit/aa0c99c8f25440bb3dc91f4f3448777c800604d7))
+
 ## [6.9.16](https://github.com/nodemailer/nodemailer/compare/v6.9.15...v6.9.16) (2024-10-28)
 
 
