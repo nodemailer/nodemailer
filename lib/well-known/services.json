@@ -217,6 +217,12 @@
         "secure": true
     },
 
+    "qiye.163": {
+        "host": "smtp.qiye.163.com",
+        "port": 994,
+        "secure": true
+    },
+
     "QQ": {
         "domains": ["qq.com"],
         "host": "smtp.qq.com",
