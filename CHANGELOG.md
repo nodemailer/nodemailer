@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [7.0.0](https://github.com/nodemailer/nodemailer/compare/v6.10.1...v7.0.0) (2025-05-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* SESv2 SDK support, removed older SES SDK v2 and v3 , removed SES rate limiting and idling features
+
+### Features
+
+* SESv2 SDK support, removed older SES SDK v2 and v3 , removed SES rate limiting and idling features ([15db667](https://github.com/nodemailer/nodemailer/commit/15db667af2d0a5ed835281cfdbab16ee73b5edce))
+
 ## [6.10.1](https://github.com/nodemailer/nodemailer/compare/v6.10.0...v6.10.1) (2025-02-06)
 
 
