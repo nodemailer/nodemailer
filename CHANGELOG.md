@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [6.10.1](https://github.com/nodemailer/nodemailer/compare/v6.10.0...v6.10.1) (2025-02-06)
+
+
+### Bug Fixes
+
+* close correct socket ([a18062c](https://github.com/nodemailer/nodemailer/commit/a18062c04d0e05ca4357fbe8f0a59b690fa5391e))
+
 ## [6.10.0](https://github.com/nodemailer/nodemailer/compare/v6.9.16...v6.10.0) (2025-01-23)
 
 
