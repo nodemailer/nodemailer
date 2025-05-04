@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.2](https://github.com/nodemailer/nodemailer/compare/v7.0.1...v7.0.2) (2025-05-04)
+
+
+### Bug Fixes
+
+* **ses:** Fixed structured from header ([faa9a5e](https://github.com/nodemailer/nodemailer/commit/faa9a5eafaacbaf85de3540466a04636e12729b3))
+
 ## [7.0.1](https://github.com/nodemailer/nodemailer/compare/v7.0.0...v7.0.1) (2025-05-04)
 
 
