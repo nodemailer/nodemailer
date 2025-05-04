@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.1](https://github.com/nodemailer/nodemailer/compare/v7.0.0...v7.0.1) (2025-05-04)
+
+
+### Bug Fixes
+
+* **ses:** Use formatted FromEmailAddress for SES emails ([821cd09](https://github.com/nodemailer/nodemailer/commit/821cd09002f16c20369cc728b9414c7eb99e4113))
+
 ## [7.0.0](https://github.com/nodemailer/nodemailer/compare/v6.10.1...v7.0.0) (2025-05-03)
 
 
