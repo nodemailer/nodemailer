@@ -731,6 +731,133 @@ describe('MailComposer unit tests', () => {
             });
         });
 
+        it('should use default transfer encoding', (t, done) => {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        content: 'test',
+                        filename: 'test.bin'
+                    }
+                ]
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                'abc\r\n-' +
+                '---_NmP-test-Part_1\r\n' +
+                'Content-Type: application/octet-stream; name=test.bin\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: attachment; filename=test.bin\r\n' +
+                '\r\n' +
+                'dGVzdA==\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should keep provided transfer encoding', (t, done) => {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        content: 'test',
+                        filename: 'test.bin',
+                        contentTransferEncoding: '7bit'
+                    }
+                ]
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                'abc\r\n-' +
+                '---_NmP-test-Part_1\r\n' +
+                'Content-Type: application/octet-stream; name=test.bin\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                'Content-Disposition: attachment; filename=test.bin\r\n' +
+                '\r\n' +
+                'test\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should use 7bit transfer encoding for message/rfc822', (t, done) => {
+            let data = {
+                text: 'abc',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        content: 'test',
+                        filename: 'test.eml'
+                    }
+                ]
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                'abc\r\n-' +
+                '---_NmP-test-Part_1\r\n' +
+                'Content-Type: message/rfc822; name=test.eml\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                'Content-Disposition: inline; filename=test.eml\r\n' +
+                '\r\n' +
+                'test\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
         it('should ignore attachment filename', (t, done) => {
             let data = {
                 text: 'abc',
