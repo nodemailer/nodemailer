@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.3](https://github.com/nodemailer/nodemailer/compare/v7.0.2...v7.0.3) (2025-05-08)
+
+
+### Bug Fixes
+
+* **attachments:** Set the default transfer encoding for message/rfc822 attachments as '7bit' ([007d5f3](https://github.com/nodemailer/nodemailer/commit/007d5f3f40908c588f1db46c76de8b64ff429327))
+
 ## [7.0.2](https://github.com/nodemailer/nodemailer/compare/v7.0.1...v7.0.2) (2025-05-04)
 
 
