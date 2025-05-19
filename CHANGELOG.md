@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.4](https://github.com/nodemailer/nodemailer/compare/v7.0.3...v7.0.4) (2025-05-19)
+
+
+### Bug Fixes
+
+* **well-known-services:** Added AliyunQiye ([bb9e6da](https://github.com/nodemailer/nodemailer/commit/bb9e6daffb632d7d8f969359859f88a138de3a48))
+
 ## [7.0.3](https://github.com/nodemailer/nodemailer/compare/v7.0.2...v7.0.3) (2025-05-08)
 
 
