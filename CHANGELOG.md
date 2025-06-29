@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [7.0.4](https://github.com/nodemailer/nodemailer/compare/v7.0.3...v7.0.4) (2025-06-29)
+
+
+### Bug Fixes
+
+* **pools:** Emit 'clear' once transporter is idle and all connections are closed ([839e286](https://github.com/nodemailer/nodemailer/commit/839e28634c9a93ae4321f399a8c893bf487a09fa))
+* **smtp-connection:** jsdoc public annotation for socket ([#1741](https://github.com/nodemailer/nodemailer/issues/1741)) ([c45c84f](https://github.com/nodemailer/nodemailer/commit/c45c84fe9b8e2ec5e0615ab02d4197473911ab3e))
+* **well-known-services:** Added AliyunQiye ([bb9e6da](https://github.com/nodemailer/nodemailer/commit/bb9e6daffb632d7d8f969359859f88a138de3a48))
+
 ## [7.0.3](https://github.com/nodemailer/nodemailer/compare/v7.0.2...v7.0.3) (2025-05-08)
 
 
