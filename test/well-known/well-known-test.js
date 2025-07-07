@@ -8,6 +8,7 @@ describe('Well-Known Services Tests', () => {
     describe('#wellKnown', () => {
         it('Should find by key', () => {
             assert.deepStrictEqual(wellKnown('Gmail'), {
+                description: 'Gmail',
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
@@ -16,6 +17,7 @@ describe('Well-Known Services Tests', () => {
 
         it('Should find by alias', () => {
             assert.deepStrictEqual(wellKnown('Google Mail'), {
+                description: 'Gmail',
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
@@ -24,6 +26,7 @@ describe('Well-Known Services Tests', () => {
 
         it('Should find by domain', () => {
             assert.deepStrictEqual(wellKnown('GoogleMail.com'), {
+                description: 'Gmail',
                 host: 'smtp.gmail.com',
                 port: 465,
                 secure: true
