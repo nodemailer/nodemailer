@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.5](https://github.com/nodemailer/nodemailer/compare/v7.0.4...v7.0.5) (2025-07-07)
+
+
+### Bug Fixes
+
+* updated well known delivery service list ([fa2724b](https://github.com/nodemailer/nodemailer/commit/fa2724b337eb8d8fdcdd788fe903980b061316b8))
+
 ## [7.0.4](https://github.com/nodemailer/nodemailer/compare/v7.0.3...v7.0.4) (2025-06-29)
 
 
