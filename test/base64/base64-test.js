@@ -110,5 +110,38 @@ describe('Base64 Tests', () => {
                 done();
             });
         });
+
+        it('should flush incomplete trailing base64 chunks correctly', (t, done) => {
+            const encoder = new base64.Encoder({ lineLength: 10 });
+
+            // Prepare a buffer of 5 bytes, which encodes to 8 base64 characters.
+            // This length is below the specified lineLength (10), so no wrapping should occur.
+            const input = Buffer.from('12345');
+            let output = Buffer.alloc(0);
+
+            encoder.on('data', chunk => {
+                // Accumulate the data chunks emitted by the base64 encoder stream.
+                output = Buffer.concat([output, chunk]);
+            });
+
+            encoder.on('end', () => {
+                const result = output.toString();
+
+                /**
+                 * The string "12345" encoded in base64 is "MTIzNDU=".
+                 * Since the output length (8 characters) is less than the lineLength (10),
+                 * the encoder should not insert any line breaks.
+                 *
+                 * This test verifies that any incomplete trailing base64 data
+                 * held internally in `_curLine` is correctly flushed and emitted
+                 * when the stream ends, preventing silent data loss.
+                 */
+                assert.strictEqual(result, 'MTIzNDU=');
+                done();
+            });
+
+            encoder.write(input);
+            encoder.end(); // triggers the _flush method
+        });
     });
 });
