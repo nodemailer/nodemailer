@@ -143,5 +143,30 @@ describe('Base64 Tests', () => {
             encoder.write(input);
             encoder.end(); // triggers the _flush method
         });
+        it('should handle large payload efficiently', (t, done) => {
+            const encoder = new base64.Encoder({ lineLength: 76 });
+            const largeData = crypto.randomBytes(370 * 1024 * 1024); // 370 MB
+
+            const start = Date.now();
+            encoder.write(largeData);
+            encoder.end();
+
+            let outputSize = 0;
+            encoder.on('data', chunk => {
+                outputSize += chunk.length;
+            });
+
+            encoder.on('end', () => {
+                const duration = Date.now() - start;
+                console.log(`Encoded 100MB in ${duration}ms`);
+
+                const base64Size = Math.ceil(largeData.length / 3) * 4;
+                const numberOfLines = Math.ceil(base64Size / 76);
+                const expectedSize = base64Size + (numberOfLines - 1) * 2;
+
+                assert.strictEqual(outputSize, expectedSize);
+                done();
+            });
+        });
     });
 });
