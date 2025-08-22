@@ -43,6 +43,16 @@
         "port": 587
     },
 
+    "Aruba": {
+        "description": "Aruba PEC (Italian email provider)",
+        "domains": ["aruba.it", "pec.aruba.it"],
+        "aliases": ["Aruba PEC"],
+        "host": "smtps.aruba.it",
+        "port": 465,
+        "secure": true,
+        "authMethod": "LOGIN"
+    },
+
     "Bluewin": {
         "description": "Bluewin (Swiss email provider)",
         "host": "smtpauths.bluewin.ch",
@@ -50,10 +60,27 @@
         "port": 465
     },
 
+    "BOL": {
+        "description": "BOL Mail (Brazilian provider)",
+        "domains": ["bol.com.br"],
+        "host": "smtp.bol.com.br",
+        "port": 587,
+        "requireTLS": true
+    },
+
     "DebugMail": {
         "description": "DebugMail (email testing service)",
         "host": "debugmail.io",
         "port": 25
+    },
+
+    "Disroot": {
+        "description": "Disroot (privacy-focused provider)",
+        "domains": ["disroot.org"],
+        "host": "smtp.disroot.org",
+        "port": 587,
+        "secure": true,
+        "authMethod": "LOGIN"
     },
 
     "DynectEmail": {
@@ -171,6 +198,16 @@
         "host": "mail.infomaniak.com",
         "domains": ["ik.me", "ikmail.com", "etik.com"],
         "port": 587
+    },
+
+    "KolabNow": {
+        "description": "KolabNow (secure email service)",
+        "domains": ["kolabnow.com"],
+        "aliases": ["Kolab"],
+        "host": "smtp.kolabnow.com",
+        "port": 465,
+        "secure": true,
+        "authMethod": "LOGIN"
     },
 
     "Loopia": {
@@ -324,6 +361,14 @@
     "Resend": {
         "description": "Resend",
         "host": "smtp.resend.com",
+        "port": 465,
+        "secure": true
+    },
+
+    "Runbox": {
+        "description": "Runbox (Norwegian email provider)",
+        "domains": ["runbox.com"],
+        "host": "smtp.runbox.com",
         "port": 465,
         "secure": true
     },
@@ -546,6 +591,14 @@
         "host": "smtp.yandex.ru",
         "port": 465,
         "secure": true
+    },
+
+    "Zimbra": {
+        "description": "Zimbra Mail Server",
+        "aliases": ["Zimbra Collaboration"],
+        "host": "smtp.zimbra.com",
+        "port": 587,
+        "requireTLS": true
     },
 
     "Zoho": {
