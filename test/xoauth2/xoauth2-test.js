@@ -271,4 +271,30 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
 
         await assert.rejects(() => Promise.all(promises));
     });
+
+    it('should handle sequential token requests with varying tokens', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            clientId: '{Client ID}',
+            clientSecret: '{Client Secret}',
+            refreshToken: 'saladus',
+            accessUrl: 'http://localhost:' + XOAUTH_PORT + '/',
+            timeout: 1
+        });
+
+        const tokens = new Set();
+
+        await [...Array(500).keys()].reduce(async prev => {
+            await prev;
+            const token = await new Promise((resolve, reject) => {
+                xoauth2.getToken(true, (err, token) => {
+                    if (err) reject(err);
+                    else resolve(token);
+                });
+            });
+            tokens.add(token);
+        }, Promise.resolve());
+
+        assert.strictEqual(tokens.size, 500);
+    });
 });
