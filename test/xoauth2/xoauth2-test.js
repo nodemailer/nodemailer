@@ -297,4 +297,141 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
 
         assert.strictEqual(tokens.size, 500);
     });
+
+    it('should reuse existing token when no refresh mechanism is available', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            accessToken: 'existing_valid_token_123',
+            expires: Date.now() + 3600000 // 1 hour from now
+            // Note: No refreshToken, no provisionCallback, no serviceClient
+        });
+
+        // Mock logger to capture debug messages
+        const debugLogs = [];
+        xoauth2.logger.debug = (data, message, user) => {
+            if (data.action === 'reuse') {
+                debugLogs.push({ data, message, user });
+            }
+        };
+
+        // Should reuse existing token even with renew=true
+        const token = await new Promise((resolve, reject) => {
+            xoauth2.getToken(true, (err, token) => {
+                if (err) reject(err);
+                else resolve(token);
+            });
+        });
+
+        assert.strictEqual(token, 'existing_valid_token_123');
+        assert.strictEqual(debugLogs.length, 1);
+        assert.strictEqual(debugLogs[0].data.action, 'reuse');
+        assert.strictEqual(debugLogs[0].user, 'test@example.com');
+    });
+
+    it('should return error when no token exists and no refresh mechanism', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com'
+            // Note: No accessToken, no refreshToken, no provisionCallback, no serviceClient
+        });
+
+        // Mock logger to capture error messages
+        const errorLogs = [];
+        xoauth2.logger.error = (data, message, user) => {
+            if (data.action === 'renew') {
+                errorLogs.push({ data, message, user });
+            }
+        };
+
+        await assert.rejects(async () => {
+            await new Promise((resolve, reject) => {
+                xoauth2.getToken(true, (err, token) => {
+                    if (err) reject(err);
+                    else resolve(token);
+                });
+            });
+        }, /Can't create new access token for user/);
+
+        assert.strictEqual(errorLogs.length, 1);
+        assert.strictEqual(errorLogs[0].data.action, 'renew');
+        assert.strictEqual(errorLogs[0].user, 'test@example.com');
+    });
+
+    it('should attempt renewal when refresh mechanism is available', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            refreshToken: 'valid_refresh_token',
+            clientId: 'test_client_id',
+            clientSecret: 'test_client_secret',
+            accessUrl: 'http://localhost:' + XOAUTH_PORT + '/'
+        });
+
+        // Mock generateToken to track if it was called
+        let generateTokenCalled = false;
+        xoauth2.generateToken = callback => {
+            generateTokenCalled = true;
+            // Simulate successful token generation
+            xoauth2.updateToken('new_generated_token', 3600);
+            callback(null, 'new_generated_token');
+        };
+
+        const token = await new Promise((resolve, reject) => {
+            xoauth2.getToken(true, (err, token) => {
+                if (err) reject(err);
+                else resolve(token);
+            });
+        });
+
+        assert.strictEqual(token, 'new_generated_token');
+        assert.strictEqual(generateTokenCalled, true);
+    });
+
+    it('should use provisionCallback when available instead of refresh', async () => {
+        let provisionCallbackCalled = false;
+
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            provisionCallback: (user, renew, cb) => {
+                provisionCallbackCalled = true;
+                cb(null, 'provisioned_token', 3600);
+            }
+        });
+
+        const token = await new Promise((resolve, reject) => {
+            xoauth2.getToken(true, (err, token) => {
+                if (err) reject(err);
+                else resolve(token);
+            });
+        });
+
+        assert.strictEqual(token, 'provisioned_token');
+        assert.strictEqual(provisionCallbackCalled, true);
+    });
+
+    it('should use serviceClient when available for token generation', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            serviceClient: 'test_service_client',
+            privateKey: '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+            accessUrl: 'http://localhost:' + XOAUTH_PORT + '/'
+        });
+
+        // Mock generateToken to track if it was called
+        let generateTokenCalled = false;
+        xoauth2.generateToken = callback => {
+            generateTokenCalled = true;
+            // Simulate successful token generation
+            xoauth2.updateToken('service_token', 3600);
+            callback(null, 'service_token');
+        };
+
+        const token = await new Promise((resolve, reject) => {
+            xoauth2.getToken(true, (err, token) => {
+                if (err) reject(err);
+                else resolve(token);
+            });
+        });
+
+        assert.strictEqual(token, 'service_token');
+        assert.strictEqual(generateTokenCalled, true);
+    });
 });
