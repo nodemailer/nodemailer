@@ -212,4 +212,63 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
             'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.yBo28P5qE8t8yMkN0hC6uWstUAGh8RGW-zLe1NHdtit8ZVlAEdnhXbZvjGEfDWjOeWe1aZ2eZ65i83awWsx02G9HDsI1xMOFTHpviSHLIWnOf1D2hqJxm0On9zYRjd6oFxuRlmJtI9PIDlMJltG7K3leqReLLC6ZOAYL1Au0WY5swdG2eA6Oi83BTEckLj9c-0TYYRYtyRSG9o298Iuc8JL2KhrAbM8d62JgAPuI3hN_NgEtxs36bidt3SHbuWSszAdt1lHR-bFCZ-kXy_DAGlGiYRHRNyvsLR_q_v4GhV2oVi3WSPR816UhHrTryA0NlbanACb8T22bJGRQ708m_g'
         );
     });
+
+    it('should handle concurrent token requests', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            clientId: '{Client ID}',
+            clientSecret: '{Client Secret}',
+            refreshToken: 'saladus',
+            accessUrl: 'http://localhost:' + XOAUTH_PORT + '/',
+            timeout: 1
+        });
+
+        // First call to expire the token
+        await new Promise(resolve => xoauth2.getToken(false, resolve));
+
+        // Multiple simultaneous calls after expiration
+        const results = await Promise.all(
+            Array.from(
+                { length: 1000 },
+                () =>
+                    new Promise((resolve, reject) => {
+                        xoauth2.getToken(false, (err, accessToken) => {
+                            if (err) reject(err);
+                            else resolve(accessToken);
+                        });
+                    })
+            )
+        );
+
+        // They must all return the same valid token
+        results.forEach(accessToken => {
+            assert.ok(accessToken);
+            assert.strictEqual(accessToken, users['test@example.com']);
+        });
+    });
+
+    it('should propagate renewal errors to all concurrent requests', async () => {
+        const xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            clientId: '{Client ID}',
+            clientSecret: '{Client Secret}',
+            refreshToken: 'invalid',
+            accessUrl: 'http://localhost:' + XOAUTH_PORT + '/',
+            timeout: 1
+        });
+
+        // All calls should fail with the same error
+        const promises = Array.from(
+            { length: 1000 },
+            () =>
+                new Promise((resolve, reject) => {
+                    xoauth2.getToken(true, (err, accessToken) => {
+                        if (err) reject(err);
+                        else resolve(accessToken);
+                    });
+                })
+        );
+
+        await assert.rejects(() => Promise.all(promises));
+    });
 });
