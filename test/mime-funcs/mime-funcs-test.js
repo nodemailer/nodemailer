@@ -45,7 +45,7 @@ describe('Mime-Funcs Tests', () => {
     describe('#encodeWords', () => {
         it('should encode Ascii range', () => {
             let input1 = 'метель" вьюга',
-                input2 = 'метель\x27вьюга',
+                input2 = "метель'вьюга",
                 input3 = 'Verão você vai adorar!',
                 output1 = '=?UTF-8?Q?=D0=BC=D0=B5=D1=82=D0=B5=D0=BB=D1=8C=22_?= =?UTF-8?Q?=D0=B2=D1=8C=D1=8E=D0=B3=D0=B0?=',
                 output2 = '=?UTF-8?Q?=D0=BC=D0=B5=D1=82=D0=B5=D0=BB=D1=8C=27?= =?UTF-8?Q?=D0=B2=D1=8C=D1=8E=D0=B3=D0=B0?=',
@@ -121,7 +121,7 @@ describe('Mime-Funcs Tests', () => {
                 [
                     {
                         key: 'title*0*',
-                        value: 'utf-8\x27\x27Unicode%20title%20%F0%9F%98%8A'
+                        value: "utf-8''Unicode%20title%20%F0%9F%98%8A"
                     }
                 ],
                 mimeFuncs.buildHeaderParam('title', 'Unicode title 😊', 50)
@@ -133,7 +133,7 @@ describe('Mime-Funcs Tests', () => {
                 [
                     {
                         key: 'title*0*',
-                        value: 'utf-8\x27\x27this%20is%20'
+                        value: "utf-8''this%20is%20"
                     },
                     {
                         key: 'title*1',
@@ -157,7 +157,7 @@ describe('Mime-Funcs Tests', () => {
                 [
                     {
                         key: 'filename*0*',
-                        value: 'utf-8\x27\x27%C6%94------%C6%94------%C6%94------%C6%94'
+                        value: "utf-8''%C6%94------%C6%94------%C6%94------%C6%94"
                     },
                     {
                         key: 'filename*1*',
@@ -222,18 +222,18 @@ describe('Mime-Funcs Tests', () => {
         it('should handle multi line values', () => {
             let str =
                     'text/plain; single_encoded*="UTF-8\'\'%C3%95%C3%84%C3%96%C3%9C";\n' +
-                    ' multi_encoded*0*=UTF-8\x27\x27%C3%96%C3%9C;\n' +
+                    " multi_encoded*0*=UTF-8''%C3%96%C3%9C;\n" +
                     ' multi_encoded*1*=%C3%95%C3%84;\n' +
                     ' no_charset*0=OA;\n' +
                     ' no_charset*1=OU;\n' +
-                    ' invalid*=utf-8\x27\x27 _?\x27=%ab',
+                    " invalid*=utf-8'' _?'=%ab",
                 obj = {
                     value: 'text/plain',
                     params: {
                         single_encoded: '=?UTF-8?Q?=C3=95=C3=84=C3=96=C3=9C?=',
                         multi_encoded: '=?UTF-8?Q?=C3=96=C3=9C=C3=95=C3=84?=',
                         no_charset: 'OAOU',
-                        invalid: '=?utf-8?Q?_=5f=3f\x27=3d=ab?='
+                        invalid: "=?utf-8?Q?_=5f=3f'=3d=ab?="
                     }
                 };
 
@@ -310,7 +310,7 @@ describe('Mime-Funcs Tests', () => {
                         filename: '😁😂 *\'%()<>@,;:\\"[]?=😃😄zzz😊õäöü😓.pdf'
                     }
                 }),
-                'test; a=b; filename*0*=utf-8\x27\x27%F0%9F%98%81%F0%9F%98%82%20%2A%27%25%28%29; filename*1*=%3C%3E%40%2C%3B%3A%5C%22%5B%5D%3F%3D%F0%9F%98%83; filename*2*=%F0%9F%98%84zzz%F0%9F%98%8A%C3%B5%C3%A4%C3%B6; filename*3*=%C3%BC%F0%9F%98%93.pdf'
+                "test; a=b; filename*0*=utf-8''%F0%9F%98%81%F0%9F%98%82%20%2A%27%25%28%29; filename*1*=%3C%3E%40%2C%3B%3A%5C%22%5B%5D%3F%3D%F0%9F%98%83; filename*2*=%F0%9F%98%84zzz%F0%9F%98%8A%C3%B5%C3%A4%C3%B6; filename*3*=%C3%BC%F0%9F%98%93.pdf"
             );
         });
 
@@ -322,7 +322,7 @@ describe('Mime-Funcs Tests', () => {
                         filename: 'Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------.pdf'
                     }
                 }),
-                'test; filename*0*=utf-8\x27\x27%C6%94------%C6%94------%C6%94------%C6%94; filename*1*=------%C6%94------%C6%94------%C6%94------.pdf'
+                "test; filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94; filename*1*=------%C6%94------%C6%94------%C6%94------.pdf"
             );
         });
 
@@ -335,7 +335,7 @@ describe('Mime-Funcs Tests', () => {
                         filename: 'Jõge-vaŽJõge-vaŽJõge-vaŽ.pdf'
                     }
                 }),
-                'test; a=b; filename*0*=utf-8\x27\x27J%C3%B5ge-va%C5%BDJ%C3%B5ge-va%C5%BDJ; filename*1*=%C3%B5ge-va%C5%BD.pdf'
+                "test; a=b; filename*0*=utf-8''J%C3%B5ge-va%C5%BDJ%C3%B5ge-va%C5%BDJ; filename*1*=%C3%B5ge-va%C5%BD.pdf"
             );
         });
 
@@ -412,7 +412,7 @@ describe('Mime-Funcs Tests', () => {
                         semicolon: 'x;y',
                         colon: 'x:y',
                         back_slash: 'x\\y',
-                        single_quote: 'x\x27y',
+                        single_quote: "x'y",
                         double_quotes: 'x"y',
                         forward_slash: 'x/y',
                         big_bracket_open: 'x[y',

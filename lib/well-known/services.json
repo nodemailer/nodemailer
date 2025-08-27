@@ -77,9 +77,9 @@
     "Disroot": {
         "description": "Disroot (privacy-focused provider)",
         "domains": ["disroot.org"],
-        "host": "smtp.disroot.org",
+        "host": "disroot.org",
         "port": 587,
-        "secure": true,
+        "secure": false,
         "authMethod": "LOGIN"
     },
 

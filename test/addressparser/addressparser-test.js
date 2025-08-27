@@ -239,10 +239,10 @@ describe('#addressparser', () => {
     });
 
     it('should handle apostrophe in name correctly', () => {
-        let input = 'O\x27Neill';
+        let input = "O'Neill";
         let expected = [
             {
-                name: 'O\x27Neill',
+                name: "O'Neill",
                 address: ''
             }
         ];

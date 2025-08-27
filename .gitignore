@@ -5,3 +5,6 @@ npm-debug.log
 test/dkim/cache/message.*
 .npmrc
 examples/test-send.js
+*.patch
+.claude
+CLAUDE.md
