@@ -1004,3 +1004,144 @@ describe('MailComposer unit tests', () => {
         });
     });
 });
+
+describe('MailComposer ReDoS Protection Tests', () => {
+    describe('parseDataURI security', () => {
+        it('should handle malicious data URLs without ReDoS', () => {
+            // Test case from the vulnerability report
+            const maliciousDataUrl = 'data:;' + ';'.repeat(60000) + ',test';
+
+            const startTime = Date.now();
+            const data = {
+                attachments: [
+                    {
+                        path: maliciousDataUrl
+                    }
+                ]
+            };
+
+            const compiler = new MailComposer(data);
+            assert.doesNotThrow(() => compiler.compile());
+
+            const processingTime = Date.now() - startTime;
+            // Should complete in reasonable time (under 100ms)
+            assert.ok(processingTime < 100, `Processing took too long: ${processingTime}ms`);
+        });
+
+        it('should handle various data URL formats correctly', () => {
+            const testCases = [
+                'data:text/plain,hello%20world',
+                'data:text/html;base64,PGh0bWw+',
+                'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+                'data:application/json;charset=utf-8,{"test":true}'
+            ];
+
+            testCases.forEach(dataUrl => {
+                const data = {
+                    attachments: [{ path: dataUrl }]
+                };
+
+                const compiler = new MailComposer(data);
+                assert.doesNotThrow(() => {
+                    const mail = compiler.compile();
+                    assert.ok(mail);
+                }, `Failed to process data URL: ${dataUrl}`);
+            });
+        });
+
+        it('should reject excessively long data URLs gracefully', () => {
+            const longDataUrl = 'data:text/plain,' + 'a'.repeat(200000);
+            const data = {
+                attachments: [{ path: longDataUrl }]
+            };
+
+            const compiler = new MailComposer(data);
+            assert.doesNotThrow(() => {
+                const mail = compiler.compile();
+                assert.ok(mail);
+            });
+        });
+
+        it('should handle malformed data URLs without crashing', () => {
+            const malformedUrls = ['data:', 'data:;base64,!!!', 'data:text/plain;', 'data:invalid;base64,!@#$%'];
+
+            malformedUrls.forEach(url => {
+                const data = {
+                    attachments: [{ path: url }]
+                };
+
+                const compiler = new MailComposer(data);
+                assert.doesNotThrow(() => {
+                    const mail = compiler.compile();
+                    assert.ok(mail);
+                }, `Failed to handle malformed URL: ${url}`);
+            });
+        });
+    });
+
+    describe('getAttachments with data URLs', () => {
+        it('should process data URLs in attachments safely', () => {
+            const data = {
+                attachments: [
+                    {
+                        filename: 'test.txt',
+                        path: 'data:text/plain;base64,SGVsbG8gV29ybGQ='
+                    }
+                ]
+            };
+
+            const compiler = new MailComposer(data);
+            const attachments = compiler.getAttachments(false);
+
+            assert.strictEqual(attachments.attached.length, 1);
+            assert.ok(Buffer.isBuffer(attachments.attached[0].content));
+        });
+
+        it('should handle data URLs in alternatives safely', () => {
+            const data = {
+                html: {
+                    path: 'data:text/html,<html><body>Test</body></html>'
+                }
+            };
+
+            const compiler = new MailComposer(data);
+            const alternatives = compiler.getAlternatives();
+
+            assert.strictEqual(alternatives.length, 1);
+            assert.ok(Buffer.isBuffer(alternatives[0].content));
+        });
+    });
+
+    describe('performance with malicious inputs', () => {
+        it('should process PoC examples quickly', () => {
+            // Test cases from the vulnerability report
+            const poc1 = {
+                text: 'Hello to myself!',
+                html: '<p><b>Hello</b> to myself <img src="cid:note@example.com"/></p>',
+                attachments: [
+                    {
+                        filename: 'Embedded file',
+                        path: 'data:' + ';t'.repeat(60000)
+                    }
+                ]
+            };
+
+            const poc2 = {
+                attachDataUrls: ['http://localhost:3000/1'],
+                html: '"<img;'.repeat(809) + ' c' + ' src=data:r'.repeat(1000)
+            };
+
+            const start1 = Date.now();
+            const compiler1 = new MailComposer(poc1);
+            assert.doesNotThrow(() => compiler1.compile());
+            const time1 = Date.now() - start1;
+            assert.ok(time1 < 100, `POC 1 took too long: ${time1}ms`);
+
+            const start2 = Date.now();
+            const compiler2 = new MailComposer(poc2);
+            assert.doesNotThrow(() => compiler2.compile());
+            const time2 = Date.now() - start2;
+            assert.ok(time2 < 100, `POC 2 took too long: ${time2}ms`);
+        });
+    });
+});
