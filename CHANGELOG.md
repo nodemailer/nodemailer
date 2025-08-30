@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [7.0.6](https://github.com/nodemailer/nodemailer/compare/v7.0.5...v7.0.6) (2025-08-27)
+
+
+### Bug Fixes
+
+* **encoder:** avoid silent data loss by properly flushing trailing base64 ([#1747](https://github.com/nodemailer/nodemailer/issues/1747)) ([01ae76f](https://github.com/nodemailer/nodemailer/commit/01ae76f2cfe991c0c3fe80170f236da60531496b))
+* handle multiple XOAUTH2 token requests correctly ([#1754](https://github.com/nodemailer/nodemailer/issues/1754)) ([dbe0028](https://github.com/nodemailer/nodemailer/commit/dbe00286351cddf012726a41a96ae613d30a34ee))
+* ReDoS vulnerability in parseDataURI and _processDataUrl ([#1755](https://github.com/nodemailer/nodemailer/issues/1755)) ([90b3e24](https://github.com/nodemailer/nodemailer/commit/90b3e24d23929ebf9f4e16261049b40ee4055a39))
+
 ## [7.0.5](https://github.com/nodemailer/nodemailer/compare/v7.0.4...v7.0.5) (2025-07-07)
 
 
