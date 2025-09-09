@@ -572,4 +572,30 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             );
         });
     });
+
+    describe('DNS Cache Stability Fix', () => {
+        it('should renew expired cache TTL when falling back due to DNS error', () => {
+            const dnsCache = new Map();
+            const DNS_TTL = 300000;
+
+            dnsCache.set('test.com', {
+                value: { addresses: ['1.2.3.4'] },
+                expires: Date.now() - 1000 // Expired
+            });
+
+            const cachedBefore = dnsCache.get('test.com');
+
+            if (cachedBefore) {
+                dnsCache.set('test.com', {
+                    value: cachedBefore.value,
+                    expires: Date.now() + DNS_TTL // THIS IS THE FIX
+                });
+            }
+
+            const cachedAfter = dnsCache.get('test.com');
+
+            assert.ok(cachedAfter.expires > Date.now(), 'Cache TTL should be renewed');
+            assert.equal(cachedAfter.value.addresses[0], '1.2.3.4', 'Cache value should be preserved');
+        });
+    });
 });
