@@ -389,6 +389,10 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
         beforeEach((t, done) => {
             shared.dnsCache.clear();
+            // Reset the cleanup timer to allow immediate cleanup in tests
+            if (shared._resetCacheCleanup) {
+                shared._resetCacheCleanup();
+            }
 
             done();
         });
@@ -573,7 +577,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         });
     });
 
-    describe('DNS Cache Stability Fix', () => {
+    describe('DNS Cache Management', () => {
         it('should renew expired cache TTL when falling back due to DNS error', () => {
             const dnsCache = new Map();
             const DNS_TTL = 300000;
@@ -596,6 +600,84 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
             assert.ok(cachedAfter.expires > Date.now(), 'Cache TTL should be renewed');
             assert.equal(cachedAfter.value.addresses[0], '1.2.3.4', 'Cache value should be preserved');
+        });
+
+        it('should clean up expired entries during cache access', (t, done) => {
+            // Clear the cache and reset cleanup timer
+            shared.dnsCache.clear();
+            if (shared._resetCacheCleanup) {
+                shared._resetCacheCleanup();
+            }
+
+            // Add some test entries with expired TTLs
+            const now = Date.now();
+            shared.dnsCache.set('expired1.com', {
+                value: { addresses: ['1.1.1.1'], servername: 'expired1.com' },
+                expires: now - 10000 // Expired 10 seconds ago
+            });
+            shared.dnsCache.set('expired2.com', {
+                value: { addresses: ['2.2.2.2'], servername: 'expired2.com' },
+                expires: now - 5000 // Expired 5 seconds ago
+            });
+            shared.dnsCache.set('valid.com', {
+                value: { addresses: ['3.3.3.3'], servername: 'valid.com' },
+                expires: now + 60000 // Valid for another minute
+            });
+
+            const initialSize = shared.dnsCache.size;
+            assert.equal(initialSize, 3, 'Should have 3 entries initially');
+
+            // Trigger a DNS lookup which should invoke cleanup
+            // We'll check for an IP address to avoid slow DNS lookups
+            shared.resolveHostname({ host: '192.168.1.1' }, (err, result) => {
+                // This should succeed with the IP address
+                assert.ok(!err, 'Should succeed for IP address');
+
+                // Now check that expired entries were cleaned up during the cache check
+                // The cleanup happens when checking cache, even if the host is an IP
+                // But since IPs don't use cache, we need a different approach
+
+                // Let's directly check if cleanup would work by accessing a cached domain
+                shared.resolveHostname({ host: 'valid.com' }, (err2, result2) => {
+                    // After this lookup, cleanup should have occurred
+                    assert.ok(!shared.dnsCache.has('expired1.com'), 'expired1.com should be removed');
+                    assert.ok(!shared.dnsCache.has('expired2.com'), 'expired2.com should be removed');
+                    assert.ok(shared.dnsCache.has('valid.com'), 'valid.com should still be present');
+
+                    done();
+                });
+            });
+        });
+
+        it('should limit cache size during cleanup', (t, done) => {
+            // Clear the cache and reset cleanup timer
+            shared.dnsCache.clear();
+            if (shared._resetCacheCleanup) {
+                shared._resetCacheCleanup();
+            }
+
+            // Add many entries to exceed MAX_CACHE_SIZE
+            const now = Date.now();
+            for (let i = 0; i < 1100; i++) {
+                shared.dnsCache.set(`test${i}.com`, {
+                    value: { addresses: [`10.0.0.${i % 256}`], servername: `test${i}.com` },
+                    expires: now + 60000
+                });
+            }
+
+            const initialSize = shared.dnsCache.size;
+            assert.ok(initialSize > 1000, 'Should have more than MAX_CACHE_SIZE entries');
+
+            // Trigger cleanup by accessing a cached entry
+            shared.resolveHostname({ host: 'test500.com' }, (err, result) => {
+                // This should succeed with cached data
+                assert.ok(!err, 'Should succeed with cached entry');
+
+                // Check that cache size was reduced
+                assert.ok(shared.dnsCache.size <= 1000, 'Cache size should be limited to MAX_CACHE_SIZE');
+
+                done();
+            });
         });
     });
 });
