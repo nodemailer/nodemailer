@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [7.0.7](https://github.com/nodemailer/nodemailer/compare/v7.0.6...v7.0.7) (2025-09-09)
+
+
+### Bug Fixes
+
+* **dns:** add memory leak prevention for DNS cache ([0240d67](https://github.com/nodemailer/nodemailer/commit/0240d6795ded6d8008d102161a729f120b6d786a))
+* refresh expired DNS cache on error ([#1759](https://github.com/nodemailer/nodemailer/issues/1759)) ([ea0fc5a](https://github.com/nodemailer/nodemailer/commit/ea0fc5a6633a3546f4b00fcf2f428e9ca732cdb6))
+* resolve linter errors in DNS cache tests ([3b8982c](https://github.com/nodemailer/nodemailer/commit/3b8982c1f24508089a8757b74039000a4498b158))
+
 ## [7.0.6](https://github.com/nodemailer/nodemailer/compare/v7.0.5...v7.0.6) (2025-08-27)
 
 
