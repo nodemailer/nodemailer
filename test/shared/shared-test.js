@@ -629,7 +629,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
             // Trigger a DNS lookup which should invoke cleanup
             // We'll check for an IP address to avoid slow DNS lookups
-            shared.resolveHostname({ host: '192.168.1.1' }, (err, result) => {
+            shared.resolveHostname({ host: '192.168.1.1' }, err => {
                 // This should succeed with the IP address
                 assert.ok(!err, 'Should succeed for IP address');
 
@@ -638,7 +638,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 // But since IPs don't use cache, we need a different approach
 
                 // Let's directly check if cleanup would work by accessing a cached domain
-                shared.resolveHostname({ host: 'valid.com' }, (err2, result2) => {
+                shared.resolveHostname({ host: 'valid.com' }, () => {
                     // After this lookup, cleanup should have occurred
                     assert.ok(!shared.dnsCache.has('expired1.com'), 'expired1.com should be removed');
                     assert.ok(!shared.dnsCache.has('expired2.com'), 'expired2.com should be removed');
@@ -669,7 +669,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             assert.ok(initialSize > 1000, 'Should have more than MAX_CACHE_SIZE entries');
 
             // Trigger cleanup by accessing a cached entry
-            shared.resolveHostname({ host: 'test500.com' }, (err, result) => {
+            shared.resolveHostname({ host: 'test500.com' }, err => {
                 // This should succeed with cached data
                 assert.ok(!err, 'Should succeed with cached entry');
 
