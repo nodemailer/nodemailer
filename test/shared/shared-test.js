@@ -28,6 +28,140 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
     });
 
     describe('Connection url parser tests', () => {
+        it('should merge user options with parsed URL options', () => {
+            let url = 'smtp://user:pass@localhost:25';
+            let userOptions = {
+                name: 'myapp',
+                debug: true,
+                pool: true
+            };
+            
+            let result = shared.parseConnectionUrl(url, userOptions);
+            
+            assert.deepStrictEqual(result, {
+                secure: false,
+                port: 25,
+                host: 'localhost',
+                auth: {
+                    user: 'user',
+                    pass: 'pass'
+                },
+                name: 'myapp',
+                debug: true,
+                pool: true
+            });
+        });
+
+        it('should override user options with base options from URL', () => {
+            let url = 'smtps://admin:secret@mail.example.com:465?name=urlname&debug=false';
+            let userOptions = {
+                name: 'userapp',
+                debug: true,
+                secure: false,
+                host: 'oldhost.com',
+                connectionTimeout: 5000,
+                logger: true
+            };
+            
+            let result = shared.parseConnectionUrl(url, userOptions);
+            
+            assert.deepStrictEqual(result, {
+                secure: true,  // URL overrides user option
+                port: 465,
+                host: 'mail.example.com',  // URL overrides user option
+                auth: {
+                    user: 'admin',
+                    pass: 'secret'
+                },
+                name: 'urlname',  // URL overrides user option
+                debug: false,  // URL overrides user option
+                connectionTimeout: 5000,  // User option preserved
+                logger: true
+            });
+        });
+
+        it('should merge nested tls options correctly', () => {
+            let url = 'smtps://user:pass@localhost:465?tls.rejectUnauthorized=false&tls.minVersion=TLSv1.2';
+            let userOptions = {
+                tls: {
+                    ca: 'user-ca-cert',
+                    rejectUnauthorized: true,  // Should be overridden
+                    servername: 'custom.example.com'
+                }
+            };
+            
+            let result = shared.parseConnectionUrl(url, userOptions);
+            
+            assert.deepStrictEqual(result, {
+                secure: true,
+                host: 'localhost',
+                port: 465,
+                auth: {
+                    user: 'user',
+                    pass: 'pass'
+                },
+                tls: {
+                    ca: 'user-ca-cert',  // User option preserved
+                    rejectUnauthorized: false,  // URL overrides user option
+                    servername: 'custom.example.com',  // User option preserved
+                    minVersion: 'TLSv1.2'  // URL adds new option
+                }
+            });
+        });
+
+        it('should handle empty user options', () => {
+            let url = 'smtp://test:123@example.com:587?name=testapp';
+            let userOptions = {};
+            
+            let result = shared.parseConnectionUrl(url, userOptions);
+            
+            assert.deepStrictEqual(result, {
+                secure: false,
+                port: 587,
+                host: 'example.com',
+                auth: {
+                    user: 'test',
+                    pass: '123'
+                },
+                name: 'testapp'
+            });
+        });
+
+        it('should handle null user options', () => {
+            let url = 'direct://example.com?pool=true';
+            
+            let result = shared.parseConnectionUrl(url, null);
+            
+            assert.deepStrictEqual(result, {
+                direct: true,
+                host: 'example.com',
+                pool: true
+            });
+        });
+
+        it('should merge auth options correctly when both exist', () => {
+            let url = 'smtp://urluser:urlpass@localhost:25';
+            let userOptions = {
+                auth: {
+                    user: 'useruser',
+                    pass: 'userpass',
+                    xoauth2: 'token123'
+                }
+            };
+            
+            let result = shared.parseConnectionUrl(url, userOptions);
+            
+            assert.deepStrictEqual(result, {
+                secure: false,
+                port: 25,
+                host: 'localhost',
+                auth: {
+                    user: 'urluser',  // URL overrides user option
+                    pass: 'urlpass',  // URL overrides user option
+                    xoauth2: 'token123'  // User option preserved
+                }
+            });
+        });
         it('Should parse connection url', () => {
             let url = 'smtps://user:pass@localhost:123?tls.rejectUnauthorized=false&name=horizon';
             assert.deepStrictEqual(shared.parseConnectionUrl(url), {
