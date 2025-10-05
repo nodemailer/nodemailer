@@ -399,12 +399,7 @@ describe('#addressparser', () => {
     });
 
     it('should handle special characters in local-part', () => {
-        let inputs = [
-            'user+tag@example.com',
-            'user.name@example.com',
-            'user_name@example.com',
-            'user-name@example.com'
-        ];
+        let inputs = ['user+tag@example.com', 'user.name@example.com', 'user_name@example.com', 'user-name@example.com'];
         inputs.forEach(input => {
             let result = addressparser(input);
             assert.strictEqual(result.length, 1);

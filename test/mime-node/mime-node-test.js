@@ -612,7 +612,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.ok(
                     msg.indexOf(
                         'Content-Disposition: attachment;\r\n' +
-                            " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" + // eslint-disable-line
+                            " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" +
                             ' filename*1*=------%C6%94------%C6%94------%C6%94------.pdf'
                     ) >= 0
                 );
@@ -811,7 +811,8 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                         'message-id': '67890'
                     })
                     .setContent('Hello world!'),
-                expected = 'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
+                expected =
+                    'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
 
             mb.build((err, msg) => {
                 assert.ok(!err);
@@ -863,7 +864,13 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     .getEnvelope(),
                 {
                     from: 'from@example.com',
-                    to: ['receiver1@example.com', 'receiver2@example.com', 'receiver3@example.com', 'receiver4@example.com', 'receiver5@example.com']
+                    to: [
+                        'receiver1@example.com',
+                        'receiver2@example.com',
+                        'receiver3@example.com',
+                        'receiver4@example.com',
+                        'receiver5@example.com'
+                    ]
                 }
             );
 
@@ -881,7 +888,13 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     .getEnvelope(),
                 {
                     from: 'sender@example.com',
-                    to: ['receiver1@example.com', 'receiver2@example.com', 'receiver3@example.com', 'receiver4@example.com', 'receiver5@example.com']
+                    to: [
+                        'receiver1@example.com',
+                        'receiver2@example.com',
+                        'receiver3@example.com',
+                        'receiver4@example.com',
+                        'receiver5@example.com'
+                    ]
                 }
             );
         });
@@ -1196,12 +1209,12 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(
                 mb._convertAddresses([
                     {
-                        name: 'O Vigala Sass', // eslint-disable-line
+                        name: 'O Vigala Sass',
                         address: 'a@b.c'
                     }
                 ]),
                 'O Vigala Sass <a@b.c>'
-            ); // eslint-disable-line
+            );
         });
 
         it('should encode single quote', () => {
@@ -1209,12 +1222,12 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(
                 mb._convertAddresses([
                     {
-                        name: "O'Vigala Sass", // eslint-disable-line
+                        name: "O'Vigala Sass",
                         address: 'a@b.c'
                     }
                 ]),
                 '"O\'Vigala Sass" <a@b.c>'
-            ); // eslint-disable-line
+            );
         });
 
         it('should include name in quotes for special symbols', () => {

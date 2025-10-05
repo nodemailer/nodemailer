@@ -1067,7 +1067,11 @@ describe('SMTP-Connection Tests', () => {
                     (err, info) => {
                         assert.ok(err);
                         assert.ok(!info);
-                        assert.deepStrictEqual(err.rejected, ['test1@invalid.recipient', 'test2@invalid.recipient', 'test3@invalid.recipient']);
+                        assert.deepStrictEqual(err.rejected, [
+                            'test1@invalid.recipient',
+                            'test2@invalid.recipient',
+                            'test3@invalid.recipient'
+                        ]);
                         assert.strictEqual(err.rejectedErrors.length, 3);
                         done();
                     }

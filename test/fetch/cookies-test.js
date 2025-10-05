@@ -254,15 +254,18 @@ describe('Cookie Tests', () => {
                 value: 'plain'
             });
 
-            assert.deepStrictEqual(biskviit.parse('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly'), {
-                name: 'ssid',
-                value: 'Ap4P….GTEq',
-                domain: '.foo.com',
-                path: '/',
-                httponly: true,
-                secure: true,
-                expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
-            });
+            assert.deepStrictEqual(
+                biskviit.parse('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly'),
+                {
+                    name: 'ssid',
+                    value: 'Ap4P….GTEq',
+                    domain: '.foo.com',
+                    path: '/',
+                    httponly: true,
+                    secure: true,
+                    expires: new Date('Wed, 13 Jan 2031 22:23:01 GMT')
+                }
+            );
         });
 
         it('should ignore invalid expire header', () => {
@@ -367,9 +370,15 @@ describe('Cookie Tests', () => {
             // short
             biskviit.set('theme=plain', 'https://foo.com/');
             // long
-            biskviit.set('SSID=Ap4P….GTEq; Domain=foo.com; Path=/test; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly', 'https://foo.com/');
+            biskviit.set(
+                'SSID=Ap4P….GTEq; Domain=foo.com; Path=/test; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly',
+                'https://foo.com/'
+            );
             // subdomains
-            biskviit.set('SSID=Ap4P….GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly', 'https://www.foo.com/');
+            biskviit.set(
+                'SSID=Ap4P….GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly',
+                'https://www.foo.com/'
+            );
             // invalid cors
             biskviit.set('invalid_1=cors; domain=example.com', 'https://foo.com/');
             biskviit.set('invalid_2=cors; domain=www.foo.com', 'https://foo.com/');

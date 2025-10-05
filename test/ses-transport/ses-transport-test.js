@@ -142,7 +142,9 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
                         }
                     },
                     send(messageData) {
-                        assert.ok(messageData.messageData.Content.Raw.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;'));
+                        assert.ok(
+                            messageData.messageData.Content.Raw.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;')
+                        );
                         return new Promise(resolve => {
                             setImmediate(() => resolve(messageData.send()));
                         });

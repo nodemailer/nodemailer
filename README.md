@@ -37,20 +37,20 @@ It's either a firewall issue, or your SMTP server blocks authentication attempts
 
 #### I get TLS errors
 
--   If you are running the code on your machine, check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
--   Latest Node versions allow only TLS versions 1.2 and higher. Some servers might still use TLS 1.1 or lower. Check Node.js docs on how to get correct TLS support for your app. You can change this with [tls.minVersion](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tls_tls_createsecurecontext_options) option
--   You might have the wrong value for the `secure` option. This should be set to `true` only for port 465. For every other port, it should be `false`. Setting it to `false` does not mean that Nodemailer would not use TLS. Nodemailer would still try to upgrade the connection to use TLS if the server supports it.
--   Older Node versions do not fully support the certificate chain of the newest Let's Encrypt certificates. Either set [tls.rejectUnauthorized](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tlsconnectoptions-callback) to `false` to skip chain verification or upgrade your Node version
+- If you are running the code on your machine, check your antivirus settings. Antiviruses often mess around with email ports usage. Node.js might not recognize the MITM cert your antivirus is using.
+- Latest Node versions allow only TLS versions 1.2 and higher. Some servers might still use TLS 1.1 or lower. Check Node.js docs on how to get correct TLS support for your app. You can change this with [tls.minVersion](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tls_tls_createsecurecontext_options) option
+- You might have the wrong value for the `secure` option. This should be set to `true` only for port 465. For every other port, it should be `false`. Setting it to `false` does not mean that Nodemailer would not use TLS. Nodemailer would still try to upgrade the connection to use TLS if the server supports it.
+- Older Node versions do not fully support the certificate chain of the newest Let's Encrypt certificates. Either set [tls.rejectUnauthorized](https://nodejs.org/dist/latest-v16.x/docs/api/tls.html#tlsconnectoptions-callback) to `false` to skip chain verification or upgrade your Node version
 
 ```js
 let configOptions = {
-    host: "smtp.example.com",
+    host: 'smtp.example.com',
     port: 587,
     tls: {
         rejectUnauthorized: true,
-        minVersion: "TLSv1.2"
+        minVersion: 'TLSv1.2'
     }
-}
+};
 ```
 
 #### I have issues with DNS / hosts file
@@ -59,14 +59,14 @@ Node.js uses [c-ares](https://nodejs.org/en/docs/meta/topics/dependencies/#c-are
 
 ```js
 let configOptions = {
-    host: "1.2.3.4",
+    host: '1.2.3.4',
     port: 465,
     secure: true,
     tls: {
         // must provide server name, otherwise TLS certificate check will fail
-        servername: "example.com"
+        servername: 'example.com'
     }
-}
+};
 ```
 
 #### I have an issue with TypeScript types

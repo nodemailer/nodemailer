@@ -134,8 +134,9 @@ describe('MailComposer unit tests', () => {
                 assert.ok(!err);
                 let msg = message.toString();
                 assert.ok(
-                    msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n') >=
-                        0
+                    msg.indexOf(
+                        '\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n'
+                    ) >= 0
                 );
                 assert.ok(
                     msg.indexOf(

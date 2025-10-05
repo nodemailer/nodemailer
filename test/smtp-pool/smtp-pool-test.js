@@ -83,7 +83,7 @@ describe('SMTP Pool Tests', () => {
                 }
             },
             logger: false
-        })
+        });
 
         server.listen(PORT_NUMBER, done);
     });
@@ -145,7 +145,7 @@ describe('SMTP Pool Tests', () => {
                     message
                 )
             },
-            (err) => {
+            err => {
                 assert.ok(!err);
                 pool.close();
                 done();
@@ -181,7 +181,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     assert.ok(!err);
                     callback();
                 }
@@ -249,7 +249,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     if (isErr) {
                         assert.ok(err);
                     } else {
@@ -324,7 +324,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     if (err) {
                         assert.strictEqual(err.message, 'Connection closed unexpectedly');
                     }
@@ -381,7 +381,7 @@ describe('SMTP Pool Tests', () => {
                     message
                 )
             },
-            (err) => {
+            err => {
                 assert.ok(!err);
             }
         );
@@ -397,7 +397,7 @@ describe('SMTP Pool Tests', () => {
                     message
                 )
             },
-            (err) => {
+            err => {
                 assert.ok(err);
                 pool.close();
                 done();
@@ -433,7 +433,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     assert.ok(!err);
                     callback();
                 }
@@ -493,7 +493,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     assert.ok(!err);
                     callback();
                 }
@@ -552,7 +552,7 @@ describe('SMTP Pool Tests', () => {
                         message
                     )
                 },
-                (err) => {
+                err => {
                     assert.ok(err);
                     callback();
                 }
@@ -640,7 +640,7 @@ describe('SMTP Pool Tests', () => {
             logger: false,
             getSocket(options, callback) {
                 let socket = net.connect(PORT_NUMBER, 'localhost');
-                let errHandler = (err) => {
+                let errHandler = err => {
                     callback(err);
                 };
                 socket.on('error', errHandler);
@@ -676,7 +676,7 @@ describe('SMTP Pool Tests', () => {
                     message
                 )
             },
-            (err) => {
+            err => {
                 assert.ok(!err);
                 pool.close();
                 return done();
@@ -704,7 +704,7 @@ describe('SMTP Pool Tests', () => {
             logger: false
         });
 
-        client.verify((err) => {
+        client.verify(err => {
             assert.ok(err);
             client.close();
             done();

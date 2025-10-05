@@ -17,7 +17,10 @@ describe('Quoted-Printable Tests', () => {
 
     let wrapFixtures = [
         ['tere, tere, vana kere, kuidas sul l=C3=A4heb?', 'tere, tere, vana =\r\nkere, kuidas sul =\r\nl=C3=A4heb?'],
-        ['=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4', '=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4'],
+        [
+            '=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4',
+            '=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4'
+        ],
         ['1234567890123456789=C3=A40', '1234567890123456789=\r\n=C3=A40'],
         ['123456789012345678  90', '123456789012345678 =\r\n 90']
     ];

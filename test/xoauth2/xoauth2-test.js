@@ -233,8 +233,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
                 () =>
                     new Promise((resolve, reject) => {
                         xoauth2.getToken(false, (err, accessToken) => {
-                            if (err) reject(err);
-                            else resolve(accessToken);
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(accessToken);
+                            }
                         });
                     })
             )
@@ -263,8 +266,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
             () =>
                 new Promise((resolve, reject) => {
                     xoauth2.getToken(true, (err, accessToken) => {
-                        if (err) reject(err);
-                        else resolve(accessToken);
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(accessToken);
+                        }
                     });
                 })
         );
@@ -288,8 +294,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
             await prev;
             const token = await new Promise((resolve, reject) => {
                 xoauth2.getToken(true, (err, token) => {
-                    if (err) reject(err);
-                    else resolve(token);
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(token);
+                    }
                 });
             });
             tokens.add(token);
@@ -317,8 +326,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
         // Should reuse existing token even with renew=true
         const token = await new Promise((resolve, reject) => {
             xoauth2.getToken(true, (err, token) => {
-                if (err) reject(err);
-                else resolve(token);
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(token);
+                }
             });
         });
 
@@ -345,8 +357,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
         await assert.rejects(async () => {
             await new Promise((resolve, reject) => {
                 xoauth2.getToken(true, (err, token) => {
-                    if (err) reject(err);
-                    else resolve(token);
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(token);
+                    }
                 });
             });
         }, /Can't create new access token for user/);
@@ -376,8 +391,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
 
         const token = await new Promise((resolve, reject) => {
             xoauth2.getToken(true, (err, token) => {
-                if (err) reject(err);
-                else resolve(token);
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(token);
+                }
             });
         });
 
@@ -398,8 +416,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
 
         const token = await new Promise((resolve, reject) => {
             xoauth2.getToken(true, (err, token) => {
-                if (err) reject(err);
-                else resolve(token);
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(token);
+                }
             });
         });
 
@@ -426,8 +447,11 @@ describe('XOAuth2 tests', { timeout: 10000 }, () => {
 
         const token = await new Promise((resolve, reject) => {
             xoauth2.getToken(true, (err, token) => {
-                if (err) reject(err);
-                else resolve(token);
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(token);
+                }
             });
         });
 
