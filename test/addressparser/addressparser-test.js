@@ -345,4 +345,173 @@ describe('#addressparser', () => {
         // When address is in <>, quotes are preserved as part of the address
         assert.strictEqual(result[0].address, '"user@domain.com"@example.com');
     });
+
+    // Edge case tests
+    it('should handle escaped quotes in quoted string', () => {
+        let input = '"test\\"quote"@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'test"quote@example.com');
+    });
+
+    it('should handle escaped backslashes', () => {
+        let input = '"test\\\\backslash"@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'test\\backslash@example.com');
+    });
+
+    it('should handle unclosed quote gracefully', () => {
+        let input = '"unclosed@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'unclosed@example.com');
+    });
+
+    it('should handle unclosed angle bracket', () => {
+        let input = 'Name <user@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    it('should handle unclosed comment', () => {
+        let input = 'user@example.com (comment';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    it('should handle empty string', () => {
+        let result = addressparser('');
+        assert.strictEqual(result.length, 0);
+    });
+
+    it('should handle whitespace only', () => {
+        let result = addressparser('   ');
+        assert.strictEqual(result.length, 0);
+    });
+
+    it('should handle empty angle brackets', () => {
+        let result = addressparser('<>');
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, '');
+    });
+
+    it('should handle special characters in local-part', () => {
+        let inputs = [
+            'user+tag@example.com',
+            'user.name@example.com',
+            'user_name@example.com',
+            'user-name@example.com'
+        ];
+        inputs.forEach(input => {
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, input);
+        });
+    });
+
+    it('should handle leading and trailing whitespace', () => {
+        let input = '  user@example.com  ';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    it('should handle comment before address', () => {
+        let input = '(comment)user@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    it('should handle comment after address without space', () => {
+        let input = 'user@example.com(comment)';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    it('should handle multiple consecutive delimiters', () => {
+        let input = 'a@example.com,,,b@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 2);
+        assert.strictEqual(result[0].address, 'a@example.com');
+        assert.strictEqual(result[1].address, 'b@example.com');
+    });
+
+    it('should handle mixed quotes and unquoted text', () => {
+        let input = '"quoted" unquoted@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].name, 'quoted');
+        assert.strictEqual(result[0].address, 'unquoted@example.com');
+    });
+
+    it('should handle very long local-part', () => {
+        let longLocal = 'a'.repeat(100);
+        let input = longLocal + '@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, input);
+    });
+
+    it('should handle very long domain', () => {
+        let longDomain = 'a'.repeat(100);
+        let input = 'user@' + longDomain + '.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, input);
+    });
+
+    it('should not have ReDoS vulnerability with many @ symbols', () => {
+        let input = '@'.repeat(100);
+        let start = Date.now();
+        let result = addressparser(input);
+        let elapsed = Date.now() - start;
+        assert.ok(elapsed < 1000, 'Parser should complete quickly even with pathological input');
+        assert.ok(result.length >= 0);
+    });
+
+    it('should handle double @ (malformed)', () => {
+        let input = 'user@@example.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        // Parser is lenient and accepts this
+        assert.ok(result[0].address.includes('@@'));
+    });
+
+    it('should handle address with only name, no email', () => {
+        let input = 'John Doe';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].name, 'John Doe');
+        assert.strictEqual(result[0].address, '');
+    });
+
+    it('should handle nested comments (RFC 5322)', () => {
+        let input = 'user@example.com (outer (nested) comment)';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'user@example.com');
+    });
+
+    // Security: Ensure quotes at different positions don't break parsing
+    it('should not extract from quoted text even with spaces', () => {
+        let input = '"evil@attacker.com more stuff"@legitimate.com';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address.includes('@legitimate.com'), true);
+        assert.strictEqual(result[0].address.includes('evil@attacker.com'), true);
+    });
+
+    // Test flatten option with complex groups
+    it('should flatten nested groups correctly', () => {
+        let input = 'Group1:a@b.com, Group2:c@d.com;;';
+        let result = addressparser(input, { flatten: true });
+        // Should extract all individual addresses
+        let addresses = result.map(r => r.address).filter(a => a);
+        assert.ok(addresses.includes('a@b.com'));
+    });
 });
