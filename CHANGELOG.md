@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [7.0.7](https://github.com/nodemailer/nodemailer/compare/v7.0.6...v7.0.7) (2025-10-05)
+
+
+### Bug Fixes
+
+* **addressparser:** Fixed addressparser handling of quoted nested email addresses ([1150d99](https://github.com/nodemailer/nodemailer/commit/1150d99fba77280df2cfb1885c43df23109a8626))
+* **dns:** add memory leak prevention for DNS cache ([0240d67](https://github.com/nodemailer/nodemailer/commit/0240d6795ded6d8008d102161a729f120b6d786a))
+* **linter:** Updated eslint and created prettier formatting task ([df13b74](https://github.com/nodemailer/nodemailer/commit/df13b7487e368acded35e45d0887d23c89c9177a))
+* refresh expired DNS cache on error ([#1759](https://github.com/nodemailer/nodemailer/issues/1759)) ([ea0fc5a](https://github.com/nodemailer/nodemailer/commit/ea0fc5a6633a3546f4b00fcf2f428e9ca732cdb6))
+* resolve linter errors in DNS cache tests ([3b8982c](https://github.com/nodemailer/nodemailer/commit/3b8982c1f24508089a8757b74039000a4498b158))
+
 ## [7.0.6](https://github.com/nodemailer/nodemailer/compare/v7.0.5...v7.0.6) (2025-08-27)
 
 ### Bug Fixes
