@@ -309,4 +309,40 @@ describe('#addressparser', () => {
         ];
         assert.deepStrictEqual(addressparser(input), expected);
     });
+
+    // Security tests for RFC 5321/5322 quoted local-part handling
+    it('should not extract email from quoted local-part (security)', () => {
+        let input = '"xclow3n@gmail.com x"@internal.domain';
+        let result = addressparser(input);
+        // Should preserve full address, NOT extract xclow3n@gmail.com
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address.includes('@internal.domain'), true);
+        assert.strictEqual(result[0].address, 'xclow3n@gmail.com x@internal.domain');
+    });
+
+    it('should handle quoted local-part with attacker domain (security)', () => {
+        let input = '"user@attacker.com"@legitimate.com';
+        let result = addressparser(input);
+        // Should route to legitimate.com, not attacker.com
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address.includes('@legitimate.com'), true);
+        assert.strictEqual(result[0].address, 'user@attacker.com@legitimate.com');
+    });
+
+    it('should handle multiple @ in quoted local-part (security)', () => {
+        let input = '"a@b@c"@example.com';
+        let result = addressparser(input);
+        // Should not extract a@b or b@c
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].address, 'a@b@c@example.com');
+    });
+
+    it('should handle quoted local-part with angle brackets', () => {
+        let input = 'Name <"user@domain.com"@example.com>';
+        let result = addressparser(input);
+        assert.strictEqual(result.length, 1);
+        assert.strictEqual(result[0].name, 'Name');
+        // When address is in <>, quotes are preserved as part of the address
+        assert.strictEqual(result[0].address, '"user@domain.com"@example.com');
+    });
 });
