@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.9](https://github.com/nodemailer/nodemailer/compare/v7.0.8...v7.0.9) (2025-10-07)
+
+
+### Bug Fixes
+
+* **release:** Trying to fix release proecess by upgrading Node version in runner ([579fce4](https://github.com/nodemailer/nodemailer/commit/579fce4683eb588891613a6c9a00d8092e8c62d1))
+
 ## [7.0.8](https://github.com/nodemailer/nodemailer/compare/v7.0.7...v7.0.8) (2025-10-07)
 
 
