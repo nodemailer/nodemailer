@@ -251,18 +251,14 @@ describe('#addressparser', () => {
 
     it('should handle particularily bad input, unescaped colon correctly', () => {
         let input = 'FirstName Surname-WithADash :: Company <firstname@company.com>';
+        // Nested groups are not allowed per RFC 5322, so they should be flattened
         let expected = [
             {
                 name: 'FirstName Surname-WithADash',
                 group: [
                     {
-                        name: undefined,
-                        group: [
-                            {
-                                address: 'firstname@company.com',
-                                name: 'Company'
-                            }
-                        ]
+                        address: 'firstname@company.com',
+                        name: 'Company'
                     }
                 ]
             }
@@ -506,7 +502,9 @@ describe('#addressparser', () => {
         let input = 'Group1:a@b.com, Group2:c@d.com;;';
         let result = addressparser(input, { flatten: true });
         // Should extract all individual addresses
+        // Note: nested groups are now flattened at parse time, not just with flatten option
         let addresses = result.map(r => r.address).filter(a => a);
         assert.ok(addresses.includes('a@b.com'));
+        assert.ok(addresses.includes('c@d.com'));
     });
 });
