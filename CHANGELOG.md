@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.8](https://github.com/nodemailer/nodemailer/compare/v7.0.7...v7.0.8) (2025-10-07)
+
+
+### Bug Fixes
+
+* **addressparser:** flatten nested groups per RFC 5322 ([8f8a77c](https://github.com/nodemailer/nodemailer/commit/8f8a77c67f0ba94ddf4e16c68f604a5920fb5d26))
+
 ## [7.0.7](https://github.com/nodemailer/nodemailer/compare/v7.0.6...v7.0.7) (2025-10-05)
 
 ### Bug Fixes
