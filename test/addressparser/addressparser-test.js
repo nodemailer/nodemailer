@@ -507,4 +507,271 @@ describe('#addressparser', () => {
         assert.ok(addresses.includes('a@b.com'));
         assert.ok(addresses.includes('c@d.com'));
     });
+
+    // Additional edge cases for nested group flattening
+    describe('Nested group flattening (RFC 5322 compliance)', () => {
+        it('should flatten deeply nested groups', () => {
+            let input = 'Outer:Inner:deep@example.com;;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'Outer');
+            assert.ok(result[0].group);
+            // Should be flattened to single level
+            assert.strictEqual(result[0].group.length, 1);
+            assert.strictEqual(result[0].group[0].address, 'deep@example.com');
+        });
+
+        it('should flatten multiple nested groups at same level', () => {
+            let input = 'Main:Sub1:a@b.com;, Sub2:c@d.com;;';
+            let result = addressparser(input);
+            // Comma creates separate top-level groups
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].name, 'Main');
+            assert.strictEqual(result[1].name, 'Sub2');
+            // First group should have flattened address from Sub1
+            assert.strictEqual(result[0].group.length, 1);
+            assert.strictEqual(result[0].group[0].address, 'a@b.com');
+            // Second group has its own address
+            assert.strictEqual(result[1].group.length, 1);
+            assert.strictEqual(result[1].group[0].address, 'c@d.com');
+        });
+
+        it('should handle mixed nested and regular addresses in group', () => {
+            let input = 'Group:x@y.com, Nested:a@b.com;, z@w.com;';
+            let result = addressparser(input);
+            // Comma after x@y.com creates a new top-level entry (Nested group)
+            // Then comma after Nested; creates another top-level entry (z@w.com)
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].name, 'Group');
+            // Group contains x@y.com and the flattened a@b.com from Nested
+            assert.strictEqual(result[0].group.length, 2);
+            assert.strictEqual(result[0].group[0].address, 'x@y.com');
+            assert.strictEqual(result[0].group[1].address, 'a@b.com');
+            // z@w.com is a separate top-level address
+            assert.strictEqual(result[1].address, 'z@w.com');
+        });
+    });
+
+    // Unicode and international domain tests
+    describe('Unicode and international addresses', () => {
+        it('should handle unicode in display name', () => {
+            let input = 'Jüri Õunapuu <juri@example.com>';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'Jüri Õunapuu');
+            assert.strictEqual(result[0].address, 'juri@example.com');
+        });
+
+        it('should handle emoji in display name', () => {
+            let input = '🤖 Robot <robot@example.com>';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, '🤖 Robot');
+            assert.strictEqual(result[0].address, 'robot@example.com');
+        });
+
+        it('should handle unicode domain (IDN)', () => {
+            let input = 'user@münchen.de';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@münchen.de');
+        });
+
+        it('should handle CJK characters in name', () => {
+            let input = '田中太郎 <tanaka@example.jp>';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, '田中太郎');
+            assert.strictEqual(result[0].address, 'tanaka@example.jp');
+        });
+    });
+
+    // Real-world malformed input
+    describe('Real-world malformed input handling', () => {
+        it('should handle multiple angle brackets', () => {
+            let input = 'Name <<user@example.com>>';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+
+        it('should handle address with no domain', () => {
+            let input = 'user@';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@');
+        });
+
+        it('should handle address with no local part', () => {
+            let input = '@example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            // Parser handles this gracefully
+            assert.ok(result[0].address.includes('@example.com'));
+        });
+
+        it('should handle mixed case in domain', () => {
+            let input = 'user@Example.COM';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@Example.COM');
+        });
+
+        it('should handle tab characters', () => {
+            let input = 'user@example.com\t\tother@example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            // Tabs are treated as whitespace, should extract first email
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+
+        it('should handle newlines in input', () => {
+            let input = 'user@example.com\nother@example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            // Newlines converted to spaces
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+
+        it('should handle CRLF line endings', () => {
+            let input = 'user@example.com\r\nother@example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+    });
+
+    // Group edge cases
+    describe('Group edge cases', () => {
+        it('should handle group with only spaces', () => {
+            let input = 'EmptyGroup:   ;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'EmptyGroup');
+            assert.strictEqual(result[0].group.length, 0);
+        });
+
+        it('should handle group with invalid addresses', () => {
+            let input = 'Group:not-an-email, another-invalid;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'Group');
+            assert.strictEqual(result[0].group.length, 2);
+        });
+
+        it('should handle group name with special chars', () => {
+            let input = 'Group-Name_123:user@example.com;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'Group-Name_123');
+            assert.strictEqual(result[0].group.length, 1);
+        });
+
+        it('should handle quoted group name', () => {
+            let input = '"My Group":user@example.com;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'My Group');
+            assert.strictEqual(result[0].group.length, 1);
+        });
+    });
+
+    // Comment edge cases
+    describe('Comment edge cases', () => {
+        it('should handle multiple comments', () => {
+            let input = '(comment1)user@example.com(comment2)';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+
+        it('should handle empty comment', () => {
+            let input = 'user@example.com()';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+
+        it('should handle comment with special characters', () => {
+            let input = 'user@example.com (comment with @#$%)';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@example.com');
+        });
+    });
+
+    // Subdomain tests
+    describe('Subdomain handling', () => {
+        it('should handle multiple subdomains', () => {
+            let input = 'user@mail.server.company.example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@mail.server.company.example.com');
+        });
+
+        it('should handle numeric subdomains', () => {
+            let input = 'user@123.456.example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@123.456.example.com');
+        });
+
+        it('should handle hyphenated subdomains', () => {
+            let input = 'user@mail-server.example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@mail-server.example.com');
+        });
+    });
+
+    // IP address domains
+    describe('IP address domains', () => {
+        it('should handle IPv4 address as domain', () => {
+            let input = 'user@[192.168.1.1]';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].address, 'user@[192.168.1.1]');
+        });
+
+        it('should handle IPv6 address notation', () => {
+            let input = 'user@[IPv6:2001:db8::1]';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            // Parser treats colons as potential group separators, so result may vary
+            // Just verify we get a result and don't crash
+            assert.ok(result.length > 0);
+        });
+    });
+
+    // Performance tests
+    describe('Performance and pathological inputs', () => {
+        it('should handle very long address list efficiently', () => {
+            let addresses = [];
+            for (let i = 0; i < 1000; i++) {
+                addresses.push(`user${i}@example.com`);
+            }
+            let input = addresses.join(', ');
+            let start = Date.now();
+            let result = addressparser(input);
+            let elapsed = Date.now() - start;
+            assert.ok(elapsed < 5000, 'Should parse 1000 addresses in under 5 seconds');
+            assert.strictEqual(result.length, 1000);
+        });
+
+        it('should handle deeply nested quotes', () => {
+            let input = '"test\\"nested\\"quotes"@example.com';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 1);
+            assert.ok(result[0].address.includes('@example.com'));
+        });
+
+        it('should handle many consecutive delimiters', () => {
+            let input = 'a@b.com' + ','.repeat(100) + 'c@d.com';
+            let start = Date.now();
+            let result = addressparser(input);
+            let elapsed = Date.now() - start;
+            assert.ok(elapsed < 1000, 'Should handle many delimiters quickly');
+            assert.strictEqual(result.length, 2);
+        });
+    });
 });
