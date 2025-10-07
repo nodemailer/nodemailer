@@ -5,3 +5,4 @@ dist
 build
 .nyc_output
 package-lock.json
+CHANGELOG.md
