@@ -88,7 +88,6 @@ describe('JSON Transport Tests', () => {
         let transport = nodemailer.createTransport({
             jsonTransport: true
         });
-
         let messageObject = {
             from: 'Andris Reinman <andris.reinman@gmail.com>',
             to: 'Andris Kreata <andris@kreata.ee>, andris@nodemailer.com',
@@ -106,6 +105,7 @@ describe('JSON Transport Tests', () => {
         transport.sendMail(messageObject, (err, info) => {
             assert.ok(!err);
             assert.ok(info);
+            assert.equal(transport.options.jsonTransport, true);
             assert.deepStrictEqual(JSON.parse(info.message), {
                 from: {
                     address: 'andris.reinman@gmail.com',
