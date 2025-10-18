@@ -56,6 +56,66 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 }
             });
         });
+
+        it('should parse a simple SMTP URL', () => {
+            const input = 'smtp://user:pass@example.com:587';
+            const options = shared.parseConnectionUrl(input);
+
+            assert.strictEqual(options.secure, false);
+            assert.strictEqual(options.host, 'example.com');
+            assert.strictEqual(options.port, 587);
+            assert.deepStrictEqual(options.auth, { user: 'user', pass: 'pass' });
+        });
+
+        it('should parse a SMTPS URL with query parameters and TLS options', () => {
+            const input = 'smtps://example.com:465?tls.rejectUnauthorized=false&tls.ciphers=ALL';
+            const options = shared.parseConnectionUrl(input);
+
+            assert.strictEqual(options.secure, true);
+            assert.strictEqual(options.port, 465);
+            assert.strictEqual(options.tls.rejectUnauthorized, false);
+            assert.strictEqual(options.tls.ciphers, 'ALL');
+        });
+
+        it('should merge extra options from an object input with url', () => {
+            const input = {
+                url: 'smtp://example.com:25',
+                pool: true,
+                maxConnections: 5
+            };
+            const options = shared.parseConnectionUrl(input);
+
+            assert.strictEqual(options.secure, false);
+            assert.strictEqual(options.host, 'example.com');
+            assert.strictEqual(options.port, 25);
+            assert.strictEqual(options.pool, true);
+            assert.strictEqual(options.maxConnections, 5);
+        });
+
+        it('should handle object input without url', () => {
+            const input = {
+                host: 'smtp.example.com',
+                port: 2525,
+                jsonTransport: true
+            };
+            const options = shared.parseConnectionUrl(input);
+
+            assert.strictEqual(options.host, 'smtp.example.com');
+            assert.strictEqual(options.port, 2525);
+            assert.strictEqual(options.jsonTransport, true);
+        });
+
+        it('should handle direct protocol and boolean/numeric query params', () => {
+            const input = 'direct://example.com:1234?foo=42&bar=true&baz=false';
+            const options = shared.parseConnectionUrl(input);
+
+            assert.strictEqual(options.direct, true);
+            assert.strictEqual(options.host, 'example.com');
+            assert.strictEqual(options.port, 1234);
+            assert.strictEqual(options.foo, 42);
+            assert.strictEqual(options.bar, true);
+            assert.strictEqual(options.baz, false);
+        });
     });
 
     describe('Resolver tests', () => {
