@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.10](https://github.com/nodemailer/nodemailer/compare/v7.0.9...v7.0.10) (2025-10-23)
+
+
+### Bug Fixes
+
+* Increase data URI size limit from 100KB to 50MB and preserve content type ([28dbf3f](https://github.com/nodemailer/nodemailer/commit/28dbf3fe129653f5756c150a98dc40593bfb2cfe))
+
 ## [7.0.9](https://github.com/nodemailer/nodemailer/compare/v7.0.8...v7.0.9) (2025-10-07)
 
 
