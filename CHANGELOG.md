@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.11](https://github.com/nodemailer/nodemailer/compare/v7.0.10...v7.0.11) (2025-11-26)
+
+
+### Bug Fixes
+
+* prevent stack overflow DoS in addressparser with deeply nested groups ([b61b9c0](https://github.com/nodemailer/nodemailer/commit/b61b9c0cfd682b6f647754ca338373b68336a150))
+
 ## [7.0.10](https://github.com/nodemailer/nodemailer/compare/v7.0.9...v7.0.10) (2025-10-23)
 
 
