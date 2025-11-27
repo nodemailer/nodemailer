@@ -817,7 +817,7 @@ describe('MailComposer unit tests', () => {
             });
         });
 
-        it('should use 7bit transfer encoding for message/rfc822', (t, done) => {
+        it('should use 8bit transfer encoding for message/rfc822', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -845,7 +845,7 @@ describe('MailComposer unit tests', () => {
                 'abc\r\n-' +
                 '---_NmP-test-Part_1\r\n' +
                 'Content-Type: message/rfc822; name=test.eml\r\n' +
-                'Content-Transfer-Encoding: 7bit\r\n' +
+                'Content-Transfer-Encoding: 8bit\r\n' +
                 'Content-Disposition: inline; filename=test.eml\r\n' +
                 '\r\n' +
                 'test\r\n' +
@@ -855,6 +855,46 @@ describe('MailComposer unit tests', () => {
             mail.build((err, message) => {
                 assert.ok(!err);
                 assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should handle message/rfc822 attachments with non-ASCII content', (t, done) => {
+            // Simulates a forwarded email containing UTF-8 characters
+            let nestedMessage =
+                'From: sender@example.com\r\n' +
+                'To: recipient@example.com\r\n' +
+                'Subject: =?UTF-8?B?VGVzdCDDhMOWw5w=?=\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 8bit\r\n' +
+                '\r\n' +
+                'Message with non-ASCII: äöü 你好 🎉\r\n';
+
+            let data = {
+                text: 'Forwarding a message',
+                baseBoundary: 'test',
+                messageId: 'nested-msg-test',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000',
+                attachments: [
+                    {
+                        content: nestedMessage,
+                        contentType: 'message/rfc822',
+                        filename: 'forwarded.eml'
+                    }
+                ]
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                let msg = message.toString();
+                // Verify Content-Transfer-Encoding is 8bit for the nested message
+                assert.ok(msg.includes('Content-Type: message/rfc822'));
+                assert.ok(msg.includes('Content-Transfer-Encoding: 8bit'));
+                // Verify the non-ASCII content is preserved (not corrupted by 7bit encoding)
+                assert.ok(msg.includes('äöü'));
+                assert.ok(msg.includes('你好'));
+                assert.ok(msg.includes('🎉'));
                 done();
             });
         });
