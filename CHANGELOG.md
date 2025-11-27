@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.12](https://github.com/nodemailer/nodemailer/compare/v7.0.11...v7.0.12) (2025-11-27)
+
+
+### Bug Fixes
+
+* use 8bit encoding for message/rfc822 attachments ([adf8611](https://github.com/nodemailer/nodemailer/commit/adf86113217b23ff3cd1191af5cd1d360fcc313b))
+
 ## [7.0.11](https://github.com/nodemailer/nodemailer/compare/v7.0.10...v7.0.11) (2025-11-26)
 
 
