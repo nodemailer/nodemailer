@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [7.0.12](https://github.com/nodemailer/nodemailer/compare/v7.0.11...v7.0.12) (2025-12-22)
+
+
+### Bug Fixes
+
+* added support for REQUIRETLS ([#1793](https://github.com/nodemailer/nodemailer/issues/1793)) ([053ce6a](https://github.com/nodemailer/nodemailer/commit/053ce6a772a7c608e6bee7f58ebe9900afbd9b84))
+* use 8bit encoding for message/rfc822 attachments ([adf8611](https://github.com/nodemailer/nodemailer/commit/adf86113217b23ff3cd1191af5cd1d360fcc313b))
+
 ## [7.0.11](https://github.com/nodemailer/nodemailer/compare/v7.0.10...v7.0.11) (2025-11-26)
 
 
