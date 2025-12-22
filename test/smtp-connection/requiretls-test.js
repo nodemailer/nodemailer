@@ -133,7 +133,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
             server.close(done);
         });
 
-        it('should send REQUIRETLS parameter when envelope.requireTLS is true', (t, done) => {
+        it('should send REQUIRETLS parameter when envelope.requireTLSExtensionEnabled is true', (t, done) => {
             lastMailFromArgs = null;
             lastEnvelopeRequireTLS = null;
 
@@ -148,7 +148,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                     {
                         from: 'sender@example.com',
                         to: ['recipient@example.com'],
-                        requireTLS: true
+                        requireTLSExtensionEnabled: true
                     },
                     'Subject: Test\r\n\r\nTest message',
                     (err, info) => {
@@ -167,7 +167,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
             client.on('end', done);
         });
 
-        it('should NOT send REQUIRETLS parameter when envelope.requireTLS is false/undefined', (t, done) => {
+        it('should NOT send REQUIRETLS parameter when envelope.requireTLSExtensionEnabled is false/undefined', (t, done) => {
             lastMailFromArgs = null;
             lastEnvelopeRequireTLS = null;
 
@@ -182,7 +182,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                     {
                         from: 'sender@example.com',
                         to: ['recipient@example.com']
-                        // No requireTLS
+                        // No requireTLSExtensionEnabled
                     },
                     'Subject: Test\r\n\r\nTest message',
                     (err, info) => {
@@ -196,6 +196,59 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
 
             client.on('error', err => {
                 assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+    });
+
+    describe('REQUIRETLS Error Handling', () => {
+        let serverWithoutRequireTLS;
+
+        before((t, done) => {
+            // Server that does NOT advertise REQUIRETLS
+            serverWithoutRequireTLS = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: true, // Do not advertise REQUIRETLS
+                authOptional: true,
+                onData: (stream, session, callback) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            serverWithoutRequireTLS.listen(PORT_NUMBER + 3, done);
+        });
+
+        after((t, done) => {
+            serverWithoutRequireTLS.close(done);
+        });
+
+        it('should error when server does not support REQUIRETLS but requireTLSExtensionEnabled is true', (t, done) => {
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 3,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                client.send(
+                    {
+                        from: 'sender@example.com',
+                        to: ['recipient@example.com'],
+                        requireTLSExtensionEnabled: true
+                    },
+                    'Subject: Test\r\n\r\nTest message',
+                    (err, info) => {
+                        assert.ok(err, 'Should error when server does not support REQUIRETLS');
+                        assert.ok(
+                            err.message.includes('REQUIRETLS') || err.code === 'EREQUIRETLS',
+                            'Error should mention REQUIRETLS or have EREQUIRETLS code'
+                        );
+                        client.close();
+                    }
+                );
             });
 
             client.on('end', done);
@@ -246,7 +299,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                     {
                         from: 'sender@example.com',
                         to: ['recipient@example.com'],
-                        requireTLS: true,
+                        requireTLSExtensionEnabled: true,
                         dsn: {
                             ret: 'HDRS',
                             envid: 'test-envelope-id'
