@@ -151,7 +151,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                         requireTLSExtensionEnabled: true
                     },
                     'Subject: Test\r\n\r\nTest message',
-                    (err, info) => {
+                    (err, _info) => {
                         assert.ok(!err, 'Should not error');
                         assert.strictEqual(lastMailFromArgs.REQUIRETLS, true, 'REQUIRETLS should be in MAIL FROM args');
                         assert.strictEqual(lastEnvelopeRequireTLS, true, 'session.envelope.requireTLS should be true');
@@ -185,7 +185,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                         // No requireTLSExtensionEnabled
                     },
                     'Subject: Test\r\n\r\nTest message',
-                    (err, info) => {
+                    (err, _info) => {
                         assert.ok(!err, 'Should not error');
                         assert.strictEqual(lastMailFromArgs.REQUIRETLS, undefined, 'REQUIRETLS should NOT be in MAIL FROM args');
                         assert.strictEqual(lastEnvelopeRequireTLS, false, 'session.envelope.requireTLS should be false');
@@ -240,7 +240,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                         requireTLSExtensionEnabled: true
                     },
                     'Subject: Test\r\n\r\nTest message',
-                    (err, info) => {
+                    (err, _info) => {
                         assert.ok(err, 'Should error when server does not support REQUIRETLS');
                         assert.ok(
                             err.message.includes('REQUIRETLS') || err.code === 'EREQUIRETLS',
@@ -306,7 +306,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                         }
                     },
                     'Subject: Test\r\n\r\nTest message',
-                    (err, info) => {
+                    (err, _info) => {
                         assert.ok(!err, 'Should not error');
                         assert.strictEqual(lastMailFromArgs.REQUIRETLS, true, 'REQUIRETLS should be present');
                         // Note: DSN params may or may not be present depending on server config
