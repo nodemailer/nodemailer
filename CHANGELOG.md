@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [7.0.13](https://github.com/nodemailer/nodemailer/compare/v7.0.12...v7.0.13) (2026-01-27)
+
+
+### Bug Fixes
+
+* downgrade transient connection error logs to warn level ([4c041db](https://github.com/nodemailer/nodemailer/commit/4c041db85d560e98bc5e1fd5d5a191835c5b7d2f))
+
 ## [7.0.12](https://github.com/nodemailer/nodemailer/compare/v7.0.11...v7.0.12) (2025-12-22)
 
 
