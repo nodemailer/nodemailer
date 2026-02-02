@@ -64,10 +64,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
             });
 
             client.connect(() => {
-                assert.ok(
-                    client._supportedExtensions.includes('REQUIRETLS'),
-                    'REQUIRETLS should be in supported extensions'
-                );
+                assert.ok(client._supportedExtensions.includes('REQUIRETLS'), 'REQUIRETLS should be in supported extensions');
                 client.close();
             });
 
@@ -86,10 +83,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
             });
 
             client.connect(() => {
-                assert.ok(
-                    !client._supportedExtensions.includes('REQUIRETLS'),
-                    'REQUIRETLS should NOT be in supported extensions'
-                );
+                assert.ok(!client._supportedExtensions.includes('REQUIRETLS'), 'REQUIRETLS should NOT be in supported extensions');
                 client.close();
             });
 

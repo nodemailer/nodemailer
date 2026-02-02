@@ -406,7 +406,7 @@ describe('SMTP Transport Tests', { timeout: 10000 }, () => {
 
             client.verify(err => {
                 assert.ok(err);
-                assert.strictEqual(err.code, 'NoAuth');
+                assert.strictEqual(err.code, 'ENOAUTH');
                 done();
             });
         });
