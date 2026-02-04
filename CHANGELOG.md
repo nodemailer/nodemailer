@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [8.0.0](https://github.com/nodemailer/nodemailer/compare/v7.0.13...v8.0.0) (2026-02-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* Error code 'NoAuth' renamed to 'ENOAUTH'
+
+### Bug Fixes
+
+* add connection fallback to alternative DNS addresses ([e726d6f](https://github.com/nodemailer/nodemailer/commit/e726d6f44aa7ca14e943d4303243cb5494b09c75))
+* centralize and standardize error codes ([45062ce](https://github.com/nodemailer/nodemailer/commit/45062ce7a4705f3e63c5d9e606547f4d99fd29b5))
+* harden DNS fallback against race conditions and cleanup issues ([4fa3c63](https://github.com/nodemailer/nodemailer/commit/4fa3c63a1f36aefdbaea7f57a133adc458413a47))
+* improve socket cleanup to prevent potential memory leaks ([6069fdc](https://github.com/nodemailer/nodemailer/commit/6069fdcff68a3eef9a9bb16b2bf5ddb924c02091))
+
 ## [7.0.13](https://github.com/nodemailer/nodemailer/compare/v7.0.12...v7.0.13) (2026-01-27)
 
 
