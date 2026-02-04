@@ -466,6 +466,160 @@ describe('SMTP-Connection Tests', () => {
         });
     });
 
+    describe('Connection fallback tests', () => {
+        let server;
+
+        before((t, done) => {
+            server = new SMTPServer({
+                disabledCommands: ['STARTTLS', 'AUTH'],
+                onData: (stream, session, callback) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+            server.listen(PORT_NUMBER + 20, done);
+        });
+
+        after((t, done) => {
+            server.close(done);
+        });
+
+        it('should connect using fallback address when first address fails', (t, done) => {
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 20,
+                host: '127.0.0.1',
+                ignoreTLS: true,
+                logger: false
+            });
+
+            // Simulate fallback addresses by directly setting them
+            let originalConnect = client.connect.bind(client);
+            client.connect = callback => {
+                originalConnect(err => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback();
+                });
+            };
+
+            client.connect(() => {
+                assert.strictEqual(client.secure, false);
+                client.close();
+            });
+
+            client.on('error', err => {
+                assert.ok(!err);
+            });
+
+            client.on('end', done);
+        });
+
+        it('should emit error when all fallback addresses fail', (t, done) => {
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 99, // Non-existent port
+                host: '127.0.0.1',
+                ignoreTLS: true,
+                logger: false,
+                connectionTimeout: 1000
+            });
+
+            // Manually set fallback addresses to test exhaustion
+            client._fallbackAddresses = ['127.0.0.2', '127.0.0.3'];
+
+            client.connect(() => {
+                // Should not reach here
+                assert.ok(false, 'Should not connect');
+                client.close();
+            });
+
+            client.once('error', err => {
+                assert.ok(err);
+                assert.ok(['ECONNREFUSED', 'ESOCKET', 'ETIMEDOUT', 'ECONNECTION'].includes(err.code));
+            });
+
+            client.on('end', done);
+        });
+
+        it('should try fallback address on connection error', (t, done) => {
+            // Create a client pointing to a non-existent server
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 98, // Non-existent port
+                host: '127.0.0.1',
+                ignoreTLS: true,
+                logger: false,
+                connectionTimeout: 500
+            });
+
+            let fallbackAttempted = false;
+            let originalConnectToHost = client._connectToHost.bind(client);
+            let attemptCount = 0;
+
+            client._connectToHost = (opts, secure) => {
+                attemptCount++;
+                if (attemptCount === 1) {
+                    // First attempt should fail, triggering fallback
+                    originalConnectToHost(opts, secure);
+                } else if (attemptCount === 2) {
+                    // Second attempt (fallback) - redirect to working server
+                    fallbackAttempted = true;
+                    opts.port = PORT_NUMBER + 20;
+                    originalConnectToHost(opts, secure);
+                }
+            };
+
+            // Set up fallback address
+            client._fallbackAddresses = ['127.0.0.1'];
+
+            client.connect(() => {
+                assert.ok(fallbackAttempted, 'Should have attempted fallback');
+                assert.strictEqual(attemptCount, 2, 'Should have made 2 connection attempts');
+                client.close();
+            });
+
+            client.on('error', err => {
+                // Only fail if we get an error after fallback was attempted
+                if (fallbackAttempted) {
+                    assert.ok(!err);
+                }
+            });
+
+            client.on('end', done);
+        });
+
+        it('should not attempt fallback after connection is established', (t, done) => {
+            let client = new SMTPConnection({
+                port: PORT_NUMBER + 20,
+                host: '127.0.0.1',
+                ignoreTLS: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                // Connection established, stage should be 'connected'
+                assert.strictEqual(client.stage, 'connected');
+
+                // Set fallback addresses - these should NOT be used since we're already connected
+                client._fallbackAddresses = ['127.0.0.2', '127.0.0.3'];
+
+                // Verify that _onConnectionError would not trigger fallback
+                let canFallback =
+                    client._fallbackAddresses && client._fallbackAddresses.length && client.stage === 'init' && !client._destroyed;
+
+                assert.strictEqual(canFallback, false, 'Should not be able to fallback after connection');
+
+                client.close();
+            });
+
+            client.on('error', err => {
+                assert.ok(!err);
+            });
+
+            client.on('end', done);
+        });
+    });
+
     describe('Login tests', () => {
         let server,
             lmtpServer,

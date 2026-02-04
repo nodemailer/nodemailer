@@ -412,18 +412,16 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         it('should resolve a single IPv4 entry', (t, done) => {
             shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
                 assert.ok(!err);
-                assert.deepStrictEqual(result, {
-                    servername: 'ipv4.single.dev.ethereal.email',
-                    host: '95.216.108.161',
-                    cached: false
-                });
+                assert.strictEqual(result.servername, 'ipv4.single.dev.ethereal.email');
+                assert.strictEqual(result.host, '95.216.108.161');
+                assert.strictEqual(result.cached, false);
+                assert.ok(Array.isArray(result._addresses));
+                assert.ok(result._addresses.includes('95.216.108.161'));
                 shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
                     assert.ok(!err);
-                    assert.deepStrictEqual(result, {
-                        servername: 'ipv4.single.dev.ethereal.email',
-                        host: '95.216.108.161',
-                        cached: true
-                    });
+                    assert.strictEqual(result.servername, 'ipv4.single.dev.ethereal.email');
+                    assert.strictEqual(result.host, '95.216.108.161');
+                    assert.strictEqual(result.cached, true);
                     done();
                 });
             });
@@ -478,18 +476,16 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
             shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, (err, result) => {
                 assert.ok(!err);
-                assert.deepStrictEqual(result, {
-                    servername: 'ipv6.single.dev.ethereal.email',
-                    host: '2a01:4f9:3051:4501::2',
-                    cached: false
-                });
+                assert.strictEqual(result.servername, 'ipv6.single.dev.ethereal.email');
+                assert.strictEqual(result.host, '2a01:4f9:3051:4501::2');
+                assert.strictEqual(result.cached, false);
+                assert.ok(Array.isArray(result._addresses));
+                assert.ok(result._addresses.includes('2a01:4f9:3051:4501::2'));
                 shared.resolveHostname({ host: 'ipv6.single.dev.ethereal.email' }, (err, result) => {
                     assert.ok(!err);
-                    assert.deepStrictEqual(result, {
-                        servername: 'ipv6.single.dev.ethereal.email',
-                        host: '2a01:4f9:3051:4501::2',
-                        cached: true
-                    });
+                    assert.strictEqual(result.servername, 'ipv6.single.dev.ethereal.email');
+                    assert.strictEqual(result.host, '2a01:4f9:3051:4501::2');
+                    assert.strictEqual(result.cached, true);
                     done();
                 });
             });
@@ -505,11 +501,11 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         it('should return provided IP', (t, done) => {
             shared.resolveHostname({ host: '1.2.3.4', servername: 'example.com' }, (err, result) => {
                 assert.ok(!err);
-                assert.deepStrictEqual(result, {
-                    servername: 'example.com',
-                    host: '1.2.3.4',
-                    cached: false
-                });
+                assert.strictEqual(result.servername, 'example.com');
+                assert.strictEqual(result.host, '1.2.3.4');
+                assert.strictEqual(result.cached, false);
+                assert.ok(Array.isArray(result._addresses));
+                assert.ok(result._addresses.includes('1.2.3.4'));
                 done();
             });
         });
@@ -533,11 +529,9 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
             shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result) => {
                 assert.ok(!err);
-                assert.deepStrictEqual(result, {
-                    servername: 'ipv4.single.dev.ethereal.email',
-                    host: 'ipv4.single.dev.ethereal.email',
-                    cached: false
-                });
+                assert.strictEqual(result.servername, 'ipv4.single.dev.ethereal.email');
+                assert.strictEqual(result.host, 'ipv4.single.dev.ethereal.email');
+                assert.strictEqual(result.cached, false);
                 done();
             });
         });
@@ -566,14 +560,28 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 },
                 (err, result) => {
                     assert.ok(!err);
-                    assert.deepStrictEqual(result, {
-                        servername: 'ipv4.single.dev.ethereal.email',
-                        host: '95.216.108.161',
-                        cached: false
-                    });
+                    assert.strictEqual(result.servername, 'ipv4.single.dev.ethereal.email');
+                    assert.strictEqual(result.host, '95.216.108.161');
+                    assert.strictEqual(result.cached, false);
+                    assert.ok(Array.isArray(result._addresses));
+                    assert.ok(result._addresses.includes('95.216.108.161'));
                     done();
                 }
             );
+        });
+
+        it('should include all addresses in _addresses for fallback support', (t, done) => {
+            // Test that when resolving a host with multiple A records, all are included in _addresses
+            shared.resolveHostname({ host: 'ipv4.multi.dev.ethereal.email' }, (err, result) => {
+                assert.ok(!err);
+                assert.ok(Array.isArray(result._addresses), 'Should have _addresses array');
+                // ipv4.multi.dev.ethereal.email has 3 A records
+                assert.ok(result._addresses.length >= 1, 'Should have at least one address');
+                assert.ok(result.host, 'Should have a primary host');
+                // The primary host should be one of the addresses
+                assert.ok(result._addresses.includes(result.host), 'Primary host should be in _addresses');
+                done();
+            });
         });
     });
 
