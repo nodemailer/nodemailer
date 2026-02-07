@@ -147,6 +147,14 @@
         "secure": true
     },
 
+    "GmailWorkspace": {
+        "description": "Gmail Workspace",
+        "aliases": ["Google Workspace Mail"],
+        "host": "smtp-relay.gmail.com",
+        "port": 465,
+        "secure": true
+    },
+
     "GMX": {
         "description": "GMX Mail",
         "domains": ["gmx.com", "gmx.net", "gmx.de"],
