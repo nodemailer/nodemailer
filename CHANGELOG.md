@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [8.0.1](https://github.com/nodemailer/nodemailer/compare/v8.0.0...v8.0.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* absorb TLS errors during socket teardown ([7f8dde4](https://github.com/nodemailer/nodemailer/commit/7f8dde41438c66b8311e888fa5f8c518fcaba6f1))
+* absorb TLS errors during socket teardown ([381f628](https://github.com/nodemailer/nodemailer/commit/381f628d55e62bb3131bd2a452fa1ce00bc48aea))
+* Add Gmail Workspace service configuration ([#1787](https://github.com/nodemailer/nodemailer/issues/1787)) ([dc97ede](https://github.com/nodemailer/nodemailer/commit/dc97ede417b3030b311771541b1f17f5ca76bcbf))
+
 ## [8.0.0](https://github.com/nodemailer/nodemailer/compare/v7.0.13...v8.0.0) (2026-02-04)
 
 
