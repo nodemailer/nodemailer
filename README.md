@@ -4,7 +4,7 @@
 
 Send emails from Node.js – easy as cake! 🍰✉️
 
-[![NPM](https://nodei.co/npm/nodemailer.png?downloads=true&downloadRank=true&stars=true)](https://nodemailer.com/about/)
+[![NPM](https://nodei.co/npm/nodemailer.png?downloads=true&downloadRank=true&stars=true)](https://nodemailer.com/about/) [![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20Nodemailer%20Guru-006BFF)](https://gurubase.io/g/nodemailer)
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
