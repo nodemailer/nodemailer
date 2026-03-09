@@ -775,6 +775,66 @@ describe('#addressparser', () => {
         });
     });
 
+    // Unquoted display names with commas (GitHub issue nodemailer/mailparser#375)
+    describe('Unquoted display names with commas', () => {
+        it('should merge comma-separated name parts with angle-bracket address', () => {
+            let input = 'Joe Foo, PhD <joe@example.com>';
+            let expected = [{ name: 'Joe Foo, PhD', address: 'joe@example.com' }];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should merge multiple comma-separated name parts', () => {
+            let input = 'A, B, C <d@e.com>';
+            let expected = [{ name: 'A, B, C', address: 'd@e.com' }];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should merge multiple recipients with commas in names', () => {
+            let input = 'Joe, PhD <j@e.com>, Jane, MD <jane@e.com>';
+            let expected = [
+                { name: 'Joe, PhD', address: 'j@e.com' },
+                { name: 'Jane, MD', address: 'jane@e.com' }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should handle bare emails mixed with comma-in-name addresses', () => {
+            let input = 'a@b.com, Foo, Bar <c@d.com>, e@f.com';
+            let expected = [
+                { name: '', address: 'a@b.com' },
+                { name: 'Foo, Bar', address: 'c@d.com' },
+                { name: '', address: 'e@f.com' }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should not merge when bare email follows a name (no angle brackets)', () => {
+            let input = 'SomeName, joe@example.com';
+            let result = addressparser(input);
+            // Bare email produces empty name, so no merge should happen
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].name, 'SomeName');
+            assert.strictEqual(result[0].address, '');
+            assert.strictEqual(result[1].address, 'joe@example.com');
+            assert.strictEqual(result[1].name, '');
+        });
+
+        it('should not merge when group is involved', () => {
+            let input = 'Title, Group: a@b.com;';
+            let result = addressparser(input);
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].name, 'Title');
+            assert.strictEqual(result[1].name, 'Group');
+            assert.ok(result[1].group);
+        });
+
+        it('should not regress quoted names with commas', () => {
+            let input = '"Joe, PhD" <joe@example.com>';
+            let expected = [{ name: 'Joe, PhD', address: 'joe@example.com' }];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+    });
+
     // DoS protection tests for deeply nested groups (CVE-like vulnerability fix)
     describe('Nested group DoS protection', () => {
         /**
