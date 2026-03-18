@@ -27,7 +27,7 @@
     },
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
-        "@aws-sdk/client-sesv2": "3.1004.0",
+        "@aws-sdk/client-sesv2": "3.1011.0",
         "bunyan": "1.8.15",
         "c8": "11.0.0",
         "eslint": "10.0.3",
