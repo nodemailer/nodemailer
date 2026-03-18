@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [8.0.3](https://github.com/nodemailer/nodemailer/compare/v8.0.2...v8.0.3) (2026-03-18)
+
+
+### Bug Fixes
+
+* clean up addressparser and fix group name fallback producing undefined ([9d55877](https://github.com/nodemailer/nodemailer/commit/9d55877f8ed15a6aefd7ba76cbb6b6a6cdbcc4fd))
+* fix cookie bugs, remove dead code, and improve hot-path efficiency ([e8c8b92](https://github.com/nodemailer/nodemailer/commit/e8c8b92f46f2a82d06d49cc9a6ffc26067f68524))
+* refactor smtp-connection for clarity and add Node.js 6 syntax compat test ([c5b48ea](https://github.com/nodemailer/nodemailer/commit/c5b48ea61c28eabf347972f4198a12cdab226ff7))
+* remove familySupportCache that broke DNS resolution tests ([c803d90](https://github.com/nodemailer/nodemailer/commit/c803d901f195a21edbb2c276b2e116564467aaaa))
+
 ## [8.0.2](https://github.com/nodemailer/nodemailer/compare/v8.0.1...v8.0.2) (2026-03-09)
 
 
