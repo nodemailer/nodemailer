@@ -8,7 +8,7 @@ jobs:
     syntax-compat:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Verify Node.js 6 syntax compatibility
               run: docker run --rm -v "$PWD:/app:ro" -w /app node:6-alpine node test/syntax-compat.js
 
@@ -19,9 +19,9 @@ jobs:
                 os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Use Node.js ${{ matrix.node }}
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node }}
             - run: npm install
