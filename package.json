@@ -10,7 +10,8 @@
         "format:check": "prettier --check \"**/*.{js,json,md}\"",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install"
+        "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install",
+        "test:syntax": "docker run --rm -v \"$PWD:/app:ro\" -w /app node:6-alpine node test/syntax-compat.js"
     },
     "repository": {
         "type": "git",

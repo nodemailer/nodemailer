@@ -5,6 +5,13 @@ on:
     pull_request:
 
 jobs:
+    syntax-compat:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Verify Node.js 6 syntax compatibility
+              run: docker run --rm -v "$PWD:/app:ro" -w /app node:6-alpine node test/syntax-compat.js
+
     test:
         strategy:
             matrix:
