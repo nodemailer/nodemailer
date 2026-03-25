@@ -1395,6 +1395,24 @@ describe('SMTP-Connection Tests', () => {
                 );
             });
 
+            it('should sanitize CRLF in envelope size to prevent SMTP injection', (t, done) => {
+                client.send(
+                    {
+                        from: 'test@valid.sender',
+                        to: ['test@valid.recipient'],
+                        size: '100\r\nRCPT TO:<attacker@evil.com>'
+                    },
+                    'test',
+                    (err, info) => {
+                        assert.ok(!err);
+                        assert.deepStrictEqual(info.accepted, ['test@valid.recipient']);
+                        assert.ok(!info.accepted.includes('attacker@evil.com'));
+                        assert.ok(!info.rejected.includes('attacker@evil.com'));
+                        done();
+                    }
+                );
+            });
+
             it('should return error for no valid recipients', (t, done) => {
                 client.send(
                     {
