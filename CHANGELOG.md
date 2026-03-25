@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [8.0.4](https://github.com/nodemailer/nodemailer/compare/v8.0.3...v8.0.4) (2026-03-25)
+
+
+### Bug Fixes
+
+* sanitize envelope size to prevent SMTP command injection ([2d7b971](https://github.com/nodemailer/nodemailer/commit/2d7b9710e63555a1eb13d721296c51186d4b5651))
+
 ## [8.0.3](https://github.com/nodemailer/nodemailer/compare/v8.0.2...v8.0.3) (2026-03-18)
 
 
