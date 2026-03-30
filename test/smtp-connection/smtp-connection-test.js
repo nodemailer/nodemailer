@@ -128,7 +128,7 @@ describe('SMTP-Connection Tests', () => {
             });
         });
 
-        it('should connect to unsecure server', (t, done) => {
+        it('should connect to insecure server', (t, done) => {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 ignoreTLS: true,
@@ -419,7 +419,7 @@ describe('SMTP-Connection Tests', () => {
             });
         });
 
-        it('should send to unsecure server', (t, done) => {
+        it('should send to insecure server', (t, done) => {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,
                 ignoreTLS: true,

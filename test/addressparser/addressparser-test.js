@@ -75,7 +75,7 @@ describe('#addressparser', () => {
         assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle emtpy group correctly', () => {
+    it('should handle empty group correctly', () => {
         let input = 'Undisclosed:;';
         let expected = [
             {
@@ -249,7 +249,7 @@ describe('#addressparser', () => {
         assert.deepStrictEqual(addressparser(input), expected);
     });
 
-    it('should handle particularily bad input, unescaped colon correctly', () => {
+    it('should handle particularly bad input, unescaped colon correctly', () => {
         let input = 'FirstName Surname-WithADash :: Company <firstname@company.com>';
         // Nested groups are not allowed per RFC 5322, so they should be flattened
         let expected = [

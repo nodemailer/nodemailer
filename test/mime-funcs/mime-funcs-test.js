@@ -170,7 +170,7 @@ describe('Mime-Funcs Tests', () => {
 
         it('should encode and decode', () => {
             let input =
-                'Lorěm ipsum doloř siť amet, háš peřpetua compřéhenšam at, ei nám modó soleát éxpétěndá! Boňorum vocibůs dignisšim pro ad, ea sensibus efficiendi intellegam ius. Ad nam aperiam delicata voluptaria, vix nobis luptatum ea, ců úsú graeco viďiššě ňusqúam. ';
+                'Lorěm ipsum doloř siť amet, háš peřpetua compřéhenšam at, ei nám modó soleát éxpétěndá! Boňorum vocibůs dignisšim pro ad, ea sensibus efficiendi intellegam ius. Ad name aperiam delicata voluptaria, vix nobis luptatum ea, ců úsú graeco viďiššě ňusqúam. ';
             let headerLine =
                 'content-disposition: attachment; ' +
                 mimeFuncs
@@ -431,9 +431,9 @@ describe('Mime-Funcs Tests', () => {
 
     describe('#foldLines', () => {
         it('should Fold long header line', () => {
-            let inputStr = 'Subject: Testin command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla',
+            let inputStr = 'Subject: Testing command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla',
                 outputStr =
-                    'Subject: Testin command line kirja\r\n' +
+                    'Subject: Testing command line kirja\r\n' +
                     ' =?UTF-8?Q?=C3=B5kva_kakva_m=C3=B5ni_t=C3=B5nis_k?=\r\n' +
                     ' =?UTF-8?Q?=C3=B5llas_p=C3=B5llas_t=C3=B5llas_r?=\r\n' +
                     ' =?UTF-8?Q?=C3=B5llas_ju=C5=A1la_ku=C5=A1la_tu?= =?UTF-8?Q?=C5=A1la?= musla',
@@ -444,10 +444,10 @@ describe('Mime-Funcs Tests', () => {
 
         it('should Fold flowed text', () => {
             let inputStr =
-                    'Testin command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla Testin command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla',
+                    'Testing command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla Testing command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas jušla kušla tušla musla',
                 outputStr =
                     'Testin command line kirja õkva kakva mõni tõnis kõllas põllas tõllas rõllas \r\n' +
-                    'jušla kušla tušla musla Testin command line kirja õkva kakva mõni tõnis \r\n' +
+                    'jušla kušla tušla musla Testing command line kirja õkva kakva mõni tõnis \r\n' +
                     'kõllas põllas tõllas rõllas jušla kušla tušla musla';
 
             assert.strictEqual(outputStr, mimeFuncs.foldLines(inputStr, 76, true));

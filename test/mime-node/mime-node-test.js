@@ -1135,7 +1135,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#_generateBoundary ', () => {
-        it('should genereate boundary string', () => {
+        it('should generate boundary string', () => {
             let mb = new MimeNode();
             mb._nodeId = 'abc';
             mb.rootNode.baseBoundary = 'def';
