@@ -233,7 +233,7 @@ describe('SMTP Transport Tests', { timeout: 10000 }, () => {
             );
         });
 
-        it('Should recover unexpeced close during transmission', (t, done) => {
+        it('Should recover unexpected close during transmission', (t, done) => {
             let client = new SMTPTransport('smtp:localhost:' + (PORT_NUMBER + 1) + '?logger=false');
             let chunks = [],
                 message = new Array(1024).join('teretere, vana kere\n');

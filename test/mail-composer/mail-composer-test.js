@@ -279,7 +279,7 @@ describe('MailComposer unit tests', () => {
             let mail = compiler.compile();
             let attachmentHeaders = mail.childNodes[1].buildHeaders();
 
-            // attachment header must not contain mutipart header
+            // attachment header must not contain multipart header
             assert.ok(attachmentHeaders.indexOf('boundary=') < 0);
         });
 
@@ -334,7 +334,7 @@ describe('MailComposer unit tests', () => {
             let data = {
                 raw: 'test test test\r\n',
                 envelope: {
-                    from: 'Daemon <deamon@kreata.ee>',
+                    from: 'Daemon <daemon@kreata.ee>',
                     to: 'mailer@kreata.ee, Mailer <mailer2@kreata.ee>'
                 }
             };

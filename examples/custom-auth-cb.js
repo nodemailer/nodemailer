@@ -15,7 +15,7 @@ nodemailer.createTestAccount((err, account) => {
     console.log('Credentials obtained, sending message...');
 
     // NB! Store the account object values somewhere if you want
-    // to re-use the same account for future mail deliveries
+    // to reuse the same account for future mail deliveries
 
     // Create a SMTP transporter object
     let transporter = nodemailer.createTransport(
