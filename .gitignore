@@ -7,4 +7,3 @@ test/dkim/cache/message.*
 examples/test-send.js
 *.patch
 .claude
-CLAUDE.md
