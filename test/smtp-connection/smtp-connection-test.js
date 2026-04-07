@@ -19,6 +19,108 @@ let LMTP_PORT_NUMBER = 8396;
 let XOAUTH_PORT = 8497;
 
 describe('SMTP-Connection Tests', () => {
+    // Spin up a tiny TCP server with byte-exact control over each SMTP reply.
+    // smtp-server can't return arbitrary non-ASCII reply text, so we need raw net.
+    // `replies` is an object whose keys are SMTP commands and values are Buffers (or
+    // strings, which will be sent as UTF-8). Unspecified commands fall through to
+    // sane defaults so each test only has to override what it cares about.
+    function startServer(replies, callback) {
+        let openSockets = new Set();
+        let server = net.createServer(socket => {
+            openSockets.add(socket);
+            socket.on('close', () => openSockets.delete(socket));
+            let buf = '';
+            let inData = false;
+            socket.write(toBuf(replies.greeting || '220 test ESMTP\r\n'));
+            socket.on('data', chunk => {
+                buf += chunk.toString('binary');
+                let idx;
+                while ((idx = buf.indexOf('\r\n')) !== -1) {
+                    let line = buf.slice(0, idx);
+                    buf = buf.slice(idx + 2);
+                    if (inData) {
+                        if (line === '.') {
+                            inData = false;
+                            socket.write(toBuf(replies.dataDone || '250 2.0.0 OK\r\n'));
+                        }
+                        continue;
+                    }
+                    if (/^EHLO\b/i.test(line)) {
+                        socket.write(toBuf(replies.ehlo || '250-test\r\n250 PIPELINING\r\n'));
+                    } else if (/^MAIL FROM/i.test(line)) {
+                        socket.write(toBuf(replies.mail || '250 2.1.0 Sender OK\r\n'));
+                    } else if (/^RCPT TO/i.test(line)) {
+                        socket.write(toBuf(replies.rcpt || '250 2.1.5 Recipient OK\r\n'));
+                    } else if (/^DATA\b/i.test(line)) {
+                        socket.write(toBuf(replies.data || '354 Go ahead\r\n'));
+                        inData = true;
+                    } else if (/^QUIT\b/i.test(line)) {
+                        socket.write('221 Bye\r\n');
+                        socket.end();
+                    } else {
+                        socket.write('250 OK\r\n');
+                    }
+                }
+            });
+        });
+        server.closeAllConnections = () => {
+            for (const sock of openSockets) {
+                sock.destroy();
+            }
+        };
+        server.listen(0, '127.0.0.1', () => callback(server));
+    }
+
+    function toBuf(payload) {
+        return Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8');
+    }
+
+    function makeClient(server) {
+        return new SMTPConnection({
+            port: server.address().port,
+            host: '127.0.0.1',
+            ignoreTLS: true,
+            logger: false
+        });
+    }
+
+    // net.Server.close() only stops accepting new connections and waits for the
+    // existing ones to drain. Tests that finish while a client socket is still
+    // open need closeAllConnections() (a shim attached by startServer or its
+    // inline equivalents in custom-server tests) to force-close the in-flight
+    // sockets, otherwise server.close() hangs until the client tears down on its
+    // own. The try/catch is load-bearing: throws inside the close callback are
+    // outside any test runner async boundary and would otherwise become
+    // unhandled exceptions instead of test failures.
+    function safeDone(server, done, fn) {
+        if (typeof server.closeAllConnections === 'function') {
+            server.closeAllConnections();
+        }
+        server.close(() => {
+            let assertErr = null;
+            try {
+                fn();
+            } catch (e) {
+                assertErr = e;
+            }
+            done(assertErr);
+        });
+    }
+
+    // Latches a `done` callback so the first invocation wins. Tests that have
+    // both a happy-path and a defensive client.on('error') path go through this
+    // to avoid the narrow double-done race when both fire.
+    function once(fn) {
+        let called = false;
+        return (...args) => {
+            if (called) {
+                return;
+            }
+            called = true;
+            return fn(...args);
+        };
+    }
+
     describe('Version test', () => {
         it('Should expose version number', () => {
             let client = new SMTPConnection();
@@ -93,6 +195,249 @@ describe('SMTP-Connection Tests', () => {
                         done();
                     });
                 });
+            });
+        });
+    });
+
+    describe('Server response decoding', () => {
+        it('should decode UTF-8 in error response and propagate via err.response and err.message', (t, done) => {
+            done = once(done);
+            startServer(
+                {
+                    mail: Buffer.from('451 4.7.1 Temporary failure: öõüä Привет мир\r\n', 'utf8')
+                },
+                server => {
+                    let client = makeClient(server);
+                    client.on('error', err => {
+                        server.close();
+                        done(err);
+                    });
+                    client.connect(() => {
+                        client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'test', err => {
+                            safeDone(server, done, () => {
+                                assert.ok(err);
+                                assert.strictEqual(err.responseCode, 451);
+                                assert.ok(
+                                    err.response.includes('öõüä Привет мир'),
+                                    'expected decoded UTF-8 in err.response, got: ' + JSON.stringify(err.response)
+                                );
+                                assert.ok(err.message.includes('öõüä Привет мир'));
+                            });
+                        });
+                    });
+                }
+            );
+        });
+
+        it('should decode UTF-8 in success response and propagate via info.response', (t, done) => {
+            done = once(done);
+            startServer(
+                {
+                    dataDone: Buffer.from('250 2.0.0 OK queued öõ Привет\r\n', 'utf8')
+                },
+                server => {
+                    let client = makeClient(server);
+                    client.on('error', err => {
+                        server.close();
+                        done(err);
+                    });
+                    client.connect(() => {
+                        client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'test message', (err, info) => {
+                            safeDone(server, done, () => {
+                                assert.ok(!err, err && err.message);
+                                assert.ok(
+                                    info.response.includes('öõ Привет'),
+                                    'expected decoded UTF-8 in info.response, got: ' + JSON.stringify(info.response)
+                                );
+                            });
+                        });
+                    });
+                }
+            );
+        });
+
+        it('should fall back to byte container when response bytes are not valid UTF-8', (t, done) => {
+            done = once(done);
+            // 0xff 0xfe is not valid UTF-8 in any context
+            let payload = Buffer.concat([Buffer.from('451 4.7.1 binary: '), Buffer.from([0xff, 0xfe]), Buffer.from('\r\n')]);
+            startServer({ mail: payload }, server => {
+                let client = makeClient(server);
+                client.on('error', err => {
+                    server.close();
+                    done(err);
+                });
+                client.connect(() => {
+                    client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'test', err => {
+                        safeDone(server, done, () => {
+                            assert.ok(err);
+                            // bytes round-trip from the byte-container form
+                            let recovered = Buffer.from(err.response, 'binary');
+                            assert.ok(
+                                recovered.includes(Buffer.from([0xff, 0xfe])),
+                                'expected raw bytes to round-trip, got hex: ' + recovered.toString('hex')
+                            );
+                            // and the result must NOT contain U+FFFD (would mean a lossy decode shipped to caller)
+                            assert.ok(!err.response.includes('\uFFFD'), 'unexpected replacement character in fallback');
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should decode multi-line UTF-8 EHLO response and still parse extensions', (t, done) => {
+            done = once(done);
+            let ehlo = Buffer.from('250-mail.example.com Привет\r\n250-PIPELINING\r\n250 SIZE 10485760\r\n', 'utf8');
+            startServer({ ehlo }, server => {
+                let client = makeClient(server);
+                client.on('error', err => {
+                    server.close();
+                    done(err);
+                });
+                client.connect(() => {
+                    let lastResp = client.lastServerResponse;
+                    let supported = client._supportedExtensions.slice();
+                    client.quit();
+                    client.on('end', () => {
+                        safeDone(server, done, () => {
+                            assert.ok(
+                                lastResp.includes('Привет'),
+                                'expected decoded UTF-8 in lastServerResponse, got: ' + JSON.stringify(lastResp)
+                            );
+                            assert.ok(supported.includes('PIPELINING'), 'PIPELINING extension should be detected');
+                            assert.ok(supported.includes('SIZE'), 'SIZE extension should be detected');
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should decode UTF-8 sequences split across socket chunks', (t, done) => {
+            done = once(done);
+            // 'ö' = 0xC3 0xB6; write each byte in its own packet to force chunk reassembly.
+            // Inlined fixture (not startServer) because the test needs byte-level write timing.
+            let openSockets = new Set();
+            let server = net.createServer(socket => {
+                openSockets.add(socket);
+                socket.on('close', () => openSockets.delete(socket));
+                let buf = '';
+                socket.setNoDelay(true);
+                socket.write('220 test ESMTP\r\n');
+                socket.on('data', chunk => {
+                    buf += chunk.toString('binary');
+                    let idx;
+                    while ((idx = buf.indexOf('\r\n')) !== -1) {
+                        let line = buf.slice(0, idx);
+                        buf = buf.slice(idx + 2);
+                        if (/^EHLO\b/i.test(line)) {
+                            socket.write('250 OK\r\n');
+                        } else if (/^MAIL FROM/i.test(line)) {
+                            socket.write(Buffer.from('451 4.7.1 split: '));
+                            setImmediate(() => {
+                                socket.write(Buffer.from([0xc3]));
+                                setImmediate(() => {
+                                    socket.write(Buffer.from([0xb6]));
+                                    setImmediate(() => {
+                                        socket.write(Buffer.from('\r\n'));
+                                    });
+                                });
+                            });
+                        } else if (/^QUIT\b/i.test(line)) {
+                            socket.write('221 Bye\r\n');
+                            socket.end();
+                        } else {
+                            socket.write('250 OK\r\n');
+                        }
+                    }
+                });
+            });
+            server.closeAllConnections = () => {
+                for (const sock of openSockets) {
+                    sock.destroy();
+                }
+            };
+            server.listen(0, '127.0.0.1', () => {
+                let client = new SMTPConnection({
+                    port: server.address().port,
+                    host: '127.0.0.1',
+                    ignoreTLS: true,
+                    logger: false
+                });
+                client.on('error', err => {
+                    server.close();
+                    done(err);
+                });
+                client.connect(() => {
+                    client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'test', err => {
+                        safeDone(server, done, () => {
+                            assert.ok(err);
+                            assert.ok(
+                                err.response.includes('ö'),
+                                'expected reassembled ö in err.response, got: ' + JSON.stringify(err.response)
+                            );
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should leave pure ASCII responses unchanged', (t, done) => {
+            done = once(done);
+            startServer({ dataDone: '250 2.0.0 OK queued as ABC123\r\n' }, server => {
+                let client = makeClient(server);
+                client.on('error', err => {
+                    server.close();
+                    done(err);
+                });
+                client.connect(() => {
+                    client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'plain ascii', (err, info) => {
+                        safeDone(server, done, () => {
+                            assert.ok(!err);
+                            assert.strictEqual(info.response, '250 2.0.0 OK queued as ABC123');
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should decode UTF-8 in _remainder when the connection closes mid-line', (t, done) => {
+            let server = net.createServer(socket => {
+                socket.write('220 test ESMTP\r\n');
+                socket.once('data', () => {
+                    // Send a non-terminated line, then immediately end the connection.
+                    // Bytes land in _remainder and are decoded by _onClose.
+                    socket.write(Buffer.from('421 Прощай', 'utf8'));
+                    setImmediate(() => socket.end());
+                });
+            });
+            server.listen(0, '127.0.0.1', () => {
+                let client = new SMTPConnection({
+                    port: server.address().port,
+                    host: '127.0.0.1',
+                    ignoreTLS: true,
+                    logger: false
+                });
+                let connectErr = null;
+                client.on('error', err => {
+                    connectErr = err;
+                });
+                client.on('end', () => {
+                    safeDone(server, done, () => {
+                        assert.ok(client.lastServerResponse, 'expected lastServerResponse to be set on close');
+                        assert.ok(
+                            client.lastServerResponse.includes('Прощай'),
+                            'expected decoded UTF-8 from _onClose path, got: ' + JSON.stringify(client.lastServerResponse)
+                        );
+                        // _onClose calls _onError because _responseActions[0] is _actionEHLO
+                        // (we sent EHLO but the server closed before sending a complete reply),
+                        // so the 'error' event is guaranteed to fire and carry the decoded response.
+                        assert.ok(connectErr, 'expected error event to fire');
+                        assert.ok(
+                            connectErr.response && connectErr.response.includes('Прощай'),
+                            'expected err.response to be decoded, got: ' + JSON.stringify(connectErr && connectErr.response)
+                        );
+                    });
+                });
+                client.connect(() => {});
             });
         });
     });
