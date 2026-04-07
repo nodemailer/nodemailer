@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [8.0.5](https://github.com/nodemailer/nodemailer/compare/v8.0.4...v8.0.5) (2026-04-07)
+
+
+### Bug Fixes
+
+* decode SMTP server responses as UTF-8 at line boundary ([95876b1](https://github.com/nodemailer/nodemailer/commit/95876b103e587e49583e43f88cb2c3a61556f3ac))
+* sanitize CRLF in transport name option to prevent SMTP command injection (GHSA-vvjj-xcjg-gr5g) ([0a43876](https://github.com/nodemailer/nodemailer/commit/0a43876801a420ca528f492eaa01bfc421cc306e))
+
 ## [8.0.4](https://github.com/nodemailer/nodemailer/compare/v8.0.3...v8.0.4) (2026-03-25)
 
 
