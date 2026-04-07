@@ -26,6 +26,77 @@ describe('SMTP-Connection Tests', () => {
         });
     });
 
+    describe('Security', () => {
+        it('should sanitize CRLF in name option to prevent SMTP injection', () => {
+            let raw = 'legit.host\r\nMAIL FROM:<attacker@evil.com>\r\nRCPT TO:<victim@target.com>';
+            assert.strictEqual(new SMTPConnection({ name: raw }).name, raw.replace(/[\r\n]+/g, ''));
+        });
+
+        it('should sanitize bare CR, bare LF, and runs of CRLF in name option', () => {
+            assert.strictEqual(new SMTPConnection({ name: 'a\rb' }).name, 'ab');
+            assert.strictEqual(new SMTPConnection({ name: 'a\nb' }).name, 'ab');
+            assert.strictEqual(new SMTPConnection({ name: 'a\r\n\r\nb' }).name, 'ab');
+        });
+
+        it('should preserve a clean name option unchanged', () => {
+            assert.strictEqual(new SMTPConnection({ name: 'mail.example.com' }).name, 'mail.example.com');
+        });
+
+        it('should not allow injected SMTP commands to reach the server via name option', (t, done) => {
+            let receivedLines = [];
+            let server = net.createServer(socket => {
+                let buffer = '';
+                socket.write('220 test ESMTP\r\n');
+                socket.on('data', chunk => {
+                    buffer += chunk.toString();
+                    let idx;
+                    while ((idx = buffer.indexOf('\r\n')) !== -1) {
+                        let line = buffer.slice(0, idx);
+                        buffer = buffer.slice(idx + 2);
+                        receivedLines.push(line);
+                        if (/^EHLO\b/i.test(line) || /^HELO\b/i.test(line)) {
+                            socket.write('250 OK\r\n');
+                        } else if (/^QUIT\b/i.test(line)) {
+                            socket.write('221 Bye\r\n');
+                            socket.end();
+                        }
+                    }
+                });
+            });
+
+            server.listen(0, '127.0.0.1', () => {
+                let port = server.address().port;
+                let client = new SMTPConnection({
+                    port,
+                    host: '127.0.0.1',
+                    ignoreTLS: true,
+                    logger: false,
+                    name: 'legit.host\r\nMAIL FROM:<attacker@evil.com>\r\nRCPT TO:<victim@target.com>\r\nDATA\r\nphishing\r\n.'
+                });
+
+                client.on('error', err => {
+                    server.close();
+                    done(err);
+                });
+
+                client.connect(() => {
+                    client.quit();
+                });
+
+                client.on('end', () => {
+                    server.close(() => {
+                        let ehloLines = receivedLines.filter(line => /^EHLO\b/i.test(line));
+                        let injectedLines = receivedLines.filter(line => /^(MAIL FROM|RCPT TO|DATA)\b/i.test(line));
+                        assert.strictEqual(ehloLines.length, 1, 'expected exactly one EHLO command');
+                        assert.strictEqual(injectedLines.length, 0, 'no injected SMTP commands should reach the server');
+                        assert.ok(!/[\r\n]/.test(ehloLines[0]));
+                        done();
+                    });
+                });
+            });
+        });
+    });
+
     describe('Connection tests', () => {
         let server, insecureServer, invalidServer, secureServer, disconnectingServer, httpProxy;
 
