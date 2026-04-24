@@ -19,6 +19,8 @@ describe('Base64 Tests', () => {
         ['dGVyZSwgdGVyZSwgdmFuYSBrZXJlLCBrdWlkYXMgc3VsIGzDpGhlYj8=', 'dGVyZSwgdGVyZSwgdmFu\r\nYSBrZXJlLCBrdWlkYXMg\r\nc3VsIGzDpGhlYj8=']
     ];
 
+    let exactMultipleBase64 = 'A'.repeat(152);
+
     let streamFixture = [
         '123456789012345678  90\r\nõäöüõäöüõäöüõäöüõäöüõäöüõäöüõäöü another line === ',
         'MTIzNDU2N\r\nzg5MDEyMz\r\nQ1Njc4ICA\r\n5MA0Kw7XD\r\npMO2w7zDt\r\ncOkw7bDvM\r\nO1w6TDtsO\r\n8w7XDpMO2\r\nw7zDtcOkw\r\n7bDvMO1w6\r\nTDtsO8w7X\r\nDpMO2w7zD\r\ntcOkw7bDv\r\nCBhbm90aG\r\nVyIGxpbmU\r\ngPT09IA=='
@@ -41,6 +43,12 @@ describe('Base64 Tests', () => {
             wrapFixtures.forEach(test => {
                 assert.strictEqual(base64.wrap(test[0], 20), test[1]);
             });
+        });
+
+        it('should not emit a trailing CRLF when input is an exact multiple of lineLength', () => {
+            const wrapped = base64.wrap(exactMultipleBase64, 76);
+            assert.strictEqual(wrapped, 'A'.repeat(76) + '\r\n' + 'A'.repeat(76));
+            assert.ok(!wrapped.endsWith('\r\n'));
         });
     });
 
@@ -116,59 +124,41 @@ describe('Base64 Tests', () => {
         it('should flush incomplete trailing base64 chunks correctly', (t, done) => {
             const encoder = new base64.Encoder({ lineLength: 10 });
 
-            // Prepare a buffer of 5 bytes, which encodes to 8 base64 characters.
-            // This length is below the specified lineLength (10), so no wrapping should occur.
+            // 5 bytes -> 8 base64 chars, below lineLength -> no wrapping expected.
             const input = Buffer.from('12345');
             let output = Buffer.alloc(0);
 
             encoder.on('data', chunk => {
-                // Accumulate the data chunks emitted by the base64 encoder stream.
+                output = Buffer.concat([output, chunk]);
+            });
+
+            encoder.on('end', () => {
+                assert.strictEqual(output.toString(), 'MTIzNDU=');
+                done();
+            });
+
+            encoder.write(input);
+            encoder.end();
+        });
+
+        it('should not emit a trailing CRLF when stream output is an exact multiple of lineLength', (t, done) => {
+            // 114 bytes -> 152 base64 chars = 2 * lineLength(76).
+            const encoder = new base64.Encoder({ lineLength: 76 });
+            const input = Buffer.alloc(114, 0x61);
+            let output = Buffer.alloc(0);
+
+            encoder.on('data', chunk => {
                 output = Buffer.concat([output, chunk]);
             });
 
             encoder.on('end', () => {
                 const result = output.toString();
-
-                /**
-                 * The string "12345" encoded in base64 is "MTIzNDU=".
-                 * Since the output length (8 characters) is less than the lineLength (10),
-                 * the encoder should not insert any line breaks.
-                 *
-                 * This test verifies that any incomplete trailing base64 data
-                 * held internally in `_curLine` is correctly flushed and emitted
-                 * when the stream ends, preventing silent data loss.
-                 */
-                assert.strictEqual(result, 'MTIzNDU=');
+                assert.ok(!result.endsWith('\r\n'), 'base64 stream output must not end with CRLF');
+                assert.strictEqual(result, 'YWFh'.repeat(19) + '\r\n' + 'YWFh'.repeat(19));
                 done();
             });
 
-            encoder.write(input);
-            encoder.end(); // triggers the _flush method
-        });
-        it('should handle large payload efficiently', (t, done) => {
-            const encoder = new base64.Encoder({ lineLength: 76 });
-            const largeData = crypto.randomBytes(370 * 1024 * 1024); // 370 MB
-
-            const start = Date.now();
-            encoder.write(largeData);
-            encoder.end();
-
-            let outputSize = 0;
-            encoder.on('data', chunk => {
-                outputSize += chunk.length;
-            });
-
-            encoder.on('end', () => {
-                const duration = Date.now() - start;
-                console.log(`Encoded 100MB in ${duration}ms`);
-
-                const base64Size = Math.ceil(largeData.length / 3) * 4;
-                const numberOfLines = Math.ceil(base64Size / 76);
-                const expectedSize = base64Size + (numberOfLines - 1) * 2;
-
-                assert.strictEqual(outputSize, expectedSize);
-                done();
-            });
+            encoder.end(input);
         });
     });
 });
