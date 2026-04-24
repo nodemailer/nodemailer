@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [8.0.6](https://github.com/nodemailer/nodemailer/compare/v8.0.5...v8.0.6) (2026-04-24)
+
+
+### Bug Fixes
+
+* restore base64 wrap() trim behavior to prevent trailing CRLF ([#1810](https://github.com/nodemailer/nodemailer/issues/1810)) ([#1811](https://github.com/nodemailer/nodemailer/issues/1811)) ([b1ae6c1](https://github.com/nodemailer/nodemailer/commit/b1ae6c1c2927240737d9f68f316f0c84042b8adb))
+
 ## [8.0.5](https://github.com/nodemailer/nodemailer/compare/v8.0.4...v8.0.5) (2026-04-07)
 
 
