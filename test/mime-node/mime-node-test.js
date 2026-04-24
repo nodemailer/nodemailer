@@ -293,6 +293,22 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not emit a blank line before the boundary when base64 body length is an exact multiple of lineLength (regression #1810)', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            // 114 bytes -> 152 base64 chars = 2 * 76. Before the fix, the
+            // trailing CRLF emitted by the base64 wrapper compounded with the
+            // boundary writer's '\r\n--' prefix, yielding '\r\n\r\n--{boundary}'.
+            mb.createChild('application/octet-stream').setContent(Buffer.alloc(114, 0x61));
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const text = msg.toString();
+                assert.ok(!text.includes('\r\n\r\n--' + mb.boundary + '--'), 'boundary must not be preceded by a blank line');
+                assert.ok(text.includes('\r\n--' + mb.boundary + '--'));
+                done();
+            });
+        });
+
         it('should build root with generated headers', (t, done) => {
             let mb = new MimeNode('text/plain');
             mb.hostname = 'abc';
