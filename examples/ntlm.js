@@ -1,5 +1,10 @@
 /* eslint no-console: 0 */
 
+// To run this example, install the optional NTLM helper alongside nodemailer:
+//   npm install nodemailer-ntlm-auth
+// It is not bundled with nodemailer because of an unfixed transitive
+// underscore advisory (GHSA-qpx9-hpmf-5gmw); the helper is unmaintained.
+
 'use strict';
 
 const nodemailer = require('../lib/nodemailer');
