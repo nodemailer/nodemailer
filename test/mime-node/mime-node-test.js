@@ -318,8 +318,14 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.ok(!err);
                 const segments = msg.toString().split('--' + mb.boundary);
                 assert.strictEqual(segments.length, 4, 'expected 4 segments: prologue, child 1, child 2, terminator');
-                assert.ok(segments[1].endsWith('\r\n') && !segments[1].endsWith('\r\n\r\n'), 'body of first child must end with exactly one CRLF before the next boundary');
-                assert.ok(segments[2].endsWith('\r\n') && !segments[2].endsWith('\r\n\r\n'), 'body of second child must end with exactly one CRLF before the terminator');
+                assert.ok(
+                    segments[1].endsWith('\r\n') && !segments[1].endsWith('\r\n\r\n'),
+                    'body of first child must end with exactly one CRLF before the next boundary'
+                );
+                assert.ok(
+                    segments[2].endsWith('\r\n') && !segments[2].endsWith('\r\n\r\n'),
+                    'body of second child must end with exactly one CRLF before the terminator'
+                );
                 done();
             });
         });
@@ -929,6 +935,36 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 }
             );
         });
+
+        it('should keep envelope domains as UTF-8 when local part is non-ASCII', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .setHeader({
+                        from: { name: 'Jõser', address: 'jõser@jõgeva.ee' },
+                        to: { name: 'Jõser', address: 'jõser@jõgeva.ee' }
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'jõser@jõgeva.ee',
+                    to: ['jõser@jõgeva.ee']
+                }
+            );
+        });
+
+        it('should normalize a punycoded envelope back to UTF-8 when local part is non-ASCII', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .setEnvelope({
+                        from: 'jõser@xn--jgeva-dua.ee',
+                        to: ['jõser@xn--jgeva-dua.ee']
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'jõser@jõgeva.ee',
+                    to: ['jõser@jõgeva.ee']
+                }
+            );
+        });
     });
 
     describe('#messageId', () => {
@@ -1206,6 +1242,17 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 'the safewithme testuser <safewithme.testuser@xn--jgeva-dua.com>'
             );
         });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._encodeHeaderValue('from', {
+                    name: 'Jõser',
+                    address: 'jõser@jõgeva.ee'
+                }),
+                '=?UTF-8?Q?J=C3=B5ser?= <jõser@jõgeva.ee>'
+            );
+        });
     });
 
     describe('#_convertAddresses', () => {
@@ -1298,6 +1345,53 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 ]),
                 '=?UTF-8?Q?=22J=C3=B5geva_Sass=22?= <a@b.c>'
             );
+        });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: 'Jõgeva Ants',
+                        address: 'jõser@jõgeva.ee'
+                    }
+                ]),
+                '=?UTF-8?Q?J=C3=B5geva_Ants?= <jõser@jõgeva.ee>'
+            );
+        });
+    });
+
+    describe('#_normalizeAddress', () => {
+        it('should punycode the domain when local part is ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@jõgeva.ee'), 'safe@xn--jgeva-dua.ee');
+        });
+
+        it('should keep ASCII domain unchanged', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@example.com'), 'safe@example.com');
+        });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser@jõgeva.ee'), 'jõser@jõgeva.ee');
+        });
+
+        it('should decode an already punycoded domain when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser@xn--jgeva-dua.ee'), 'jõser@jõgeva.ee');
+        });
+
+        it('should lowercase the domain regardless of branch', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@EXAMPLE.COM'), 'safe@example.com');
+            assert.strictEqual(mb._normalizeAddress('jõser@JÕGEVA.EE'), 'jõser@jõgeva.ee');
+        });
+
+        it('should fall back to the supplied domain when punycode throws', () => {
+            let mb = new MimeNode();
+            // 'xn--$.com' is a malformed punycode label that makes punycode.toUnicode throw "Invalid input"
+            assert.strictEqual(mb._normalizeAddress('jõser@xn--$.com'), 'jõser@xn--$.com');
         });
     });
 
