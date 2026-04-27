@@ -309,6 +309,21 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not emit a blank line before the internal boundary when an earlier sibling base64 body is an exact multiple of lineLength', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            mb.createChild('application/octet-stream').setContent(Buffer.alloc(114, 0x61));
+            mb.createChild('application/octet-stream').setContent(Buffer.from('hello'));
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const segments = msg.toString().split('--' + mb.boundary);
+                assert.strictEqual(segments.length, 4, 'expected 4 segments: prologue, child 1, child 2, terminator');
+                assert.ok(segments[1].endsWith('\r\n') && !segments[1].endsWith('\r\n\r\n'), 'body of first child must end with exactly one CRLF before the next boundary');
+                assert.ok(segments[2].endsWith('\r\n') && !segments[2].endsWith('\r\n\r\n'), 'body of second child must end with exactly one CRLF before the terminator');
+                done();
+            });
+        });
+
         it('should build root with generated headers', (t, done) => {
             let mb = new MimeNode('text/plain');
             mb.hostname = 'abc';
