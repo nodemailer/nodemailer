@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [8.0.7](https://github.com/nodemailer/nodemailer/compare/v8.0.6...v8.0.7) (2026-04-27)
+
+
+### Bug Fixes
+
+* keep domain as UTF-8 when local part is non-ASCII ([#1814](https://github.com/nodemailer/nodemailer/issues/1814)) ([66d4ecb](https://github.com/nodemailer/nodemailer/commit/66d4ecb5aa431f3614a26b3c08b9c63cdf32a9ea))
+
 ## [8.0.6](https://github.com/nodemailer/nodemailer/compare/v8.0.5...v8.0.6) (2026-04-24)
 
 
