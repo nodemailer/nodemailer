@@ -48,7 +48,6 @@ describe('Base64 Tests', () => {
         it('should not emit a trailing CRLF when input is an exact multiple of lineLength', () => {
             const wrapped = base64.wrap(exactMultipleBase64, 76);
             assert.strictEqual(wrapped, 'A'.repeat(76) + '\r\n' + 'A'.repeat(76));
-            assert.ok(!wrapped.endsWith('\r\n'));
         });
 
         it('should preserve content and never emit trailing whitespace across single- and cross-chunk inputs', () => {
