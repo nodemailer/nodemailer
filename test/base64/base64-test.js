@@ -50,6 +50,25 @@ describe('Base64 Tests', () => {
             assert.strictEqual(wrapped, 'A'.repeat(76) + '\r\n' + 'A'.repeat(76));
             assert.ok(!wrapped.endsWith('\r\n'));
         });
+
+        it('should preserve content and never emit trailing whitespace across single- and cross-chunk inputs', () => {
+            // lineLength=8 -> chunkLength = 8 * 1024 = 8192. Sweep covers:
+            // sub-lineLength, single-chunk exact/non-exact, single-chunk boundary,
+            // cross-chunk boundary, and 2x-cross-chunk exact-multiple.
+            const lineLength = 8;
+            const sizes = [1, 7, 8, 9, 15, 16, 17, 8191, 8192, 8193, 16383, 16384, 16385];
+
+            sizes.forEach(n => {
+                const input = 'A'.repeat(n);
+                const wrapped = base64.wrap(input, lineLength);
+
+                assert.ok(!/[\r\n]$/.test(wrapped), `size ${n}: output ends in CR/LF`);
+                assert.strictEqual(wrapped.split('\r\n').join(''), input, `size ${n}: content not preserved`);
+                wrapped.split('\r\n').forEach(line => {
+                    assert.ok(line.length <= lineLength, `size ${n}: line ${line.length} > ${lineLength}`);
+                });
+            });
+        });
     });
 
     describe('base64 Streams', () => {
@@ -159,6 +178,30 @@ describe('Base64 Tests', () => {
             });
 
             encoder.end(input);
+        });
+
+        it('should not emit a trailing CRLF when two writes combine to an exact multiple of lineLength', (t, done) => {
+            // After write 1: encode(57 bytes)=76 b64 chars, all stashed in _curLine, nothing pushed.
+            // After write 2: _curLine + encode(57)=152 chars (2 * 76) -> exercises the
+            // last-LF split path with a CRLF-terminated wrap result, plus a non-empty _curLine
+            // at flush time.
+            const encoder = new base64.Encoder({ lineLength: 76 });
+            const half = Buffer.alloc(57, 0x61);
+            let output = Buffer.alloc(0);
+
+            encoder.on('data', chunk => {
+                output = Buffer.concat([output, chunk]);
+            });
+
+            encoder.on('end', () => {
+                const result = output.toString();
+                assert.ok(!result.endsWith('\r\n'), 'base64 stream output must not end with CRLF');
+                assert.strictEqual(result, 'YWFh'.repeat(19) + '\r\n' + 'YWFh'.repeat(19));
+                done();
+            });
+
+            encoder.write(half);
+            encoder.end(half);
         });
     });
 });
