@@ -4,7 +4,10 @@ const nodemailer = require('../lib/nodemailer');
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-describe('Ethereal Tests', { timeout: 50 * 1000 }, () => {
+// These tests hit the real api.nodemailer.com endpoint and send through
+// the actual Ethereal SMTP server, so they need network + working external
+// services. Opt in with NODEMAILER_INTEGRATION_TESTS=1 to run them.
+describe('Ethereal Tests', { timeout: 50 * 1000, skip: !process.env.NODEMAILER_INTEGRATION_TESTS }, () => {
     it('should create an account and send a message', (t, done) => {
         // Generate SMTP service account from ethereal.email
         nodemailer.createTestAccount((err, account) => {
