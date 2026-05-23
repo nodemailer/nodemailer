@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [8.0.8](https://github.com/nodemailer/nodemailer/compare/v8.0.7...v8.0.8) (2026-05-23)
+
+
+### Bug Fixes
+
+* enforce strict TLS for OAuth2 and Ethereal credential requests ([#1818](https://github.com/nodemailer/nodemailer/issues/1818)) ([833d6e5](https://github.com/nodemailer/nodemailer/commit/833d6e58c8b717962bbb1b23e16923cd267c3bc9))
+* four listener/stream leaks in SMTP transport, connection, pool ([#1817](https://github.com/nodemailer/nodemailer/issues/1817)) ([850bb91](https://github.com/nodemailer/nodemailer/commit/850bb91bff7707ed498c1424df01c4e5b30ea14b))
+
 ## [8.0.7](https://github.com/nodemailer/nodemailer/compare/v8.0.6...v8.0.7) (2026-04-27)
 
 
