@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [8.0.9](https://github.com/nodemailer/nodemailer/compare/v8.0.8...v8.0.9) (2026-05-26)
+
+
+### Bug Fixes
+
+* two pending security advisories (jsonTransport access bypass, List-* CRLF injection) ([#1820](https://github.com/nodemailer/nodemailer/issues/1820)) ([5f69497](https://github.com/nodemailer/nodemailer/commit/5f694977da2e0e13dc947037566e8e689a01217e))
+
 ## [8.0.8](https://github.com/nodemailer/nodemailer/compare/v8.0.7...v8.0.8) (2026-05-23)
 
 
