@@ -2,8 +2,9 @@
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const { describe, it } = require('node:test');
+const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const http = require('http');
 const nodemailer = require('../../lib/nodemailer');
 
 describe('JSON Transport Tests', () => {
@@ -144,5 +145,129 @@ describe('JSON Transport Tests', () => {
             });
             done();
         });
+    });
+});
+
+describe('JSON Transport access control (disableFileAccess / disableUrlAccess)', () => {
+    let port = 10399;
+    let server;
+
+    before((t, done) => {
+        server = http.createServer((req, res) => {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('SECRET_URL_BODY');
+        });
+        server.listen(port, done);
+    });
+
+    after((t, done) => {
+        server.close(done);
+    });
+
+    it('should reject attachment file access when disableFileAccess is set', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true,
+            disableFileAccess: true
+        });
+
+        transport.sendMail(
+            {
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'file',
+                text: 'body',
+                attachments: [{ filename: 'secret.txt', path: __dirname + '/fixtures/body.html' }]
+            },
+            err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            }
+        );
+    });
+
+    it('should reject URL content access when disableUrlAccess is set', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true,
+            disableUrlAccess: true
+        });
+
+        transport.sendMail(
+            {
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'url',
+                text: { href: 'http://127.0.0.1:' + port + '/private' }
+            },
+            err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EURLACCESS');
+                done();
+            }
+        );
+    });
+
+    it('should reject attachDataUrls html file access when disableFileAccess is set', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true,
+            attachDataUrls: true,
+            disableFileAccess: true
+        });
+
+        transport.sendMail(
+            {
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'datauri',
+                html: { path: __dirname + '/fixtures/body.html' }
+            },
+            err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            }
+        );
+    });
+
+    it('should still resolve file attachments when the flags are not set', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true
+        });
+
+        transport.sendMail(
+            {
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'file',
+                text: 'body',
+                attachments: [{ filename: 'body.html', path: __dirname + '/fixtures/body.html' }]
+            },
+            (err, info) => {
+                assert.ok(!err);
+                let message = JSON.parse(info.message);
+                assert.ok(message.attachments[0].content);
+                done();
+            }
+        );
+    });
+
+    it('should still resolve URL content when the flags are not set', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true
+        });
+
+        transport.sendMail(
+            {
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'url',
+                text: { href: 'http://127.0.0.1:' + port + '/private' }
+            },
+            (err, info) => {
+                assert.ok(!err);
+                assert.strictEqual(JSON.parse(info.message).text, 'SECRET_URL_BODY');
+                done();
+            }
+        );
     });
 });
