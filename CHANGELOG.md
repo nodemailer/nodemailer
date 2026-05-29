@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [8.0.10](https://github.com/nodemailer/nodemailer/compare/v8.0.9...v8.0.10) (2026-05-29)
+
+
+### Bug Fixes
+
+* fall back to lower-severity handler when custom logger lacks a level method ([6d849df](https://github.com/nodemailer/nodemailer/commit/6d849df59a56184b48844ed10b5fb7b8e9f74634))
+
 ## [8.0.9](https://github.com/nodemailer/nodemailer/compare/v8.0.8...v8.0.9) (2026-05-26)
 
 
