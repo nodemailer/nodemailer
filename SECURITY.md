@@ -41,16 +41,10 @@ When reporting, please include as much of the following as you can:
 - A minimal proof of concept or reproduction steps.
 - Any suggested remediation, if you have one.
 
-## What to Expect
-
-- **Acknowledgement:** we aim to confirm receipt within 5 business days.
-- **Assessment:** we will investigate and let you know whether the report is
-  accepted, needs more information, or is declined (with reasoning).
-- **Fix and disclosure:** for accepted reports we will prepare a fix, publish a
-  new release, and coordinate a GitHub Security Advisory / CVE. We are happy to
-  credit reporters who wish to be named.
-- **Updates:** we will keep you informed of progress as the fix moves toward
-  release.
+Nodemailer is maintained by a single person, so there is no guaranteed response
+time — sometimes reports are handled within hours, sometimes they take longer.
+Accepted issues are fixed in a new release and coordinated through a GitHub
+Security Advisory / CVE, and reporters who wish to be named are credited.
 
 ## Scope
 
