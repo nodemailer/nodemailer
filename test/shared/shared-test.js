@@ -25,6 +25,62 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             );
             assert.strictEqual(typeof shared.getLogger(), 'object');
         });
+
+        it('Should fall back to a lower-severity handler for missing levels', () => {
+            const calls = [];
+            const logger = shared.getLogger({
+                logger: {
+                    // deliberately omit warn/trace/fatal
+                    info(entry, message) {
+                        calls.push(['info', message]);
+                    },
+                    debug(entry, message) {
+                        calls.push(['debug', message]);
+                    },
+                    error(entry, message) {
+                        calls.push(['error', message]);
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => logger.warn({}, 'warn message'));
+            assert.doesNotThrow(() => logger.fatal({}, 'fatal message'));
+            assert.doesNotThrow(() => logger.trace({}, 'trace message'));
+
+            // missing levels should be routed to the preferred low-severity handler (info)
+            assert.deepStrictEqual(calls, [
+                ['info', 'warn message'],
+                ['info', 'fatal message'],
+                ['info', 'trace message']
+            ]);
+        });
+
+        it('Should preserve the logger `this` binding when falling back', () => {
+            const seen = [];
+
+            class CustomLogger {
+                info(entry, message) {
+                    // relies on `this` being the logger instance
+                    this.record(message);
+                }
+                record(message) {
+                    seen.push(message);
+                }
+            }
+
+            const logger = shared.getLogger({ logger: new CustomLogger() });
+
+            assert.doesNotThrow(() => logger.warn({}, 'needs this'));
+            assert.deepStrictEqual(seen, ['needs this']);
+        });
+
+        it('Should not throw when the logger implements no usable level', () => {
+            const logger = shared.getLogger({ logger: {} });
+
+            assert.doesNotThrow(() => logger.info({}, 'no-op'));
+            assert.doesNotThrow(() => logger.warn({}, 'no-op'));
+            assert.doesNotThrow(() => logger.error({}, 'no-op'));
+        });
     });
 
     describe('Connection url parser tests', () => {
