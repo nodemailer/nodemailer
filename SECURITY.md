@@ -26,8 +26,7 @@ Report privately through one of the following channels:
 
 1. **GitHub Security Advisories (preferred).** Open a private report at
    <https://github.com/nodemailer/nodemailer/security/advisories/new>. This keeps
-   the discussion private until a fix is published and lets us coordinate a CVE
-   and credit you.
+   the discussion private until a fix is published and lets us credit you.
 2. **Email.** Send details to **andris@reinman.eu** (the contact listed in
    [`SECURITY.txt`](SECURITY.txt)). Encrypt sensitive details if possible.
 
@@ -44,7 +43,14 @@ When reporting, please include as much of the following as you can:
 Nodemailer is maintained by a single person, so there is no guaranteed response
 time — sometimes reports are handled within hours, sometimes they take longer.
 Accepted issues are fixed in a new release and coordinated through a GitHub
-Security Advisory / CVE, and reporters who wish to be named are credited.
+Security Advisory, and reporters who wish to be named are credited.
+
+## CVEs
+
+We track and disclose vulnerabilities through GitHub Security Advisories. We do
+not request or manage CVE identifiers ourselves. If you need a CVE assigned for a
+reported issue, please request one yourself — for example, through GitHub's own
+CVE request flow on the published advisory, or another CNA.
 
 ## Scope
 
