@@ -119,6 +119,66 @@ describe('Stream Transport Tests', { timeout: 10000 }, () => {
         });
     });
 
+    // Regression tests: the transport-level `newline` option must transform the
+    // generated stream even when the message itself sets no `newline` value
+    describe('Transport-level newline option', () => {
+        it('Should apply windows newlines to the output stream', (t, done) => {
+            let client = new StreamTransport({
+                newline: 'windows'
+            });
+            let chunks = [],
+                message = new Array(100).join('teretere\nvana kere\n');
+
+            client.send(
+                {
+                    data: {},
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        raw: Buffer.from(message)
+                    }).compile()
+                },
+                (err, info) => {
+                    assert.ok(!err);
+
+                    info.message.on('data', chunk => {
+                        chunks.push(chunk);
+                    });
+
+                    info.message.on('end', () => {
+                        let body = Buffer.concat(chunks);
+                        assert.strictEqual(body.toString(), message.replace(/\n/g, '\r\n'));
+                        done();
+                    });
+                }
+            );
+        });
+
+        it('Should apply unix newlines to the output buffer', (t, done) => {
+            let client = new StreamTransport({
+                newline: 'unix',
+                buffer: true
+            });
+            let message = new Array(100).join('teretere\r\nvana kere\r\n');
+
+            client.send(
+                {
+                    data: {},
+                    message: new MailComposer({
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient',
+                        raw: Buffer.from(message)
+                    }).compile()
+                },
+                (err, info) => {
+                    assert.ok(!err);
+                    assert.strictEqual(info.message.toString(), message.replace(/\r\n/g, '\n'));
+                    done();
+                }
+            );
+        });
+    });
+
     describe('Send as buffer', () => {
         it('Should send mail using unix newlines', (t, done) => {
             let client = new StreamTransport({

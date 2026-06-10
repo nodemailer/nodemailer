@@ -80,6 +80,86 @@ describe('Sendmail Transport Tests', () => {
         );
     });
 
+    // Regression tests: the transport-level `newline` option must transform the
+    // message piped to the sendmail binary
+    it('Should apply transport-level windows newlines', (t, done) => {
+        let client = new SendmailTransport({ newline: 'windows' });
+
+        let stubbedSpawn = new EventEmitter();
+        stubbedSpawn.stdin = new PassThrough();
+        stubbedSpawn.stdout = new PassThrough();
+
+        let output = '';
+        stubbedSpawn.stdin.on('data', chunk => {
+            output += chunk.toString();
+        });
+
+        stubbedSpawn.stdin.on('end', () => {
+            stubbedSpawn.emit('close', 0);
+            stubbedSpawn.emit('exit', 0);
+        });
+
+        t.mock.method(client, '_spawn', () => stubbedSpawn);
+
+        client.send(
+            {
+                data: {},
+                message: new MockBuilder(
+                    {
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient'
+                    },
+                    'message\nline 2'
+                )
+            },
+            err => {
+                assert.ok(!err);
+                assert.strictEqual(output, 'message\r\nline 2');
+                t.mock.restoreAll();
+                done();
+            }
+        );
+    });
+
+    it('Should apply transport-level unix newlines', (t, done) => {
+        let client = new SendmailTransport({ newline: 'unix' });
+
+        let stubbedSpawn = new EventEmitter();
+        stubbedSpawn.stdin = new PassThrough();
+        stubbedSpawn.stdout = new PassThrough();
+
+        let output = '';
+        stubbedSpawn.stdin.on('data', chunk => {
+            output += chunk.toString();
+        });
+
+        stubbedSpawn.stdin.on('end', () => {
+            stubbedSpawn.emit('close', 0);
+            stubbedSpawn.emit('exit', 0);
+        });
+
+        t.mock.method(client, '_spawn', () => stubbedSpawn);
+
+        client.send(
+            {
+                data: {},
+                message: new MockBuilder(
+                    {
+                        from: 'test@valid.sender',
+                        to: 'test@valid.recipient'
+                    },
+                    'message\r\nline 2'
+                )
+            },
+            err => {
+                assert.ok(!err);
+                assert.strictEqual(output, 'message\nline 2');
+                t.mock.restoreAll();
+                done();
+            }
+        );
+    });
+
     it('Should reject message', (t, done) => {
         let client = new SendmailTransport();
 
