@@ -18,14 +18,14 @@ jobs:
               with:
                   release-type: node
             # The logic below handles the npm publication:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               # these if statements ensure that a publication only occurs when
               # a new release is created:
               if: ${{ steps.release.outputs.release_created }}
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v5
               with:
                   node-version: 24
-                  registry-url: "https://registry.npmjs.org"
+                  registry-url: 'https://registry.npmjs.org'
               if: ${{ steps.release.outputs.release_created }}
             - run: npm ci
               if: ${{ steps.release.outputs.release_created }}
