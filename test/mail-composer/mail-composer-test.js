@@ -2,6 +2,7 @@
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
+const http = require('node:http');
 const MailComposer = require('../../lib/mail-composer');
 
 describe('MailComposer unit tests', () => {
@@ -1003,6 +1004,96 @@ describe('MailComposer unit tests', () => {
             mail.build((err, message) => {
                 assert.ok(!err);
                 assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should load icalEvent from file for both alternative and attachment parts', (t, done) => {
+            let data = {
+                text: 'def',
+                icalEvent: {
+                    path: __dirname + '/fixtures/attachment.bin'
+                }
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                let msg = message.toString();
+                let icsPart = msg.substring(msg.indexOf('Content-Type: application/ics'));
+                assert.ok(icsPart.includes('name=invite.ics'));
+                // base64 of the fixture content must be present in the attachment copy
+                assert.ok(icsPart.includes('w7VrdmEK'), 'application/ics part should not be empty');
+                done();
+            });
+        });
+
+        it('should load icalEvent from data uri for both alternative and attachment parts', (t, done) => {
+            let data = {
+                text: 'def',
+                icalEvent: {
+                    path: 'data:text/calendar;base64,dGVzdA=='
+                }
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                let msg = message.toString();
+                let icsPart = msg.substring(msg.indexOf('Content-Type: application/ics'));
+                assert.ok(icsPart.includes('dGVzdA=='), 'application/ics part should not be empty');
+                done();
+            });
+        });
+
+        it('should load icalEvent from an url for both alternative and attachment parts', (t, done) => {
+            let requestCount = 0;
+            let server = http.createServer((req, res) => {
+                requestCount++;
+                res.writeHead(200, { 'Content-Type': 'text/calendar' });
+                res.end('BEGIN:VCALENDAR');
+            });
+
+            server.listen(0, () => {
+                let data = {
+                    text: 'def',
+                    icalEvent: {
+                        href: 'http://localhost:' + server.address().port + '/invite.ics'
+                    }
+                };
+
+                let mail = new MailComposer(data).compile();
+                mail.build((err, message) => {
+                    server.close(() => {
+                        assert.ok(!err);
+                        let msg = message.toString();
+                        let icsPart = msg.substring(msg.indexOf('Content-Type: application/ics'));
+                        assert.ok(
+                            icsPart.includes(Buffer.from('BEGIN:VCALENDAR').toString('base64')),
+                            'application/ics part should not be empty'
+                        );
+                        // the text/calendar alternative shares the resolved value
+                        assert.ok(msg.indexOf('Content-Type: text/calendar') >= 0);
+                        assert.strictEqual(requestCount, 1, 'the event url should be fetched only once');
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('should not load icalEvent from file if disableFileAccess is set', (t, done) => {
+            let data = {
+                text: 'def',
+                icalEvent: {
+                    path: __dirname + '/fixtures/attachment.bin'
+                },
+                disableFileAccess: true
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(err);
+                assert.ok(!message);
                 done();
             });
         });
