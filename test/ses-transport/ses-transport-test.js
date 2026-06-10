@@ -127,6 +127,95 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
         });
     });
 
+    it('should tag send errors with the ESES code', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        return new Promise((resolve, reject) => {
+                            // AWS SDK v3 style error: a `name` but no `code` property
+                            let error = new Error('Access denied');
+                            error.name = 'AccessDeniedException';
+                            setImmediate(() => reject(error));
+                        });
+                    }
+                },
+                SendEmailCommand
+            }
+        });
+
+        transport.sendMail({ from: 'a@example.com', to: 'b@example.com', subject: 'test', text: 'test' }, err => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ESES');
+            assert.strictEqual(err.name, 'AccessDeniedException');
+            done();
+        });
+    });
+
+    it('should not overwrite an existing error code on send errors', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        return new Promise((resolve, reject) => {
+                            let error = new Error('Throttled');
+                            error.code = 'Throttling';
+                            setImmediate(() => reject(error));
+                        });
+                    }
+                },
+                SendEmailCommand
+            }
+        });
+
+        transport.sendMail({ from: 'a@example.com', to: 'b@example.com', subject: 'test', text: 'test' }, err => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'Throttling');
+            done();
+        });
+    });
+
+    it('should reject verify with the ESES code for unexpected errors', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        return new Promise((resolve, reject) => {
+                            let error = new Error('Access denied');
+                            error.name = 'AccessDeniedException';
+                            setImmediate(() => reject(error));
+                        });
+                    }
+                },
+                SendEmailCommand
+            }
+        });
+
+        transport.verify().then(
+            () => done(new Error('verify should have failed')),
+            err => {
+                assert.strictEqual(err.code, 'ESES');
+                assert.strictEqual(err.name, 'AccessDeniedException');
+                done();
+            }
+        );
+    });
+
     it('should sign message with DKIM, using AWS SES JavaScript SDK v2', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
