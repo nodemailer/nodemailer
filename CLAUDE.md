@@ -50,6 +50,7 @@ Conventional Commit prefixes used in this repo: `fix:`, `feat:`, `chore:`, `docs
 ## Security
 
 This is a widely-deployed library — security-sensitive changes get extra scrutiny:
+
 - SMTP command injection: any user-controllable value that flows into a written SMTP command (envelope addresses, sizes, the `name`/EHLO option, headers) must be CRLF-stripped or rejected at the boundary. Sanitize at the assignment, not at every call site.
 - Server reply parsing in `lib/smtp-connection/index.js` uses a `'binary'` byte-container intermediate to reassemble multi-byte UTF-8 across socket chunks; the actual decode happens at line boundaries via `decodeServerResponse`. Don't change the chunk-buffering encoding without understanding why.
 - Reference the GHSA ID in commit messages for advisories.
