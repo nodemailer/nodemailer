@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [8.0.11](https://github.com/nodemailer/nodemailer/compare/v8.0.10...v8.0.11) (2026-06-10)
+
+
+### Bug Fixes
+
+* apply the transport-level newline option in stream and sendmail transports ([cb4f904](https://github.com/nodemailer/nodemailer/commit/cb4f904a53d2c2feeaf327203c92378d46304398))
+* include icalEvent path/href content in the application/ics attachment ([b801c48](https://github.com/nodemailer/nodemailer/commit/b801c48fab8e9b71bc7e0ea1fb32ce6b34675b15))
+* parse Ethereal response props without polynomial regex backtracking ([067aebe](https://github.com/nodemailer/nodemailer/commit/067aebec83b8cbe7682905e89b30ab19d260b503))
+* resolve oauth2_provision_cb at send time for non-pooled SMTP transports ([203c8ec](https://github.com/nodemailer/nodemailer/commit/203c8ecf97594ac2e69919b0f3ba966c0f86750e))
+* return the promise from every resolveContent branch ([07ffe8c](https://github.com/nodemailer/nodemailer/commit/07ffe8cfd97f0486b8c7b541f398922ddab47882))
+* strip the url scheme from List-ID header values ([77e5885](https://github.com/nodemailer/nodemailer/commit/77e5885cfa0c6723ea7749c1ee74b1c11aeb78bd))
+* tag AWS SES transport errors with the ESES code ([efa647a](https://github.com/nodemailer/nodemailer/commit/efa647a125dd698413a7cf6813b8e36881a06f91))
+
 ## [8.0.10](https://github.com/nodemailer/nodemailer/compare/v8.0.9...v8.0.10) (2026-05-29)
 
 
