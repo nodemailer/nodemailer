@@ -38,6 +38,40 @@ describe('List-* header comment CRLF injection', () => {
         });
     });
 
+    // Regression tests: the scheme-stripping regex used the invalid quantifier `{,2}`
+    // (literal in JavaScript), so List-ID kept the `http://` prefix added by
+    // _formatListUrl and violated the RFC 2919 `<domain>` form.
+    describe('List-ID formatting', () => {
+        it('should format a bare domain as <domain>', async () => {
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list id',
+                list: { id: 'mylist.example.test' },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-ID:/i.test(l));
+            assert.ok(line);
+            assert.ok(line.includes('<mylist.example.test>'), 'expected bare domain form, got: ' + line);
+            assert.ok(!line.includes('http://'), 'scheme prefix must be stripped: ' + line);
+        });
+
+        it('should strip the scheme from an url form and keep the comment', async () => {
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list id',
+                list: { id: { url: 'https://mylist.example.test', comment: 'My List' } },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-ID:/i.test(l));
+            assert.ok(line);
+            assert.ok(line.includes('"My List" <mylist.example.test>'), 'expected comment + bare domain, got: ' + line);
+        });
+    });
+
     it('should keep a benign comment intact in the List-* header', async () => {
         const raw = await send({
             from: 'sender@example.test',
