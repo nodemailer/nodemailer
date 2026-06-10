@@ -1,0 +1,10 @@
+name: 'Nodemailer CodeQL config'
+
+# Exclude code that is not part of the production runtime from analysis.
+# These paths generate only false-positive noise:
+#   - tests intentionally disable TLS verification, spin up plaintext-auth
+#     SMTP servers, and use throwaway credentials
+#   - examples are documentation snippets, not shipped code
+paths-ignore:
+    - test
+    - examples
