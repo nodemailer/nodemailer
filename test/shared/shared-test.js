@@ -380,6 +380,90 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                     done();
                 });
             });
+
+            it('should return an empty buffer for a data uri without a comma', (t, done) => {
+                let mail = {
+                    data: {
+                        attachment: {
+                            path: 'data:no-comma-here'
+                        }
+                    }
+                };
+                shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                    assert.ok(!err);
+                    assert.deepStrictEqual(value, Buffer.alloc(0));
+                    done();
+                });
+            });
+        });
+
+        // Regression tests: every resolveContent branch must return the generated
+        // promise; stream/url/file/data-uri/empty branches used to return early and
+        // resolve the awaited value to undefined
+        describe('promise form', () => {
+            const expected = Buffer.from('<p>Tere, tere</p><p>vana kere!</p>\n');
+
+            it('should resolve string content', async () => {
+                let mail = { data: { html: '<p>Tere, tere</p><p>vana kere!</p>\n' } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.strictEqual(value, '<p>Tere, tere</p><p>vana kere!</p>\n');
+            });
+
+            it('should resolve empty content', async () => {
+                let mail = { data: { html: '' } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.strictEqual(value, '');
+            });
+
+            it('should resolve a stream', async () => {
+                let mail = { data: { html: fs.createReadStream(__dirname + '/fixtures/message.html') } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.deepStrictEqual(value, expected);
+            });
+
+            it('should resolve a file path', async () => {
+                let mail = { data: { html: { path: __dirname + '/fixtures/message.html' } } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.deepStrictEqual(value, expected);
+            });
+
+            it('should resolve an url', async () => {
+                let mail = { data: { html: { path: 'http://localhost:' + port + '/message.html' } } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.deepStrictEqual(value, expected);
+            });
+
+            it('should resolve a data uri', async () => {
+                let mail = { data: { attachment: { path: 'data:image/png,tere%20tere' } } };
+                const value = await shared.resolveContent(mail.data, 'attachment');
+                assert.deepStrictEqual(value, Buffer.from('tere tere'));
+            });
+
+            it('should resolve an empty buffer for a data uri without a comma', async () => {
+                let mail = { data: { attachment: { path: 'data:no-comma-here' } } };
+                const value = await shared.resolveContent(mail.data, 'attachment');
+                assert.deepStrictEqual(value, Buffer.alloc(0));
+            });
+
+            it('should reject a missing file', async () => {
+                let mail = { data: { html: { path: __dirname + '/fixtures/no-such-file.html' } } };
+                await assert.rejects(shared.resolveContent(mail.data, 'html'));
+            });
+
+            it('should reject an unreachable url', async () => {
+                let mail = { data: { html: { path: 'http://localhost:' + (port + 1000) + '/message.html' } } };
+                await assert.rejects(shared.resolveContent(mail.data, 'html'));
+            });
+
+            it('should reject when file access is disabled', async () => {
+                let mail = { data: { html: { path: __dirname + '/fixtures/message.html' } } };
+                await assert.rejects(shared.resolveContent(mail.data, 'html', { disableFileAccess: true }), { code: 'EFILEACCESS' });
+            });
+
+            it('should reject when url access is disabled', async () => {
+                let mail = { data: { html: { path: 'http://localhost:' + port + '/message.html' } } };
+                await assert.rejects(shared.resolveContent(mail.data, 'html', { disableUrlAccess: true }), { code: 'EURLACCESS' });
+            });
         });
     });
 
