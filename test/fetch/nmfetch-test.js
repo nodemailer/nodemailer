@@ -174,6 +174,30 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
 
                     break;
                 }
+
+                case '/crosshost':
+                    // redirect to a different hostname (127.0.0.1 vs localhost)
+                    res.writeHead(302, {
+                        Location: 'http://127.0.0.1:' + HTTP_PORT + '/show-auth'
+                    });
+                    res.end();
+                    break;
+
+                case '/samehost':
+                    // redirect within the same hostname
+                    res.writeHead(302, {
+                        Location: '/show-auth'
+                    });
+                    res.end();
+                    break;
+
+                case '/show-auth':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(req.headers.authorization || 'NO_AUTH');
+                    break;
+
                 default:
                     res.writeHead(200, {
                         'Content-Type': 'text/plain'
@@ -183,6 +207,14 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
         });
 
         httpsServer = https.createServer(httpsOptions, (req, res) => {
+            if (req.url === '/downgrade') {
+                // redirect to plain HTTP on the same host
+                res.writeHead(302, {
+                    Location: 'http://localhost:' + HTTP_PORT + '/show-auth'
+                });
+                res.end();
+                return;
+            }
             res.writeHead(200, {
                 'Content-Type': 'text/plain'
             });
@@ -213,7 +245,12 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
     });
 
     it('should fetch HTTPS data', (t, done) => {
-        let req = nmfetch('https://localhost:' + HTTPS_PORT);
+        // test server uses a self-signed cert, so opt out of validation here
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
         let buf = [];
         req.on('data', chunk => {
             buf.push(chunk);
@@ -496,5 +533,83 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
             done();
         });
         req.on('end', () => {});
+    });
+
+    it('should reject a self-signed cert by default', (t, done) => {
+        // no tls option provided — certificates must be validated by default
+        let req = nmfetch('https://localhost:' + HTTPS_PORT);
+        req.on('data', () => {});
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should allow a self-signed cert when rejectUnauthorized is false', (t, done) => {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        let buf = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTPS\n');
+            done();
+        });
+    });
+
+    it('should drop the Authorization header on a cross-host redirect', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/crosshost', {
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
+            done();
+        });
+    });
+
+    it('should keep the Authorization header on a same-host redirect', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/samehost', {
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Bearer SECRET_TOKEN');
+            done();
+        });
+    });
+
+    it('should drop the Authorization header on an https to http downgrade redirect', (t, done) => {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT + '/downgrade', {
+            tls: {
+                rejectUnauthorized: false
+            },
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
+            done();
+        });
     });
 });
