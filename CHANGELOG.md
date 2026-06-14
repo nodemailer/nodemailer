@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [9.0.0](https://github.com/nodemailer/nodemailer/compare/v8.0.11...v9.0.0) (2026-06-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* HTTPS requests made while fetching remote content (attachment href/path URLs, OAuth2 token endpoints, HTTP/HTTPS proxy CONNECT) now validate the server's TLS certificate by default. Requests to hosts with self-signed, expired, or hostname-mismatched certificates that previously succeeded will now fail. Opt back out per request with tls.rejectUnauthorized=false (transport options, or a per-attachment `tls` option).
+
+### Bug Fixes
+
+* replace deprecated url.parse with a WHATWG URL wrapper ([0c080fb](https://github.com/nodemailer/nodemailer/commit/0c080fbf3278926f013a5c2ad06f5f6f0e18f5ed))
+* validate TLS certificates by default when fetching remote content ([6a947ac](https://github.com/nodemailer/nodemailer/commit/6a947ac7114a16da1e6a50d9a6f4e17026ce145d))
+
 ## [8.0.11](https://github.com/nodemailer/nodemailer/compare/v8.0.10...v8.0.11) (2026-06-10)
 
 
