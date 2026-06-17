@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [9.0.1](https://github.com/nodemailer/nodemailer/compare/v9.0.0...v9.0.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* enforce disableFileAccess/disableUrlAccess for raw message option ([a82e060](https://github.com/nodemailer/nodemailer/commit/a82e060d978f27e5f41369a9a9807b1e3dedc2e2))
+
 ## [9.0.0](https://github.com/nodemailer/nodemailer/compare/v8.0.11...v9.0.0) (2026-06-14)
 
 
