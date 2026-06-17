@@ -1134,6 +1134,56 @@ describe('MailComposer unit tests', () => {
                 done();
             });
         });
+
+        it('should load raw message from file', (t, done) => {
+            let data = {
+                raw: {
+                    path: __dirname + '/fixtures/attachment.bin'
+                }
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                // raw content is emitted verbatim (not base64-encoded like an attachment)
+                assert.ok(message.toString().includes('õkva'));
+                done();
+            });
+        });
+
+        it('should not load raw message from file if disableFileAccess is set', (t, done) => {
+            let data = {
+                raw: {
+                    path: __dirname + '/fixtures/attachment.bin'
+                },
+                disableFileAccess: true
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                assert.ok(!message);
+                done();
+            });
+        });
+
+        it('should not load raw message from url if disableUrlAccess is set', (t, done) => {
+            let data = {
+                raw: {
+                    href: 'http://localhost:1/raw'
+                },
+                disableUrlAccess: true
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EURLACCESS');
+                assert.ok(!message);
+                done();
+            });
+        });
     });
 });
 
