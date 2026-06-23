@@ -75,6 +75,17 @@ describe('#addressparser', () => {
         assert.deepStrictEqual(addressparser(input), expected);
     });
 
+    it('should keep a colon inside an address literal', () => {
+        let input = 'user@[IPv6:2001:db8::1]';
+        let expected = [
+            {
+                name: '',
+                address: 'user@[IPv6:2001:db8::1]'
+            }
+        ];
+        assert.deepStrictEqual(addressparser(input), expected);
+    });
+
     it('should handle emtpy group correctly', () => {
         let input = 'Undisclosed:;';
         let expected = [
