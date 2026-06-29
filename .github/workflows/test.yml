@@ -18,7 +18,7 @@ jobs:
     test:
         strategy:
             matrix:
-                node: [18.x, 20.x, 22.x, 24.x]
+                node: [18.x, 20.x, 22.x, 24.x, 26.x]
                 os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
@@ -29,4 +29,18 @@ jobs:
                   node-version: ${{ matrix.node }}
             - run: npm install
             - run: npm run lint
+            - run: npm test
+
+    # Coverage is gated separately on a single Node.js version: c8's dependency
+    # chain (yargs) is not yet loadable on Node.js 26, and coverage numbers are
+    # the same across versions, so there is no need to run it across the matrix.
+    coverage:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v5
+              with:
+                  node-version: 24.x
+            - run: npm install
             - run: npm run test:coverage
