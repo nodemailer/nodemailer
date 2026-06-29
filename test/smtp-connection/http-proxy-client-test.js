@@ -210,4 +210,22 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
             });
         });
     });
+
+    it('should reject a destination host containing CRLF (request smuggling)', (t, done) => {
+        httpProxyClient('http://127.0.0.1:9/', 25, 'target.example.com\r\nX-Injected: smuggled', {}, (err, socket) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'EPROXY');
+            assert.ok(!socket);
+            done();
+        });
+    });
+
+    it('should reject a destination port containing CRLF', (t, done) => {
+        httpProxyClient('http://127.0.0.1:9/', '25\r\nX-Injected: 1', 'mail.example.com', {}, (err, socket) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'EPROXY');
+            assert.ok(!socket);
+            done();
+        });
+    });
 });
