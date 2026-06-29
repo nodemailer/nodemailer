@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [9.0.2](https://github.com/nodemailer/nodemailer/compare/v9.0.1...v9.0.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* **addressparser:** keep operator chars inside an address-literal as text ([#1829](https://github.com/nodemailer/nodemailer/issues/1829)) ([9ba1064](https://github.com/nodemailer/nodemailer/commit/9ba1064f3b115cd60cb63aa954a3c0961e86fbb7))
+* harden smtp-connection low-severity issues ([22ddcea](https://github.com/nodemailer/nodemailer/commit/22ddcea8ed043e4ea23b8971b75a2df196b5a581))
+* harden smtp-connection response parsing and socket lifecycle ([68860b9](https://github.com/nodemailer/nodemailer/commit/68860b94311b5b6837754e5e790f186ca8a00b70))
+* prevent SES transport callback double-invocation and hang on sync errors ([#1831](https://github.com/nodemailer/nodemailer/issues/1831)) ([9517bc5](https://github.com/nodemailer/nodemailer/commit/9517bc5dc94e77907bb157e3466bf73a2b327f5c))
+* reject CRLF in HTTP proxy CONNECT destination to prevent request injection ([6347b47](https://github.com/nodemailer/nodemailer/commit/6347b47c7d12f9d3acf53d391b921e836f400640))
+
 ## [9.0.1](https://github.com/nodemailer/nodemailer/compare/v9.0.0...v9.0.1) (2026-06-17)
 
 
