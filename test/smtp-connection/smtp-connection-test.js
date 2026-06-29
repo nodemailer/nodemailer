@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const { describe, it, before, after, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const net = require('node:net');
+const EventEmitter = require('node:events');
 const SMTPConnection = require('../../lib/smtp-connection');
 const shared = require('../../lib/shared');
 const packageData = require('../../package.json');
@@ -198,6 +199,68 @@ describe('SMTP-Connection Tests', () => {
                     }, 80);
                 });
             });
+        });
+    });
+
+    describe('Low-severity hardening', () => {
+        it('sets the public destroyed flag when the connection is destroyed', () => {
+            const conn = new SMTPConnection({ logger: false });
+            assert.strictEqual(conn.destroyed, false);
+            conn._destroy();
+            assert.strictEqual(conn.destroyed, true);
+        });
+
+        it('errors the reset() callback instead of hanging on a destroyed connection', (t, done) => {
+            const conn = new SMTPConnection({ logger: false });
+            conn._destroyed = true;
+            conn.reset(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ECONNECTION');
+                done();
+            });
+        });
+
+        it('does not leave a duplicate error listener after _onConnect', () => {
+            const conn = new SMTPConnection({ logger: false });
+            const sock = new net.Socket();
+            conn._socket = sock;
+            // simulate _upgradeConnection having already attached the normal handler
+            sock.on('error', conn._onSocketError);
+            conn._onConnect();
+            const dupes = sock.listeners('error').filter(fn => fn === conn._onSocketError).length;
+            clearTimeout(conn._greetingTimeout);
+            sock.removeAllListeners();
+            sock.destroy();
+            assert.strictEqual(dupes, 1);
+        });
+
+        it('does not drop an incomplete multiline response left at the queue front', () => {
+            const conn = new SMTPConnection({ logger: false });
+            conn._responseQueue = ['250-partial'];
+            conn._processResponse();
+            // the partial line must be put back, not consumed/dropped
+            assert.deepStrictEqual(conn._responseQueue, ['250-partial']);
+        });
+
+        it('absorbs a late teardown error from a failed fallback socket', (t, done) => {
+            const conn = new SMTPConnection({ logger: false });
+            conn.stage = 'init';
+            conn._fallbackAddresses = ['127.0.0.2'];
+            conn._connectOpts = { host: '127.0.0.1', port: 1 };
+            // do not actually dial the next address
+            conn._connectToHost = () => {};
+
+            const fakeSocket = new EventEmitter();
+            fakeSocket.destroy = () => {
+                // emit a late async error during teardown, as a TLS socket can
+                setImmediate(() => fakeSocket.emit('error', new Error('late teardown')));
+            };
+            fakeSocket.on('error', conn._onConnectionSocketError);
+            conn._socket = fakeSocket;
+
+            conn._onConnectionError(new Error('first address failed'), 'ESOCKET');
+            // an unhandled late error here would crash the test via uncaughtException
+            setTimeout(done, 60);
         });
     });
 

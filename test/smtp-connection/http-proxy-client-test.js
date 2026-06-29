@@ -228,4 +228,29 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
             done();
         });
     });
+
+    it('should reject a proxy response that never terminates its headers', (t, done) => {
+        const server = net.createServer(socket => {
+            socket.on('error', () => {});
+            socket.on('data', () => {}); // consume the CONNECT request
+            const blast = () => {
+                if (socket.destroyed) {
+                    return;
+                }
+                socket.write('X'.repeat(8192)); // never sends \r\n\r\n
+                setImmediate(blast);
+            };
+            blast();
+        });
+        server.listen(0, '127.0.0.1', () => {
+            const port = server.address().port;
+            httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'mail.example.com', {}, (err, socket) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EPROXY');
+                assert.ok(!socket);
+                server.close();
+                done();
+            });
+        });
+    });
 });
