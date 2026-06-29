@@ -316,4 +316,29 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
             client.on('end', done);
         });
     });
+
+    describe('REQUIRETLS response-action discipline', () => {
+        it('does not queue a MAIL FROM response action when REQUIRETLS validation fails', () => {
+            // Non-TLS connection: REQUIRETLS requires TLS, so validation must fail
+            const conn1 = new SMTPConnection({ logger: false });
+            conn1.secure = false;
+            let err1;
+            conn1._setEnvelope({ from: 'a@example.com', to: ['b@example.com'], requireTLSExtensionEnabled: true }, e => {
+                err1 = e;
+            });
+            assert.strictEqual(err1 && err1.code, 'EREQUIRETLS');
+            assert.strictEqual(conn1._responseActions.length, 0, 'no orphaned MAIL FROM response action');
+
+            // TLS connection, but the server never advertised REQUIRETLS
+            const conn2 = new SMTPConnection({ logger: false });
+            conn2.secure = true;
+            conn2._supportedExtensions = [];
+            let err2;
+            conn2._setEnvelope({ from: 'a@example.com', to: ['b@example.com'], requireTLSExtensionEnabled: true }, e => {
+                err2 = e;
+            });
+            assert.strictEqual(err2 && err2.code, 'EREQUIRETLS');
+            assert.strictEqual(conn2._responseActions.length, 0, 'no orphaned MAIL FROM response action');
+        });
+    });
 });
