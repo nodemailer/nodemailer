@@ -5,6 +5,7 @@
 const nodemailer = require('../../lib/nodemailer');
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 
 const privateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIBywIBAAJhANCx7ncKUfQ8wBUYmMqq6ky8rBB0NL8knBf3+uA7q/CSxpX6sQ8N
@@ -214,6 +215,130 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
                 done();
             }
         );
+    });
+
+    it('should surface a synchronous SendEmailCommand failure as a single error callback', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        return Promise.resolve({ MessageId: 'unused' });
+                    }
+                },
+                SendEmailCommand: class {
+                    constructor() {
+                        throw new Error('ctor boom');
+                    }
+                }
+            }
+        });
+
+        let calls = 0;
+        transport.sendMail({ from: 'a@example.com', to: 'b@example.com', subject: 'test', text: 'test' }, err => {
+            calls++;
+            assert.ok(err);
+            assert.strictEqual(err.message, 'ctor boom');
+            assert.strictEqual(err.code, 'ESES');
+            // a sync throw must not hang and must not invoke the callback twice
+            setTimeout(() => {
+                assert.strictEqual(calls, 1);
+                done();
+            }, 50);
+        });
+    });
+
+    it('should surface a synchronous sesClient.send failure as a single error callback', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        throw new Error('send boom');
+                    }
+                },
+                SendEmailCommand
+            }
+        });
+
+        let calls = 0;
+        transport.sendMail({ from: 'a@example.com', to: 'b@example.com', subject: 'test', text: 'test' }, err => {
+            calls++;
+            assert.ok(err);
+            assert.strictEqual(err.message, 'send boom');
+            setTimeout(() => {
+                assert.strictEqual(calls, 1);
+                done();
+            }, 50);
+        });
+    });
+
+    it('should not hang verify when SendEmailCommand throws synchronously', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    config: {
+                        region() {
+                            return Promise.resolve('eu-west-1');
+                        }
+                    },
+                    send() {
+                        return Promise.resolve({});
+                    }
+                },
+                SendEmailCommand: class {
+                    constructor() {
+                        throw new Error('verify ctor boom');
+                    }
+                }
+            }
+        });
+
+        transport.verify().then(
+            () => done(new Error('verify should have rejected')),
+            err => {
+                assert.strictEqual(err.message, 'verify ctor boom');
+                assert.strictEqual(err.code, 'ESES');
+                done();
+            }
+        );
+    });
+
+    it('should not re-invoke the send callback when it throws (no recatch)', () => {
+        // The callback runs detached (setImmediate) after the fix, so a throw from it surfaces
+        // as an uncaught exception rather than being recaught by .catch() and used to call the
+        // callback a second time. node:test fails a test on any uncaught exception, so this runs
+        // in a child process that absorbs the throw and reports the invocation count.
+        const entry = require.resolve('../../lib/nodemailer');
+        const script = [
+            "'use strict';",
+            'process.on("uncaughtException", () => {});',
+            `const nm = require(${JSON.stringify(entry)});`,
+            'const transport = nm.createTransport({ logger: false, SES: {',
+            '  sesClient: { config: { region() { return Promise.resolve("eu-west-1"); } },',
+            '    send() { return new Promise(r => setImmediate(() => r({ MessageId: "x" }))); } },',
+            '  SendEmailCommand: class { constructor(d) { this.d = d; } } } });',
+            'let calls = 0, secondErr = false;',
+            'transport.sendMail({ from: "a@example.com", to: "b@example.com", subject: "s", text: "t" }, err => {',
+            '  calls++; if (calls >= 2 && err) { secondErr = true; }',
+            '  if (calls === 1) { throw new Error("throw on first"); } });',
+            'setTimeout(() => { process.stdout.write("RESULT:" + JSON.stringify({ calls, secondErr })); process.exit(0); }, 100);'
+        ].join('\n');
+
+        const out = execFileSync(process.execPath, ['-e', script], { encoding: 'utf8' });
+        const m = out.match(/RESULT:(\{.*\})/);
+        assert.ok(m, 'child did not emit a result: ' + out);
+        const res = JSON.parse(m[1]);
+        assert.strictEqual(res.calls, 1);
+        assert.strictEqual(res.secondErr, false);
     });
 
     it('should sign message with DKIM, using AWS SES JavaScript SDK v2', (t, done) => {
