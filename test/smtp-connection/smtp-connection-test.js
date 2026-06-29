@@ -7,6 +7,7 @@ const { describe, it, before, after, beforeEach, afterEach } = require('node:tes
 const assert = require('node:assert/strict');
 const net = require('node:net');
 const SMTPConnection = require('../../lib/smtp-connection');
+const shared = require('../../lib/shared');
 const packageData = require('../../package.json');
 const SMTPServer = require('smtp-server').SMTPServer;
 const HttpConnectProxy = require('proxy-test-server');
@@ -120,6 +121,85 @@ describe('SMTP-Connection Tests', () => {
             return fn(...args);
         };
     }
+
+    describe('Response parser robustness', () => {
+        it('skips a stray empty line before the greeting and still connects', (t, done) => {
+            startServer({ greeting: '\r\n220 test ESMTP\r\n', ehlo: '250 OK\r\n' }, server => {
+                let client = makeClient(server);
+                let finish = once(failMsg =>
+                    safeDone(server, done, () => {
+                        if (failMsg) {
+                            assert.fail(failMsg);
+                        }
+                    })
+                );
+                client.on('error', err => finish('stray empty line before greeting must not error: ' + err.message));
+                client.connect(() => finish(null));
+            });
+        });
+
+        it('does not error on a stray empty line after the final EHLO response', (t, done) => {
+            startServer({ ehlo: '250-test\r\n250 PIPELINING\r\n\r\n' }, server => {
+                let client = makeClient(server);
+                let errored = null;
+                client.on('error', err => {
+                    errored = err;
+                });
+                client.connect(() => {
+                    // let the trailing empty line be (mis)processed before asserting
+                    setTimeout(() => {
+                        safeDone(server, done, () =>
+                            assert.ok(!errored, 'trailing empty line must not error: ' + (errored && errored.message))
+                        );
+                    }, 80);
+                });
+            });
+        });
+    });
+
+    describe('close() during DNS resolution', () => {
+        it('does not open a socket when closed while DNS is in flight', (t, done) => {
+            const origResolve = shared.resolveHostname;
+            let connectionsAccepted = 0;
+            let server = net.createServer(socket => {
+                connectionsAccepted++;
+                socket.write('220 test\r\n');
+            });
+            server.listen(0, '127.0.0.1', () => {
+                const port = server.address().port;
+                let deferred = null;
+                // Defer DNS resolution so we control the window in which close() lands
+                shared.resolveHostname = (opts, cb) => {
+                    deferred = () =>
+                        cb(null, { host: '127.0.0.1', servername: opts.host, _addresses: ['127.0.0.1'], port: opts.port, cached: false });
+                };
+
+                let client = new SMTPConnection({ host: 'deferred.invalid', port, ignoreTLS: true, logger: false });
+                client.on('error', () => {});
+                client.connect();
+                client.close();
+                shared.resolveHostname = origResolve; // restore immediately, before any other test runs
+
+                setImmediate(() => {
+                    if (deferred) {
+                        deferred();
+                    }
+                    setTimeout(() => {
+                        server.close(() => {
+                            let assertErr = null;
+                            try {
+                                assert.strictEqual(connectionsAccepted, 0, 'no socket should be opened after close()');
+                                assert.ok(!(client._socket && client._socket.destroyed === false), 'no live client socket should leak');
+                            } catch (e) {
+                                assertErr = e;
+                            }
+                            done(assertErr);
+                        });
+                    }, 80);
+                });
+            });
+        });
+    });
 
     describe('Version test', () => {
         it('Should expose version number', () => {
