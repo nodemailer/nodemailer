@@ -86,6 +86,27 @@ describe('#addressparser', () => {
         assert.deepStrictEqual(addressparser(input), expected);
     });
 
+    it('should not let an unclosed address literal swallow later recipients', () => {
+        // A stray "[" must not absorb the following comma delimiters and drop the
+        // recipients after it - list separators always end the address.
+        let input = 'alice@example.com, bob[@example.com, carol@example.com';
+        let expected = [
+            { name: '', address: 'alice@example.com' },
+            { name: '', address: 'bob[@example.com' },
+            { name: '', address: 'carol@example.com' }
+        ];
+        assert.deepStrictEqual(addressparser(input), expected);
+    });
+
+    it('should split on a comma following an unclosed address literal', () => {
+        let input = 'a@[b, c@d';
+        let expected = [
+            { name: '', address: 'a@[b' },
+            { name: '', address: 'c@d' }
+        ];
+        assert.deepStrictEqual(addressparser(input), expected);
+    });
+
     it('should handle emtpy group correctly', () => {
         let input = 'Undisclosed:;';
         let expected = [
