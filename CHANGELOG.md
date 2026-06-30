@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [9.0.3](https://github.com/nodemailer/nodemailer/compare/v9.0.2...v9.0.3) (2026-06-30)
+
+
+### Bug Fixes
+
+* **smtp-connection:** harden STARTTLS upgrade and secure socket handling ([#1835](https://github.com/nodemailer/nodemailer/issues/1835)) ([07d8253](https://github.com/nodemailer/nodemailer/commit/07d8253326ecefff9f7d92c157429ce8bc7335f8))
+
 ## [9.0.2](https://github.com/nodemailer/nodemailer/compare/v9.0.1...v9.0.2) (2026-06-29)
 
 
