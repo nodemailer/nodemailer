@@ -672,6 +672,41 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should escape backslash and quote in Content-Type name parameter', (t, done) => {
+            // a single trailing backslash must be emitted as a quoted-pair, otherwise
+            // it escapes the closing quote and produces an unterminated quoted-string
+            // that a lenient MIME parser can use to swallow the following headers
+            let bs = String.fromCharCode(0x5c); // backslash
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'foo' + bs
+            }).setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // name= must match the (correct) filename= form: both fully escaped
+                assert.ok(msg.indexOf('name="foo' + bs + bs + '"') >= 0);
+                assert.ok(msg.indexOf('filename="foo' + bs + bs + '"') >= 0);
+                // the broken, unterminated form must NOT be present
+                assert.strictEqual(msg.indexOf('name="foo' + bs + '"') >= 0, false);
+                done();
+            });
+        });
+
+        it('should escape backslash inside a Content-Type name parameter', (t, done) => {
+            let bs = String.fromCharCode(0x5c); // backslash
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'a' + bs + 'b.dat'
+            }).setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(msg.indexOf('name="a' + bs + bs + 'b.dat"') >= 0);
+                done();
+            });
+        });
+
         it('should detect content type from filename', (t, done) => {
             let mb = new MimeNode(false, {
                 filename: 'jogeva.zip'
