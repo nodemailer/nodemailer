@@ -77,6 +77,14 @@ describe('Mime-Funcs Tests', () => {
             assert.strictEqual(outputStr, encoded);
             assert.strictEqual(inputStr, libmime.decodeWords(encoded));
         });
+
+        it('should not split a non-emoji surrogate pair when chunking base64', () => {
+            // U+20000 (CJK Extension B) uses a high surrogate outside the emoji range
+            let inputStr = '一' + '\u{20000}'.repeat(7),
+                encoded = mimeFuncs.encodeWord(inputStr, 'B', 52);
+
+            assert.strictEqual(inputStr, libmime.decodeWords(encoded));
+        });
     });
 
     describe('#buildHeaderParam', () => {
