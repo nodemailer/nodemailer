@@ -72,6 +72,101 @@ describe('List-* header comment CRLF injection', () => {
         });
     });
 
+    // A comment is inserted into a quoted-string (List-ID) or an RFC 5322 comment
+    // (every other List-* header), so the specials of the surrounding construct have
+    // to be emitted as quoted-pairs. Stripping CR/LF alone is not enough: without the
+    // escaping the comment ends early, never ends, or is read back as different text.
+    describe('List-* header comment escaping', () => {
+        const listIdValue = async comment => {
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list id',
+                list: { id: { url: 'mylist.example.test', comment } },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-ID:/i.test(l));
+            assert.ok(line, 'no List-ID header');
+            return line;
+        };
+
+        it('should escape a quote in a List-ID comment', async () => {
+            // an unescaped quote ends the quoted-string early, so everything after it,
+            // including the <domain>, is no longer where the grammar expects it
+            assert.strictEqual(await listIdValue('a"b'), 'List-ID: "a\\"b" <mylist.example.test>');
+        });
+
+        it('should escape a trailing backslash in a List-ID comment', async () => {
+            // a raw trailing backslash escapes the closing quote, so the quoted-string
+            // runs on and swallows the <domain> that identifies the list
+            assert.strictEqual(await listIdValue('x\\'), 'List-ID: "x\\\\" <mylist.example.test>');
+        });
+
+        it('should escape a backslash inside a List-ID comment', async () => {
+            // an unescaped backslash is a quoted-pair, so the receiver reads back "ab"
+            assert.strictEqual(await listIdValue('a\\b'), 'List-ID: "a\\\\b" <mylist.example.test>');
+        });
+
+        const listUrlValue = async comment => {
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list unsubscribe',
+                list: { unsubscribe: { url: 'https://example.test/u', comment } },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-Unsubscribe:/i.test(l));
+            assert.ok(line, 'no List-Unsubscribe header');
+            return line;
+        };
+
+        it('should escape a closing parenthesis in a List-* comment', async () => {
+            // an unescaped ")" closes the comment early and leaves the remainder as junk
+            assert.strictEqual(await listUrlValue('a)b'), 'List-Unsubscribe: <https://example.test/u> (a\\)b)');
+        });
+
+        it('should escape an opening parenthesis in a List-* comment', async () => {
+            // comments nest, so an unpaired "(" opens one that is never closed
+            assert.strictEqual(await listUrlValue('a(b'), 'List-Unsubscribe: <https://example.test/u> (a\\(b)');
+        });
+
+        it('should escape a trailing backslash in a List-* comment', async () => {
+            assert.strictEqual(await listUrlValue('x\\'), 'List-Unsubscribe: <https://example.test/u> (x\\\\)');
+        });
+
+        it('should not let a comment swallow a following url in the same header', async () => {
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list unsubscribe',
+                // both entries share one header, joined with ", "
+                list: { unsubscribe: [[{ url: 'https://example.test/u', comment: 'x\\' }, { url: 'mailto:u@example.test' }]] },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-Unsubscribe:/i.test(l));
+            // the trailing backslash used to escape the ")", leaving an unterminated
+            // comment that consumed the mailto: entry
+            assert.strictEqual(line, 'List-Unsubscribe: <https://example.test/u> (x\\\\), <mailto:u@example.test>');
+        });
+
+        it('should not escape anything in a non-plaintext comment', async () => {
+            // a non-ascii comment becomes an encoded word, which has no specials to escape
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list unsubscribe',
+                list: { unsubscribe: { url: 'https://example.test/u', comment: 'ünsubscribe' } },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-Unsubscribe:/i.test(l));
+            assert.strictEqual(line, 'List-Unsubscribe: <https://example.test/u> (=?UTF-8?Q?=C3=BCnsubscribe?=)');
+        });
+    });
+
     it('should keep a benign comment intact in the List-* header', async () => {
         const raw = await send({
             from: 'sender@example.test',
