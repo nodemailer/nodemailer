@@ -93,6 +93,15 @@ describe('Mime-Funcs Tests', () => {
 
             assert.strictEqual(inputStr, libmime.decodeWords(encoded));
         });
+
+        it('should not let an unpaired surrogate consume the next character', () => {
+            // the lone leading surrogate is lost either way, but it must not swallow the leading
+            // half of the valid pair behind it and take that down with it
+            let inputStr = '\ud800' + '\u{20000}'.repeat(4),
+                encoded = mimeFuncs.encodeWord(inputStr, 'B', 20);
+
+            assert.strictEqual('�' + '\u{20000}'.repeat(4), libmime.decodeWords(encoded));
+        });
     });
 
     describe('#buildHeaderParam', () => {
