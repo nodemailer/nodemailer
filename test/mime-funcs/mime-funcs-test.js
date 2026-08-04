@@ -20,6 +20,14 @@ describe('Mime-Funcs Tests', () => {
             assert.strictEqual(mimeFuncs.isPlainText('az09\n\x08!?'), false);
         });
 
+        it('should not treat tabs and line breaks as plaintext in a parameter value', () => {
+            // a header parameter can not carry these, unlike a header value or a body
+            assert.strictEqual(mimeFuncs.isPlainText('az09\t!?', true), false);
+            assert.strictEqual(mimeFuncs.isPlainText('az09\r!?', true), false);
+            assert.strictEqual(mimeFuncs.isPlainText('az09\n!?', true), false);
+            assert.strictEqual(mimeFuncs.isPlainText('az09!?', true), true);
+        });
+
         it('should return false on high bits', () => {
             assert.strictEqual(mimeFuncs.isPlainText('az09\nõ!?'), false);
         });
@@ -288,6 +296,24 @@ describe('Mime-Funcs Tests', () => {
                     }
                 }),
                 "test; a*0*=utf-8''%3B%22"
+            );
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'test',
+                    params: {
+                        a: 'x\ty'
+                    }
+                }),
+                "test; a*0*=utf-8''x%09y"
+            );
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'test',
+                    params: {
+                        a: 'x\r\ny'
+                    }
+                }),
+                "test; a*0*=utf-8''x%0D%0Ay"
             );
             assert.strictEqual(
                 mimeFuncs.buildHeaderValue({
