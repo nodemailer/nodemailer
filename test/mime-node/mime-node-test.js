@@ -686,6 +686,8 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.ok(!err);
                 msg = msg.toString();
                 assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%0D%0Avoice.pdf$/m.test(msg), true);
+                // name= used to lose the line break entirely: header value encoding rewrites CR/LF as a space
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=0D=0Avoice=2Epdf\?="$/m.test(msg), true);
                 const headers = msg.split('\r\n\r\n')[0];
                 assert.strictEqual(/\\r|\\n/.test(headers), false);
                 done();
