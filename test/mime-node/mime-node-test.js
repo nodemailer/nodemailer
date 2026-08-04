@@ -709,37 +709,49 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
-        it('should escape backslash and quote in Content-Type name parameter', (t, done) => {
-            // a single trailing backslash must be emitted as a quoted-pair, otherwise
-            // it escapes the closing quote and produces an unterminated quoted-string
-            // that a lenient MIME parser can use to swallow the following headers
-            let bs = String.fromCharCode(0x5c); // backslash
+        it('should escape a trailing backslash in filename', (t, done) => {
             let mb = new MimeNode('application/octet-stream', {
-                filename: 'foo' + bs
+                filename: 'foo\\'
             }).setContent('x');
 
             mb.build((err, msg) => {
                 assert.ok(!err);
                 msg = msg.toString();
-                // name= must match the (correct) filename= form: both fully escaped
-                assert.ok(msg.indexOf('name="foo' + bs + bs + '"') >= 0);
-                assert.ok(msg.indexOf('filename="foo' + bs + bs + '"') >= 0);
-                // the broken, unterminated form must NOT be present
-                assert.strictEqual(msg.indexOf('name="foo' + bs + '"') >= 0, false);
+                assert.strictEqual(/^Content-Disposition: attachment; filename="foo\\\\"$/m.test(msg), true);
+                // name= used to emit the backslash raw, which escaped the closing quote and left
+                // the parameter as an unterminated quoted-string
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="foo\\\\"$/m.test(msg), true);
                 done();
             });
         });
 
-        it('should escape backslash inside a Content-Type name parameter', (t, done) => {
-            let bs = String.fromCharCode(0x5c); // backslash
+        it('should escape a backslash inside filename', (t, done) => {
             let mb = new MimeNode('application/octet-stream', {
-                filename: 'a' + bs + 'b.dat'
+                filename: 'a\\b.dat'
             }).setContent('x');
 
             mb.build((err, msg) => {
                 assert.ok(!err);
                 msg = msg.toString();
-                assert.ok(msg.indexOf('name="a' + bs + bs + 'b.dat"') >= 0);
+                assert.strictEqual(/^Content-Disposition: attachment; filename="a\\\\b\.dat"$/m.test(msg), true);
+                // an unescaped backslash here is a quoted-pair, so the receiver would see "ab.dat"
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="a\\\\b\.dat"$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should encode a quote in filename as a mime word', (t, done) => {
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'fo"o.dat'
+            }).setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // a quote never reaches the quoting step, encodeWords turns the whole value into a
+                // mime word first, which is why escaping it there is only a safety net
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''fo%22o.dat$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="=\?UTF-8\?Q\?fo=22o=2Edat\?="$/m.test(msg), true);
                 done();
             });
         });
