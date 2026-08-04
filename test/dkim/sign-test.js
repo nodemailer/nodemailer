@@ -97,6 +97,27 @@ describe('DKIM Sign Tests', () => {
         );
     });
 
+    it('should strip control chars from the domain and the selector', () => {
+        // both are interpolated straight into the header, where neither the tag list nor a
+        // domain name has any way to carry them
+        let headerLines = [
+            {
+                key: 'from',
+                line: 'From: andris@node.ee'
+            }
+        ];
+
+        let dkimField = sign(headerLines, 'sha256', 'z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=', {
+            domainName: 'no\x01de.ee',
+            keySelector: 'dk\x7fim',
+            privateKey
+        });
+
+        assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(dkimField), false);
+        assert.ok(dkimField.indexOf('d=node.ee;') >= 0);
+        assert.ok(dkimField.indexOf('s=dkim;') >= 0);
+    });
+
     it('should sign headers for unicode domain', () => {
         let headerLines = [
             {

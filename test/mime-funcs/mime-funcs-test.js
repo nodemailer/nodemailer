@@ -402,6 +402,43 @@ describe('Mime-Funcs Tests', () => {
             );
         });
 
+        it('should strip control chars from the value token', () => {
+            // the part ahead of the parameters is a token, there is no quoting construct
+            // around it that a control char could be escaped into
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'text/a\x01b\x7fc',
+                    params: {
+                        charset: 'utf-8'
+                    }
+                }),
+                'text/abc; charset=utf-8'
+            );
+        });
+
+        it('should strip control chars from a parameter name', () => {
+            // the name is a token as well and it is emitted without any quoting around it
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'text/plain',
+                    params: {
+                        'ab\x01c\x7fd': '1'
+                    }
+                }),
+                'text/plain; abcd=1'
+            );
+            // a line break in a name used to end the header and start a new one
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'text/plain',
+                    params: {
+                        'a\r\nX-Injected: y': '1'
+                    }
+                }),
+                'text/plain; aX-Injected: y=1'
+            );
+        });
+
         it('should handle unicode filename', () => {
             assert.strictEqual(
                 mimeFuncs.buildHeaderValue({

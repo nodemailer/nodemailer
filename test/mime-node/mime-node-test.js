@@ -657,6 +657,19 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should clean the content type before the multipart check reads it', (t, done) => {
+            // the type token drives the multipart and charset decisions, so a control char in it
+            // used to make those miss and emit a header claiming a type the node is not set up for
+            let mb = new MimeNode('mult\x01ipart/mixed').setContent('abc');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: multipart\/mixed; boundary=/m.test(msg), true);
+                done();
+            });
+        });
+
         it('should not leave a control char anywhere in the headers', (t, done) => {
             // a header carries VCHAR and WSP only. every field below used to pass these through
             let mb = new MimeNode('text/plain')
@@ -1335,6 +1348,14 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._normalizeHeaderKey('message-id'), 'Message-ID');
             assert.strictEqual(mb._normalizeHeaderKey('CONTENT-FEATUres'), 'Content-features');
         });
+
+        it('should strip control chars from a header key', () => {
+            // a field name is printable ascii without the colon, there is no construct
+            // around it that could carry one of these
+            let mb = new MimeNode();
+
+            assert.strictEqual(mb._normalizeHeaderKey('x-cu\x01st\x7fom'), 'X-Custom');
+        });
     });
 
     describe('#_handleContentType', () => {
@@ -1578,6 +1599,11 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
         it('should keep ASCII domain unchanged', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._normalizeAddress('safe@example.com'), 'safe@example.com');
+        });
+
+        it('should not leave DEL in an address', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('a\x7fb@ex\x7fample.test'), '"a b"@ex ample.test');
         });
 
         it('should keep domain as UTF-8 when local part is non-ASCII', () => {
