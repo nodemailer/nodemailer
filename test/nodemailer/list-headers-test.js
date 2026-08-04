@@ -165,6 +165,13 @@ describe('List-* header comment CRLF injection', () => {
             const line = raw.split('\r\n').find(l => /^List-Unsubscribe:/i.test(l));
             assert.strictEqual(line, 'List-Unsubscribe: <https://example.test/u> (=?UTF-8?Q?=C3=BCnsubscribe?=)');
         });
+
+        it('should encode a DEL in a List-* comment', async () => {
+            // DEL is neither qtext nor ctext, so escaping can not save it and it has to
+            // become an encoded word the same way a non-ascii comment does
+            assert.strictEqual(await listIdValue('a\x7fb'), 'List-ID: =?UTF-8?Q?a=7Fb?= <mylist.example.test>');
+            assert.strictEqual(await listUrlValue('a\x7fb'), 'List-Unsubscribe: <https://example.test/u> (=?UTF-8?Q?a=7Fb?=)');
+        });
     });
 
     it('should keep a benign comment intact in the List-* header', async () => {

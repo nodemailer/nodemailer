@@ -677,6 +677,24 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should encode filename with a DEL', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\x7fvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // DEL is neither a token character nor qtext, so it used to go out bare and
+                // unquoted in both headers
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%7Fvoice.pdf$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=7Fvoice=2Epdf\?="$/m.test(msg), true);
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/\x7f/.test(headers), false);
+                done();
+            });
+        });
+
         it('should encode filename with a line break', (t, done) => {
             let mb = new MimeNode('application/pdf', {
                 filename: 'in\r\nvoice.pdf'

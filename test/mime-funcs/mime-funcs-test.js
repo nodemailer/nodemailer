@@ -28,6 +28,13 @@ describe('Mime-Funcs Tests', () => {
             assert.strictEqual(mimeFuncs.isPlainText('az09!?', true), true);
         });
 
+        it('should not treat DEL as plaintext in a parameter value', () => {
+            // DEL is neither a token character nor qtext, so it can go neither bare nor quoted.
+            // a header value or a body can still carry it, so only the parameter variant rejects it
+            assert.strictEqual(mimeFuncs.isPlainText('az09\x7f!?', true), false);
+            assert.strictEqual(mimeFuncs.isPlainText('az09\x7f!?'), true);
+        });
+
         it('should return false on high bits', () => {
             assert.strictEqual(mimeFuncs.isPlainText('az09\nõ!?'), false);
         });
