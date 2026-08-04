@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [9.0.4](https://github.com/nodemailer/nodemailer/compare/v9.0.3...v9.0.4) (2026-08-04)
+
+
+### Bug Fixes
+
+* **mime-funcs:** do not let an unpaired surrogate consume the next character ([9797f7f](https://github.com/nodemailer/nodemailer/commit/9797f7f57d47b1e27d8ae050550ba93600dbf9f4))
+* **mime-funcs:** keep any surrogate pair intact when chunking base64 mime words ([#1838](https://github.com/nodemailer/nodemailer/issues/1838)) ([5bd3a65](https://github.com/nodemailer/nodemailer/commit/5bd3a657be2d12df1ac2838a1673cb4885e99016))
+* **mime-funcs:** percent encode unpaired surrogates in header parameter values ([78f4aa2](https://github.com/nodemailer/nodemailer/commit/78f4aa253d0ebb9c5ba91301adacef5fb6cf5493))
+* **mime-node:** escape backslash and quote in the Content-Type name parameter ([#1837](https://github.com/nodemailer/nodemailer/issues/1837)) ([adcfc4f](https://github.com/nodemailer/nodemailer/commit/adcfc4f46445edc8a14136b2bf3f775943425c13))
+* **mime:** encode HT/CR/LF in header parameter values instead of quoting them ([#1840](https://github.com/nodemailer/nodemailer/issues/1840)) ([5bc9cab](https://github.com/nodemailer/nodemailer/commit/5bc9cabddcb8d18d16244701ae9facc8fba942a3))
+
 ## [9.0.3](https://github.com/nodemailer/nodemailer/compare/v9.0.2...v9.0.3) (2026-06-30)
 
 
