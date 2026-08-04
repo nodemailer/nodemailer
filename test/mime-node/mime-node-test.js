@@ -670,6 +670,22 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not let a normalizeHeaderKey result inject a header', (t, done) => {
+            // the callback replaces the key on the way into the header, so a line break in
+            // what it returns used to end the header and start one of the caller's own
+            let mb = new MimeNode('text/plain').setContent('x');
+            mb.normalizeHeaderKey = () => 'X-A\r\nX-Injected: yes\r\nX-B';
+            mb.setHeader({ 'x-my': 'v' });
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const headers = msg.toString().split('\r\n\r\n')[0];
+                assert.strictEqual(/^X-Injected: yes$/m.test(headers), false);
+                assert.strictEqual(/^X-AX-Injected: yesX-B: v$/m.test(headers), true);
+                done();
+            });
+        });
+
         it('should not leave a control char anywhere in the headers', (t, done) => {
             // a header carries VCHAR and WSP only. every field below used to pass these through
             let mb = new MimeNode('text/plain')

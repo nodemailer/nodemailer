@@ -118,6 +118,36 @@ describe('DKIM Sign Tests', () => {
         assert.ok(dkimField.indexOf('s=dkim;') >= 0);
     });
 
+    it('should strip tag delimiters from the domain and the selector', () => {
+        // the tag list is built by joining on "; ", so a delimiter inside a value closes it
+        // and opens a tag the caller never set
+        let headerLines = [
+            {
+                key: 'from',
+                line: 'From: andris@node.ee'
+            }
+        ];
+
+        let dkimField = sign(headerLines, 'sha256', 'z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=', {
+            domainName: 'node.ee; s=evil',
+            keySelector: 'dkim; d=evil.ee',
+            privateKey
+        });
+
+        // unfold the rfc5322 way, keeping the folding whitespace, so a tag landing right
+        // after a fold is still visible as its own tag
+        let tags = dkimField
+            .replace(/\r?\n(?=[ \t])/g, '')
+            .replace(/^DKIM-Signature:\s*/, '')
+            .split(';')
+            .map(tag => tag.trim().split('=')[0])
+            .filter(Boolean);
+
+        // the delimiters are gone, so each value stays inside the tag it belongs to
+        assert.deepStrictEqual(tags, ['v', 'a', 'c', 'd', 'q', 's', 'bh', 'h', 'b']);
+        assert.ok(dkimField.replace(/\r?\n(?=[ \t])/g, '').indexOf('d=node.ee sevil; q=dns/txt; s=dkim devil.ee; bh=') >= 0);
+    });
+
     it('should sign headers for unicode domain', () => {
         let headerLines = [
             {
