@@ -172,6 +172,21 @@ describe('List-* header comment CRLF injection', () => {
             assert.strictEqual(await listIdValue('a\x7fb'), 'List-ID: =?UTF-8?Q?a=7Fb?= <mylist.example.test>');
             assert.strictEqual(await listUrlValue('a\x7fb'), 'List-Unsubscribe: <https://example.test/u> (=?UTF-8?Q?a=7Fb?=)');
         });
+
+        it('should strip control chars from a List-* url', async () => {
+            // the angle brackets around a url are not a quoting construct and a url has no
+            // way to carry these, so anything left here would land in the header raw
+            const raw = await send({
+                from: 'sender@example.test',
+                to: 'recipient@example.test',
+                subject: 'list unsubscribe',
+                list: { unsubscribe: { url: 'https://example.test/u\x01n\x7fsub' } },
+                text: 'body'
+            });
+
+            const line = raw.split('\r\n').find(l => /^List-Unsubscribe:/i.test(l));
+            assert.strictEqual(line, 'List-Unsubscribe: <https://example.test/unsub>');
+        });
     });
 
     it('should keep a benign comment intact in the List-* header', async () => {

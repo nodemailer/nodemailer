@@ -657,6 +657,26 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not leave a control char anywhere in the headers', (t, done) => {
+            // a header carries VCHAR and WSP only. every field below used to pass these through
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    subject: 'in\x01voice',
+                    'x-custom': 'a\x7fb',
+                    'message-id': '<a\x01b@example.test>',
+                    'in-reply-to': '<c\x1bd@example.test>',
+                    references: '<e\x00f@example.test>'
+                })
+                .setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const headers = msg.toString().split('\r\n\r\n')[0];
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(headers), false);
+                done();
+            });
+        });
+
         it('should encode filename with a tab', (t, done) => {
             let mb = new MimeNode('application/pdf', {
                 filename: 'in\tvoice.pdf'
@@ -1376,15 +1396,48 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._encodeHeaderValue('x-my', 'test jõgeva value'), '=?UTF-8?Q?test_j=C3=B5geva_value?=');
         });
 
+        it('should encode a control char', () => {
+            // a header value can only carry VCHAR and WSP, so these have to become an encoded word
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'in\x01voice'), '=?UTF-8?Q?in=01voice?=');
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'a\x7fb'), '=?UTF-8?Q?a=7Fb?=');
+        });
+
+        it('should keep a tab in a header value', () => {
+            // HT is valid folding whitespace here, unlike in a header parameter
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'a\tb'), 'a\tb');
+        });
+
         it('should format references', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._encodeHeaderValue('references', 'abc def'), '<abc> <def>');
             assert.strictEqual(mb._encodeHeaderValue('references', ['abc', 'def']), '<abc> <def>');
         });
 
+        it('should strip control chars from references', () => {
+            // a msg-id is structured, an encoded word inside the brackets would be literal text
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('references', 'a\x00b c\x7fd'), '<ab> <cd>');
+        });
+
+        it('should keep tab separated references apart', () => {
+            // HT separates the ids of an unfolded References header, so stripping it would
+            // merge them into a single unusable token
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('references', '<a@x.test>\t<b@x.test>'), '<a@x.test> <b@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', '<a@x.test>\t<b@x.test>'), '<a@x.test>\t<b@x.test>');
+        });
+
         it('should format message-id', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._encodeHeaderValue('message-id', 'abc'), '<abc>');
+        });
+
+        it('should strip control chars from message-id', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('message-id', 'a\x01b'), '<ab>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', 'c\x1bd'), '<cd>');
         });
 
         it('should format addresses', () => {
