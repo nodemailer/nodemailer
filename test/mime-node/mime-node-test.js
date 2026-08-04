@@ -756,6 +756,30 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not let an unpaired surrogate in filename inject a header parameter', (t, done) => {
+            // an unpaired surrogate makes encodeURIComponent throw, and the fallback used to hand
+            // back ; and = unencoded, so this filename produced a second, attacker named parameter
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'a\ud800;filename\ud800=evil.exe'
+            }).setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                const headers = msg.split('\r\n\r\n')[0];
+                const unfolded = headers.replace(/\r\n[ \t]+/g, ' ');
+
+                // the whole value stays inside the one filename parameter, semicolon and equals
+                // percent encoded, so nothing after it can be read as a parameter of its own
+                assert.strictEqual(
+                    /^Content-Disposition: attachment; filename\*0\*=utf-8''a%EF%BF%BD%3Bfilename%EF%BF%BD%3Devil\.exe$/m.test(unfolded),
+                    true
+                );
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(headers), false);
+                done();
+            });
+        });
+
         it('should detect content type from filename', (t, done) => {
             let mb = new MimeNode(false, {
                 filename: 'jogeva.zip'

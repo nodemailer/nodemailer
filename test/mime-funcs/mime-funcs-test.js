@@ -153,6 +153,34 @@ describe('Mime-Funcs Tests', () => {
             );
         });
 
+        it('should percent encode an unpaired surrogate instead of passing it through raw', () => {
+            // encodeURIComponent throws on an unpaired surrogate. the fallback used to return the
+            // value with only the safe characters stripped out, leaving ; and = raw in a parameter
+            // value that is emitted unquoted, so the filename could inject a parameter of its own
+            assert.deepStrictEqual(
+                [
+                    {
+                        key: 'filename*0*',
+                        value: "utf-8''a%EF%BF%BD%3Bfilename%EF%BF%BD%3Devil.exe"
+                    }
+                ],
+                mimeFuncs.buildHeaderParam('filename', 'a\ud800;filename\ud800=evil.exe', 100)
+            );
+        });
+
+        it('should not let an unpaired surrogate consume a valid pair behind it', () => {
+            // the lone leading surrogate becomes U+FFFD, the astral character after it must survive
+            assert.deepStrictEqual(
+                [
+                    {
+                        key: 'filename*0*',
+                        value: "utf-8''%EF%BF%BD%F0%A0%80%80"
+                    }
+                ],
+                mimeFuncs.buildHeaderParam('filename', '\ud800\u{20000}', 50)
+            );
+        });
+
         it('should encode and split unicode', () => {
             assert.deepStrictEqual(
                 [
