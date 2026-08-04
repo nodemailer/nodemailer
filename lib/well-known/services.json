@@ -577,6 +577,20 @@
         "port": 587
     },
 
+    "TurboSMTP": {
+        "description": "TurboSMTP",
+        "host": "pro.turbo-smtp.com",
+        "port": 465,
+        "secure": true
+    },
+
+    "TurboSMTP-EU": {
+        "description": "TurboSMTP (EU region)",
+        "host": "pro.eu.turbo-smtp.com",
+        "port": 465,
+        "secure": true
+    },
+
     "Tutanota": {
         "description": "Tutanota (Tuta Mail)",
         "domains": ["tutanota.com", "tuta.com", "tutanota.de", "tuta.io"],
