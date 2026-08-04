@@ -657,6 +657,41 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should encode filename with a tab', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\tvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // the tab has to be encoded, not quoted: a quoted-pair "\t" means a literal
+                // "t" and a raw tab is a fold point that unfolding turns into a space
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%09voice.pdf$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=09voice=2Epdf\?="$/m.test(msg), true);
+                // no raw control char and no bogus quoted-pair anywhere in the headers
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f]|\t/.test(headers), false);
+                assert.strictEqual(/\\t/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should encode filename with a line break', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\r\nvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%0D%0Avoice.pdf$/m.test(msg), true);
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/\\r|\\n/.test(headers), false);
+                done();
+            });
+        });
+
         it('should encode filename with a space', (t, done) => {
             let mb = new MimeNode('text/plain', {
                 filename: 'document a.test.pdf'
