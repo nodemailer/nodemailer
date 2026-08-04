@@ -695,6 +695,35 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should star every continuation segment that holds percent escapes', (t, done) => {
+            // the trailing ü lands on a line of its own, which used to be emitted under an
+            // unstarred key, so a receiver read the filename back ending in "%C3%BC.txt"
+            let mb = new MimeNode('text/plain', {
+                filename: 'ü' + 'x'.repeat(80) + 'ü.txt'
+            }).setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(
+                    msg.indexOf(
+                        'Content-Disposition: attachment;\r\n' +
+                            " filename*0*=utf-8''%C3%BCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;\r\n" +
+                            ' filename*1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;\r\n' +
+                            ' filename*2*=%C3%BC.txt'
+                    ) >= 0
+                );
+                // no continuation segment may carry a percent escape without the trailing star
+                const segments = msg.match(/filename\*\d+\*?=[^;\r\n]*/g) || [];
+                assert.ok(segments.length > 1);
+                assert.strictEqual(
+                    segments.some(segment => !/^filename\*\d+\*=/.test(segment) && /%[0-9A-F]{2}/.test(segment)),
+                    false
+                );
+                done();
+            });
+        });
+
         it('should encode filename with a line break', (t, done) => {
             let mb = new MimeNode('application/pdf', {
                 filename: 'in\r\nvoice.pdf'

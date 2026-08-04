@@ -188,6 +188,29 @@ describe('Mime-Funcs Tests', () => {
             );
         });
 
+        it('should star the continuation key of a line restarted for an encoded char', () => {
+            // when the encoded char does not fit, the plain line is pushed and a new one starts
+            // holding that char. the new line used to keep the old unencoded flag, so it got an
+            // unstarred key and a receiver read the percent escapes back as literal text
+            assert.deepStrictEqual(
+                [
+                    {
+                        key: 'filename*0*',
+                        value: "utf-8''xxxxxxxxxxxx"
+                    },
+                    {
+                        key: 'filename*1',
+                        value: 'xxxxxxxxxxxxxx'
+                    },
+                    {
+                        key: 'filename*2*',
+                        value: '%C3%BC'
+                    }
+                ],
+                mimeFuncs.buildHeaderParam('filename', 'x'.repeat(26) + 'ü', 20)
+            );
+        });
+
         it('should encode and split unicode', () => {
             assert.deepStrictEqual(
                 [
