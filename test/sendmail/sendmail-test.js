@@ -35,6 +35,20 @@ class MockBuilder {
     }
 }
 
+// a spawn stub that runs to completion, so a test asserting that the transport bailed out
+// early reports a failed assertion instead of leaving its callback pending
+function completingSpawn() {
+    let spawned = new EventEmitter();
+    spawned.stdin = new PassThrough();
+    spawned.stdout = new PassThrough();
+    spawned.stdin.on('data', () => false);
+    spawned.stdin.on('end', () => {
+        spawned.emit('close', 0);
+        spawned.emit('exit', 0);
+    });
+    return spawned;
+}
+
 describe('Sendmail Transport Tests', () => {
     it('Should expose version number', () => {
         let client = new SendmailTransport();
@@ -74,6 +88,68 @@ describe('Sendmail Transport Tests', () => {
             err => {
                 assert.ok(!err);
                 assert.strictEqual(output, 'message\nline 2\n');
+                t.mock.restoreAll();
+                done();
+            }
+        );
+    });
+
+    it('Should reject an envelope address that sendmail would read as an option', (t, done) => {
+        let client = new SendmailTransport();
+        let spawned = false;
+
+        t.mock.method(client, '_spawn', () => {
+            spawned = true;
+            return completingSpawn();
+        });
+
+        client.send(
+            {
+                data: {},
+                message: new MailComposer({
+                    // the local part carries specials, so it goes out quoted and the dash
+                    // ends up behind the opening quote instead of at the start of the argument
+                    from: '-X[a]@example.com',
+                    to: 'test@valid.recipient',
+                    raw: Buffer.from('message')
+                }).compile()
+            },
+            err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ESENDMAIL');
+                assert.strictEqual(spawned, false);
+                t.mock.restoreAll();
+                done();
+            }
+        );
+    });
+
+    it('Should normalize the addresses of a custom envelope', (t, done) => {
+        let client = new SendmailTransport();
+        let envelope = {
+            from: 'a@evil.com@good.com',
+            to: ['b@evil.com@good.com']
+        };
+
+        let args;
+        t.mock.method(client, '_spawn', (path, spawnArgs) => {
+            args = spawnArgs;
+            return completingSpawn();
+        });
+
+        client.send(
+            {
+                // a custom envelope used to reach argv unnormalized, so the header and the
+                // envelope disagreed on which side of the '@' the domain starts
+                data: { envelope },
+                message: new MailComposer({
+                    envelope,
+                    raw: Buffer.from('message')
+                }).compile()
+            },
+            err => {
+                assert.ok(!err);
+                assert.deepStrictEqual(args, ['-i', '-f', '"a@evil.com"@good.com', '"b@evil.com"@good.com']);
                 t.mock.restoreAll();
                 done();
             }

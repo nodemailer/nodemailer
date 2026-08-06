@@ -3,6 +3,7 @@
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const MimeNode = require('../../lib/mime-node');
+const addressparser = require('../../lib/addressparser');
 const http = require('http');
 const stream = require('stream');
 const Transform = stream.Transform;
@@ -1169,6 +1170,28 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 }
             );
         });
+
+        it('should keep a bare username of an explicit envelope', () => {
+            // an envelope value is an addr-spec, so 'root' is a local username here and not
+            // the display name that the same value would be in a header. Local sendmail
+            // delivery relies on it, and both input shapes have to agree
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'root@localhost', to: ['root'] }).getEnvelope(), {
+                from: 'root@localhost',
+                to: ['root']
+            });
+
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'root@localhost', to: [{ address: 'root' }] }).getEnvelope(), {
+                from: 'root@localhost',
+                to: ['root']
+            });
+        });
+
+        it('should still normalize an explicit envelope that carries a quoted local part (security)', () => {
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] }).getEnvelope(), {
+                from: '"a@evil.com"@good.com',
+                to: ['"b@evil.com"@good.com']
+            });
+        });
     });
 
     describe('#messageId', () => {
@@ -1348,6 +1371,16 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     }
                 ]
             );
+        });
+
+        it('should not modify the address object it was given', () => {
+            let mb = new MimeNode();
+            let input = { address: 'a,b@good.com' };
+
+            let parsed = mb._parseAddresses([input]);
+
+            assert.deepStrictEqual(input, { address: 'a,b@good.com' });
+            assert.strictEqual(parsed[0].address, '"a,b"@good.com');
         });
     });
 
@@ -1604,6 +1637,48 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 '=?UTF-8?Q?J=C3=B5geva_Ants?= <jõser@jõgeva.ee>'
             );
         });
+
+        it('should keep a plain address outside of angle brackets', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([{ address: 'user@example.com' }, { address: 'other@example.com' }]),
+                'user@example.com, other@example.com'
+            );
+        });
+
+        it('should wrap an address carrying a special into angle brackets', () => {
+            let mb = new MimeNode();
+            // a quoted local part with no space in it used to be emitted bare, so a parser
+            // splitting the list on ',' before becoming quote-aware saw two recipients
+            assert.strictEqual(
+                mb._convertAddresses([{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]),
+                '<"a,b"@good.com>, <"c;d"@good.com>'
+            );
+        });
+
+        it('should emit as many recipients as the envelope carries (security)', () => {
+            // a domain can not be quoted, so an unnormalizable one is only unambiguous inside
+            // angle brackets. Without them the ',' in the domain adds a recipient to the
+            // visible header that the envelope never had
+            let mb = new MimeNode();
+            [
+                [{ address: 'a@good.com,victim@evil.com' }],
+                [{ address: 'a@good.com;victim@evil.com' }],
+                [{ address: '"a"@evil.com"@good.com' }, { address: 'victim@example.net' }],
+                [{ address: '"a\\"@good.com' }, { address: 'victim@example.net' }],
+                [{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]
+            ].forEach(list => {
+                let envelope = [];
+                let header = mb._convertAddresses(list, envelope);
+                let parsed = addressparser(header);
+
+                assert.strictEqual(parsed.length, envelope.length);
+                assert.deepStrictEqual(
+                    parsed.map(entry => entry.address),
+                    envelope.map(entry => entry.address)
+                );
+            });
+        });
     });
 
     describe('#_normalizeAddress', () => {
@@ -1642,6 +1717,82 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             let mb = new MimeNode();
             // 'xn--$.com' is a malformed punycode label that makes punycode.toUnicode throw "Invalid input"
             assert.strictEqual(mb._normalizeAddress('jõser@xn--$.com'), 'jõser@xn--$.com');
+        });
+
+        it('should re-quote a quoted local-part that lost its quotes in parsing (security)', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('user@evil.com@good.com'), '"user@evil.com"@good.com');
+        });
+
+        it('should leave an intact quoted local-part untouched', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('"user@evil.com"@good.com'), '"user@evil.com"@good.com');
+        });
+
+        it('should escape quotes and backslashes when quoting a local-part', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('a"b\\c@good.com'), '"a\\"b\\\\c"@good.com');
+        });
+
+        it('should keep a bare dot-atom local-part unquoted', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress("u.s-e+r!#$%&'*=?^_`{|}~@example.com"), "u.s-e+r!#$%&'*=?^_`{|}~@example.com");
+        });
+
+        it('should quote local-part specials without touching SMTPUTF8 bytes', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser:pärnu@example.com'), '"jõser:pärnu"@example.com');
+        });
+
+        it('should re-quote a local-part that only starts and ends with a quote (security)', () => {
+            let mb = new MimeNode();
+            // starting and ending with a quote does not make it one quoted-string, the inner
+            // quote ends the first one and leaves '@evil.com' outside of it
+            assert.strictEqual(mb._normalizeAddress('"a"@evil.com"@good.com'), '"\\"a\\"@evil.com\\""@good.com');
+        });
+
+        it('should re-quote a local-part whose closing quote is a quoted-pair (security)', () => {
+            let mb = new MimeNode();
+            // the backslash escapes the quote that looks like the closing one, so the
+            // quoted-string never terminates
+            assert.strictEqual(mb._normalizeAddress('"a\\"@good.com'), '"\\"a\\\\\\""@good.com');
+        });
+
+        it('should quote a local-part with dots outside dot-atom positions', () => {
+            let mb = new MimeNode();
+            // dot-atom-text is 1*atext *("." 1*atext), so a leading, trailing or doubled dot
+            // is not a valid dot-atom and a strict receiver rejects the bare form
+            assert.strictEqual(mb._normalizeAddress('.user@example.com'), '".user"@example.com');
+            assert.strictEqual(mb._normalizeAddress('user.@example.com'), '"user."@example.com');
+            assert.strictEqual(mb._normalizeAddress('us..er@example.com'), '"us..er"@example.com');
+        });
+
+        it('should quote an empty local-part', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('@example.com'), '""@example.com');
+        });
+
+        it('should keep an empty address empty', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress(''), '');
+            assert.strictEqual(mb._normalizeAddress(false), '');
+        });
+
+        it('should quote a bare username that carries a special', () => {
+            let mb = new MimeNode();
+            // no '@' to split on, but an unquoted ',' still reads as a recipient separator
+            assert.strictEqual(mb._normalizeAddress('a,b'), '"a,b"');
+            assert.strictEqual(mb._normalizeAddress('root'), 'root');
+        });
+
+        it('should be idempotent', () => {
+            let mb = new MimeNode();
+            ['"a"@evil.com"@good.com', 'user@evil.com@good.com', 'a"b\\c@good.com', '@example.com', 'a,b', 'safe@jõgeva.ee'].forEach(
+                address => {
+                    let once = mb._normalizeAddress(address);
+                    assert.strictEqual(mb._normalizeAddress(once), once);
+                }
+            );
         });
     });
 

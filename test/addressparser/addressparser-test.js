@@ -331,7 +331,7 @@ describe('#addressparser', () => {
         let input = '"test@subdomain.com"@example.com';
         let expected = [
             {
-                address: 'test@subdomain.com@example.com',
+                address: '"test@subdomain.com"@example.com',
                 name: ''
             }
         ];
@@ -342,10 +342,11 @@ describe('#addressparser', () => {
     it('should not extract email from quoted local-part (security)', () => {
         let input = '"xclow3n@gmail.com x"@internal.domain';
         let result = addressparser(input);
-        // Should preserve full address, NOT extract xclow3n@gmail.com
+        // Should preserve full address, NOT extract xclow3n@gmail.com. The local part keeps
+        // its quotes, without them the '@' that splits the domain off is ambiguous
         assert.strictEqual(result.length, 1);
         assert.strictEqual(result[0].address.includes('@internal.domain'), true);
-        assert.strictEqual(result[0].address, 'xclow3n@gmail.com x@internal.domain');
+        assert.strictEqual(result[0].address, '"xclow3n@gmail.com x"@internal.domain');
     });
 
     it('should handle quoted local-part with attacker domain (security)', () => {
@@ -354,7 +355,7 @@ describe('#addressparser', () => {
         // Should route to legitimate.com, not attacker.com
         assert.strictEqual(result.length, 1);
         assert.strictEqual(result[0].address.includes('@legitimate.com'), true);
-        assert.strictEqual(result[0].address, 'user@attacker.com@legitimate.com');
+        assert.strictEqual(result[0].address, '"user@attacker.com"@legitimate.com');
     });
 
     it('should handle multiple @ in quoted local-part (security)', () => {
@@ -362,7 +363,7 @@ describe('#addressparser', () => {
         let result = addressparser(input);
         // Should not extract a@b or b@c
         assert.strictEqual(result.length, 1);
-        assert.strictEqual(result[0].address, 'a@b@c@example.com');
+        assert.strictEqual(result[0].address, '"a@b@c"@example.com');
     });
 
     it('should handle quoted local-part with angle brackets', () => {
@@ -379,14 +380,14 @@ describe('#addressparser', () => {
         let input = '"test\\"quote"@example.com';
         let result = addressparser(input);
         assert.strictEqual(result.length, 1);
-        assert.strictEqual(result[0].address, 'test"quote@example.com');
+        assert.strictEqual(result[0].address, '"test\\"quote"@example.com');
     });
 
     it('should handle escaped backslashes', () => {
         let input = '"test\\\\backslash"@example.com';
         let result = addressparser(input);
         assert.strictEqual(result.length, 1);
-        assert.strictEqual(result[0].address, 'test\\backslash@example.com');
+        assert.strictEqual(result[0].address, '"test\\\\backslash"@example.com');
     });
 
     it('should handle unclosed quote gracefully', () => {
