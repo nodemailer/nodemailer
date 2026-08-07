@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [9.0.6](https://github.com/nodemailer/nodemailer/compare/v9.0.5...v9.0.6) (2026-08-07)
+
+
+### Bug Fixes
+
+* harden copies of user supplied keys and URL fetching ([2f667f4](https://github.com/nodemailer/nodemailer/commit/2f667f4272cb2d7cb479b2e3903ab10600fc0eae))
+
 ## [9.0.5](https://github.com/nodemailer/nodemailer/compare/v9.0.4...v9.0.5) (2026-08-07)
 
 
