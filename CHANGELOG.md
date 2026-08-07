@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [9.0.5](https://github.com/nodemailer/nodemailer/compare/v9.0.4...v9.0.5) (2026-08-07)
+
+
+### Bug Fixes
+
+* **ci:** retrigger the workflows dropped during the Actions outage ([85d16c1](https://github.com/nodemailer/nodemailer/commit/85d16c103ec69e237c7e55c0e3103f439c135ce3))
+* **mailer:** escape specials in List-* header comments ([#1842](https://github.com/nodemailer/nodemailer/issues/1842)) ([75913bb](https://github.com/nodemailer/nodemailer/commit/75913bba032623046dd7fa037b8b880e388d8357))
+* **mime-funcs:** star the continuation key of a restarted parameter line ([36bcf1a](https://github.com/nodemailer/nodemailer/commit/36bcf1a21a92b5a283c780e35aacd3080292d98d))
+* **mime-node:** keep control chars out of header values and msg-id headers ([15cf6d1](https://github.com/nodemailer/nodemailer/commit/15cf6d1c15cdf60f551618fd54fb727ea7aac94c))
+* **mime:** encode DEL in header parameters and List-* comments ([cf69430](https://github.com/nodemailer/nodemailer/commit/cf69430ffac1d246bfbab564daf321f31ed9e1dd))
+* **mime:** keep control chars out of the remaining header positions ([5ed9d26](https://github.com/nodemailer/nodemailer/commit/5ed9d26f85eecb48f4b3ae74ad33ed2abf002040))
+* **mime:** normalize an address parsed out of a string as well ([63685f7](https://github.com/nodemailer/nodemailer/commit/63685f7dd4aefa75cc72a36f983f32f61cd6733e))
+* **mime:** normalize an address so header and envelope agree ([a9343b4](https://github.com/nodemailer/nodemailer/commit/a9343b47e42b9ccb27911ad8e73d4119c6170c85))
+* **mime:** stop a header key callback and the dkim tags from injecting ([b7d772e](https://github.com/nodemailer/nodemailer/commit/b7d772ea4ec12ee82e65a9b919af882bf0f125d9))
+
 ## [9.0.4](https://github.com/nodemailer/nodemailer/compare/v9.0.3...v9.0.4) (2026-08-04)
 
 
