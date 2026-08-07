@@ -12,6 +12,32 @@ describe('Stream Transport Tests', { timeout: 10000 }, () => {
         assert.ok(client.version);
     });
 
+    it('Should normalize the addresses of a custom envelope', (t, done) => {
+        let client = new StreamTransport();
+        // a custom envelope used to reach the transport unnormalized, so it kept the
+        // ambiguous form while the header carried the quoted one
+        let envelope = { from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] };
+
+        client.send(
+            {
+                data: { envelope },
+                message: new MailComposer({
+                    envelope,
+                    newline: '\n',
+                    raw: Buffer.from('message')
+                }).compile()
+            },
+            (err, info) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(info.envelope, {
+                    from: '"a@evil.com"@good.com',
+                    to: ['"b@evil.com"@good.com']
+                });
+                done();
+            }
+        );
+    });
+
     describe('Send as stream', () => {
         it('Should send mail using unix newlines 1', (t, done) => {
             let client = new StreamTransport();

@@ -56,6 +56,40 @@ const sesMock = {
 };
 
 describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
+    it('should normalize the addresses of a custom envelope', (t, done) => {
+        let transport = nodemailer.createTransport({
+            SES: sesMock
+        });
+
+        // the recipients of the SES command are the value that really reaches the API, and a
+        // custom envelope used to arrive there unnormalized
+        let sesMessage;
+        t.mock.method(sesMock.sesClient, 'send', command => {
+            sesMessage = command.messageData;
+            return new Promise(resolve => setImmediate(() => resolve(command.send())));
+        });
+
+        transport.sendMail(
+            {
+                envelope: { from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] },
+                from: 'a@evil.com@good.com',
+                to: 'b@evil.com@good.com',
+                subject: 'envelope',
+                text: 'hello'
+            },
+            (err, info) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(sesMessage.Destination.ToAddresses, ['"b@evil.com"@good.com']);
+                assert.deepStrictEqual(info.envelope, {
+                    from: '"a@evil.com"@good.com',
+                    to: ['"b@evil.com"@good.com']
+                });
+                t.mock.restoreAll();
+                done();
+            }
+        );
+    });
+
     it('should return MessageId', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: sesMock

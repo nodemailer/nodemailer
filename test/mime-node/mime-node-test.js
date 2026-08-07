@@ -1186,6 +1186,15 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not turn a display name of an explicit envelope into an address', () => {
+            // whitespace makes 'John Doe' a display name rather than a local username, so it
+            // carries no address to deliver to and drops out of the envelope
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'a@example.com', to: ['John Doe'] }).getEnvelope(), {
+                from: 'a@example.com',
+                to: []
+            });
+        });
+
         it('should still normalize an explicit envelope that carries a quoted local part (security)', () => {
             assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] }).getEnvelope(), {
                 from: '"a@evil.com"@good.com',

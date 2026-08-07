@@ -146,6 +146,32 @@ describe('JSON Transport Tests', () => {
             done();
         });
     });
+
+    it('should normalize the addresses of a custom envelope', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true
+        });
+
+        transport.sendMail(
+            {
+                // a custom envelope used to reach the transport unnormalized, so it kept the
+                // ambiguous form while the header carried the quoted one
+                envelope: { from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] },
+                from: 'a@evil.com@good.com',
+                to: 'b@evil.com@good.com',
+                subject: 'envelope',
+                text: 'hello'
+            },
+            (err, info) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(info.envelope, {
+                    from: '"a@evil.com"@good.com',
+                    to: ['"b@evil.com"@good.com']
+                });
+                done();
+            }
+        );
+    });
 });
 
 describe('JSON Transport access control (disableFileAccess / disableUrlAccess)', () => {
