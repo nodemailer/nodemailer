@@ -1382,6 +1382,30 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             );
         });
 
+        it('should normalize an address parsed out of a string', () => {
+            let mb = new MimeNode();
+
+            // an object and a string carrying the same address have to come back the same
+            assert.deepStrictEqual(mb._parseAddresses('a@evil.com@good.com'), [{ address: '"a@evil.com"@good.com', name: '' }]);
+            assert.deepStrictEqual(mb._parseAddresses([{ address: 'a@evil.com@good.com' }]), [
+                { address: '"a@evil.com"@good.com', name: '' }
+            ]);
+        });
+
+        it('should normalize the addresses of a parsed group', () => {
+            let mb = new MimeNode();
+
+            assert.deepStrictEqual(mb._parseAddresses('Team: a@evil.com@good.com, b@example.com;'), [
+                {
+                    name: 'Team',
+                    group: [
+                        { address: '"a@evil.com"@good.com', name: '' },
+                        { address: 'b@example.com', name: '' }
+                    ]
+                }
+            ]);
+        });
+
         it('should not modify the address object it was given', () => {
             let mb = new MimeNode();
             let input = { address: 'a,b@good.com' };

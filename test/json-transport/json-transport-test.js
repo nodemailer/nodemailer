@@ -147,6 +147,43 @@ describe('JSON Transport Tests', () => {
         });
     });
 
+    it('should emit the same addresses in the message as in the envelope', (t, done) => {
+        let transport = nodemailer.createTransport({
+            jsonTransport: true
+        });
+
+        transport.sendMail(
+            {
+                // the serialized message used to carry the bare 'a@evil.com@good.com' while the
+                // envelope carried the quoted form, so a consumer of the JSON was handed back
+                // the ambiguous address the rest of the library had already resolved
+                from: 'a@evil.com@good.com',
+                to: 'b@evil.com@good.com',
+                subject: 'addresses',
+                text: 'hello'
+            },
+            (err, info) => {
+                assert.ok(!err);
+                let message = JSON.parse(info.message);
+
+                assert.strictEqual(message.from.address, '"a@evil.com"@good.com');
+                assert.deepStrictEqual(
+                    message.to.map(entry => entry.address),
+                    ['"b@evil.com"@good.com']
+                );
+
+                // and the serialized message agrees with the envelope, which is what a
+                // consumer of the JSON actually delivers against
+                assert.strictEqual(message.from.address, info.envelope.from);
+                assert.deepStrictEqual(
+                    message.to.map(entry => entry.address),
+                    info.envelope.to
+                );
+                done();
+            }
+        );
+    });
+
     it('should normalize the addresses of a custom envelope', (t, done) => {
         let transport = nodemailer.createTransport({
             jsonTransport: true
