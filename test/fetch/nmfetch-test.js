@@ -68,6 +68,15 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
     beforeEach((t, done) => {
         httpServer = http.createServer((req, res) => {
             switch (req.url) {
+                case '/redirectfile':
+                    // redirect to a scheme that can not be fetched, and keep the response
+                    // open so a request that is not aborted stays alive to time out later
+                    res.writeHead(302, {
+                        Location: 'file:///etc/passwd'
+                    });
+                    res.write(' ');
+                    break;
+
                 case '/redirect6':
                     res.writeHead(302, {
                         Location: '/redirect5'
@@ -441,6 +450,106 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
             req.on('end', () => {});
         });
     }
+
+    for (let url of ['file:///etc/passwd', 'gopher://localhost/x', 'http://localhost \u0000.example.com/x']) {
+        it('should return error for unusable URL ' + JSON.stringify(url), (t, done) => {
+            // the last one does not parse at all, which used to throw synchronously out of
+            // urllib.parse before the protocol check ever ran
+            let req = nmfetch(url);
+            req.on('data', () => {
+                done(new Error('unusable URL fetch should not have produced data'));
+            });
+            req.on('error', err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.strictEqual(err.sourceUrl, url);
+                done();
+            });
+            req.on('end', () => {
+                done(new Error('unusable URL fetch should have failed'));
+            });
+        });
+    }
+
+    it('should emit a single error for a redirect to an unusable URL', (t, done) => {
+        // the window has to outlast the idle timeout below, which is what would produce a
+        // second error if the redirect branch did not abort this request
+        let errors = [];
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirectfile', { timeout: 300 });
+
+        req.on('data', () => false);
+        req.on('error', err => {
+            errors.push(err);
+        });
+
+        setTimeout(() => {
+            assert.strictEqual(errors.length, 1);
+            assert.strictEqual(errors[0].code, 'EFETCH');
+            assert.strictEqual(errors[0].sourceUrl, 'file:///etc/passwd');
+            done();
+        }, 500);
+    });
+
+    it('should release a body stream when the URL is refused', (t, done) => {
+        let body = new PassThrough();
+        let req = nmfetch('file:///etc/passwd', { method: 'POST', body });
+
+        req.on('error', err => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(body.destroyed, true);
+            // an error on the abandoned body must not reach the process as an uncaught one
+            body.emit('error', new Error('body blew up'));
+            setImmediate(done);
+        });
+    });
+
+    it('should not let an own __proto__ key of options.headers mutate the prototype chain', (t, done) => {
+        // options.headers is the caller's httpHeaders, straight off an attachment
+        const mocked = t.mock.method(http, 'request');
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/', {
+            headers: JSON.parse('{"x-real":"1","__proto__":{"authorization":"secret"}}')
+        });
+
+        req.on('data', () => false);
+        req.on('end', () => {
+            const seen = mocked.mock.calls[0].arguments[0].headers;
+            assert.strictEqual(Object.getPrototypeOf(seen), Object.prototype);
+            assert.strictEqual(seen['x-real'], '1');
+            assert.strictEqual(seen.authorization, undefined);
+            done();
+        });
+        req.on('error', done);
+    });
+
+    it('should not let options.tls repoint the request', (t, done) => {
+        const mocked = t.mock.method(http, 'request');
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/', {
+            tls: {
+                host: 'evil.invalid',
+                port: 1234,
+                path: '/pwn',
+                socketPath: '/var/run/docker.sock',
+                lookup: () => false,
+                rejectUnauthorized: false
+            }
+        });
+
+        req.on('data', () => false);
+        req.on('end', () => {
+            const seen = mocked.mock.calls[0].arguments[0];
+            assert.strictEqual(seen.host, 'localhost');
+            assert.strictEqual(Number(seen.port), HTTP_PORT);
+            assert.strictEqual(seen.path, '/');
+            assert.strictEqual(seen.socketPath, undefined);
+            assert.strictEqual(seen.lookup, undefined);
+            // a genuine TLS setting still gets through
+            assert.strictEqual(seen.rejectUnauthorized, false);
+            done();
+        });
+        req.on('error', done);
+    });
 
     it('should set cookie value', (t, done) => {
         let req = nmfetch('http://localhost:' + HTTP_PORT + '/cookie', {

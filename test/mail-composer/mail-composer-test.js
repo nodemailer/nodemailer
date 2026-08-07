@@ -1028,6 +1028,43 @@ describe('MailComposer unit tests', () => {
             });
         });
 
+        it('should not let an own __proto__ key of icalEvent replace the content', (t, done) => {
+            // the event is normalized on a copy, and an own "__proto__" key used to make
+            // that copy inherit a path, which the mapping then turned into the content and
+            // read off disk. An app validating the own keys of the blob sees only content
+            let data = {
+                text: 'def',
+                icalEvent: JSON.parse(
+                    '{"content":"BEGIN:VCALENDAR\\r\\nEND:VCALENDAR","__proto__":{"path":"' + __dirname + '/fixtures/attachment.bin"}}'
+                )
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                let msg = message.toString();
+                assert.ok(msg.includes('BEGIN:VCALENDAR'), 'the content the caller set should be used');
+                assert.ok(!msg.includes('w7VrdmEK'), 'the inherited path should not be read');
+                done();
+            });
+        });
+
+        it('should not let an own __proto__ key of icalEvent fetch an url', (t, done) => {
+            // the href variant is SSRF that passes every URL check, because the injected
+            // URL genuinely is http
+            let data = {
+                text: 'def',
+                icalEvent: JSON.parse('{"content":"BEGIN:VCALENDAR\\r\\nEND:VCALENDAR","__proto__":{"href":"http://127.0.0.1:1/x"}}')
+            };
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.ok(message.toString().includes('BEGIN:VCALENDAR'));
+                done();
+            });
+        });
+
         it('should load icalEvent from data uri for both alternative and attachment parts', (t, done) => {
             let data = {
                 text: 'def',

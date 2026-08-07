@@ -464,6 +464,25 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 let mail = { data: { html: { path: 'http://localhost:' + port + '/message.html' } } };
                 await assert.rejects(shared.resolveContent(mail.data, 'html', { disableUrlAccess: true }), { code: 'EURLACCESS' });
             });
+
+            for (let href of ['file:///etc/passwd', 'gopher://localhost/x']) {
+                it('should reject the unusable href ' + JSON.stringify(href), async () => {
+                    // this resolver used to match no branch for such an href and fall through
+                    // to "return as is", handing the descriptor object back as the content.
+                    // jsonTransport output is normally passed to another service to send, so
+                    // the href travelled on intact while the same message over SMTP failed
+                    let mail = { data: { html: { href } } };
+                    await assert.rejects(shared.resolveContent(mail.data, 'html'), { code: 'EFETCH' });
+                });
+            }
+
+            it('should resolve a whitespace padded url', async () => {
+                // the URL parser normalizes this, so it must not be refused on the shape of
+                // the raw string when MimeNode would happily fetch it
+                let mail = { data: { html: { href: ' http://localhost:' + port + '/message.html' } } };
+                const value = await shared.resolveContent(mail.data, 'html');
+                assert.ok(value.toString().length);
+            });
         });
     });
 
@@ -494,6 +513,72 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 e: 33,
                 qq: 98
             });
+        });
+
+        it('should not mutate the prototype chain of the target', () => {
+            let target = {};
+
+            // an own "__proto__" key (e.g. from JSON.parse) must not become the target's prototype
+            shared.assign(target, JSON.parse('{"__proto__":{"polluted":true}}'));
+
+            assert.strictEqual(Object.getPrototypeOf(target), Object.prototype);
+            assert.strictEqual(target.polluted, undefined);
+            assert.strictEqual({}.polluted, undefined);
+        });
+
+        it('should not mutate the prototype chain of a nested tls or auth object', () => {
+            // tls and auth are merged key by key instead of being passed through, and that
+            // merge is a copy of caller supplied keys just like the outer one. An injected
+            // auth.pass is read by direct property access in the pool, so it would reach
+            // the SMTP server while Object.keys(auth) still showed only the legitimate user
+            let target = shared.assign(
+                {},
+                JSON.parse(
+                    '{"auth":{"user":"legit@example.com","__proto__":{"pass":"injected"}},"tls":{"__proto__":{"rejectUnauthorized":false}}}'
+                )
+            );
+
+            assert.strictEqual(Object.getPrototypeOf(target.auth), Object.prototype);
+            assert.strictEqual(target.auth.user, 'legit@example.com');
+            assert.strictEqual(target.auth.pass, undefined);
+            assert.strictEqual(Object.getPrototypeOf(target.tls), Object.prototype);
+            assert.strictEqual(target.tls.rejectUnauthorized, undefined);
+        });
+
+        it('should keep keys that share a name with an Object member', () => {
+            // only "__proto__" has an inherited setter, so dropping "constructor" or
+            // "prototype" alongside it would discard legitimate values for no gain
+            let target = shared.assign({}, { constructor: 'x', prototype: 'y', toString: 'z' });
+
+            assert.strictEqual(target.constructor, 'x');
+            assert.strictEqual(target.prototype, 'y');
+            assert.strictEqual(target.toString, 'z');
+        });
+    });
+
+    describe('#copyOwnKeys tests', () => {
+        it('should copy own keys', () => {
+            assert.deepStrictEqual(shared.copyOwnKeys({ a: 1 }, { b: 2, c: 3 }), { a: 1, b: 2, c: 3 });
+        });
+
+        it('should tolerate a missing source', () => {
+            assert.deepStrictEqual(shared.copyOwnKeys({ a: 1 }, null), { a: 1 });
+        });
+
+        it('should honour the skip predicate', () => {
+            assert.deepStrictEqual(
+                shared.copyOwnKeys({}, { a: 1, b: 2 }, key => key === 'b'),
+                { a: 1 }
+            );
+        });
+
+        it('should not mutate the prototype chain of the target', () => {
+            let target = shared.copyOwnKeys({}, JSON.parse('{"a":1,"__proto__":{"polluted":true}}'));
+
+            assert.strictEqual(Object.getPrototypeOf(target), Object.prototype);
+            assert.strictEqual(target.a, 1);
+            assert.strictEqual(target.polluted, undefined);
+            assert.strictEqual({}.polluted, undefined);
         });
     });
 

@@ -3,9 +3,10 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const libmime = require('libmime');
+const child_process = require('node:child_process');
 const mimeFuncs = require('../../lib/mime-funcs');
 
-describe('Mime-Funcs Tests', () => {
+describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
     describe('#isPlainText', () => {
         it('should detect plain text', () => {
             assert.strictEqual(mimeFuncs.isPlainText('abc'), true);
@@ -54,6 +55,43 @@ describe('Mime-Funcs Tests', () => {
 
         it('should encode base64', () => {
             assert.strictEqual('=?UTF-8?B?U2VlIG9uIMO1aGluIHRlc3Q=?=', mimeFuncs.encodeWord('See on õhin test', 'B'));
+        });
+    });
+
+    describe('#splitMimeEncodedString', () => {
+        it('should handle malformed UTF-8 continuation sequences', () => {
+            // A run of stray continuation bytes has no split point that keeps a character
+            // sequence whole, and the splitter used to walk back forever looking for one.
+            // That loop is synchronous, so a regression can only wedge the serial suite:
+            // node:test can not fire a timer to abort it and every assertion below would
+            // hang with it. Run the whole battery in a child process with a hard kill so a
+            // regression fails loudly instead.
+            const script = `
+                const assert = require('node:assert/strict');
+                const mimeFuncs = require(${JSON.stringify(require.resolve('../../lib/mime-funcs'))});
+
+                const input = '=80'.repeat(60);
+                for (const maxlen of [12, 13, 14, 40, 41]) {
+                    const parts = mimeFuncs.splitMimeEncodedString(input, maxlen);
+                    assert.strictEqual(parts.join(''), input, 'parts do not reassemble into the input');
+                    assert.ok(parts.length, 'no parts emitted');
+                    for (const part of parts) {
+                        // a part ending in a bare '=' or a half written escape corrupts the
+                        // byte and is not a decodable encoded word
+                        assert.ok(!/[=][0-9A-F]?$/i.test(part), 'part ' + JSON.stringify(part) + ' ends inside an escape');
+                    }
+                }
+
+                // encodeWord is the production caller and subtracts the encoded word
+                // overhead from maxlen, so the chunk size it asks for is not a multiple of 3
+                for (const word of mimeFuncs.encodeWord(Buffer.alloc(60, 0x80), 'Q', 52).split(' ')) {
+                    assert.ok(/^=\\?UTF-8\\?Q\\?(?:[^=]|=[0-9A-F]{2})*\\?=$/i.test(word), 'invalid encoded word ' + JSON.stringify(word));
+                }
+            `;
+            const res = child_process.spawnSync(process.execPath, ['-e', script], { timeout: 30 * 1000, encoding: 'utf8' });
+
+            assert.strictEqual(res.signal, null, 'splitMimeEncodedString did not terminate');
+            assert.strictEqual(res.status, 0, res.stderr);
         });
     });
 
@@ -266,6 +304,20 @@ describe('Mime-Funcs Tests', () => {
     });
 
     describe('#parseHeaderValue', () => {
+        it('should drop a __proto__ parameter instead of reaching the prototype chain', () => {
+            // an rfc2231 continuation named __proto__ used to read back as Object.prototype,
+            // skip the initializer and throw on the write that followed. Any caller supplied
+            // contentType or contentDisposition reaches this parser
+            for (let str of ['text/plain; __proto__*0*=y', 'text/plain; __proto__=y', 'text/plain; __proto__*=y; charset=utf-8']) {
+                const parsed = mimeFuncs.parseHeaderValue(str);
+
+                assert.strictEqual(parsed.value, 'text/plain');
+                assert.strictEqual(Object.getPrototypeOf(parsed.params), Object.prototype);
+                assert.ok(!Object.keys(parsed.params).includes('__proto__'));
+                assert.strictEqual({}.values, undefined);
+            }
+        });
+
         it('should handle default value only', () => {
             let str = 'text/plain',
                 obj = {

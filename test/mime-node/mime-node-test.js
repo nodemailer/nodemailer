@@ -251,6 +251,26 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should not let an own __proto__ key of a header value emit the value raw', (t, done) => {
+            // the per header options are copied off the caller supplied value object, and
+            // `prepared` there means "emit this value verbatim". An own "__proto__" key used
+            // to smuggle that flag in without ever appearing as an own key of the header
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    'x-track': JSON.parse('{"value":"a\\r\\nBcc: attacker@example.com","__proto__":{"prepared":true}}')
+                })
+                .setContent('Hello world!');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(!/^Bcc:/m.test(msg));
+                // the CRLF collapses to a space and the value stays inside its own header
+                assert.ok(/^X-Track: a Bcc: attacker@example\.com\r$/m.test(msg));
+                done();
+            });
+        });
+
         it('should build child node', (t, done) => {
             let mb = new MimeNode('multipart/mixed'),
                 childNode = mb.createChild('text/plain').setContent('Hello world!'),
@@ -1141,6 +1161,35 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             );
         });
 
+        it('should not let an own __proto__ key of an address inject an envelope recipient', () => {
+            // the address is rewritten into a copy, and an own "__proto__" key used to make
+            // that copy inherit `group`, which _convertAddresses walks straight into the
+            // recipient list. The injected address shows up in no own key of the input
+            const to = JSON.parse('{"address":"<>","__proto__":{"group":[{"address":"exfil@attacker.test"}],"name":"Team"}}');
+            const envelope = new MimeNode().setHeader({ from: 'from@example.com', to }).getEnvelope();
+
+            assert.deepStrictEqual(envelope.to, []);
+        });
+
+        it('should not let an own __proto__ key of an envelope mutate the prototype chain', () => {
+            const node = new MimeNode().setEnvelope(
+                JSON.parse('{"from":"from@example.com","to":"to@example.com","__proto__":{"polluted":true}}')
+            );
+            const envelope = node.getEnvelope();
+
+            assert.strictEqual(Object.getPrototypeOf(envelope), Object.prototype);
+            assert.strictEqual(envelope.polluted, undefined);
+            assert.strictEqual({}.polluted, undefined);
+        });
+
+        it('should keep a custom envelope field that shares a name with an Object member', () => {
+            // "constructor" and "prototype" are ordinary own properties when assigned, so
+            // dropping them alongside "__proto__" would discard a legitimate custom field
+            const envelope = new MimeNode().setEnvelope({ from: 'from@example.com', to: 'to@example.com', constructor: 'x' }).getEnvelope();
+
+            assert.strictEqual(envelope.constructor, 'x');
+        });
+
         it('should keep envelope domains as UTF-8 when local part is non-ASCII', () => {
             assert.deepStrictEqual(
                 new MimeNode()
@@ -1918,10 +1967,58 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
             mb.build((err, msg) => {
                 assert.ok(err);
+                // pin the layer: disableUrlAccess is refused here, an unusable scheme is
+                // refused by nmfetch and reports EFETCH instead
+                assert.strictEqual(err.code, 'EURLACCESS');
                 assert.ok(!msg);
                 done();
             });
         });
+
+        it('should reject non-http(s) URL attachment', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'file:///etc/passwd'
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should not take the process down on an unparseable URL attachment', (t, done) => {
+            // the host holds a byte the URL parser refuses, which used to throw out of a
+            // setImmediate with no callback and no error event to catch it
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'http://localhost\u0000.example.com/x'
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        for (let href of [' http://localhost:PORT', '\r\nhttp://localhost:PORT', 'http:/localhost:PORT']) {
+            it('should pipe URL as an attachment for ' + JSON.stringify(href), (t, done) => {
+                // the URL parser normalizes surrounding whitespace and a slash-less
+                // authority, so these resolve to the same host the plain form does and
+                // must not be refused on the shape of the raw string
+                let mb = new MimeNode('text/plain').setContent({
+                    href: href.replace('PORT', port)
+                });
+
+                mb.build((err, msg) => {
+                    assert.ok(!err);
+                    assert.strictEqual(/^=C3=A4/m.test(msg.toString()), true);
+                    done();
+                });
+            });
+        }
 
         it('should return an error on invalid url', (t, done) => {
             let mb = new MimeNode('text/plain').setContent({
