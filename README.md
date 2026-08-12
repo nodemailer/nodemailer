@@ -8,10 +8,7 @@ Send emails from Node.js – easy as cake! 🍰✉️
 
 See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
-> [!TIP]
-> Check out **[EmailEngine](https://emailengine.app/?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link)** – a self-hosted email gateway that allows making **REST requests against IMAP and SMTP servers**. EmailEngine also sends webhooks whenever something changes on the registered accounts.\
-> \
-> Using the email accounts registered with EmailEngine, you can receive and [send emails](https://emailengine.app/sending-emails?utm_source=github-nodemailer&utm_campaign=nodemailer&utm_medium=readme-link). EmailEngine supports OAuth2, delayed sends, opens and clicks tracking, bounce detection, etc. All on top of regular email accounts without an external MTA service.
+> Nodemailer is developed by the team behind **[EmailEngine](https://emailengine.app/?utm_source=nodemailer-readme&utm_medium=readme&utm_campaign=oss-docs)**, a self-hosted email API that turns any Gmail, Microsoft 365, or IMAP account into a REST endpoint, with managed OAuth2, webhooks for incoming mail, and built-in [sending](https://emailengine.app/sending-emails?utm_source=nodemailer-readme&utm_medium=readme&utm_campaign=oss-docs). If you would rather call an HTTP API than maintain IMAP and SMTP connections yourself, that is what it is for.
 
 ## Having an issue?
 
@@ -25,7 +22,7 @@ You are using an older Node.js version than v6.0. Upgrade Node.js to get support
 
 #### I'm having issues with Gmail
 
-Gmail either works well, or it does not work at all. It is probably easier to switch to an alternative service instead of fixing issues with Gmail. If Gmail does not work for you, then don't use it. Read more about it [here](https://nodemailer.com/usage/using-gmail/).
+Gmail either works well, or it does not work at all. It is probably easier to switch to an alternative service instead of fixing issues with Gmail. If Gmail does not work for you, then don't use it. Read more about it [here](https://nodemailer.com/usage/using-gmail/). If the blocker is OAuth2 setup rather than Gmail itself, [EmailEngine](https://emailengine.app/?utm_source=nodemailer-readme&utm_medium=readme&utm_campaign=oss-docs&utm_content=faq-gmail) handles the OAuth2 flow and token refresh for you.
 
 #### I get ETIMEDOUT errors
 
