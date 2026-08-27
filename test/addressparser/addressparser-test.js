@@ -868,6 +868,152 @@ describe('#addressparser', () => {
         });
     });
 
+    describe('Angle-addr holding unquoted whitespace', () => {
+        it('should recover the addr-spec when the recipient is written twice', () => {
+            let input = 'lo@zillowgroup.com <lo@zillowgroup.com lo@zillowgroup.com>';
+            let expected = [
+                {
+                    address: 'lo@zillowgroup.com',
+                    name: 'lo@zillowgroup.com lo@zillowgroup.com'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should recover the addr-spec from a bare domain prefix', () => {
+            let input = 'lo@ <zillowgroup.com lo@zillowgroup.com>';
+            let expected = [
+                {
+                    address: 'lo@zillowgroup.com',
+                    name: 'lo@ zillowgroup.com'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should keep the leftovers out of the address of every recipient in the list', () => {
+            let input = 'lo@ <zillowgroup.com lo@zillowgroup.com>, other@example.com';
+            let expected = [
+                {
+                    address: 'lo@zillowgroup.com',
+                    name: 'lo@ zillowgroup.com'
+                },
+                {
+                    address: 'other@example.com',
+                    name: ''
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should take the first addr-spec when the wreckage holds several', () => {
+            let input = '<first@example.com second@example.net>';
+            let expected = [
+                {
+                    address: 'first@example.com',
+                    name: 'second@example.net'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should treat an unquoted space in the local part as wreckage', () => {
+            let input = '<foo bar@example.com>';
+            let expected = [
+                {
+                    address: 'bar@example.com',
+                    name: 'foo'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should leave the value alone when nothing in it reads as an address', () => {
+            let input = '<no address here>';
+            let expected = [
+                {
+                    address: '',
+                    name: 'no address here'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should agree with the same wreckage written without angle brackets', () => {
+            // The recovery is the angle-addr entry point to what the unquoted-text branch
+            // already does, so the two readings of one malformed value must not diverge
+            for (let value of ['a@b@c.com junk', 'notanaddress a@b.com', 'lo@zillowgroup.com lo@zillowgroup.com']) {
+                assert.deepStrictEqual(addressparser(`<${value}>`)[0].address, addressparser(value)[0].address, value);
+            }
+        });
+
+        it('should not carve an address out of a quoted local part', () => {
+            // Splitting on the whitespace inside the quotes would hand back an address from
+            // the domain the quotes were hiding. The value stays as it came, which is no
+            // worse than reporting a mailbox nobody wrote
+            let input = '<junk "a@evil.com b"@good.com>';
+            let expected = [
+                {
+                    address: 'junk "a@evil.com b"@good.com',
+                    name: ''
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should not carve an address out of the middle of a quoted local part', () => {
+            // The run in the middle carries no quote of its own, so a per-part check would
+            // let 'b@evil.com' through and move the mail off good.com
+            for (let input of ['<junk "a b@evil.com c"@good.com>', '<"a b@evil.com c" x>']) {
+                assert.deepStrictEqual(addressparser(input)[0].address, input.replace(/^<|>$/g, ''), input);
+            }
+        });
+
+        it('should leave a well formed quoted local part alone even when it hides an @', () => {
+            let input = 'Name <"a b@evil.com c"@good.com>';
+            let expected = [
+                {
+                    address: '"a b@evil.com c"@good.com',
+                    name: 'Name'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should not touch whitespace inside a quoted local part', () => {
+            let input = 'Nick <"user name"@example.com>';
+            let expected = [
+                {
+                    address: '"user name"@example.com',
+                    name: 'Nick'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should peel a quoted local part off whole when wreckage trails it', () => {
+            let input = '<"user name"@example.com junk here>';
+            let expected = [
+                {
+                    address: '"user name"@example.com',
+                    name: 'junk here'
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+
+        it('should not touch a quoted local part without a display name', () => {
+            let input = '<"user name"@example.com>';
+            let expected = [
+                {
+                    address: '"user name"@example.com',
+                    name: ''
+                }
+            ];
+            assert.deepStrictEqual(addressparser(input), expected);
+        });
+    });
+
     // DoS protection tests for deeply nested groups (CVE-like vulnerability fix)
     describe('Nested group DoS protection', () => {
         /**
