@@ -1148,4 +1148,62 @@ describe('#addressparser', () => {
             assert.ok(Array.isArray(result));
         });
     });
+    describe('linear time parsing', () => {
+        // A flat list used to be accumulated with parsedAddresses.concat(handled), which
+        // copied everything collected so far on every address. 200k recipients took ~25s
+        // of blocked event loop; the budget here is far above the linear cost (~100ms) and
+        // far below the quadratic one, so it only trips if the accumulator regresses.
+        it('should parse a large flat address list in linear time', () => {
+            const count = 200000;
+            const input = 'a@b.com,'.repeat(count);
+
+            const started = Date.now();
+            const result = addressparser(input);
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(result.length, count);
+            assert.ok(elapsed < 5000, `parsing ${count} addresses took ${elapsed}ms`);
+        });
+
+        // The display-name merge loop spliced each fragment out of the array, which is the
+        // same quadratic shape reached through a different input.
+        it('should merge display name fragments in linear time', () => {
+            const count = 80000;
+            const input = 'a, b <c@d.com>,'.repeat(count);
+
+            const started = Date.now();
+            const result = addressparser(input);
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(result.length, count);
+            assert.strictEqual(result[0].name, 'a, b');
+            assert.strictEqual(result[0].address, 'c@d.com');
+            assert.ok(elapsed < 5000, `merging ${count} fragments took ${elapsed}ms`);
+        });
+
+        it('should keep fragment merging identical to the previous implementation', () => {
+            assert.deepStrictEqual(addressparser('Joe Foo, PhD <joe@example.com>'), [{ address: 'joe@example.com', name: 'Joe Foo, PhD' }]);
+            assert.deepStrictEqual(addressparser('a, b, c <x@y.com>'), [{ address: 'x@y.com', name: 'a, b, c' }]);
+            assert.deepStrictEqual(addressparser('A <a@b.com>, B, C <c@d.com>'), [
+                { address: 'a@b.com', name: 'A' },
+                { address: 'c@d.com', name: 'B, C' }
+            ]);
+            assert.deepStrictEqual(addressparser('a@b.com, c@d.com'), [
+                { address: 'a@b.com', name: '' },
+                { address: 'c@d.com', name: '' }
+            ]);
+        });
+
+        it('should not merge fragments across a group boundary', () => {
+            assert.deepStrictEqual(addressparser('g: a@b.com, c@d.com;'), [
+                {
+                    name: 'g',
+                    group: [
+                        { address: 'a@b.com', name: '' },
+                        { address: 'c@d.com', name: '' }
+                    ]
+                }
+            ]);
+        });
+    });
 });
