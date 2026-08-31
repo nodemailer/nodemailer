@@ -2436,6 +2436,32 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._normalizeAddress('user@ex_ample.com'), 'user@ex_ample.com');
         });
 
+        // domainToASCII and domainToUnicode are host parsers, not IDNA mappers: they cut the
+        // host at '/', '\\', '?' and '#' and percent-decode. Passing a domain through them
+        // unguarded turned 'attacker.example/mail.corp.example', which the bundled codec
+        // leaves unroutable, into deliverable mail for 'attacker.example', so an application
+        // allow-listing by suffix would approve one domain and send to another.
+        it('should not let a URL delimiter truncate the domain', () => {
+            const mb = new MimeNode('text/plain');
+
+            for (const domain of [
+                'attacker.example/mail.corp.example',
+                'attacker.example\\mail.corp.example',
+                'attacker.example?mail.corp.example',
+                'attacker.example#mail.corp.example',
+                'attacker.example%2email.corp.example'
+            ]) {
+                assert.strictEqual(mb._normalizeAddress('user@' + domain), 'user@' + domain, domain);
+            }
+        });
+
+        it('should keep a truncating domain out of the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'user@attacker.example/mail.corp.example');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@attacker.example/mail.corp.example']);
+        });
+
         it('should carry the mapped domain into the envelope', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'victim@compa\u00ADny.com');
