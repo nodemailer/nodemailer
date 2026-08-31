@@ -2278,4 +2278,54 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
     });
+    describe('recipient list scaling', () => {
+        const uniqueRecipients = count => {
+            const list = new Array(count);
+            for (let i = 0; i < count; i++) {
+                list[i] = 'u' + i + '@example.com';
+            }
+            return list;
+        };
+
+        // Recipients used to be deduped with uniqueList.some(), a linear scan per address,
+        // so a list of distinct recipients cost O(n^2). 100k took ~35s. The budget sits far
+        // above the linear cost (~100ms) and far below the quadratic one.
+        it('should build an envelope for a large unique recipient list in linear time', () => {
+            const count = 100000;
+            const recipients = uniqueRecipients(count);
+
+            const started = Date.now();
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', recipients.join(','));
+            const envelope = mb.getEnvelope();
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(envelope.to.length, count);
+            assert.ok(elapsed < 5000, `building ${count} recipients took ${elapsed}ms`);
+        });
+
+        it('should dedupe recipients across To, Cc and Bcc', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'a@example.com, a@example.com, b@example.com');
+            mb.setHeader('Cc', 'b@example.com, c@example.com');
+            mb.setHeader('Bcc', 'a@example.com, d@example.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['a@example.com', 'b@example.com', 'c@example.com', 'd@example.com']);
+        });
+
+        it('should dedupe a group against the addresses around it', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'x@example.com, grp: x@example.com, y@example.com;, y@example.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['x@example.com', 'y@example.com']);
+        });
+
+        it('should keep the rendered header list intact while deduping the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'A <a@example.com>, a@example.com, b@example.com');
+
+            assert.strictEqual(mb.getHeader('To'), 'A <a@example.com>, a@example.com, b@example.com');
+            assert.deepStrictEqual(mb.getEnvelope().to, ['a@example.com', 'b@example.com']);
+        });
+    });
 });
