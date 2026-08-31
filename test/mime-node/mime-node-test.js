@@ -2,6 +2,7 @@
 
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
+const urlModule = require('url');
 const MimeNode = require('../../lib/mime-node');
 const addressparser = require('../../lib/addressparser');
 const http = require('http');
@@ -2356,6 +2357,71 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             mb.setHeader('To', 'user@(x)good-corp.com');
 
             assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
+        });
+    });
+    describe('UTS-46 domain encoding', () => {
+        // The bundled Punycode codec maps nothing, so an ignored or mapped code point
+        // encoded to a different A-label than every conformant parser. An application that
+        // allow-listed 'company.com' with url.domainToASCII approved the recipient while
+        // Nodemailer delivered to 'xn--company-pka.com'.
+        it('should fold away an ignored code point like a validator does', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('victim@compa\u00ADny.com'), 'victim@company.com');
+        });
+
+        it('should map full width characters to their canonical form', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('victim@\uFF43\uFF4F\uFF4D\uFF50\uFF41\uFF4E\uFF59.com'), 'victim@company.com');
+        });
+
+        it('should agree with url.domainToASCII on every encodable domain', () => {
+            const mb = new MimeNode('text/plain');
+            const domains = [
+                'compa\u00ADny.com',
+                'exa\u0301mple.com',
+                'jõgeva.ee',
+                'münchen.de',
+                'пример.рф',
+                '日本.jp',
+                'xn--jgeva-dua.ee',
+                'EXAMPLE.COM',
+                'example.com'
+            ];
+
+            for (const domain of domains) {
+                const reference = urlModule.domainToASCII(domain.toLowerCase());
+                const encoded = mb
+                    ._normalizeAddress('user@' + domain)
+                    .split('@')
+                    .pop();
+                assert.strictEqual(encoded, reference, domain);
+            }
+        });
+
+        it('should map the domain for an SMTPUTF8 address too', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('käsu@compa\u00ADny.com'), 'käsu@company.com');
+            assert.strictEqual(mb._normalizeAddress('käsu@jõgeva.ee'), 'käsu@jõgeva.ee');
+        });
+
+        // domainToASCII returns an empty string for anything that is not a hostname, so
+        // these have to fall through to the bundled codec and stay as supplied.
+        it('should leave address literals and non hostnames alone', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('user@[127.0.0.1]'), 'user@[127.0.0.1]');
+            assert.strictEqual(mb._normalizeAddress('user@[IPv6:::1]'), 'user@[ipv6:::1]');
+            assert.strictEqual(mb._normalizeAddress('user@ex_ample.com'), 'user@ex_ample.com');
+        });
+
+        it('should carry the mapped domain into the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'victim@compa\u00ADny.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['victim@company.com']);
         });
     });
 });
