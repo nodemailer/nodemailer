@@ -2342,4 +2342,20 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.deepStrictEqual(mb.getEnvelope().to, ['a@example.com', 'b@example.com']);
         });
     });
+    describe('comment handling in recipients', () => {
+        it('should deliver to the domain before a comment, not the text after it', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('From', 'app@good-corp.com');
+            mb.setHeader('To', 'user@good-corp.com(x)evil.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
+        });
+
+        it('should keep a comment beside the @ inside the same address', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'user@(x)good-corp.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
+        });
+    });
 });
