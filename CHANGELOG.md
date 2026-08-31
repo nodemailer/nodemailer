@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [9.1.0](https://github.com/nodemailer/nodemailer/compare/v9.0.6...v9.1.0) (2026-08-31)
+
+
+### Features
+
+* **mailer:** cap recipients per message with maxRecipients ([7279ac8](https://github.com/nodemailer/nodemailer/commit/7279ac8dee4f66c032981e6e51e3e7210ad0dcbf))
+
+
+### Bug Fixes
+
+* **addressparser:** handle address lists in linear time ([9116da9](https://github.com/nodemailer/nodemailer/commit/9116da9528c6524cefaed75185602a7e85d20434))
+* **addressparser:** terminate the domain at an RFC 5322 comment ([902b63e](https://github.com/nodemailer/nodemailer/commit/902b63e935435c30f4025901c0902dce64cd8880))
+* **mime-node:** apply UTS-46 mapping when encoding a domain ([259c32d](https://github.com/nodemailer/nodemailer/commit/259c32d7d266301e3377a212776c3fff993c0148))
+* **mime-node:** dedupe envelope recipients in linear time ([7cc38af](https://github.com/nodemailer/nodemailer/commit/7cc38af418ffa6fc7e86085195ca5ca681694b3e))
+* **mime-node:** flatten parsed addresses without concat.apply ([83b8c48](https://github.com/nodemailer/nodemailer/commit/83b8c48cbdb8b3116f2e1ba84af755b2c5661c0f))
+* **mime-node:** keep the recipient dedupe linear across address headers ([34da642](https://github.com/nodemailer/nodemailer/commit/34da64282dcdc9b0581c721a27ab2fa226673150))
+* **mime-node:** keep URL delimiters away from the domain mapper ([b212ac4](https://github.com/nodemailer/nodemailer/commit/b212ac4e27bce8182478044fcb8d1642ccdad46e))
+
 ## [9.0.6](https://github.com/nodemailer/nodemailer/compare/v9.0.5...v9.0.6) (2026-08-27)
 
 
