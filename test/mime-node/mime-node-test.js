@@ -2304,6 +2304,20 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.ok(elapsed < 5000, `building ${count} recipients took ${elapsed}ms`);
         });
 
+        // _parseAddresses flattened with concat.apply, which spreads every parsed entry
+        // into arguments and threw "Maximum call stack size exceeded" from about 124k
+        // recipients upwards. A large Bcc list reaches that on its own, no crafted input.
+        it('should accept a recipient array past the argument limit', () => {
+            const count = 200000;
+            const recipients = uniqueRecipients(count);
+            const mb = new MimeNode('text/plain');
+
+            assert.doesNotThrow(() => {
+                mb.setHeader('To', recipients);
+            });
+            assert.strictEqual(mb.getEnvelope().to.length, count);
+        });
+
         it('should dedupe recipients across To, Cc and Bcc', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'a@example.com, a@example.com, b@example.com');
