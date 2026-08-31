@@ -2319,6 +2319,25 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb.getEnvelope().to.length, count);
         });
 
+        // The dedupe set has to outlive one _convertAddresses call. Seeding it per call is
+        // O(headers x recipients), and header count is not bounded by three: `headers: { to:
+        // [...] }` emits one To header per entry, which made this shape slower than the
+        // linear-scan it replaced.
+        it('should stay linear when recipients are spread over many headers', () => {
+            const count = 20000;
+
+            const started = Date.now();
+            const mb = new MimeNode('text/plain');
+            for (let i = 0; i < count; i++) {
+                mb.addHeader('To', 'u' + i + '@example.com');
+            }
+            const envelope = mb.getEnvelope();
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(envelope.to.length, count);
+            assert.ok(elapsed < 2000, `${count} single-recipient headers took ${elapsed}ms`);
+        });
+
         it('should dedupe recipients across To, Cc and Bcc', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'a@example.com, a@example.com, b@example.com');
