@@ -1206,4 +1206,49 @@ describe('#addressparser', () => {
             ]);
         });
     });
+    describe('RFC 5322 comments', () => {
+        // A comment is folding whitespace, so it terminates the domain instead of joining
+        // the text around it. Gluing read 'user@good-corp.com(x)evil.com' as the domain
+        // 'good-corp.comevil.com', which an attacker can register, so an application that
+        // validated 'good-corp.com' mailed a domain it never approved.
+        it('should not glue a domain to the text after a comment', () => {
+            assert.deepStrictEqual(addressparser('user@good-corp.com(x)evil.com'), [{ address: 'user@good-corp.com', name: 'evil.com' }]);
+        });
+
+        it('should not glue across empty, repeated or nested comments', () => {
+            for (const input of [
+                'user@good-corp.com()evil.com',
+                'user@good-corp.com(a)(b)evil.com',
+                'user@good-corp.com(a)(b)(c)evil.com',
+                'user@good-corp.com(a(b)evil.com'
+            ]) {
+                assert.strictEqual(addressparser(input)[0].address, 'user@good-corp.com', input);
+            }
+        });
+
+        it('should keep both recipients when a comment splits an address list', () => {
+            const parsed = addressparser('a@b.com(c)d.com, e@f.com');
+            assert.strictEqual(parsed.length, 2);
+            assert.strictEqual(parsed[0].address, 'a@b.com');
+            assert.strictEqual(parsed[1].address, 'e@f.com');
+        });
+
+        // CFWS is allowed on either side of the '@', so a comment there still belongs to
+        // the same addr-spec and the address must survive intact.
+        it('should still resolve an address with a comment beside the @', () => {
+            assert.strictEqual(addressparser('user@(x)good-corp.com')[0].address, 'user@good-corp.com');
+            assert.strictEqual(addressparser('user(x)@good-corp.com')[0].address, 'user@good-corp.com');
+            assert.strictEqual(addressparser('(lead)user@good-corp.com')[0].address, 'user@good-corp.com');
+        });
+
+        it('should keep quoted string and angle address joining intact', () => {
+            assert.strictEqual(addressparser('"foo"bar@example.com')[0].address, 'foobar@example.com');
+            assert.strictEqual(addressparser('<a@b.com>x')[0].address, 'a@b.com');
+        });
+
+        it('should read a comment as the display name when there is none', () => {
+            assert.deepStrictEqual(addressparser('Foo (Bar) <foo@example.com>'), [{ address: 'foo@example.com', name: 'Foo' }]);
+            assert.deepStrictEqual(addressparser('(Bar) <foo@example.com>'), [{ address: 'foo@example.com', name: 'Bar' }]);
+        });
+    });
 });
