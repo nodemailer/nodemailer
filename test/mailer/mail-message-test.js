@@ -89,6 +89,40 @@ describe('MailMessage Tests', () => {
             assert.strictEqual(message.data.from, 'set@example.com');
             assert.deepStrictEqual(message.data.headers, { 'x-a': 'own', 'x-b': '2' });
         });
+
+        it('should not let message data reopen an access flag set in the defaults', () => {
+            // `defaults` is the only channel a transporter plugin has for the sandbox, and the
+            // defaults copy leaves a key alone when the message already set one
+            const mailer = { options: {}, _defaults: { disableFileAccess: true, disableUrlAccess: true } };
+            const message = new MailMessage(mailer, { disableFileAccess: false, disableUrlAccess: false });
+
+            assert.strictEqual(message.data.disableFileAccess, true);
+            assert.strictEqual(message.data.disableUrlAccess, true);
+        });
+
+        it('should still let message data set an access flag the configuration does not name', () => {
+            const mailer = { options: {}, _defaults: {} };
+            const message = new MailMessage(mailer, { disableFileAccess: true });
+
+            assert.strictEqual(message.data.disableFileAccess, true);
+        });
+
+        it('should not let a falsy default cancel an access flag the message set', () => {
+            // `defaults` built programmatically, e.g. { disableFileAccess: !!cfg.sandbox }, must
+            // not switch off a message that tightened for its own untrusted content
+            const mailer = { options: {}, _defaults: { disableFileAccess: false, disableUrlAccess: undefined } };
+            const message = new MailMessage(mailer, { disableFileAccess: true, disableUrlAccess: true });
+
+            assert.strictEqual(message.data.disableFileAccess, true);
+            assert.strictEqual(message.data.disableUrlAccess, true);
+        });
+
+        it('should let transporter options override an access flag from the defaults', () => {
+            const mailer = { options: { disableFileAccess: false }, _defaults: { disableFileAccess: true } };
+            const message = new MailMessage(mailer, {});
+
+            assert.strictEqual(message.data.disableFileAccess, false);
+        });
     });
 
     describe('resolveContent', () => {
@@ -161,6 +195,19 @@ describe('MailMessage Tests', () => {
             message.resolveContent(message.data, 'html', (err, value) => {
                 assert.ok(!err);
                 assert.strictEqual(value, 'hello');
+                done();
+            });
+        });
+
+        it('should keep the sandbox when the policy came from the transporter defaults', (t, done) => {
+            // createTransport leaves `options` undefined for a transporter plugin, so a policy
+            // set through its second argument has to survive hostile message data
+            const transporter = nodemailer.createTransport({ streamTransport: true, buffer: true }, { disableFileAccess: true });
+            const hostile = JSON.parse('{"from":"a@example.com","to":"b@example.com","text":"hi","disableFileAccess":false}');
+            hostile.attachments = [{ filename: 'x', path: __filename }];
+
+            transporter.sendMail(hostile, err => {
+                assert.strictEqual(err.code, 'EFILEACCESS');
                 done();
             });
         });
