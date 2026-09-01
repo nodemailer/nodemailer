@@ -6,6 +6,7 @@ const urlModule = require('url');
 const MimeNode = require('../../lib/mime-node');
 const addressparser = require('../../lib/addressparser');
 const http = require('http');
+const fs = require('fs');
 const stream = require('stream');
 const Transform = stream.Transform;
 const PassThrough = stream.PassThrough;
@@ -43,6 +44,21 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(child.rootNode, mb);
             assert.strictEqual(mb.childNodes.length, 1);
             assert.strictEqual(mb.childNodes[0], child);
+        });
+
+        it('should take the node out of the tree it was in', () => {
+            // leaving it in the old parent keeps it streaming as part of that tree while
+            // parentNode already points at the new one
+            let first = new MimeNode('multipart/mixed');
+            let second = new MimeNode('multipart/mixed');
+
+            let child = first.createChild('text/plain');
+            second.appendChild(child);
+
+            assert.strictEqual(first.childNodes.length, 0);
+            assert.strictEqual(child.parentNode, second);
+            assert.strictEqual(child.rootNode, second);
+            assert.strictEqual(second.childNodes[0], child);
         });
     });
 
@@ -1976,6 +1992,17 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should reject an URL for a child of a closed root', (t, done) => {
+            let mb = new MimeNode('multipart/mixed', { disableUrlAccess: true });
+            mb.createChild('text/plain').setContent({ href: 'http://localhost:' + port });
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EURLACCESS');
+                done();
+            });
+        });
+
         it('should reject non-http(s) URL attachment', (t, done) => {
             let mb = new MimeNode('text/plain').setContent({
                 href: 'file:///etc/passwd'
@@ -2055,6 +2082,62 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             mb.build((err, msg) => {
                 assert.ok(err);
                 assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should reject a file for a child of a closed root', (t, done) => {
+            // createChild only sees the options the caller hands it, so the child used to
+            // start out with file access open under a root that had closed it
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            mb.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            });
+        });
+
+        it('should reject a file for a grandchild attached before its parent was', (t, done) => {
+            // the subtree is assembled before it is hung on the closed root, so the answer
+            // has to be read off the parent chain rather than copied down on append
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            let branch = new MimeNode('multipart/related');
+            branch.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+            mb.appendChild(branch);
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            });
+        });
+
+        it('should not read a file for a child re-parented into a second tree', (t, done) => {
+            // appending the node elsewhere used to re-point its parent chain at an open root
+            // while the closed root still streamed it
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            let child = mb.createChild('application/octet-stream');
+            child.setContent({ path: __dirname + '/fixtures/attachment.bin' });
+            new MimeNode('multipart/mixed').appendChild(child);
+
+            const encoded = fs.readFileSync(__dirname + '/fixtures/attachment.bin').toString('base64');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.ok(!msg.toString().includes(encoded));
+                done();
+            });
+        });
+
+        it('should resolve a file for a child of an open root', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            mb.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.ok(msg.toString().length);
                 done();
             });
         });
