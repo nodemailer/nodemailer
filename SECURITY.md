@@ -11,8 +11,8 @@ supported way to receive security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 8.x     | :white_check_mark: |
-| < 8.0   | :x:                |
+| 9.x     | :white_check_mark: |
+| < 9.0   | :x:                |
 
 If you are on an older major, please upgrade. See the migration notes at
 <https://nodemailer.com/> before updating.
