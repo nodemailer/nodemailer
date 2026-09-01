@@ -3,6 +3,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const MailMessage = require('../../lib/mailer/mail-message');
+const nodemailer = require('../../lib/nodemailer');
 
 describe('MailMessage Tests', () => {
     describe('constructor', () => {
@@ -87,6 +88,100 @@ describe('MailMessage Tests', () => {
 
             assert.strictEqual(message.data.from, 'set@example.com');
             assert.deepStrictEqual(message.data.headers, { 'x-a': 'own', 'x-b': '2' });
+        });
+    });
+
+    describe('resolveContent', () => {
+        // the transporter level access policy lives on the message, not on the call
+        const sandboxed = data => new MailMessage({ options: { disableFileAccess: true, disableUrlAccess: true }, _defaults: {} }, data);
+        const open = data => new MailMessage({ options: {}, _defaults: {} }, data);
+
+        it('should reject a file path for the legacy callback signature', (t, done) => {
+            const message = sandboxed({ html: { path: __filename } });
+
+            message.resolveContent(message.data, 'html', err => {
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            });
+        });
+
+        it('should reject an url for the legacy callback signature', (t, done) => {
+            const message = sandboxed({ attachments: [{ filename: 'x.bin', href: 'http://127.0.0.1:1/poc' }] });
+
+            message.resolveContent(message.data.attachments, 0, err => {
+                assert.strictEqual(err.code, 'EURLACCESS');
+                done();
+            });
+        });
+
+        it('should apply the policy for the full (data, key, options, callback) signature', (t, done) => {
+            // a path that looks like an url resolves through the url branch, so the merged
+            // disableUrlAccess has to reach it from an explicit options object too
+            const message = sandboxed({ html: { path: 'http://127.0.0.1:1/poc' } });
+
+            message.resolveContent(message.data, 'html', {}, err => {
+                assert.strictEqual(err.code, 'EURLACCESS');
+                done();
+            });
+        });
+
+        it('should reject a file path for the promise signature', async () => {
+            const message = sandboxed({ html: { path: __filename } });
+
+            await assert.rejects(message.resolveContent(message.data, 'html'), { code: 'EFILEACCESS' });
+        });
+
+        it('should let explicit options tighten the policy', async () => {
+            const message = open({ html: { path: __filename } });
+
+            await assert.rejects(message.resolveContent(message.data, 'html', { disableFileAccess: true }), { code: 'EFILEACCESS' });
+        });
+
+        it('should not let explicit options reopen the policy', async () => {
+            const message = sandboxed({ html: { path: __filename } });
+
+            await assert.rejects(message.resolveContent(message.data, 'html', { disableFileAccess: false, disableUrlAccess: false }), {
+                code: 'EFILEACCESS'
+            });
+        });
+
+        it('should resolve a file path when the policy allows it', (t, done) => {
+            const message = open({ html: { path: __filename } });
+
+            message.resolveContent(message.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.ok(value.toString().includes('should resolve a file path when the policy allows it'));
+                done();
+            });
+        });
+
+        it('should resolve inline content while the policy is set', (t, done) => {
+            const message = sandboxed({ html: 'hello' });
+
+            message.resolveContent(message.data, 'html', (err, value) => {
+                assert.ok(!err);
+                assert.strictEqual(value, 'hello');
+                done();
+            });
+        });
+
+        it('should apply the policy to a compile plugin resolving during sendMail', (t, done) => {
+            // how the bypass was reached in practice, a plugin resolving message content
+            // on a transporter that closed file access
+            const transporter = nodemailer.createTransport({ streamTransport: true, disableFileAccess: true });
+
+            let pluginErr;
+            transporter.use('compile', (mail, next) => {
+                mail.resolveContent(mail.data, 'html', err => {
+                    pluginErr = err;
+                    next();
+                });
+            });
+
+            transporter.sendMail({ from: 'a@example.com', to: 'b@example.com', text: 'hello', html: { path: __filename } }, () => {
+                assert.strictEqual(pluginErr.code, 'EFILEACCESS');
+                done();
+            });
         });
     });
 });
