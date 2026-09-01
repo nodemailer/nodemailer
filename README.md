@@ -52,7 +52,7 @@ let configOptions = {
 
 #### I have issues with DNS / hosts file
 
-Node.js uses [c-ares](https://nodejs.org/en/docs/meta/topics/dependencies/#c-ares) to resolve domain names, not the DNS library provided by the system, so if you have some custom DNS routing set up, it might be ignored. Nodemailer runs [dns.resolve4()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve4hostname-options-callback) and [dns.resolve6()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve6hostname-options-callback) to resolve hostname into an IP address. If both calls fail, then Nodemailer will fall back to [dns.lookup()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnslookuphostname-options-callback). If this does not work for you, you can hard code the IP address into the configuration like shown below. In that case, Nodemailer would not perform any DNS lookups.
+Node.js uses [c-ares](https://github.com/c-ares/c-ares) to resolve domain names, not the DNS library provided by the system, so if you have some custom DNS routing set up, it might be ignored. Nodemailer runs [dns.resolve4()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve4hostname-options-callback) and [dns.resolve6()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnsresolve6hostname-options-callback) to resolve hostname into an IP address. If both calls fail, then Nodemailer will fall back to [dns.lookup()](https://nodejs.org/dist/latest-v16.x/docs/api/dns.html#dnslookuphostname-options-callback). If this does not work for you, you can hard code the IP address into the configuration like shown below. In that case, Nodemailer would not perform any DNS lookups.
 
 ```js
 let configOptions = {
