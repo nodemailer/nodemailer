@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [9.1.1](https://github.com/nodemailer/nodemailer/compare/v9.1.0...v9.1.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **mailer:** apply the message access policy in resolveContent ([dc48ed3](https://github.com/nodemailer/nodemailer/commit/dc48ed395c4d6c79ee5c95eb6eff17bafe391474))
+* **mailer:** keep message data from reopening the access sandbox ([ab7ef34](https://github.com/nodemailer/nodemailer/commit/ab7ef348b9a97b1fd70e7bfbeb56d4ea4a07946b))
+* **mime-node:** inherit the access policy from the tree a node hangs in ([262d550](https://github.com/nodemailer/nodemailer/commit/262d550b1e121e3ff4ef6675d6771a5b2b4ddcec))
+
 ## [9.1.0](https://github.com/nodemailer/nodemailer/compare/v9.0.6...v9.1.0) (2026-08-31)
 
 
