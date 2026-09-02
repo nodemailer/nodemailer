@@ -112,6 +112,10 @@ export default class PoolResource extends EventEmitter {
     connect(callback: PoolResourceConnectCallback): void {
         this.pool.getSocket(this.options, (err, socketOptions) => {
             if (err) {
+                // nothing was connected, so no 'close' event is coming that would free the
+                // slot this resource holds in the pool, report the failure the way a failed
+                // login does
+                this.emit('error', err);
                 return callback(err);
             }
 
