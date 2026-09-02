@@ -267,14 +267,13 @@ class SMTPPool extends EventEmitter {
                 try {
                     entry.callback(new Error('Connection pool was closed'));
                 } catch (E: any) {
+                    // the queue is drained without a connection, so there is no cid to log
                     this.logger.error(
                         {
                             err: E,
-                            tnx: 'callback',
-                            cid: connection!.id
+                            tnx: 'callback'
                         },
-                        'Callback error for #%s: %s',
-                        connection!.id,
+                        'Callback error: %s',
                         E.message
                     );
                 }
