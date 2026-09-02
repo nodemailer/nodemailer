@@ -33,6 +33,16 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(subchild2.parentNode, child);
             assert.strictEqual(subchild2.rootNode, mb);
         });
+
+        it('should accept the options as the only argument', () => {
+            let mb = new MimeNode('multipart/mixed');
+
+            let child = mb.createChild({ filename: 'notes.txt' });
+            assert.strictEqual(child.parentNode, mb);
+            assert.strictEqual(child.filename, 'notes.txt');
+            // with no content type given it is derived from the filename
+            assert.strictEqual(child.getHeader('Content-Type'), 'text/plain');
+        });
     });
 
     describe('#appendChild', () => {
@@ -74,6 +84,18 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb.childNodes.length, 1);
             assert.strictEqual(mb.childNodes[0], replacement);
         });
+
+        it('should leave the tree alone when a node replaces itself', () => {
+            let mb = new MimeNode(),
+                child = mb.createChild('text/plain');
+
+            assert.strictEqual(child.replace(child), child);
+
+            assert.strictEqual(mb.childNodes.length, 1);
+            assert.strictEqual(mb.childNodes[0], child);
+            assert.strictEqual(child.parentNode, mb);
+            assert.strictEqual(child.rootNode, mb);
+        });
     });
 
     describe('#remove', () => {
@@ -84,6 +106,14 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             child.remove();
             assert.strictEqual(mb.childNodes.length, 0);
             assert.ok(!(child as any).parenNode);
+        });
+
+        it('should return a node without a parent as it is', () => {
+            let mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb.remove(), mb);
+            assert.strictEqual(mb.parentNode, undefined);
+            assert.strictEqual(mb.rootNode, mb);
         });
     });
 
@@ -142,6 +172,43 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 {
                     key: 'Key',
                     value: ['value1', 'value2', 'value3']
+                }
+            ]);
+        });
+
+        it('should set a single key value pair object', () => {
+            let mb = new MimeNode();
+
+            mb.setHeader({ key: 'x-a', value: 'b' });
+            mb.setHeader({ key: 'x-a', value: 'c' });
+
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'X-A',
+                    value: 'c'
+                }
+            ]);
+        });
+
+        it('should collapse repeated headers into the set value', () => {
+            let mb = new MimeNode();
+
+            mb.addHeader('x-a', '1');
+            mb.addHeader('x-b', 'z');
+            mb.addHeader('x-a', '2');
+            mb.addHeader('x-a', '3');
+
+            mb.setHeader('x-a', 'final');
+
+            // the first occurrence is replaced in place, the later ones are dropped
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'X-A',
+                    value: 'final'
+                },
+                {
+                    key: 'X-B',
+                    value: 'z'
                 }
             ]);
         });
@@ -216,6 +283,24 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 }
             ]);
         });
+
+        it('should add a single key value pair object', () => {
+            let mb = new MimeNode();
+
+            mb.addHeader({ key: 'x-a', value: 'b' });
+            mb.addHeader({ key: 'x-a', value: 'c' });
+
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'X-A',
+                    value: 'b'
+                },
+                {
+                    key: 'X-A',
+                    value: 'c'
+                }
+            ]);
+        });
     });
 
     describe('#getHeader', () => {
@@ -265,6 +350,75 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.ok(!err);
                 msg = msg.toString();
                 assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should resolve with the message when no callback is given', async () => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('Hello world!');
+
+            let msg = await mb.build();
+
+            assert.ok(Buffer.isBuffer(msg));
+            assert.strictEqual(
+                msg.toString(),
+                'Date: 12345\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'Content-Transfer-Encoding: 7bit\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n'
+            );
+        });
+
+        it('should reject when no callback is given and the content fails', async () => {
+            let mb = new MimeNode('text/plain').setContent({
+                path: '/ASfsdfsdf/Sdgsgdfg/SDFgdfgdfg'
+            });
+
+            await assert.rejects(mb.build(), { code: 'ENOENT' });
+        });
+
+        it('should format a Date object for the Date header', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    date: new Date('2014-06-21T10:52:44Z'),
+                    'message-id': '67890'
+                })
+                .setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.strictEqual(/^Date: Sat, 21 Jun 2014 10:52:44 \+0000$/m.test(msg.toString()), true);
+                done();
+            });
+        });
+
+        it('should report an error for content that can not be streamed', (t, done) => {
+            // an object that is neither a stream nor a content descriptor has no bytes to emit
+            let mb = new MimeNode('text/plain').setContent({ foo: 'bar' } as any);
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ERR_INVALID_ARG_TYPE');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should report an error for raw content that can not be streamed', (t, done) => {
+            let mb = new MimeNode('text/plain').setRaw({ foo: 'bar' } as any);
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ERR_INVALID_ARG_TYPE');
+                assert.ok(!msg);
                 done();
             });
         });
@@ -1779,6 +1933,18 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 );
             });
         });
+
+        it('should dedupe against a prefilled unique list', () => {
+            // a caller that collects To, then Cc, then Bcc into one list keeps deduping across
+            // the calls, so the seen set is rebuilt from the list when none is handed over
+            let mb = new MimeNode();
+            let uniqueList: MimeNodeAddress[] = [{ address: 'a@example.com', name: '' }];
+
+            let header = mb._convertAddresses([{ address: 'a@example.com' }, { address: 'b@example.com' }], uniqueList);
+
+            assert.strictEqual(header, 'a@example.com, b@example.com');
+            assert.deepStrictEqual(uniqueList, [{ address: 'a@example.com', name: '' }, { address: 'b@example.com' }]);
+        });
     });
 
     describe('#_normalizeAddress', () => {
@@ -2226,6 +2392,110 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.strictEqual(msg, expected);
                 done();
             });
+        });
+
+        it('should accept a function that creates the transform', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('Hello world!');
+            let created = 0;
+
+            mb.transform(() => {
+                created++;
+                return new Transform({
+                    transform(chunk, encoding, callback) {
+                        this.push(chunk.toString().toUpperCase());
+                        callback();
+                    }
+                });
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.strictEqual(created, 1);
+                assert.strictEqual(
+                    msg.toString(),
+                    'DATE: 12345\r\n' +
+                        'MESSAGE-ID: <67890>\r\n' +
+                        'CONTENT-TRANSFER-ENCODING: 7BIT\r\n' +
+                        'MIME-VERSION: 1.0\r\n' +
+                        'CONTENT-TYPE: TEXT/PLAIN\r\n' +
+                        '\r\n' +
+                        'HELLO WORLD!\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should pass a content error through the transforms', (t, done) => {
+            let s = new PassThrough();
+            let mb = new MimeNode('text/plain').setContent(s);
+
+            mb.transform(new PassThrough());
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.message, 'content blew up');
+                assert.ok(!msg);
+                done();
+            });
+
+            setImmediate(() => s.emit('error', new Error('content blew up')));
+        });
+    });
+
+    describe('Line breaks', () => {
+        it('should convert line breaks to LF when newline is linux', (t, done) => {
+            let mb = new MimeNode('text/plain', { newline: 'linux' })
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('a\r\nb');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.strictEqual(
+                    msg.toString(),
+                    'Date: 12345\nMessage-ID: <67890>\nContent-Transfer-Encoding: 7bit\nMIME-Version: 1.0\nContent-Type: text/plain\n\na\nb\n'
+                );
+                done();
+            });
+        });
+
+        it('should convert line breaks to CRLF when newline is win', (t, done) => {
+            let mb = new MimeNode('text/plain', { newline: 'win' })
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('a\nb');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.strictEqual(
+                    msg.toString(),
+                    'Date: 12345\r\nMessage-ID: <67890>\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\nContent-Type: text/plain\r\n\r\na\r\nb\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should pass a content error through the newline transform', (t, done) => {
+            let s = new PassThrough();
+            let mb = new MimeNode('text/plain', { newline: 'win' }).setContent(s);
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.message, 'content blew up');
+                assert.ok(!msg);
+                done();
+            });
+
+            setImmediate(() => s.emit('error', new Error('content blew up')));
         });
     });
 

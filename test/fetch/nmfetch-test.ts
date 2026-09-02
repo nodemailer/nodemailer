@@ -7,6 +7,7 @@ import http from 'node:http';
 import https from 'node:https';
 import zlib from 'node:zlib';
 import { PassThrough } from 'node:stream';
+import type { AddressInfo } from 'node:net';
 
 const HTTP_PORT = 19998;
 const HTTPS_PORT = 19993;
@@ -716,6 +717,236 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
         });
         req.on('end', () => {
             assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
+            done();
+        });
+    });
+});
+
+describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => {
+    let server: http.Server;
+    let base: string;
+
+    beforeEach((t, done) => {
+        server = http.createServer((req, res) => {
+            switch (req.url) {
+                case '/setcookie':
+                    res.writeHead(302, {
+                        'Set-Cookie': ['sess=abc; Path=/', 'other=1; Path=/elsewhere/'],
+                        Location: '/cookie'
+                    });
+                    res.end();
+                    break;
+
+                case '/cookie':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(req.headers.cookie || 'NO_COOKIE');
+                    break;
+
+                case '/badgzip':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain',
+                        'Content-Encoding': 'gzip'
+                    });
+                    res.end('this is not gzip');
+                    break;
+
+                case '/abort':
+                    // announce a body and drop the connection before it is complete
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain',
+                        'Content-Length': '100'
+                    });
+                    res.write('partial');
+                    setImmediate(() => req.socket.destroy());
+                    break;
+
+                case '/badlocation':
+                    // a space is legal in a header value but not in a host
+                    res.writeHead(302, {
+                        Location: 'http://exa mple.com/'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect-post':
+                    res.writeHead(302, {
+                        Location: '/echo'
+                    });
+                    res.end();
+                    break;
+
+                default: {
+                    let chunks: Buffer[] = [];
+                    req.on('data', chunk => chunks.push(chunk));
+                    req.on('end', () => {
+                        res.writeHead(200, {
+                            'Content-Type': 'application/json'
+                        });
+                        res.end(
+                            JSON.stringify({
+                                method: req.method,
+                                headers: req.headers,
+                                body: Buffer.concat(chunks).toString()
+                            })
+                        );
+                    });
+                }
+            }
+        });
+
+        server.listen(0, () => {
+            base = 'http://localhost:' + (server.address() as AddressInfo).port;
+            done();
+        });
+    });
+
+    afterEach((t, done) => {
+        server.close(() => done());
+        // a request whose body stream failed is left open by the client, do not wait for it.
+        // Ordered after close(): Bun reports the server as not running once its
+        // connections are gone
+        server.closeAllConnections();
+    });
+
+    // Fetches the echo route and hands back what the server saw of the request
+    let fetchEcho = (options: any, callback: (err: any, echo?: any) => void) => {
+        let req = nmfetch(base + '/echo', options);
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => callback(err));
+        req.on('end', () => callback(null, JSON.parse(Buffer.concat(buf).toString())));
+    };
+
+    it('should post a trimmed string body as a form', (t, done) => {
+        fetchEcho({ body: '  hello=world  ' }, (err, echo) => {
+            assert.ok(!err);
+            assert.strictEqual(echo.method, 'POST');
+            assert.strictEqual(echo.headers['content-type'], 'application/x-www-form-urlencoded');
+            assert.strictEqual(echo.headers['content-length'], '11');
+            assert.strictEqual(echo.body, 'hello=world');
+            done();
+        });
+    });
+
+    it('should send a Buffer body with the given content type and method', (t, done) => {
+        fetchEcho({ body: Buffer.from('raw bytes'), contentType: 'application/octet-stream', method: 'put' }, (err, echo) => {
+            assert.ok(!err);
+            assert.strictEqual(echo.method, 'PUT');
+            assert.strictEqual(echo.headers['content-type'], 'application/octet-stream');
+            assert.strictEqual(echo.headers['content-length'], '9');
+            assert.strictEqual(echo.body, 'raw bytes');
+            done();
+        });
+    });
+
+    it('should stream a body without a content type when contentType is false', (t, done) => {
+        let body = new PassThrough();
+
+        fetchEcho({ body, contentType: false }, (err, echo) => {
+            assert.ok(!err);
+            assert.strictEqual(echo.method, 'POST');
+            assert.strictEqual(echo.headers['transfer-encoding'], 'chunked');
+            assert.ok(!('content-type' in echo.headers));
+            assert.ok(!('content-length' in echo.headers));
+            assert.strictEqual(echo.body, 'streamed');
+            done();
+        });
+
+        setImmediate(() => body.end('streamed'));
+    });
+
+    it('should report an error of the body stream', (t, done) => {
+        let body = new PassThrough();
+
+        fetchEcho({ method: 'post', body }, (err, echo) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(err.message, 'body failed');
+            assert.strictEqual(err.sourceUrl, base + '/echo');
+            assert.ok(!echo);
+            done();
+        });
+
+        setImmediate(() => body.emit('error', new Error('body failed')));
+    });
+
+    it('should store response cookies in the jar and send them on the redirect', (t, done) => {
+        let jar = new nmfetch.Cookies();
+        let req = nmfetch(base + '/setcookie', { cookies: jar });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', done);
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'sess=abc');
+            // both cookies are kept, only the one whose path matches is sent
+            assert.strictEqual(jar.cookies.length, 2);
+            assert.strictEqual(jar.get(base + '/cookie'), 'sess=abc');
+            assert.strictEqual(jar.get(base + '/elsewhere/page'), 'sess=abc; other=1');
+            done();
+        });
+    });
+
+    it('should fail on a response that claims to be gzipped but is not', (t, done) => {
+        let req = nmfetch(base + '/badgzip');
+        req.on('data', () => false);
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(err.sourceUrl, base + '/badgzip');
+            assert.ok(/header/i.test(err.message));
+            done();
+        });
+        req.on('end', () => {
+            done(new Error('a corrupt gzip body should have failed'));
+        });
+    });
+
+    it('should fail when the connection drops before the response is complete', (t, done) => {
+        let req = nmfetch(base + '/abort');
+        req.on('data', () => false);
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(err.message, 'aborted');
+            assert.strictEqual(err.sourceUrl, base + '/abort');
+            done();
+        });
+        req.on('end', () => {
+            done(new Error('a truncated response should have failed'));
+        });
+    });
+
+    it('should refuse a redirect to a location that does not parse', (t, done) => {
+        let req = nmfetch(base + '/badlocation');
+        req.on('data', () => false);
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(err.message, 'Unsupported protocol for URL http://exa mple.com/');
+            assert.strictEqual(err.sourceUrl, 'http://exa mple.com/');
+            done();
+        });
+        req.on('end', () => {
+            done(new Error('an unparseable redirect should have failed'));
+        });
+    });
+
+    it('should follow a redirect of a POST with a GET and no body', (t, done) => {
+        let req = nmfetch(base + '/redirect-post', { body: 'a=1' });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', done);
+        req.on('end', () => {
+            let echo = JSON.parse(Buffer.concat(buf).toString());
+            assert.strictEqual(echo.method, 'GET');
+            assert.strictEqual(echo.body, '');
+            assert.ok(!('content-type' in echo.headers));
+            assert.ok(!('content-length' in echo.headers));
             done();
         });
     });

@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { NodemailerError } from '../../src/errors.js';
 import type { SESTransportOptions } from '../../src/ses-transport/index.js';
+import { captureLogger } from '../smtp-transport/smtp-fixtures.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -446,6 +447,173 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
             });
             assert.strictEqual(info.messageId, '<testtest@eu-west-1.amazonses.com>');
             assert.strictEqual(info.response, 'testtest');
+            done();
+        });
+    });
+});
+
+describe('SES Transport region and failure handling', () => {
+    const message = { from: 'a@example.com', to: 'b@example.com', subject: 'test', text: 'test' };
+
+    // a client that answers every command with the given MessageId and records the commands
+    const client = (messageId: string, config?: { region(): Promise<string> }) => {
+        const commands: any[] = [];
+        const sesClient: SESTransportOptions['SES']['sesClient'] = {
+            config,
+            send(command: any) {
+                commands.push(command);
+                return new Promise(resolve => setImmediate(() => resolve({ MessageId: messageId })));
+            }
+        };
+        return { commands, SES: { sesClient, SendEmailCommand } };
+    };
+
+    it('should fall back to the email region when the client has no region provider', (t, done) => {
+        const transport = nodemailer.createTransport({ SES: client('abc').SES });
+
+        transport.sendMail(message, (err, info) => {
+            assert.ok(!err);
+            assert.strictEqual(info.messageId, '<abc@email.amazonses.com>');
+            assert.strictEqual(info.response, 'abc');
+            done();
+        });
+    });
+
+    it('should fall back to the email region when the region provider fails', (t, done) => {
+        const transport = nodemailer.createTransport({
+            SES: client('abc', { region: () => Promise.reject(new Error('no region')) }).SES
+        });
+
+        transport.sendMail(message, (err, info) => {
+            assert.ok(!err);
+            assert.strictEqual(info.messageId, '<abc@email.amazonses.com>');
+            done();
+        });
+    });
+
+    it('should keep a MessageId that already carries a domain', (t, done) => {
+        const transport = nodemailer.createTransport({
+            SES: client('abc@custom.example', { region: () => Promise.resolve('eu-west-1') }).SES
+        });
+
+        transport.sendMail(message, (err, info) => {
+            assert.ok(!err);
+            assert.strictEqual(info.messageId, '<abc@custom.example>');
+            assert.strictEqual(info.response, 'abc@custom.example');
+            done();
+        });
+    });
+
+    it('should merge the ses fields of the message into the command', (t, done) => {
+        const { commands, SES } = client('abc');
+        const transport = nodemailer.createTransport({ SES });
+
+        transport.sendMail(
+            {
+                ...message,
+                from: 'Sender Name <a@example.com>',
+                ses: { ConfigurationSetName: 'tracked', ListManagementOptions: { ContactListName: 'list' } }
+            },
+            (err, info) => {
+                assert.ok(!err);
+                assert.strictEqual(commands.length, 1);
+                const input = commands[0].messageData;
+                assert.strictEqual(input.ConfigurationSetName, 'tracked');
+                assert.deepStrictEqual(input.ListManagementOptions, { ContactListName: 'list' });
+                assert.strictEqual(input.FromEmailAddress, 'Sender Name <a@example.com>');
+                assert.deepStrictEqual(input.Destination, { ToAddresses: ['b@example.com'] });
+                assert.ok(Buffer.isBuffer(input.Content.Raw.Data));
+                assert.strictEqual(input.Content.Raw.Data, info.raw);
+                assert.ok(info.raw.toString().includes('\r\nSubject: test\r\n'));
+                done();
+            }
+        );
+    });
+
+    it('should log the recipient list with an overflow marker', (t, done) => {
+        const { lines, logger } = captureLogger();
+        const transport = nodemailer.createTransport({ SES: client('abc').SES, logger });
+        const to = ['r1@example.com', 'r2@example.com', 'r3@example.com', 'r4@example.com', 'r5@example.com'];
+
+        transport.sendMail({ ...message, to }, (err, info) => {
+            assert.ok(!err);
+            assert.deepStrictEqual(info.envelope.to, to);
+            const line = lines.find(line => line.entry.tnx === 'send' && line.level === 'info');
+            assert.ok(line, 'no send log line');
+            assert.ok(line.message.endsWith(' to <r1@example.com, r2@example.com, ...and 3 more>'), line.message);
+            done();
+        });
+    });
+
+    it('should add date and message-id to the dkim skipFields of the message', (t, done) => {
+        const transport = nodemailer.createTransport({
+            SES: client('abc').SES,
+            dkim: { domainName: 'node.ee', keySelector: 'dkim', privateKey }
+        });
+
+        transport.sendMail({ ...message, _dkim: { skipFields: 'subject' } }, (err, info) => {
+            assert.ok(!err);
+            const raw = info.raw.toString();
+            const match = raw.replace(/\r\n[ \t]+/g, ' ').match(/^DKIM-Signature:.* h=([^;]+);/m);
+            assert.ok(match, 'no DKIM-Signature header in ' + raw);
+            const fields = match[1].split(':');
+            assert.ok(fields.includes('from'), match[1]);
+            assert.ok(fields.includes('to'), match[1]);
+            ['subject', 'date', 'message-id'].forEach(field => assert.ok(!fields.includes(field), match[1]));
+            done();
+        });
+    });
+
+    it('should report a message that can not be generated', (t, done) => {
+        const { lines, logger } = captureLogger();
+        const { commands, SES } = client('abc');
+        const transport = nodemailer.createTransport({ SES, logger });
+
+        transport.sendMail(
+            { ...message, attachments: [{ filename: 'missing.txt', path: path.join(__dirname, 'does-not-exist.txt') }] },
+            (err: any, info) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ENOENT');
+                assert.ok(!info);
+                assert.strictEqual(commands.length, 0);
+                const line = lines.find(line => line.level === 'error');
+                assert.ok(line, 'no error log line');
+                assert.ok(/^Failed creating message for <[^>]+>\. ENOENT/.test(line.message), line.message);
+                done();
+            }
+        );
+    });
+
+    it('should accept a MessageRejected response through the Code property when verifying', (t, done) => {
+        const transport = nodemailer.createTransport({
+            SES: {
+                sesClient: {
+                    send() {
+                        const error: any = new Error('Email address is not verified');
+                        error.Code = 'MessageRejected';
+                        return Promise.reject(error);
+                    }
+                },
+                SendEmailCommand
+            }
+        });
+
+        transport.verify((err, success) => {
+            assert.ok(!err);
+            assert.strictEqual(success, true);
+            done();
+        });
+    });
+
+    it('should verify without a region provider', (t, done) => {
+        const { commands, SES } = client('abc');
+        const transport = nodemailer.createTransport({ SES });
+
+        transport.verify((err, success) => {
+            assert.ok(!err);
+            assert.strictEqual(success, true);
+            assert.strictEqual(commands.length, 1);
+            assert.strictEqual(commands[0].messageData.FromEmailAddress, 'invalid@invalid');
             done();
         });
     });

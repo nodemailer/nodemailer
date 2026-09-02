@@ -1,7 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { Readable } from 'node:stream';
 import StreamTransport from '../../src/stream-transport/index.js';
 import MailComposer from '../../src/mail-composer/index.js';
+import nodemailer from '../../src/nodemailer.js';
+import { captureLogger } from '../smtp-transport/smtp-fixtures.js';
 
 describe('Stream Transport Tests', { timeout: 10000 }, () => {
     it('Should expose version number', () => {
@@ -253,5 +258,101 @@ describe('Stream Transport Tests', { timeout: 10000 }, () => {
                 }
             );
         });
+    });
+});
+
+describe('Stream Transport failure modes', () => {
+    const missingFile = path.join(path.dirname(fileURLToPath(import.meta.url)), 'does-not-exist.txt');
+
+    it('Should log the recipient list with an overflow marker', (t, done) => {
+        const { lines, logger } = captureLogger();
+        const client = new StreamTransport({ logger, newline: 'windows' });
+        const to = ['r1@valid.recipient', 'r2@valid.recipient', 'r3@valid.recipient', 'r4@valid.recipient', 'r5@valid.recipient'];
+        const message = new MailComposer({ from: 'test@valid.sender', to, raw: Buffer.from('message') }).compile();
+
+        client.send({ data: {}, message } as any, (err, info) => {
+            assert.ok(!err);
+            // the envelope still carries every recipient
+            assert.deepStrictEqual(info!.envelope.to, to);
+            const line = lines.find(line => line.entry.tnx === 'send');
+            assert.ok(line, 'no send log line');
+            assert.strictEqual(line.level, 'info');
+            assert.strictEqual(
+                line.message,
+                'Sending message ' +
+                    message.messageId() +
+                    ' to <r1@valid.recipient, r2@valid.recipient, ...and 3 more> using <CR><LF> line breaks'
+            );
+            (info!.message as any).resume();
+            done();
+        });
+    });
+
+    it('Should report a message that can not be streamed', (t, done) => {
+        const { lines, logger } = captureLogger();
+        const client = new StreamTransport({ logger });
+        const failure = new Error('no stream for you');
+        const message = {
+            getEnvelope: () => ({ from: 'test@valid.sender', to: ['test@valid.recipient'] }),
+            messageId: () => '<broken@valid.sender>',
+            createReadStream() {
+                throw failure;
+            }
+        };
+
+        client.send({ data: {}, message } as any, (err, info) => {
+            assert.strictEqual(err, failure);
+            assert.ok(!info);
+            const line = lines.find(line => line.level === 'error');
+            assert.ok(line, 'no error log line');
+            assert.strictEqual(line.message, 'Creating send stream failed for <broken@valid.sender>. no stream for you');
+            assert.strictEqual(line.entry.err, failure);
+            done();
+        });
+    });
+
+    it('Should report a stream error when returning a buffer', (t, done) => {
+        const transporter = nodemailer.createTransport({ streamTransport: true, buffer: true });
+
+        transporter.sendMail(
+            {
+                from: 'test@valid.sender',
+                to: 'test@valid.recipient',
+                text: 'hello',
+                attachments: [{ filename: 'missing.txt', path: missingFile }]
+            },
+            (err: any, info) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ENOENT');
+                assert.ok(!info);
+                done();
+            }
+        );
+    });
+
+    it('Should hand back a stream that reports its own errors', (t, done) => {
+        const { lines, logger } = captureLogger();
+        const transporter = nodemailer.createTransport({ streamTransport: true, logger });
+
+        transporter.sendMail(
+            {
+                from: 'test@valid.sender',
+                to: 'test@valid.recipient',
+                text: 'hello',
+                attachments: [{ filename: 'missing.txt', path: missingFile }]
+            },
+            (err, info) => {
+                assert.ok(!err);
+                const stream = info.message as Readable;
+                stream.on('error', (streamErr: any) => {
+                    assert.strictEqual(streamErr.code, 'ENOENT');
+                    const line = lines.find(line => line.level === 'error');
+                    assert.ok(line, 'no error log line');
+                    assert.ok(line.message.startsWith('Failed creating message for ' + info.messageId + '. ENOENT'), line.message);
+                    done();
+                });
+                stream.resume();
+            }
+        );
     });
 });

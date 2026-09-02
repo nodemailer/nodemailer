@@ -204,5 +204,46 @@ describe('Base64 Tests', () => {
             encoder.write(half);
             encoder.end(half);
         });
+
+        it('should skip an empty chunk', (t, done) => {
+            const encoder = new base64.Encoder();
+            let output = Buffer.alloc(0);
+
+            encoder.on('data', chunk => {
+                output = Buffer.concat([output, chunk]);
+            });
+
+            encoder.on('end', () => {
+                assert.strictEqual(output.toString(), 'YWJj');
+                assert.strictEqual(encoder.inputBytes, 3);
+                assert.strictEqual(encoder.outputBytes, 4);
+                done();
+            });
+
+            encoder.write(Buffer.alloc(0));
+            encoder.write(Buffer.from('abc'));
+            encoder.end();
+        });
+
+        it('should not wrap lines when lineLength is false', (t, done) => {
+            const encoder = new base64.Encoder({ lineLength: false });
+            // 200 bytes -> 268 base64 chars, which would span four lines with the default wrapping
+            const input = Buffer.alloc(200, 0x61);
+            let output = Buffer.alloc(0);
+
+            encoder.on('data', chunk => {
+                output = Buffer.concat([output, chunk]);
+            });
+
+            encoder.on('end', () => {
+                assert.strictEqual(output.toString(), input.toString('base64'));
+                assert.ok(!output.toString().includes('\r\n'));
+                assert.strictEqual(encoder.inputBytes, 200);
+                assert.strictEqual(encoder.outputBytes, 268);
+                done();
+            });
+
+            encoder.end(input);
+        });
     });
 });
