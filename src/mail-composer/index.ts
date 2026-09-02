@@ -169,7 +169,7 @@ function isContentObject(value: unknown): value is MailComposerAlternative {
     return typeof value === 'object' && !!(content.content || content.path || content.href || content.raw);
 }
 
-export default class MailComposer {
+class MailComposer {
     mail: MailComposerOptions;
     message: MimeNode | false;
 
@@ -794,3 +794,12 @@ export default class MailComposer {
         return element;
     }
 }
+
+/**
+ * Type alias in the layout of the other modules (@types/nodemailer had no namespace for MailComposer)
+ */
+declare namespace MailComposer {
+    export type Options = MailComposerOptions;
+}
+
+export default MailComposer;

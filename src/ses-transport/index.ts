@@ -7,7 +7,7 @@ import type { NodemailerError } from '../errors.js';
 import LeWindows from '../mime-node/le-windows.js';
 import MimeNode, { type MimeNodeAddressInput, type MimeNodeEnvelope, type MimeNodeHeader } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, TransportOptions, VerifyCallback } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
 
 /**
  * Options for the SES transport
@@ -67,7 +67,7 @@ function tagSesError(err: NodemailerError): NodemailerError {
  * @constructor
  * @param optional config parameter
  */
-export default class SESTransport extends EventEmitter {
+class SESTransport extends EventEmitter {
     declare mailer: Mail<SESSentMessageInfo>;
     options: SESTransportOptions;
     ses: SESTransportOptions['SES'];
@@ -316,3 +316,14 @@ export default class SESTransport extends EventEmitter {
         return promise;
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `SESTransport.Options` style references keep working
+ */
+declare namespace SESTransport {
+    export type Options = SESTransportOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = SESSentMessageInfo;
+}
+
+export default SESTransport;

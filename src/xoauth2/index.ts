@@ -117,7 +117,7 @@ export interface XOAuth2QueuedRequest {
  * @param options.provisionCallback Function to run when a new access token is required
  * @param options.tls Optional TLS options forwarded to the HTTPS token request. Defaults to strict cert validation; supply { rejectUnauthorized: false } only for self-hosted OAuth providers on private CAs.
  */
-export default class XOAuth2 extends Stream {
+class XOAuth2 extends Stream {
     options: XOAuth2Options;
     logger!: shared.Logger;
     provisionCallback!: XOAuth2ProvisionCallback | false;
@@ -544,3 +544,13 @@ export default class XOAuth2 extends Stream {
         return signedPayload + '.' + this.toBase64URL(signature);
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `XOAuth2.Options` style references keep working
+ */
+declare namespace XOAuth2 {
+    export type Options = XOAuth2Options;
+    export type Token = XOAuth2Token;
+}
+
+export default XOAuth2;

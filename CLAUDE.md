@@ -40,6 +40,7 @@ Deep imports such as `require('nodemailer/lib/mail-composer')` and `require('nod
 
 - Callback-first style throughout the public API. Many internals are still callback-based; match the style of the file you are editing rather than introducing promises mid-module.
 - Every options object a class or function reads gets an exported interface in the same file, named after the module (`SMTPConnectionOptions`, `DKIMOptions`, `MailComposerOptions`). Only include fields the code actually reads. The root entry re-exports the public ones.
+- The classes `@types/nodemailer` declared a namespace for (`Mail`, the six transports, `SMTPConnection`, `MimeNode`, `DKIM`, `XOAuth2`) carry a type-only `declare namespace` with the same aliases (`Mail.Options`, `SMTPTransport.Options`, ...). Keep those aliases when renaming option types, and re-export new public types from `src/nodemailer.ts`. Internal classes do not get a namespace.
 - Errors carry extra properties (`code`, `response`, `responseCode`, `command`, ...). Type them as `NodemailerError` from `src/errors.ts` and assign `err.code` from the constants exported there.
 - Prettier handles formatting; ESLint with typescript-eslint handles correctness, and `npm run lint` also runs the type-check. Run `npm run format` and `npm run lint` before sending changes.
 - camelCase for variables and methods, PascalCase for classes and types. Snake_case is not used.

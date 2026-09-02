@@ -6,7 +6,7 @@ import LeWindows from '../mime-node/le-windows.js';
 import LeUnix from '../mime-node/le-unix.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the Stream transport
@@ -43,7 +43,7 @@ export interface StreamSentMessageInfo {
  * @constructor
  * @param optional config parameter
  */
-export default class StreamTransport {
+class StreamTransport {
     declare mailer: Mail<StreamSentMessageInfo>;
     options: StreamTransportOptions;
     name: string;
@@ -175,3 +175,14 @@ export default class StreamTransport {
         });
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `StreamTransport.Options` style references keep working
+ */
+declare namespace StreamTransport {
+    export type Options = StreamTransportOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = StreamSentMessageInfo;
+}
+
+export default StreamTransport;

@@ -8,7 +8,7 @@ import LeWindows from '../mime-node/le-windows.js';
 import LeUnix from '../mime-node/le-unix.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the Sendmail transport
@@ -48,7 +48,7 @@ export interface SendmailSentMessageInfo {
  * @constructor
  * @param optional config parameter for Sendmail
  */
-export default class SendmailTransport {
+class SendmailTransport {
     declare mailer: Mail<SendmailSentMessageInfo>;
     _spawn: typeof spawn;
     options: SendmailTransportOptions;
@@ -260,3 +260,14 @@ export default class SendmailTransport {
         }
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `SendmailTransport.Options` style references keep working
+ */
+declare namespace SendmailTransport {
+    export type Options = SendmailTransportOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = SendmailSentMessageInfo;
+}
+
+export default SendmailTransport;

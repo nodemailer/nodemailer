@@ -327,7 +327,7 @@ function decodeServerResponse(str: string): string {
  * @namespace SMTP Client module
  * @param [options] Option properties
  */
-export default class SMTPConnection extends EventEmitter {
+class SMTPConnection extends EventEmitter {
     id: string;
     stage: string;
     options: SMTPConnectionOptions;
@@ -2399,3 +2399,19 @@ export default class SMTPConnection extends EventEmitter {
         return defaultHostname;
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `SMTPConnection.Options` style references keep working
+ */
+declare namespace SMTPConnection {
+    export type Options = SMTPConnectionOptions;
+    export type AuthenticationType = SMTPConnectionAuth;
+    export type Credentials = SMTPConnectionCredentials;
+    export type Envelope = SMTPEnvelope;
+    export type DSNOptions = SMTPEnvelopeDsn;
+    export type SentMessageInfo = SMTPConnectionSendInfo;
+    export type CustomAuthenticationContext = SMTPConnectionCustomAuthContext;
+    export type CustomAuthenticationResponse = SMTPConnectionCustomAuthResponse;
+}
+
+export default SMTPConnection;

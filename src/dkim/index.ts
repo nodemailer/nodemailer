@@ -245,7 +245,7 @@ class DKIMSigner {
     }
 }
 
-export default class DKIM {
+class DKIM {
     options: DKIMOptions;
     keys: DKIMKey[];
 
@@ -295,3 +295,13 @@ export default class DKIM {
         return output;
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `DKIM.Options` style references keep working
+ */
+declare namespace DKIM {
+    export type Options = DKIMOptions;
+    export type SingleKeyOptions = Omit<DKIMOptions, 'keys'>;
+}
+
+export default DKIM;

@@ -13,7 +13,7 @@ import type {
     SMTPSentMessageInfo
 } from '../smtp-transport/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, VerifyCallback } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, VerifyCallback } from '../mailer/index.js';
 
 /**
  * Options for the pooled SMTP transport, the SMTP transport options plus the pool settings
@@ -89,7 +89,7 @@ export interface SMTPPoolRateLimit {
  * @constructor
  * @param options SMTP Connection options
  */
-export default class SMTPPool extends EventEmitter {
+class SMTPPool extends EventEmitter {
     options: SMTPPoolResolvedOptions;
     logger: shared.Logger;
     name: string;
@@ -732,3 +732,14 @@ export default class SMTPPool extends EventEmitter {
         return promise;
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `SMTPPool.Options` style references keep working
+ */
+declare namespace SMTPPool {
+    export type Options = SMTPPoolOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = SMTPPoolSentMessageInfo;
+}
+
+export default SMTPPool;

@@ -68,7 +68,7 @@ let configOptions = {
 
 #### I have an issue with TypeScript types
 
-Nodemailer 10 and later are written in TypeScript and ship their own type definitions, so `@types/nodemailer` is no longer needed and should be removed from your project to avoid conflicting declarations. For older Nodemailer versions, the community maintained [type definitions](https://www.npmjs.com/package/@types/nodemailer) still apply.
+Nodemailer 10 and later are written in TypeScript and ship their own type definitions, so `@types/nodemailer` is no longer needed and should be removed from your project to avoid conflicting declarations. The type names follow the layout of the old definitions, so references such as `Mail.Options`, `SMTPTransport.Options` or `Transporter<SMTPTransport.SentMessageInfo>` keep compiling, and the most used types (`SendMailOptions`, `Transporter`, `SentMessageInfo`, `Attachment`, `Address`) are exported from the package root. For older Nodemailer versions, the community maintained [type definitions](https://www.npmjs.com/package/@types/nodemailer) still apply.
 
 #### I have a different problem
 

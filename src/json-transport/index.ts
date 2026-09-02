@@ -3,7 +3,7 @@ import * as shared from '../shared/index.js';
 import type { Logger } from '../shared/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type { default as MailMessage, MailMessageData } from '../mailer/mail-message.js';
-import type { default as Mail, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the JSON transport
@@ -33,7 +33,7 @@ export interface JSONSentMessageInfo {
  * @constructor
  * @param optional config parameter
  */
-export default class JSONTransport {
+class JSONTransport {
     declare mailer: Mail<JSONSentMessageInfo>;
     options: JSONTransportOptions;
     name: string;
@@ -109,3 +109,14 @@ export default class JSONTransport {
         });
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `JSONTransport.Options` style references keep working
+ */
+declare namespace JSONTransport {
+    export type Options = JSONTransportOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = JSONSentMessageInfo;
+}
+
+export default JSONTransport;

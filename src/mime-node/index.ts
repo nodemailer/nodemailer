@@ -257,7 +257,7 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
  * @param [options.normalizeHeaderKey] method to normalize header keys for custom caseing
  * @param [options.textEncoding] either 'Q' (the default) or 'B'
  */
-export default class MimeNode {
+class MimeNode {
     nodeCounter: number;
     baseBoundary: string;
     boundaryPrefix: string;
@@ -1778,3 +1778,14 @@ export default class MimeNode {
         );
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `MimeNode.Options` style references keep working
+ */
+declare namespace MimeNode {
+    export type Options = MimeNodeOptions;
+    export type Addresses = MimeNodeAddresses;
+    export type Envelope = MimeNodeEnvelope;
+}
+
+export default MimeNode;
