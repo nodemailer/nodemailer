@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
 import sign from '../../src/dkim/sign.js';
 
@@ -167,5 +168,59 @@ describe('DKIM Sign Tests', () => {
             dkimField.replace(/\r?\n\s*/g, '').replace(/\s+/g, ''),
             'DKIM-Signature:v=1;a=rsa-sha256;c=relaxed/relaxed;d=xn--mriaad-polteism-zvbj.info;q=dns/txt;s=dkim;bh=z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=;h=from:to;b=oBJ1MkwEkftfXa2AK4Expjp2xgIcAR43SVrftSEHVQ6F1SlGjP3EKP+cn/hLkhUel3rY0icthk/myDu6uhTBmM6DMtzIBW/7uQd6q9hfgaiYnw5Iew2tZc4TzBEYSdKi'
         );
+    });
+});
+
+describe('DKIM relaxed header canonicalization', () => {
+    const relaxed = (line: string) =>
+        sign.relaxedHeaders([{ key: line.substr(0, line.indexOf(':')).trim().toLowerCase(), line }], 'subject').headers;
+
+    it('should unfold and collapse whitespace', () => {
+        assert.strictEqual(relaxed('Subject: a \t b\r\n\t c  \r\n d'), 'subject:a b c d\r\n');
+    });
+
+    it('should drop whitespace around the colon and at the end', () => {
+        assert.strictEqual(relaxed('Subject \t: \t value \t'), 'subject:value\r\n');
+    });
+
+    it('should keep an empty value', () => {
+        assert.strictEqual(relaxed('Subject:'), 'subject:\r\n');
+        assert.strictEqual(relaxed('Subject: \t '), 'subject:\r\n');
+    });
+
+    it('should treat only SP and HTAB as whitespace', () => {
+        // the header lines are 'binary' strings, so a UTF-8 non-breaking space (C2 A0) or an
+        // ideographic space (E3 80 80) is a run of bytes that a verifier keeps as they are
+        const nbsp = Buffer.from('Subject: a b', 'utf-8').toString('binary');
+        assert.strictEqual(relaxed(nbsp), Buffer.from('subject:a b\r\n', 'utf-8').toString('binary'));
+
+        const ideographic = Buffer.from('Subject: 日本　語 ', 'utf-8').toString('binary');
+        assert.strictEqual(relaxed(ideographic), Buffer.from('subject:日本　語\r\n', 'utf-8').toString('binary'));
+    });
+
+    it('should keep 8-bit header bytes', () => {
+        assert.strictEqual(relaxed('Subject: j\xf5geva'), 'subject:j\xf5geva\r\n');
+    });
+
+    it('should sign the header bytes and not their UTF-8 re-encoding', () => {
+        const headers = [{ key: 'subject', line: Buffer.from('Subject: jõgeva', 'utf-8').toString('binary') }];
+        const bodyHash = '47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=';
+        const signature = sign(headers, 'sha256', bodyHash, {
+            domainName: 'example.com',
+            keySelector: 'test',
+            privateKey,
+            headerFieldNames: 'subject'
+        });
+        assert.ok(signature);
+
+        // recompute the signature over the canonicalized header bytes and compare
+        const dkimHeader = (signature as string).replace(/\r\n\s+/g, ' ').replace(/b=.*$/, 'b=');
+        const signedData = Buffer.concat([
+            Buffer.from('subject:jõgeva\r\n', 'utf-8'),
+            Buffer.from('dkim-signature:' + dkimHeader.replace(/^DKIM-Signature:\s*/i, ''), 'binary')
+        ]);
+        const publicKey = crypto.createPublicKey(privateKey);
+        const b = ((signature as string).match(/b=([^;]+)$/) as RegExpMatchArray)[1].replace(/\s+/g, '');
+        assert.ok(crypto.createVerify('RSA-SHA256').update(signedData).verify(publicKey, b, 'base64'));
     });
 });

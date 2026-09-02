@@ -41,7 +41,7 @@ export interface DKIMOptions extends DKIMSignOptions {
     keys?: DKIMKey | DKIMKey[];
     /** Directory for buffering large message bodies to disk, no buffering when not set */
     cacheDir?: string | false;
-    /** Body size in bytes from which the body is buffered to cacheDir, defaults to 2 MB */
+    /** Body size in bytes from which the body is buffered to cacheDir, defaults to 10 MB */
     cacheTreshold?: number;
     /** Hash algorithm for the body hash and the signature, defaults to sha256 */
     hashAlgo?: string;
