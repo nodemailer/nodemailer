@@ -96,8 +96,19 @@ export function createTransport(transporter?: TransportConfig | Transport<any> |
     ) {
         const urlConfig = typeof transporter === 'string' ? transporter : (transporter as SMTPTransportOptions).url;
         if (urlConfig) {
-            // parse a configuration URL into configuration options
-            options = shared.parseConnectionUrl(urlConfig) as TransportConfig & TransportOptions;
+            // parse a configuration URL into configuration options. The other keys of a
+            // configuration object apply where the url does not set them, merged the same
+            // way the SMTP transports merge their own url option
+            const parsed = shared.parseConnectionUrl(urlConfig);
+            options = (
+                typeof transporter === 'object'
+                    ? shared.assign(
+                          false,
+                          shared.copyOwnKeys({}, transporter, key => key === 'url'),
+                          parsed
+                      )
+                    : parsed
+            ) as TransportConfig & TransportOptions;
         } else {
             options = transporter as TransportConfig & TransportOptions;
         }
