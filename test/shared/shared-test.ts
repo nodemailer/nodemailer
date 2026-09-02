@@ -6,7 +6,9 @@ import * as shared from '../../src/shared/index.js';
 
 import http from 'node:http';
 import fs from 'node:fs';
+import dns from 'node:dns';
 import zlib from 'node:zlib';
+import { PassThrough, Readable } from 'node:stream';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -83,9 +85,42 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             assert.doesNotThrow(() => logger.warn({}, 'no-op'));
             assert.doesNotThrow(() => logger.error({}, 'no-op'));
         });
+
+        it('Should prefix default logger lines with the session and connection ids', t => {
+            const log = t.mock.method(console, 'log', () => false);
+            const logger = shared.getLogger({ logger: true });
+
+            logger.info({ tnx: 'server', sid: 'abc', cid: 7 }, 'first %s\nsecond', 'line');
+            logger.error({ tnx: 'client' }, 'reply');
+            logger.debug({}, 'plain');
+
+            const lines = log.mock.calls.map(call => call.arguments);
+            assert.strictEqual(lines.length, 4);
+            lines.forEach(args => {
+                assert.strictEqual(args[0], '[%s] %s %s');
+                assert.ok(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(args[1]));
+            });
+            // every line of a message gets its own entry, the level name is padded to
+            // a fixed width and the prefix names the connection, the session and the side
+            assert.deepStrictEqual(
+                lines.map(args => args.slice(2)),
+                [
+                    ['INFO ', '[#7] [abc] S: first line'],
+                    ['INFO ', '[#7] [abc] S: second'],
+                    ['ERROR', 'C: reply'],
+                    ['DEBUG', 'plain']
+                ]
+            );
+        });
     });
 
     describe('Connection url parser tests', () => {
+        it('should keep a colon in the user name apart from the password', () => {
+            assert.deepStrictEqual(shared.parseConnectionUrl('smtp://us%3Aer:pa%3Ass@localhost:25').auth, { user: 'us:er', pass: 'pa:ss' });
+            assert.deepStrictEqual(shared.parseConnectionUrl('smtp://:pass@localhost:25').auth, { user: '', pass: 'pass' });
+            assert.strictEqual(shared.parseConnectionUrl('smtp://localhost:25').auth, undefined);
+        });
+
         it('Should parse connection url', () => {
             let url = 'smtps://user:pass@localhost:123?tls.rejectUnauthorized=false&name=horizon';
             assert.deepStrictEqual(shared.parseConnectionUrl(url), {
@@ -113,6 +148,115 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                     pass: ':passwith%Char'
                 }
             });
+        });
+
+        it('should parse a direct url', () => {
+            assert.deepStrictEqual(shared.parseConnectionUrl('direct://?name=example.com'), {
+                direct: true,
+                name: 'example.com'
+            });
+        });
+
+        it('should convert boolean and numeric query values', () => {
+            assert.deepStrictEqual(
+                shared.parseConnectionUrl('smtp://localhost:25?pool=true&debug=false&maxConnections=5&tls.servername=mx.example.com'),
+                {
+                    secure: false,
+                    port: 25,
+                    host: 'localhost',
+                    pool: true,
+                    debug: false,
+                    maxConnections: 5,
+                    tls: {
+                        servername: 'mx.example.com'
+                    }
+                }
+            );
+        });
+
+        it('should not let a query parameter override a url component', () => {
+            assert.deepStrictEqual(shared.parseConnectionUrl('smtp://localhost:25?secure=true&port=99&host=other.example.com'), {
+                secure: false,
+                port: 25,
+                host: 'localhost'
+            });
+        });
+
+        it('should ignore nested keys other than tls', () => {
+            assert.deepStrictEqual(shared.parseConnectionUrl('smtp://localhost?auth.user=name&auth.pass=secret&name=host'), {
+                secure: false,
+                host: 'localhost',
+                name: 'host'
+            });
+        });
+
+        it('should return an empty object for a missing url', () => {
+            assert.deepStrictEqual(shared.parseConnectionUrl(), {});
+            assert.deepStrictEqual(shared.parseConnectionUrl(null), {});
+        });
+
+        it('should not let a __proto__ query key mutate the prototype chain', () => {
+            const options = shared.parseConnectionUrl('smtp://localhost?__proto__=1&tls.__proto__=2&tls.rejectUnauthorized=false');
+
+            assert.strictEqual(Object.getPrototypeOf(options), Object.prototype);
+            assert.strictEqual(Object.getPrototypeOf(options.tls), Object.prototype);
+            assert.deepStrictEqual(options, {
+                secure: false,
+                host: 'localhost',
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+        });
+    });
+
+    describe('#parseDataURI tests', () => {
+        it('should return null for anything that is not a data uri', () => {
+            assert.strictEqual(shared.parseDataURI(null), null);
+            assert.strictEqual(shared.parseDataURI(5), null);
+            assert.strictEqual(shared.parseDataURI('http://example.com/'), null);
+            assert.strictEqual(shared.parseDataURI('data:no-comma'), null);
+        });
+
+        it('should parse the content type, the parameters and the encoding', () => {
+            assert.deepStrictEqual(shared.parseDataURI('data:text/plain;charset=utf-8;foo=bar;=nokey;base64,aGVsbG8='), {
+                data: Buffer.from('hello'),
+                encoding: 'base64',
+                contentType: 'text/plain',
+                params: {
+                    charset: 'utf-8',
+                    foo: 'bar'
+                }
+            });
+        });
+
+        it('should recognize the utf8 encoding marker', () => {
+            assert.deepStrictEqual(shared.parseDataURI('data:text/plain;utf8,hello%20world'), {
+                data: Buffer.from('hello world'),
+                encoding: 'utf8',
+                contentType: 'text/plain',
+                params: {}
+            });
+        });
+
+        it('should default to application/octet-stream', () => {
+            assert.deepStrictEqual(shared.parseDataURI('data:,hi'), {
+                data: Buffer.from('hi'),
+                encoding: null,
+                contentType: 'application/octet-stream',
+                params: {}
+            });
+        });
+
+        it('should keep a malformed percent encoding as it is', () => {
+            assert.deepStrictEqual(shared.parseDataURI('data:text/plain,%E0%A4%A')!.data, Buffer.from('%E0%A4%A'));
+        });
+
+        it('should not let a __proto__ parameter mutate the prototype chain', () => {
+            const parsed = shared.parseDataURI('data:text/plain;__proto__=polluted,x')!;
+
+            assert.strictEqual(Object.getPrototypeOf(parsed.params), Object.prototype);
+            assert.deepStrictEqual(parsed.params, {});
         });
     });
 
@@ -306,6 +450,78 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             shared.resolveContent(mail.data, 'html', (err, value) => {
                 assert.ok(!err);
                 assert.deepStrictEqual(value, Buffer.from(str));
+                done();
+            });
+        });
+
+        it('should return the error of a content stream', (t, done) => {
+            let mail = {
+                data: {
+                    html: fs.createReadStream(__dirname + '/fixtures/no-such-file.html')
+                }
+            };
+            shared.resolveContent(mail.data, 'html', (err, value) => {
+                assert.ok(err);
+                assert.strictEqual((err as NodeJS.ErrnoException).code, 'ENOENT');
+                assert.strictEqual(value, undefined);
+                done();
+            });
+        });
+
+        it('should return the error of a stream given as the content property', (t, done) => {
+            let stream = new PassThrough();
+            let mail = {
+                data: {
+                    attachment: {
+                        filename: 'message.html',
+                        content: stream
+                    }
+                }
+            };
+            shared.resolveContent(mail.data, 'attachment', (err, value) => {
+                assert.ok(err);
+                assert.strictEqual(err!.message, 'stream failed');
+                assert.strictEqual(value, undefined);
+                // nothing was resolved, so the descriptor is left as it was
+                assert.strictEqual(mail.data.attachment.content, stream);
+                done();
+            });
+
+            setImmediate(() => stream.emit('error', new Error('stream failed')));
+        });
+
+        it('should call back once when a stream errors more than once and then ends', (t, done) => {
+            let stream = new PassThrough();
+            let calls: { message: string | null; value: any }[] = [];
+
+            shared.resolveContent({ html: stream }, 'html', (err, value) => {
+                calls.push({ message: err && err.message, value });
+            });
+
+            stream.emit('error', new Error('first'));
+            stream.emit('error', new Error('second'));
+            stream.on('end', () => {
+                setImmediate(() => {
+                    assert.deepStrictEqual(calls, [{ message: 'first', value: undefined }]);
+                    done();
+                });
+            });
+            stream.end('x');
+        });
+
+        it('should return an error for a stream that does not yield buffers', (t, done) => {
+            let stream = new Readable({
+                objectMode: true,
+                read() {
+                    // nothing to do, the chunks are pushed below
+                }
+            });
+            stream.push({ not: 'a buffer' });
+            stream.push(null);
+
+            shared.resolveContent({ html: stream }, 'html', (err, value) => {
+                assert.ok(err instanceof Error);
+                assert.strictEqual(value, undefined);
                 done();
             });
         });
@@ -823,6 +1039,292 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                 assert.ok(result.host, 'Should have a primary host');
                 // The primary host should be one of the addresses
                 assert.ok(result._addresses.includes(result.host), 'Primary host should be in _addresses');
+                done();
+            });
+        });
+    });
+
+    describe('#resolveHostname fallback tests', () => {
+        // dns.Resolver and dns.lookup are stubbed, so these run without network access
+        const HOST = 'mail.example.test';
+        let networkInterfaces: any;
+        let originalResolver: any;
+        let originalLookup: any;
+
+        type ResolverAnswers = { [family: string]: Error | string[] };
+        type LookupResult = { address: string; family: number }[] | undefined;
+
+        const dnsError = (code: string) => Object.assign(new Error('DNS ' + code), { code });
+
+        const setInterfaces = (families: string[]) => {
+            Object.keys(shared.networkInterfaces!).forEach(key => {
+                delete shared.networkInterfaces![key];
+            });
+            shared.networkInterfaces!.en0 = families.map(
+                family =>
+                    ({
+                        address: family === 'IPv4' ? '192.0.2.10' : '2001:db8::10',
+                        netmask: family === 'IPv4' ? '255.255.255.0' : 'ffff:ffff:ffff:ffff::',
+                        family,
+                        mac: '00:00:00:00:00:00',
+                        internal: false,
+                        cidr: family === 'IPv4' ? '192.0.2.10/24' : '2001:db8::10/64'
+                    }) as any
+            );
+        };
+
+        // resolve4 and resolve6 answer with the listed addresses or fail with the listed error
+        const stubResolver = (answers: ResolverAnswers) => {
+            const answer = (family: string, callback: (err: Error | null, addresses?: string[]) => void) => {
+                const value = answers[family];
+                setImmediate(() => {
+                    if (value instanceof Error) {
+                        return callback(value);
+                    }
+                    callback(null, value);
+                });
+            };
+            (dns as any).Resolver = class {
+                resolve4(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                    answer('4', callback);
+                }
+                resolve6(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                    answer('6', callback);
+                }
+            };
+        };
+
+        const stubLookup = (
+            impl: (hostname: string, options: any, callback: (err: Error | null, addresses?: LookupResult) => void) => void
+        ) => {
+            (dns as any).lookup = impl;
+        };
+
+        const setExpiredCache = (address: string) => {
+            shared.dnsCache.set(HOST, {
+                value: { addresses: [address], servername: HOST },
+                expires: Date.now() - 1000
+            });
+        };
+
+        beforeEach(() => {
+            networkInterfaces = JSON.parse(JSON.stringify(shared.networkInterfaces));
+            originalResolver = dns.Resolver;
+            originalLookup = dns.lookup;
+
+            shared.dnsCache.clear();
+            shared._resetCacheCleanup();
+            setInterfaces(['IPv4', 'IPv6']);
+        });
+
+        afterEach(() => {
+            (dns as any).Resolver = originalResolver;
+            (dns as any).lookup = originalLookup;
+
+            Object.keys(shared.networkInterfaces!).forEach(key => {
+                delete shared.networkInterfaces![key];
+            });
+            Object.keys(networkInterfaces).forEach(key => {
+                shared.networkInterfaces![key] = networkInterfaces[key];
+            });
+        });
+
+        it('should use the servername as the host when no host is given', (t, done) => {
+            stubResolver({ 4: ['192.0.2.1'], 6: [] });
+
+            shared.resolveHostname({ servername: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.1',
+                    _addresses: ['192.0.2.1'],
+                    cached: false
+                });
+                done();
+            });
+        });
+
+        it('should fall back to lookup when the resolver fails with an unexpected error', (t, done) => {
+            // a timeout is not one of the "no such record" answers, so it counts as a failure
+            stubResolver({ 4: dnsError('ETIMEOUT'), 6: dnsError('ETIMEOUT') });
+            let lookups: string[] = [];
+            stubLookup((hostname, options, callback) => {
+                lookups.push(hostname);
+                setImmediate(() => callback(null, [{ address: '192.0.2.2', family: 4 }]));
+            });
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.2',
+                    _addresses: ['192.0.2.2'],
+                    cached: false
+                });
+                assert.deepStrictEqual(lookups, [HOST]);
+                assert.deepStrictEqual(shared.dnsCache.get(HOST)!.value, { addresses: ['192.0.2.2'], servername: HOST });
+                done();
+            });
+        });
+
+        it('should drop lookup addresses of an unsupported family', (t, done) => {
+            setInterfaces(['IPv4']);
+            stubResolver({ 4: [], 6: [] });
+            stubLookup((hostname, options, callback) => {
+                setImmediate(() =>
+                    callback(null, [
+                        { address: '2001:db8::1', family: 6 },
+                        { address: '192.0.2.3', family: 4 }
+                    ])
+                );
+            });
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.3',
+                    _addresses: ['192.0.2.3'],
+                    cached: false
+                });
+                done();
+            });
+        });
+
+        it('should answer from an expired cache entry when both resolvers fail', (t, done) => {
+            const error = dnsError('ETIMEOUT');
+            stubResolver({ 4: error, 6: dnsError('ECANCELLED') });
+            stubLookup(() => {
+                done(new Error('lookup should not be called'));
+            });
+            setExpiredCache('192.0.2.4');
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.4',
+                    _addresses: ['192.0.2.4'],
+                    cached: true,
+                    error
+                });
+                // the stale entry is kept for another ttl
+                assert.ok(shared.dnsCache.get(HOST)!.expires! > Date.now());
+                done();
+            });
+        });
+
+        it('should answer from an expired cache entry when lookup fails', (t, done) => {
+            // these answers mean "no such record" and do not count as failures
+            stubResolver({ 4: dnsError('ENOTFOUND'), 6: dnsError('ENODATA') });
+            const error = dnsError('EAI_AGAIN');
+            stubLookup((hostname, options, callback) => {
+                setImmediate(() => callback(error));
+            });
+            setExpiredCache('192.0.2.5');
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.5',
+                    _addresses: ['192.0.2.5'],
+                    cached: true,
+                    error
+                });
+                assert.ok(shared.dnsCache.get(HOST)!.expires! > Date.now());
+                done();
+            });
+        });
+
+        it('should fail when lookup fails and nothing is cached', (t, done) => {
+            stubResolver({ 4: [], 6: [] });
+            const error = dnsError('EAI_AGAIN');
+            stubLookup((hostname, options, callback) => {
+                setImmediate(() => callback(error));
+            });
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.strictEqual(err, error);
+                assert.strictEqual(result, undefined);
+                assert.strictEqual(shared.dnsCache.has(HOST), false);
+                done();
+            });
+        });
+
+        it('should fall back to the hostname when lookup finds nothing', (t, done) => {
+            stubResolver({ 4: [], 6: [] });
+            stubLookup((hostname, options, callback) => {
+                setImmediate(() => callback(null, undefined));
+            });
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: HOST,
+                    _addresses: [HOST],
+                    cached: false
+                });
+                done();
+            });
+        });
+
+        it('should answer from an expired cache entry when no lookup address is usable', (t, done) => {
+            setInterfaces(['IPv4']);
+            stubResolver({ 4: [], 6: [] });
+            stubLookup((hostname, options, callback) => {
+                setImmediate(() => callback(null, [{ address: '2001:db8::1', family: 6 }]));
+            });
+            const warn = t.mock.method(console, 'warn', () => false);
+            setExpiredCache('192.0.2.6');
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.6',
+                    _addresses: ['192.0.2.6'],
+                    cached: true
+                });
+                assert.strictEqual(warn.mock.callCount(), 1);
+                assert.strictEqual(warn.mock.calls[0].arguments[0], 'Failed to resolve IPv6 addresses with current network');
+                done();
+            });
+        });
+
+        it('should answer from an expired cache entry when lookup throws', (t, done) => {
+            stubResolver({ 4: [], 6: [] });
+            const error = new Error('lookup exploded');
+            stubLookup(() => {
+                throw error;
+            });
+            setExpiredCache('192.0.2.7');
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(result, {
+                    servername: HOST,
+                    host: '192.0.2.7',
+                    _addresses: ['192.0.2.7'],
+                    cached: true,
+                    error
+                });
+                assert.ok(shared.dnsCache.get(HOST)!.expires! > Date.now());
+                done();
+            });
+        });
+
+        it('should fail with the resolver error when lookup throws and nothing is cached', (t, done) => {
+            const error = dnsError('ETIMEOUT');
+            stubResolver({ 4: error, 6: dnsError('ETIMEOUT') });
+            stubLookup(() => {
+                throw new Error('lookup exploded');
+            });
+
+            shared.resolveHostname({ host: HOST }, (err, result) => {
+                assert.strictEqual(err, error);
+                assert.strictEqual(result, undefined);
                 done();
             });
         });

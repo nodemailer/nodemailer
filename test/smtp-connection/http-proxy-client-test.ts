@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import https from 'node:https';
 import net from 'node:net';
 import proxy from 'proxy';
 import httpProxyClient from '../../src/smtp-connection/http-proxy-client.js';
 import { SMTPServer } from 'smtp-server';
+import { createHttpsProxy } from './https-connect-proxy.js';
 
 const PROXY_PORT = 3128;
 const TARGET_PORT = 3129;
@@ -60,27 +60,6 @@ const httpsOptions = {
         'VGXQDqPleug=\n' +
         '-----END CERTIFICATE-----'
 };
-
-// Minimal HTTPS CONNECT proxy with the self-signed cert above.
-function createHttpsProxy(callback: (proxyServer: https.Server) => void) {
-    const proxyServer = https.createServer(httpsOptions);
-    proxyServer.on('connect', (req: any, clientSocket, head) => {
-        const parts = req.url.split(':');
-        const port = Number(parts.pop());
-        const host = parts.join(':') || '127.0.0.1';
-        const serverSocket = net.connect(port, host, () => {
-            clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            if (head && head.length) {
-                serverSocket.write(head);
-            }
-            serverSocket.pipe(clientSocket);
-            clientSocket.pipe(serverSocket);
-        });
-        serverSocket.on('error', () => clientSocket.destroy());
-        clientSocket.on('error', () => serverSocket.destroy());
-    });
-    proxyServer.listen(PROXY_PORT, () => callback(proxyServer));
-}
 
 describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
     it('should connect to a socket through proxy', (t, done) => {
@@ -153,7 +132,7 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
     });
 
     it('should reject an HTTPS proxy with a self-signed cert by default', (t, done) => {
-        createHttpsProxy(proxyServer => {
+        createHttpsProxy(httpsOptions, PROXY_PORT, proxyServer => {
             // no tls options → the proxy's TLS certificate must be validated
             httpProxyClient('https://localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', (err, socket) => {
                 assert.ok(err);
@@ -169,7 +148,7 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
         });
 
         smtpServer.listen(TARGET_PORT, () => {
-            createHttpsProxy(proxyServer => {
+            createHttpsProxy(httpsOptions, PROXY_PORT, proxyServer => {
                 httpProxyClient(
                     'https://localhost:' + PROXY_PORT,
                     TARGET_PORT,
@@ -250,5 +229,102 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
                 done();
             });
         });
+    });
+});
+
+describe('HTTP Proxy Client CONNECT responses', { timeout: 10 * 1000 }, () => {
+    // Raw proxy with byte-exact control over the CONNECT response. Hands the
+    // request to onRequest once the request headers are complete.
+    function startRawProxy(onRequest: (socket: net.Socket, request: string) => void, callback: (server: net.Server, port: number) => void) {
+        const server = net.createServer(socket => {
+            socket.on('error', () => {});
+            let request = '';
+            const onData = (chunk: Buffer) => {
+                request += chunk.toString('binary');
+                if (request.includes('\r\n\r\n')) {
+                    socket.removeListener('data', onData);
+                    onRequest(socket, request);
+                }
+            };
+            socket.on('data', onData);
+        });
+        server.listen(0, '127.0.0.1', () => callback(server, (server.address() as net.AddressInfo).port));
+    }
+
+    it('hands over bytes that arrive together with the CONNECT response', (t, done) => {
+        let request = '';
+        startRawProxy(
+            (socket, req) => {
+                request = req;
+                // the SMTP greeting shares the packet with the response headers
+                socket.write('HTTP/1.1 200 Connection established\r\nProxy-Agent: test\r\n\r\n220 smtp.example.com ESMTP\r\n');
+            },
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    assert.ok(!err, err?.message);
+                    assert.ok(socket);
+                    socket.once('data', chunk => {
+                        socket.destroy();
+                        server.close(() => {
+                            assert.strictEqual(chunk.toString(), '220 smtp.example.com ESMTP\r\n');
+                            assert.ok(/^CONNECT smtp\.example\.com:25 HTTP\/1\.1\r\n/.test(request), request);
+                            assert.ok(/\r\nHost: smtp\.example\.com:25\r\n/.test(request), request);
+                            assert.ok(!/Proxy-Authorization/.test(request), 'no credentials were given');
+                            done();
+                        });
+                    });
+                });
+            }
+        );
+    });
+
+    it('rejects a CONNECT response without an HTTP status line', (t, done) => {
+        startRawProxy(
+            socket => socket.write('garbage\r\n\r\n'),
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    assert.ok(err);
+                    assert.ok(!socket);
+                    assert.strictEqual(err.code, 'EPROXY');
+                    assert.strictEqual(err.message, 'Invalid response from proxy');
+                    server.close(done);
+                });
+            }
+        );
+    });
+
+    it('reports the HTTP status of a refused CONNECT', (t, done) => {
+        startRawProxy(
+            socket => socket.write('HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n'),
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    assert.ok(err);
+                    assert.ok(!socket);
+                    assert.strictEqual(err.code, 'EPROXY');
+                    assert.strictEqual(err.message, 'Invalid response from proxy: 403');
+                    server.close(done);
+                });
+            }
+        );
+    });
+
+    it('times out when the proxy never answers the CONNECT request', (t, done) => {
+        const previousTimeout = httpProxyClient.timeout;
+        httpProxyClient.timeout = 100;
+        startRawProxy(
+            () => {
+                // stay silent
+            },
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    httpProxyClient.timeout = previousTimeout;
+                    assert.ok(err);
+                    assert.ok(!socket);
+                    assert.strictEqual(err.code, 'ETIMEDOUT');
+                    assert.strictEqual(err.message, 'Proxy socket timed out');
+                    server.close(done);
+                });
+            }
+        );
     });
 });

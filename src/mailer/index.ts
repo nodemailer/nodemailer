@@ -594,9 +594,9 @@ class Mail<T = SentMessageInfo> extends EventEmitter {
                             command: 'connect'
                         };
 
-                        if (proxy.auth) {
-                            const username = decodeURIComponent(proxy.auth.split(':').shift() as string);
-                            const password = decodeURIComponent(proxy.auth.split(':').pop() as string);
+                        if (proxy.username || proxy.password) {
+                            const username = proxy.username || '';
+                            const password = proxy.password || '';
                             if (proxyV2) {
                                 connectionOpts.proxy.userId = username;
                                 connectionOpts.proxy.password = password;

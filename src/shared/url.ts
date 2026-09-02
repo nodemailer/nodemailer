@@ -31,6 +31,10 @@ export interface ParsedUrl {
     path: string | null;
     href: string;
     auth: string | null;
+    /** Decoded user name, null when the URL carries no credentials */
+    username: string | null;
+    /** Decoded password, null when the URL carries none */
+    password: string | null;
     query: string | null | Record<string, string | string[]>;
 }
 
@@ -95,7 +99,12 @@ function legacyParse(input: string, parseQueryString: boolean | undefined, whatw
     } else if (parsed.hostname !== null) {
         throw whatwgError;
     }
-    return parsed;
+    // the legacy parser only offers the joined form, split it on the first colon
+    const legacyAuth = parsed.auth === null || parsed.auth === undefined ? null : parsed.auth.split(':');
+    const result = parsed as unknown as ParsedUrl;
+    result.username = legacyAuth ? (legacyAuth.shift() as string) : null;
+    result.password = legacyAuth && legacyAuth.length ? legacyAuth.join(':') : null;
+    return result;
 }
 
 // decodeURIComponent that never throws. Legacy url.parse() decodes the auth
@@ -173,10 +182,16 @@ export const parse = (input?: string | null, parseQueryString?: boolean): Parsed
     // username/password percent-encoded, so decode to stay byte-compatible with
     // existing consumers (parseConnectionUrl, Basic/Proxy-Authorization headers).
     let auth: string | null = null;
+    let username: string | null = null;
+    let password: string | null = null;
     if (u.username || u.password) {
         // Gate on password too: legacy url.parse('smtps://:pass@host').auth was
         // ':pass'. Dropping it would silently connect unauthenticated.
-        auth = safeDecode(u.username) + (u.password ? ':' + safeDecode(u.password) : '');
+        username = safeDecode(u.username);
+        password = u.password ? safeDecode(u.password) : null;
+        // the joined form is ambiguous once the user name contains a colon, so
+        // consumers that need the parts read username and password instead
+        auth = username + (password !== null ? ':' + password : '');
     }
 
     let query: ParsedUrl['query'];
@@ -210,6 +225,8 @@ export const parse = (input?: string | null, parseQueryString?: boolean): Parsed
         path: (pathname || '') + (search || '') || null,
         href: u.href,
         auth,
+        username,
+        password,
         query
     };
 };
