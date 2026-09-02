@@ -10,3 +10,4 @@ examples/test-send.js
 *.tsbuildinfo
 .claude
 src/package-info.ts
+src/well-known/services.ts
