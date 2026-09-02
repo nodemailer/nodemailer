@@ -1,22 +1,24 @@
-'use strict';
+import { defineConfig } from 'eslint/config';
+import prettier from 'eslint-config-prettier';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
-const globals = require('globals');
+const unusedVarsOptions = {
+    varsIgnorePattern: '^_',
+    argsIgnorePattern: '^_',
+    caughtErrorsIgnorePattern: '^_'
+};
 
-module.exports = [
+export default defineConfig([
     {
-        ignores: ['node_modules/**', 'coverage/**', 'dist/**', 'build/**', '.nyc_output/**']
+        ignores: ['node_modules/**', 'coverage/**', 'dist/**']
     },
     {
-        files: ['**/*.js'],
+        files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts'],
         languageOptions: {
-            ecmaVersion: 2017,
-            sourceType: 'script',
-            globals: Object.assign({}, globals.node, globals.es2017, {
-                it: true,
-                describe: true,
-                beforeEach: true,
-                afterEach: true
-            })
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: Object.assign({}, globals.node, globals.es2022)
         },
         rules: {
             // Error detection
@@ -33,14 +35,7 @@ module.exports = [
                     allowShortCircuit: true
                 }
             ],
-            'no-unused-vars': [
-                'error',
-                {
-                    varsIgnorePattern: '^_',
-                    argsIgnorePattern: '^_',
-                    caughtErrorsIgnorePattern: '^_'
-                }
-            ],
+            'no-unused-vars': ['error', unusedVarsOptions],
             'handle-callback-err': 'error',
             'no-new': 'error',
             'new-cap': 'error',
@@ -62,7 +57,6 @@ module.exports = [
             'no-void': 'error',
             yoda: 'error',
             'no-undef': 'error',
-            'global-require': 'error',
             'no-var': 'error',
             'no-bitwise': 'error',
             'no-lonely-if': 'error',
@@ -73,16 +67,49 @@ module.exports = [
             'object-shorthand': 'error',
             'prefer-spread': 'error',
             'no-prototype-builtins': 'off', // Disabled per project preference
-            strict: ['error', 'global'],
-
-            // Disable all formatting rules (handled by Prettier)
-            indent: 'off',
-            quotes: 'off',
-            'linebreak-style': 'off',
-            semi: 'off',
-            'quote-props': 'off',
-            'comma-dangle': 'off',
-            'comma-style': 'off'
+            strict: ['error', 'global']
         }
-    }
-];
+    },
+    {
+        files: ['**/*.cjs'],
+        languageOptions: {
+            sourceType: 'commonjs'
+        }
+    },
+    {
+        files: ['**/*.ts'],
+        extends: [tseslint.configs.recommended],
+        rules: {
+            // Handled by the TypeScript compiler
+            'no-undef': 'off',
+            // TypeScript-aware replacements for the base rules
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': ['error', unusedVarsOptions],
+            'no-unused-expressions': 'off',
+            '@typescript-eslint/no-unused-expressions': [
+                'error',
+                {
+                    allowShortCircuit: true
+                }
+            ],
+            'no-use-before-define': 'off',
+            '@typescript-eslint/no-use-before-define': [
+                'error',
+                {
+                    functions: false,
+                    classes: true,
+                    variables: true,
+                    typedefs: false,
+                    ignoreTypeReferences: true
+                }
+            ],
+            'no-invalid-this': 'off',
+            '@typescript-eslint/no-invalid-this': 'error',
+            // Project preferences
+            'prefer-const': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-namespace': 'off'
+        }
+    },
+    prettier
+]);

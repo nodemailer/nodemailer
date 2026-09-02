@@ -1,6 +1,4 @@
-'use strict';
-
-const MailComposer = require('../lib/mail-composer');
+import MailComposer from 'nodemailer/lib/mail-composer';
 
 const mailOptions = {
     from: 'mailer@kreata.ee',

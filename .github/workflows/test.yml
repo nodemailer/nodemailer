@@ -8,17 +8,10 @@ permissions:
     contents: read
 
 jobs:
-    syntax-compat:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v5
-            - name: Verify Node.js 6 syntax compatibility
-              run: docker run --rm -v "$PWD:/app:ro" -w /app node:6-alpine node test/syntax-compat.js
-
     test:
         strategy:
             matrix:
-                node: [18.x, 20.x, 22.x, 24.x, 26.x]
+                node: [20.x, 22.x, 24.x, 26.x]
                 os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
@@ -29,6 +22,7 @@ jobs:
                   node-version: ${{ matrix.node }}
             - run: npm install
             - run: npm run lint
+            - run: npm run format:check
             - run: npm test
 
     # Coverage is gated separately on a single Node.js version: c8's dependency

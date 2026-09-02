@@ -4,6 +4,8 @@
     "all": true,
     "temp-directory": "./coverage/.tmp",
     "reporter": ["text-summary", "html"],
-    "include": ["lib/**/*.js", "lib/*.js"],
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/package-info.ts"],
+    "exclude-after-remap": true,
     "lines": 85
 }

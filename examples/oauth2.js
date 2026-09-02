@@ -1,9 +1,11 @@
 /* eslint no-console: 0 */
 
-'use strict';
+import bunyan from 'bunyan';
+import nodemailer from 'nodemailer';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const bunyan = require('bunyan');
-const nodemailer = require('../lib/nodemailer');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let logger = bunyan.createLogger({
     name: 'nodemailer'

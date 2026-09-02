@@ -1,9 +1,0 @@
-assets
-test
-examples
-.eslintrc
-.gitignore
-.travis.yml
-.c8rc.json
-.github/
-coverage/

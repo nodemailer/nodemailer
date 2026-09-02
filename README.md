@@ -16,9 +16,9 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 Documentation for Nodemailer can be found at [nodemailer.com](https://nodemailer.com/about/).
 
-#### Nodemailer throws a SyntaxError for "..."
+#### Nodemailer fails to load or throws a SyntaxError
 
-You are using an older Node.js version than v6.0. Upgrade Node.js to get support for the spread operator. Nodemailer supports all Node.js versions starting from Node.js@v6.0.0.
+Nodemailer 10 and later require Node.js 20 or newer. The package ships both ES module and CommonJS builds, so `import nodemailer from 'nodemailer'` and `const nodemailer = require('nodemailer')` both work. If you need to run on an older Node.js version, stay on the 9.x line.
 
 #### I'm having issues with Gmail
 
@@ -68,7 +68,7 @@ let configOptions = {
 
 #### I have an issue with TypeScript types
 
-Nodemailer has official support for Node.js only. For anything related to TypeScript, you need to directly contact the authors of the [type definitions](https://www.npmjs.com/package/@types/nodemailer).
+Nodemailer 10 and later are written in TypeScript and ship their own type definitions, so `@types/nodemailer` is no longer needed and should be removed from your project to avoid conflicting declarations. For older Nodemailer versions, the community maintained [type definitions](https://www.npmjs.com/package/@types/nodemailer) still apply.
 
 #### I have a different problem
 
