@@ -10,6 +10,10 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 > Nodemailer is developed by the team behind **[EmailEngine](https://emailengine.app/?utm_source=nodemailer-readme&utm_medium=readme&utm_campaign=oss-docs)**, a self-hosted email API that turns any Gmail, Microsoft 365, or IMAP account into a REST endpoint, with managed OAuth2, webhooks for incoming mail, and built-in [sending](https://emailengine.app/sending-emails?utm_source=nodemailer-readme&utm_medium=readme&utm_campaign=oss-docs). If you would rather call an HTTP API than maintain IMAP and SMTP connections yourself, that is what it is for.
 
+## Supported runtimes
+
+Nodemailer targets Node.js 20 and later. The ES module build also runs on [Bun](https://bun.sh/) (tested against the latest release) and on [Cloudflare Workers](https://developers.cloudflare.com/workers/) with the `nodejs_compat` compatibility flag. On Workers only the SMTP based transports apply, `sendmail` needs a child process, and the runtime does not allow turning certificate validation off, so `tls.rejectUnauthorized: false` fails there with an error.
+
 ## Having an issue?
 
 #### First review the docs
