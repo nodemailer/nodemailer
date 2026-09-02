@@ -267,6 +267,18 @@ export default nodemailer;
 export type { Mail, MailDefaults, SentMessageInfo, Transport, TransportOptions };
 export type { SendMailOptions, Transporter } from './mailer/index.js';
 export type { NodemailerError, ErrorCode } from './errors.js';
+export type { MailMessage, MailMessageData, PluginFunction, VerifyCallback } from './mailer/index.js';
+export type {
+    MailComposerOptions,
+    MailComposerAttachment as Attachment,
+    MailComposerAlternative as AttachmentLike,
+    MailComposerIcalEvent as IcalAttachment,
+    MailComposerListHeaders as ListHeaders
+} from './mail-composer/index.js';
+export type { MimeNodeAddress as Address, MimeNodeHeaders as Headers } from './mime-node/index.js';
+export type { SMTPConnectionOptions, SMTPConnectionAuth, SMTPEnvelope, SMTPEnvelopeDsn } from './smtp-connection/index.js';
+export type { DKIMOptions } from './dkim/index.js';
+export type { XOAuth2Options, XOAuth2Token } from './xoauth2/index.js';
 export type { SMTPTransportOptions, SMTPSentMessageInfo };
 export type { SMTPPoolOptions, SMTPPoolSentMessageInfo };
 export type { SendmailTransportOptions, SendmailSentMessageInfo };

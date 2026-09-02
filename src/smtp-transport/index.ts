@@ -13,7 +13,7 @@ import type { Socket } from 'node:net';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, TransportOptions, VerifyCallback } from '../mailer/index.js';
+import type { default as Mail, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 
 /**
@@ -100,7 +100,7 @@ export type SMTPTransportSendCallback = ResultCallback<SMTPSentMessageInfo>;
  * @constructor
  * @param options Connection options
  */
-export default class SMTPTransport extends EventEmitter {
+class SMTPTransport extends EventEmitter {
     options: SMTPTransportOptions;
     logger: shared.Logger;
     name: string;
@@ -527,3 +527,15 @@ export default class SMTPTransport extends EventEmitter {
         this.emit('close');
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `SMTPTransport.Options` style references keep working
+ */
+declare namespace SMTPTransport {
+    export type Options = SMTPTransportOptions;
+    export type MailOptions = SendMailOptions;
+    export type SentMessageInfo = SMTPSentMessageInfo;
+    export type AuthenticationType = SMTPTransportAuth;
+}
+
+export default SMTPTransport;

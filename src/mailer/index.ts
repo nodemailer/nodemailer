@@ -13,11 +13,17 @@ import net from 'node:net';
 import dns from 'node:dns';
 import crypto from 'node:crypto';
 import type { ConnectionOptions } from 'node:tls';
-import type { MailComposerAttachment } from '../mail-composer/index.js';
+import type {
+    MailComposerAlternative,
+    MailComposerAttachment,
+    MailComposerIcalEvent,
+    MailComposerListHeaderEntry,
+    MailComposerListHeaders
+} from '../mail-composer/index.js';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import type { ParsedUrl } from '../shared/url.js';
 import type MimeNode from '../mime-node/index.js';
-import type { MimeNodeEnvelope, MimeNodeOptions } from '../mime-node/index.js';
+import type { MimeNodeAddress, MimeNodeEnvelope, MimeNodeEnvelopeInput, MimeNodeHeaders, MimeNodeOptions } from '../mime-node/index.js';
 import type { XOAuth2ProvisionCallback } from '../xoauth2/index.js';
 
 export type {
@@ -196,7 +202,7 @@ export type Transporter<T = SentMessageInfo> = Mail<T>;
  * @constructor
  * @param transporter Transport object instance to pass the mails to
  */
-export default class Mail<T = SentMessageInfo> extends EventEmitter {
+class Mail<T = SentMessageInfo> extends EventEmitter {
     options: TransportOptions;
     _defaults: MailDefaults;
     _defaultPlugins: { [step: string]: PluginFunction<T>[] };
@@ -679,3 +685,26 @@ export default class Mail<T = SentMessageInfo> extends EventEmitter {
         return this.meta.get(key);
     }
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `Mail.Options` style references keep working
+ */
+// the namespace member can not refer to the module level type of the same name directly
+type MailPluginFunction<T> = PluginFunction<T>;
+
+declare namespace Mail {
+    export type Options = SendMailOptions;
+    export type Address = MimeNodeAddress;
+    export type Attachment = MailComposerAttachment;
+    export type AttachmentLike = MailComposerAlternative;
+    export type AmpAttachment = MailComposerAlternative;
+    export type IcalAttachment = MailComposerIcalEvent;
+    export type Headers = MimeNodeHeaders;
+    export type ListHeader = MailComposerListHeaderEntry;
+    export type ListHeaders = MailComposerListHeaders;
+    export type Envelope = MimeNodeEnvelopeInput;
+    export type TextEncoding = NonNullable<SendMailOptions['textEncoding']>;
+    export type PluginFunction<T = SentMessageInfo> = MailPluginFunction<T>;
+}
+
+export default Mail;
