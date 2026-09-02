@@ -1,0 +1,342 @@
+/**
+ * RFC 8689 REQUIRETLS Tests
+ *
+ * Tests for the SMTP REQUIRETLS extension support in nodemailer.
+ * https://www.rfc-editor.org/rfc/rfc8689.html
+ */
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+import { describe, it, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import SMTPConnection from '../../src/smtp-connection/index.js';
+import { SMTPServer } from 'smtp-server';
+
+const PORT_NUMBER = 8497;
+
+describe('RFC 8689 REQUIRETLS Tests', () => {
+    describe('REQUIRETLS Extension Detection', () => {
+        let serverWithRequireTLS: any, serverWithoutRequireTLS: any;
+
+        before((t, done) => {
+            // Server that advertises REQUIRETLS
+            serverWithRequireTLS = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: false, // Advertise REQUIRETLS
+                authOptional: true,
+                onData: (stream: any, session: any, callback: any) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            // Server that does NOT advertise REQUIRETLS
+            serverWithoutRequireTLS = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: true, // Do not advertise REQUIRETLS (default)
+                authOptional: true,
+                onData: (stream: any, session: any, callback: any) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            serverWithRequireTLS.listen(PORT_NUMBER, () => {
+                serverWithoutRequireTLS.listen(PORT_NUMBER + 1, done);
+            });
+        });
+
+        after((t, done) => {
+            serverWithRequireTLS.close(() => {
+                serverWithoutRequireTLS.close(done);
+            });
+        });
+
+        it('should detect REQUIRETLS support in EHLO response', (t, done) => {
+            const client = new SMTPConnection({
+                port: PORT_NUMBER,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                assert.ok(client._supportedExtensions.includes('REQUIRETLS'), 'REQUIRETLS should be in supported extensions');
+                client.close();
+            });
+
+            client.on('error', err => {
+                assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+
+        it('should not detect REQUIRETLS when server does not advertise it', (t, done) => {
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 1,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                assert.ok(!client._supportedExtensions.includes('REQUIRETLS'), 'REQUIRETLS should NOT be in supported extensions');
+                client.close();
+            });
+
+            client.on('error', err => {
+                assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+    });
+
+    describe('REQUIRETLS MAIL FROM Parameter', () => {
+        let server: any;
+        let lastMailFromArgs: any = null;
+        let lastEnvelopeRequireTLS: any = null;
+
+        before((t, done) => {
+            server = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: false,
+                authOptional: true,
+                onMailFrom: (address: any, session: any, callback: any) => {
+                    lastMailFromArgs = address.args;
+                    lastEnvelopeRequireTLS = session.envelope.requireTLS;
+                    callback();
+                },
+                onRcptTo: (address: any, session: any, callback: any) => {
+                    callback();
+                },
+                onData: (stream: any, session: any, callback: any) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            server.listen(PORT_NUMBER + 2, done);
+        });
+
+        after((t, done) => {
+            server.close(done);
+        });
+
+        it('should send REQUIRETLS parameter when envelope.requireTLSExtensionEnabled is true', (t, done) => {
+            lastMailFromArgs = null;
+            lastEnvelopeRequireTLS = null;
+
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 2,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                client.send(
+                    {
+                        from: 'sender@example.com',
+                        to: ['recipient@example.com'],
+                        requireTLSExtensionEnabled: true
+                    },
+                    'Subject: Test\r\n\r\nTest message',
+                    (err, _info) => {
+                        assert.ok(!err, 'Should not error');
+                        assert.strictEqual(lastMailFromArgs.REQUIRETLS, true, 'REQUIRETLS should be in MAIL FROM args');
+                        assert.strictEqual(lastEnvelopeRequireTLS, true, 'session.envelope.requireTLS should be true');
+                        client.close();
+                    }
+                );
+            });
+
+            client.on('error', err => {
+                assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+
+        it('should NOT send REQUIRETLS parameter when envelope.requireTLSExtensionEnabled is false/undefined', (t, done) => {
+            lastMailFromArgs = null;
+            lastEnvelopeRequireTLS = null;
+
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 2,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                client.send(
+                    {
+                        from: 'sender@example.com',
+                        to: ['recipient@example.com']
+                        // No requireTLSExtensionEnabled
+                    },
+                    'Subject: Test\r\n\r\nTest message',
+                    (err, _info) => {
+                        assert.ok(!err, 'Should not error');
+                        assert.strictEqual(lastMailFromArgs.REQUIRETLS, undefined, 'REQUIRETLS should NOT be in MAIL FROM args');
+                        assert.strictEqual(lastEnvelopeRequireTLS, false, 'session.envelope.requireTLS should be false');
+                        client.close();
+                    }
+                );
+            });
+
+            client.on('error', err => {
+                assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+    });
+
+    describe('REQUIRETLS Error Handling', () => {
+        let serverWithoutRequireTLS: any;
+
+        before((t, done) => {
+            // Server that does NOT advertise REQUIRETLS
+            serverWithoutRequireTLS = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: true, // Do not advertise REQUIRETLS
+                authOptional: true,
+                onData: (stream: any, session: any, callback: any) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            serverWithoutRequireTLS.listen(PORT_NUMBER + 3, done);
+        });
+
+        after((t, done) => {
+            serverWithoutRequireTLS.close(done);
+        });
+
+        it('should error when server does not support REQUIRETLS but requireTLSExtensionEnabled is true', (t, done) => {
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 3,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                client.send(
+                    {
+                        from: 'sender@example.com',
+                        to: ['recipient@example.com'],
+                        requireTLSExtensionEnabled: true
+                    },
+                    'Subject: Test\r\n\r\nTest message',
+                    (err, _info) => {
+                        assert.ok(err, 'Should error when server does not support REQUIRETLS');
+                        assert.ok(
+                            err.message.includes('REQUIRETLS') || err.code === 'EREQUIRETLS',
+                            'Error should mention REQUIRETLS or have EREQUIRETLS code'
+                        );
+                        client.close();
+                    }
+                );
+            });
+
+            client.on('end', done);
+        });
+    });
+
+    describe('REQUIRETLS with DSN parameters', () => {
+        let server: any;
+        let lastMailFromArgs: any = null;
+
+        before((t, done) => {
+            server = new SMTPServer({
+                secure: true,
+                hideREQUIRETLS: false,
+                authOptional: true,
+                onMailFrom: (address: any, session: any, callback: any) => {
+                    lastMailFromArgs = address.args;
+                    callback();
+                },
+                onRcptTo: (address: any, session: any, callback: any) => {
+                    callback();
+                },
+                onData: (stream: any, session: any, callback: any) => {
+                    stream.on('data', () => {});
+                    stream.on('end', callback);
+                },
+                logger: false
+            });
+
+            server.listen(PORT_NUMBER + 4, done);
+        });
+
+        after((t, done) => {
+            server.close(done);
+        });
+
+        it('should send REQUIRETLS along with DSN parameters', (t, done) => {
+            lastMailFromArgs = null;
+
+            const client = new SMTPConnection({
+                port: PORT_NUMBER + 4,
+                secure: true,
+                logger: false
+            });
+
+            client.connect(() => {
+                client.send(
+                    {
+                        from: 'sender@example.com',
+                        to: ['recipient@example.com'],
+                        requireTLSExtensionEnabled: true,
+                        dsn: {
+                            ret: 'HDRS',
+                            envid: 'test-envelope-id'
+                        }
+                    },
+                    'Subject: Test\r\n\r\nTest message',
+                    (err, _info) => {
+                        assert.ok(!err, 'Should not error');
+                        assert.strictEqual(lastMailFromArgs.REQUIRETLS, true, 'REQUIRETLS should be present');
+                        // Note: DSN params may or may not be present depending on server config
+                        client.close();
+                    }
+                );
+            });
+
+            client.on('error', err => {
+                assert.fail('Should not error: ' + err.message);
+            });
+
+            client.on('end', done);
+        });
+    });
+
+    describe('REQUIRETLS response-action discipline', () => {
+        it('does not queue a MAIL FROM response action when REQUIRETLS validation fails', () => {
+            // Non-TLS connection: REQUIRETLS requires TLS, so validation must fail
+            const conn1 = new SMTPConnection({ logger: false });
+            conn1.secure = false;
+            let err1: any;
+            conn1._setEnvelope({ from: 'a@example.com', to: ['b@example.com'], requireTLSExtensionEnabled: true }, e => {
+                err1 = e;
+            });
+            assert.strictEqual(err1 && err1.code, 'EREQUIRETLS');
+            assert.strictEqual(conn1._responseActions.length, 0, 'no orphaned MAIL FROM response action');
+
+            // TLS connection, but the server never advertised REQUIRETLS
+            const conn2 = new SMTPConnection({ logger: false });
+            conn2.secure = true;
+            conn2._supportedExtensions = [];
+            let err2: any;
+            conn2._setEnvelope({ from: 'a@example.com', to: ['b@example.com'], requireTLSExtensionEnabled: true }, e => {
+                err2 = e;
+            });
+            assert.strictEqual(err2 && err2.code, 'EREQUIRETLS');
+            assert.strictEqual(conn2._responseActions.length, 0, 'no orphaned MAIL FROM response action');
+        });
+    });
+});

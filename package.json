@@ -2,16 +2,130 @@
     "name": "nodemailer",
     "version": "9.1.1",
     "description": "Easy as cake e-mail sending from your Node.js applications",
-    "main": "lib/nodemailer.js",
+    "type": "module",
+    "main": "./dist/cjs/nodemailer.js",
+    "typesVersions": {
+        "*": {
+            "lib/*": [
+                "dist/cjs/*/index.d.ts",
+                "dist/cjs/*.d.ts"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "import": "./dist/esm/nodemailer.js",
+            "require": "./dist/cjs/nodemailer.js"
+        },
+        "./lib/addressparser": {
+            "import": "./dist/esm/addressparser/index.js",
+            "require": "./dist/cjs/addressparser/index.js"
+        },
+        "./lib/base64": {
+            "import": "./dist/esm/base64/index.js",
+            "require": "./dist/cjs/base64/index.js"
+        },
+        "./lib/dkim": {
+            "import": "./dist/esm/dkim/index.js",
+            "require": "./dist/cjs/dkim/index.js"
+        },
+        "./lib/fetch": {
+            "import": "./dist/esm/fetch/index.js",
+            "require": "./dist/cjs/fetch/index.js"
+        },
+        "./lib/json-transport": {
+            "import": "./dist/esm/json-transport/index.js",
+            "require": "./dist/cjs/json-transport/index.js"
+        },
+        "./lib/mail-composer": {
+            "import": "./dist/esm/mail-composer/index.js",
+            "require": "./dist/cjs/mail-composer/index.js"
+        },
+        "./lib/mailer": {
+            "import": "./dist/esm/mailer/index.js",
+            "require": "./dist/cjs/mailer/index.js"
+        },
+        "./lib/mime-funcs": {
+            "import": "./dist/esm/mime-funcs/index.js",
+            "require": "./dist/cjs/mime-funcs/index.js"
+        },
+        "./lib/mime-node": {
+            "import": "./dist/esm/mime-node/index.js",
+            "require": "./dist/cjs/mime-node/index.js"
+        },
+        "./lib/punycode": {
+            "import": "./dist/esm/punycode/index.js",
+            "require": "./dist/cjs/punycode/index.js"
+        },
+        "./lib/qp": {
+            "import": "./dist/esm/qp/index.js",
+            "require": "./dist/cjs/qp/index.js"
+        },
+        "./lib/sendmail-transport": {
+            "import": "./dist/esm/sendmail-transport/index.js",
+            "require": "./dist/cjs/sendmail-transport/index.js"
+        },
+        "./lib/ses-transport": {
+            "import": "./dist/esm/ses-transport/index.js",
+            "require": "./dist/cjs/ses-transport/index.js"
+        },
+        "./lib/shared": {
+            "import": "./dist/esm/shared/index.js",
+            "require": "./dist/cjs/shared/index.js"
+        },
+        "./lib/smtp-connection": {
+            "import": "./dist/esm/smtp-connection/index.js",
+            "require": "./dist/cjs/smtp-connection/index.js"
+        },
+        "./lib/smtp-pool": {
+            "import": "./dist/esm/smtp-pool/index.js",
+            "require": "./dist/cjs/smtp-pool/index.js"
+        },
+        "./lib/smtp-transport": {
+            "import": "./dist/esm/smtp-transport/index.js",
+            "require": "./dist/cjs/smtp-transport/index.js"
+        },
+        "./lib/stream-transport": {
+            "import": "./dist/esm/stream-transport/index.js",
+            "require": "./dist/cjs/stream-transport/index.js"
+        },
+        "./lib/well-known": {
+            "import": "./dist/esm/well-known/index.js",
+            "require": "./dist/cjs/well-known/index.js"
+        },
+        "./lib/xoauth2": {
+            "import": "./dist/esm/xoauth2/index.js",
+            "require": "./dist/cjs/xoauth2/index.js"
+        },
+        "./lib/*.js": {
+            "import": "./dist/esm/*.js",
+            "require": "./dist/cjs/*.js"
+        },
+        "./lib/*": {
+            "import": "./dist/esm/*.js",
+            "require": "./dist/cjs/*.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "SECURITY.txt"
+    ],
     "scripts": {
-        "test": "node --test --test-concurrency=1 $(find test \\( -name '*-test.js' -o -name '*.test.js' \\))",
-        "test:coverage": "c8 node --test --test-concurrency=1 $(find test \\( -name '*-test.js' -o -name '*.test.js' \\))",
-        "format": "prettier --write \"**/*.{js,json,md}\"",
-        "format:check": "prettier --check \"**/*.{js,json,md}\"",
-        "lint": "eslint .",
+        "build": "node scripts/build.js",
+        "typecheck": "node scripts/build.js --package-info-only && tsc -p tsconfig.json",
+        "pretest": "npm run build",
+        "test": "node --import tsx --test --test-concurrency=1 $(find test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
+        "pretest:coverage": "npm run build",
+        "test:coverage": "c8 node --import tsx --test --test-concurrency=1 $(find test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
+        "format": "prettier --write \"**/*.{js,cjs,ts,json,md}\"",
+        "format:check": "prettier --check \"**/*.{js,cjs,ts,json,md}\"",
+        "lint": "eslint . && npm run typecheck",
         "lint:fix": "eslint . --fix",
-        "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install",
-        "test:syntax": "docker run --rm -v \"$PWD:/app:ro\" -w /app node:6-alpine node test/syntax-compat.js"
+        "prepare": "npm run build",
+        "update": "rm -rf node_modules/ package-lock.json && ncu -u && npm install"
     },
     "repository": {
         "type": "git",
@@ -28,6 +142,7 @@
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
         "@aws-sdk/client-sesv2": "3.1121.0",
+        "@types/node": "20.19.43",
         "bunyan": "1.8.15",
         "c8": "12.0.0",
         "eslint": "10.9.1",
@@ -39,9 +154,12 @@
         "prettier": "3.9.6",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
-        "smtp-server": "3.19.4"
+        "smtp-server": "3.19.4",
+        "tsx": "4.23.13",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.69.0"
     },
     "engines": {
-        "node": ">=6.0.0"
+        "node": ">=20.0.0"
     }
 }

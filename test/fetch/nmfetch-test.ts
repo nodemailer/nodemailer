@@ -1,0 +1,722 @@
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
+
+//let http = require('http');
+import nmfetch from '../../src/fetch/index.js';
+import http from 'node:http';
+import https from 'node:https';
+import zlib from 'node:zlib';
+import { PassThrough } from 'node:stream';
+
+const HTTP_PORT = 19998;
+const HTTPS_PORT = 19993;
+
+const httpsOptions = {
+    key:
+        '-----BEGIN RSA PRIVATE KEY-----\n' +
+        'MIIEpAIBAAKCAQEA6Z5Qqhw+oWfhtEiMHE32Ht94mwTBpAfjt3vPpX8M7DMCTwHs\n' +
+        '1xcXvQ4lQ3rwreDTOWdoJeEEy7gMxXqH0jw0WfBx+8IIJU69xstOyT7FRFDvA1yT\n' +
+        'RXY2yt9K5s6SKken/ebMfmZR+03ND4UFsDzkz0FfgcjrkXmrMF5Eh5UXX/+9YHeU\n' +
+        'xlp0gMAt+/SumSmgCaysxZLjLpd4uXz+X+JVxsk1ACg1NoEO7lWJC/3WBP7MIcu2\n' +
+        'wVsMd2XegLT0gWYfT1/jsIH64U/mS/SVXC9QhxMl9Yfko2kx1OiYhDxhHs75RJZh\n' +
+        'rNRxgfiwgSb50Gw4NAQaDIxr/DJPdLhgnpY6UQIDAQABAoIBAE+tfzWFjJbgJ0ql\n' +
+        's6Ozs020Sh4U8TZQuonJ4HhBbNbiTtdDgNObPK1uNadeNtgW5fOeIRdKN6iDjVeN\n' +
+        'AuXhQrmqGDYVZ1HSGUfD74sTrZQvRlWPLWtzdhybK6Css41YAyPFo9k4bJ2ZW2b/\n' +
+        'p4EEQ8WsNja9oBpttMU6YYUchGxo1gujN8hmfDdXUQx3k5Xwx4KA68dveJ8GasIt\n' +
+        'd+0Jd/FVwCyyx8HTiF1FF8QZYQeAXxbXJgLBuCsMQJghlcpBEzWkscBR3Ap1U0Zi\n' +
+        '4oat8wrPZGCblaA6rNkRUVbc/+Vw0stnuJ/BLHbPxyBs6w495yBSjBqUWZMvljNz\n' +
+        'm9/aK0ECgYEA9oVIVAd0enjSVIyAZNbw11ElidzdtBkeIJdsxqhmXzeIFZbB39Gd\n' +
+        'bjtAVclVbq5mLsI1j22ER2rHA4Ygkn6vlLghK3ZMPxZa57oJtmL3oP0RvOjE4zRV\n' +
+        'dzKexNGo9gU/x9SQbuyOmuauvAYhXZxeLpv+lEfsZTqqrvPUGeBiEQcCgYEA8poG\n' +
+        'WVnykWuTmCe0bMmvYDsWpAEiZnFLDaKcSbz3O7RMGbPy1cypmqSinIYUpURBT/WY\n' +
+        'wVPAGtjkuTXtd1Cy58m7PqziB7NNWMcsMGj+lWrTPZ6hCHIBcAImKEPpd+Y9vGJX\n' +
+        'oatFJguqAGOz7rigBq6iPfeQOCWpmprNAuah++cCgYB1gcybOT59TnA7mwlsh8Qf\n' +
+        'bm+tSllnin2A3Y0dGJJLmsXEPKtHS7x2Gcot2h1d98V/TlWHe5WNEUmx1VJbYgXB\n' +
+        'pw8wj2ACxl4ojNYqWPxegaLd4DpRbtW6Tqe9e47FTnU7hIggR6QmFAWAXI+09l8y\n' +
+        'amssNShqjE9lu5YDi6BTKwKBgQCuIlKGViLfsKjrYSyHnajNWPxiUhIgGBf4PI0T\n' +
+        '/Jg1ea/aDykxv0rKHnw9/5vYGIsM2st/kR7l5mMecg/2Qa145HsLfMptHo1ZOPWF\n' +
+        '9gcuttPTegY6aqKPhGthIYX2MwSDMM+X0ri6m0q2JtqjclAjG7yG4CjbtGTt/UlE\n' +
+        'WMlSZwKBgQDslGeLUnkW0bsV5EG3AKRUyPKz/6DVNuxaIRRhOeWVKV101claqXAT\n' +
+        'wXOpdKrvkjZbT4AzcNrlGtRl3l7dEVXTu+dN7/ZieJRu7zaStlAQZkIyP9O3DdQ3\n' +
+        'rIcetQpfrJ1cAqz6Ng0pD0mh77vQ13WG1BBmDFa2A9BuzLoBituf4g==\n' +
+        '-----END RSA PRIVATE KEY-----',
+    cert:
+        '-----BEGIN CERTIFICATE-----\n' +
+        'MIICpDCCAYwCCQCuVLVKVTXnAjANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDEwls\n' +
+        'b2NhbGhvc3QwHhcNMTUwMjEyMTEzMjU4WhcNMjUwMjA5MTEzMjU4WjAUMRIwEAYD\n' +
+        'VQQDEwlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDp\n' +
+        'nlCqHD6hZ+G0SIwcTfYe33ibBMGkB+O3e8+lfwzsMwJPAezXFxe9DiVDevCt4NM5\n' +
+        'Z2gl4QTLuAzFeofSPDRZ8HH7wgglTr3Gy07JPsVEUO8DXJNFdjbK30rmzpIqR6f9\n' +
+        '5sx+ZlH7Tc0PhQWwPOTPQV+ByOuReaswXkSHlRdf/71gd5TGWnSAwC379K6ZKaAJ\n' +
+        'rKzFkuMul3i5fP5f4lXGyTUAKDU2gQ7uVYkL/dYE/swhy7bBWwx3Zd6AtPSBZh9P\n' +
+        'X+OwgfrhT+ZL9JVcL1CHEyX1h+SjaTHU6JiEPGEezvlElmGs1HGB+LCBJvnQbDg0\n' +
+        'BBoMjGv8Mk90uGCeljpRAgMBAAEwDQYJKoZIhvcNAQELBQADggEBABXm8GPdY0sc\n' +
+        'mMUFlgDqFzcevjdGDce0QfboR+M7WDdm512Jz2SbRTgZD/4na42ThODOZz9z1AcM\n' +
+        'zLgx2ZNZzVhBz0odCU4JVhOCEks/OzSyKeGwjIb4JAY7dh+Kju1+6MNfQJ4r1Hza\n' +
+        'SVXH0+JlpJDaJ73NQ2JyfqELmJ1mTcptkA/N6rQWhlzycTBSlfogwf9xawgVPATP\n' +
+        '4AuwgjHl12JI2HVVs1gu65Y3slvaHRCr0B4+Kg1GYNLLcbFcK+NEHrHmPxy9TnTh\n' +
+        'Zwp1dsNQU+Xkylz8IUANWSLHYZOMtN2e5SKIdwTtl5C8YxveuY8YKb1gDExnMraT\n' +
+        'VGXQDqPleug=\n' +
+        '-----END CERTIFICATE-----'
+};
+
+describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
+    let httpServer: http.Server, httpsServer: https.Server;
+
+    beforeEach((t, done) => {
+        httpServer = http.createServer((req, res) => {
+            switch (req.url) {
+                case '/redirectfile':
+                    // redirect to a scheme that can not be fetched, and keep the response
+                    // open so a request that is not aborted stays alive to time out later
+                    res.writeHead(302, {
+                        Location: 'file:///etc/passwd'
+                    });
+                    res.write(' ');
+                    break;
+
+                case '/redirect6':
+                    res.writeHead(302, {
+                        Location: '/redirect5'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect5':
+                    res.writeHead(302, {
+                        Location: '/redirect4'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect4':
+                    res.writeHead(302, {
+                        Location: '/redirect3'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect3':
+                    res.writeHead(302, {
+                        Location: '/redirect2'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect2':
+                    res.writeHead(302, {
+                        Location: '/redirect1'
+                    });
+                    res.end();
+                    break;
+
+                case '/redirect1':
+                    res.writeHead(302, {
+                        Location: '/'
+                    });
+                    res.end();
+                    break;
+
+                case '/forever':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.write('This connection is never closed');
+                    // never end the request
+                    break;
+
+                case '/gzip': {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain',
+                        'Content-Encoding': 'gzip'
+                    });
+
+                    let stream = zlib.createGzip();
+                    stream.pipe(res);
+                    stream.end('Hello World HTTP\n');
+                    break;
+                }
+                case '/invalid':
+                    res.writeHead(500, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end('Hello World HTTP\n');
+                    break;
+
+                case '/auth':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(Buffer.from((req.headers.authorization as string).split(' ').pop() as string, 'base64'));
+                    break;
+
+                case '/cookie':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(req.headers.cookie);
+                    break;
+
+                case '/ua':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(req.headers['user-agent']);
+                    break;
+
+                case '/post': {
+                    let body: Buffer[] = [];
+                    req.on('readable', () => {
+                        let chunk;
+                        while ((chunk = req.read()) !== null) {
+                            body.push(chunk);
+                        }
+                    });
+                    req.on('end', () => {
+                        res.writeHead(200, {
+                            'Content-Type': 'text/plain'
+                        });
+                        res.end(Buffer.concat(body));
+                    });
+
+                    break;
+                }
+
+                case '/crosshost':
+                    // redirect to a different hostname (127.0.0.1 vs localhost)
+                    res.writeHead(302, {
+                        Location: 'http://127.0.0.1:' + HTTP_PORT + '/show-auth'
+                    });
+                    res.end();
+                    break;
+
+                case '/samehost':
+                    // redirect within the same hostname
+                    res.writeHead(302, {
+                        Location: '/show-auth'
+                    });
+                    res.end();
+                    break;
+
+                case '/show-auth':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(req.headers.authorization || 'NO_AUTH');
+                    break;
+
+                default:
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end('Hello World HTTP\n');
+            }
+        });
+
+        httpsServer = https.createServer(httpsOptions, (req, res) => {
+            if (req.url === '/downgrade') {
+                // redirect to plain HTTP on the same host
+                res.writeHead(302, {
+                    Location: 'http://localhost:' + HTTP_PORT + '/show-auth'
+                });
+                res.end();
+                return;
+            }
+            res.writeHead(200, {
+                'Content-Type': 'text/plain'
+            });
+            res.end('Hello World HTTPS\n');
+        });
+
+        httpServer.listen(HTTP_PORT, () => {
+            httpsServer.listen(HTTPS_PORT, done);
+        });
+    });
+
+    afterEach((t, done) => {
+        httpServer.close(() => {
+            httpsServer.close(done);
+        });
+    });
+
+    it('should fetch HTTP data', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT);
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTP\n');
+            done();
+        });
+    });
+
+    it('should fetch HTTPS data', (t, done) => {
+        // test server uses a self-signed cert, so opt out of validation here
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTPS\n');
+            done();
+        });
+    });
+
+    it('should fetch HTTP data with redirects', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTP\n');
+            done();
+        });
+    });
+
+    it('should return error for too many redirects', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect6');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should fetch HTTP data with custom redirect limit', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3', {
+            maxRedirects: 3
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTP\n');
+            done();
+        });
+    });
+
+    it('should return error for custom redirect limit', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect3', {
+            maxRedirects: 2
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should return disable redirects', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirect1', {
+            maxRedirects: 0
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should unzip compressed HTTP data', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/gzip');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTP\n');
+            done();
+        });
+    });
+
+    it('should return error for unresolved host', (t, done) => {
+        let req = nmfetch('http://asfhaskhhgbjdsfhgbsdjgk');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should return error for invalid status', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/invalid');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should allow invalid status', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/invalid', {
+            allowErrorResponse: true
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(!err);
+        });
+        req.on('end', () => {
+            assert.strictEqual(req.statusCode, 500);
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTP\n');
+            done();
+        });
+    });
+
+    it('should return error for invalid url', (t, done) => {
+        let req = nmfetch('http://localhost:99999999/');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should return timeout error', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/forever', {
+            timeout: 1000
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should handle basic HTTP auth', (t, done) => {
+        let req = nmfetch('http://user:pass@localhost:' + HTTP_PORT + '/auth');
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'user:pass');
+            done();
+        });
+    });
+
+    if (!/^0\.10\./.test(process.versions.node)) {
+        // disabled for node 0.10
+        it('should return error for invalid protocol', (t, done) => {
+            let req = nmfetch('http://localhost:' + HTTPS_PORT);
+            let buf: Buffer[] = [];
+            req.on('data', chunk => {
+                buf.push(chunk);
+            });
+            req.on('error', err => {
+                assert.ok(err);
+                done();
+            });
+            req.on('end', () => {});
+        });
+    }
+
+    for (let url of ['file:///etc/passwd', 'gopher://localhost/x', 'http://localhost \u0000.example.com/x']) {
+        it('should return error for unusable URL ' + JSON.stringify(url), (t, done) => {
+            // the last one does not parse at all, which used to throw synchronously out of
+            // urllib.parse before the protocol check ever ran
+            let req = nmfetch(url);
+            req.on('data', () => {
+                done(new Error('unusable URL fetch should not have produced data'));
+            });
+            req.on('error', (err: any) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.strictEqual(err.sourceUrl, url);
+                done();
+            });
+            req.on('end', () => {
+                done(new Error('unusable URL fetch should have failed'));
+            });
+        });
+    }
+
+    it('should emit a single error for a redirect to an unusable URL', (t, done) => {
+        // the window has to outlast the idle timeout below, which is what would produce a
+        // second error if the redirect branch did not abort this request
+        let errors: any[] = [];
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/redirectfile', { timeout: 300 });
+
+        req.on('data', () => false);
+        req.on('error', err => {
+            errors.push(err);
+        });
+
+        setTimeout(() => {
+            assert.strictEqual(errors.length, 1);
+            assert.strictEqual(errors[0].code, 'EFETCH');
+            assert.strictEqual(errors[0].sourceUrl, 'file:///etc/passwd');
+            done();
+        }, 500);
+    });
+
+    it('should release a body stream when the URL is refused', (t, done) => {
+        let body = new PassThrough();
+        let req = nmfetch('file:///etc/passwd', { method: 'POST', body });
+
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.strictEqual(body.destroyed, true);
+            // an error on the abandoned body must not reach the process as an uncaught one
+            body.emit('error', new Error('body blew up'));
+            setImmediate(done);
+        });
+    });
+
+    it('should not let an own __proto__ key of options.headers mutate the prototype chain', (t, done) => {
+        // options.headers is the caller's httpHeaders, straight off an attachment
+        const mocked = t.mock.method(http, 'request');
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/', {
+            headers: JSON.parse('{"x-real":"1","__proto__":{"authorization":"secret"}}')
+        });
+
+        req.on('data', () => false);
+        req.on('end', () => {
+            const seen = (mocked.mock.calls[0].arguments[0] as any).headers;
+            assert.strictEqual(Object.getPrototypeOf(seen), Object.prototype);
+            assert.strictEqual(seen['x-real'], '1');
+            assert.strictEqual(seen.authorization, undefined);
+            done();
+        });
+        req.on('error', done);
+    });
+
+    it('should not let options.tls repoint the request', (t, done) => {
+        const mocked = t.mock.method(http, 'request');
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/', {
+            tls: {
+                host: 'evil.invalid',
+                port: 1234,
+                path: '/pwn',
+                socketPath: '/var/run/docker.sock',
+                lookup: () => false,
+                rejectUnauthorized: false
+            }
+        });
+
+        req.on('data', () => false);
+        req.on('end', () => {
+            const seen = mocked.mock.calls[0].arguments[0] as any;
+            assert.strictEqual(seen.host, 'localhost');
+            assert.strictEqual(Number(seen.port), HTTP_PORT);
+            assert.strictEqual(seen.path, '/');
+            assert.strictEqual(seen.socketPath, undefined);
+            assert.strictEqual(seen.lookup, undefined);
+            // a genuine TLS setting still gets through
+            assert.strictEqual(seen.rejectUnauthorized, false);
+            done();
+        });
+        req.on('error', done);
+    });
+
+    it('should set cookie value', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/cookie', {
+            cookie: 'test=pest'
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'test=pest');
+            done();
+        });
+    });
+
+    it('should set user agent', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/ua', {
+            userAgent: 'nodemailer-fetch'
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'nodemailer-fetch');
+            done();
+        });
+    });
+
+    it('should post data', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/post', {
+            method: 'post',
+            body: {
+                hello: 'world 😭',
+                another: 'value'
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'hello=world%20%F0%9F%98%AD&another=value');
+            done();
+        });
+    });
+
+    it('should post stream data', (t, done) => {
+        let body = new PassThrough();
+        let data = Buffer.from('hello=world%20%F0%9F%98%AD&another=value');
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/post', {
+            method: 'post',
+            body
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), data.toString());
+            done();
+        });
+
+        let pos = 0;
+        let writeNext = () => {
+            if (pos >= data.length) {
+                return body.end();
+            }
+            let char = data.slice(pos++, pos);
+            body.write(char);
+            setImmediate(writeNext);
+        };
+
+        setImmediate(writeNext);
+    });
+
+    it('should return error for invalid cert', (t, done) => {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
+            tls: {
+                rejectUnauthorized: true
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should reject a self-signed cert by default', (t, done) => {
+        // no tls option provided — certificates must be validated by default
+        let req = nmfetch('https://localhost:' + HTTPS_PORT);
+        req.on('data', () => {});
+        req.on('error', err => {
+            assert.ok(err);
+            done();
+        });
+        req.on('end', () => {});
+    });
+
+    it('should allow a self-signed cert when rejectUnauthorized is false', (t, done) => {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT, {
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Hello World HTTPS\n');
+            done();
+        });
+    });
+
+    it('should drop the Authorization header on a cross-host redirect', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/crosshost', {
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
+            done();
+        });
+    });
+
+    it('should keep the Authorization header on a same-host redirect', (t, done) => {
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/samehost', {
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'Bearer SECRET_TOKEN');
+            done();
+        });
+    });
+
+    it('should drop the Authorization header on an https to http downgrade redirect', (t, done) => {
+        let req = nmfetch('https://localhost:' + HTTPS_PORT + '/downgrade', {
+            tls: {
+                rejectUnauthorized: false
+            },
+            headers: {
+                Authorization: 'Bearer SECRET_TOKEN'
+            }
+        });
+        let buf: Buffer[] = [];
+        req.on('data', chunk => {
+            buf.push(chunk);
+        });
+        req.on('end', () => {
+            assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
+            done();
+        });
+    });
+});

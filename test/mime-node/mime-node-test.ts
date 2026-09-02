@@ -1,0 +1,2556 @@
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
+import urlModule, { fileURLToPath } from 'node:url';
+import MimeNode, { type MimeNodeAddress } from '../../src/mime-node/index.js';
+import addressparser from '../../src/addressparser/index.js';
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import stream from 'node:stream';
+const Transform = stream.Transform;
+const PassThrough = stream.PassThrough;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
+    it('should create MimeNode object', () => {
+        assert.ok(new MimeNode());
+    });
+
+    describe('#createChild', () => {
+        it('should create child', () => {
+            let mb = new MimeNode('multipart/mixed');
+
+            let child = mb.createChild('multipart/mixed');
+            assert.strictEqual(child.parentNode, mb);
+            assert.strictEqual(child.rootNode, mb);
+
+            let subchild1 = child.createChild('text/html');
+            assert.strictEqual(subchild1.parentNode, child);
+            assert.strictEqual(subchild1.rootNode, mb);
+
+            let subchild2 = child.createChild('text/html');
+            assert.strictEqual(subchild2.parentNode, child);
+            assert.strictEqual(subchild2.rootNode, mb);
+        });
+    });
+
+    describe('#appendChild', () => {
+        it('should append child node', () => {
+            let mb = new MimeNode('multipart/mixed');
+
+            let child = new MimeNode('text/plain');
+            mb.appendChild(child);
+            assert.strictEqual(child.parentNode, mb);
+            assert.strictEqual(child.rootNode, mb);
+            assert.strictEqual(mb.childNodes.length, 1);
+            assert.strictEqual(mb.childNodes[0], child);
+        });
+
+        it('should take the node out of the tree it was in', () => {
+            // leaving it in the old parent keeps it streaming as part of that tree while
+            // parentNode already points at the new one
+            let first = new MimeNode('multipart/mixed');
+            let second = new MimeNode('multipart/mixed');
+
+            let child = first.createChild('text/plain');
+            second.appendChild(child);
+
+            assert.strictEqual(first.childNodes.length, 0);
+            assert.strictEqual(child.parentNode, second);
+            assert.strictEqual(child.rootNode, second);
+            assert.strictEqual(second.childNodes[0], child);
+        });
+    });
+
+    describe('#replace', () => {
+        it('should replace node', () => {
+            let mb = new MimeNode(),
+                child = mb.createChild('text/plain'),
+                replacement = new MimeNode('image/png');
+
+            child.replace(replacement);
+
+            assert.strictEqual(mb.childNodes.length, 1);
+            assert.strictEqual(mb.childNodes[0], replacement);
+        });
+    });
+
+    describe('#remove', () => {
+        it('should remove node', () => {
+            let mb = new MimeNode(),
+                child = mb.createChild('text/plain');
+
+            child.remove();
+            assert.strictEqual(mb.childNodes.length, 0);
+            assert.ok(!(child as any).parenNode);
+        });
+    });
+
+    describe('#setHeader', () => {
+        it('should set header', () => {
+            let mb = new MimeNode();
+
+            mb.setHeader('key', 'value');
+            mb.setHeader('key', 'value1');
+            assert.strictEqual(mb.getHeader('Key'), 'value1');
+
+            mb.setHeader([
+                {
+                    key: 'key',
+                    value: 'value2'
+                },
+                {
+                    key: 'key2',
+                    value: 'value3'
+                }
+            ]);
+
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'Key',
+                    value: 'value2'
+                },
+                {
+                    key: 'Key2',
+                    value: 'value3'
+                }
+            ]);
+
+            mb.setHeader({
+                key: 'value4',
+                key2: 'value5'
+            });
+
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'Key',
+                    value: 'value4'
+                },
+                {
+                    key: 'Key2',
+                    value: 'value5'
+                }
+            ]);
+        });
+
+        it('should set multiple headers with the same key', () => {
+            let mb = new MimeNode();
+
+            mb.setHeader('key', ['value1', 'value2', 'value3']);
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'Key',
+                    value: ['value1', 'value2', 'value3']
+                }
+            ]);
+        });
+    });
+
+    describe('#addHeader', () => {
+        it('should add header', () => {
+            let mb = new MimeNode();
+
+            mb.addHeader('key', 'value1');
+            mb.addHeader('key', 'value2');
+
+            mb.addHeader([
+                {
+                    key: 'key',
+                    value: 'value2'
+                },
+                {
+                    key: 'key2',
+                    value: 'value3'
+                }
+            ]);
+
+            mb.addHeader({
+                key: 'value4',
+                key2: 'value5'
+            });
+
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'Key',
+                    value: 'value1'
+                },
+                {
+                    key: 'Key',
+                    value: 'value2'
+                },
+                {
+                    key: 'Key',
+                    value: 'value2'
+                },
+                {
+                    key: 'Key2',
+                    value: 'value3'
+                },
+                {
+                    key: 'Key',
+                    value: 'value4'
+                },
+                {
+                    key: 'Key2',
+                    value: 'value5'
+                }
+            ]);
+        });
+
+        it('should set multiple headers with the same key', () => {
+            let mb = new MimeNode();
+            mb.addHeader('key', ['value1', 'value2', 'value3']);
+            assert.deepStrictEqual(mb._headers, [
+                {
+                    key: 'Key',
+                    value: 'value1'
+                },
+                {
+                    key: 'Key',
+                    value: 'value2'
+                },
+                {
+                    key: 'Key',
+                    value: 'value3'
+                }
+            ]);
+        });
+    });
+
+    describe('#getHeader', () => {
+        it('should return first matching header value', () => {
+            let mb = new MimeNode();
+            mb._headers = [
+                {
+                    key: 'Key',
+                    value: 'value4'
+                },
+                {
+                    key: 'Key2',
+                    value: 'value5'
+                }
+            ];
+
+            assert.strictEqual(mb.getHeader('KEY'), 'value4');
+        });
+    });
+
+    describe('#setContent', () => {
+        it('should set the contents for a node', () => {
+            let mb = new MimeNode();
+            mb.setContent('abc');
+            assert.strictEqual(mb.content, 'abc');
+        });
+    });
+
+    describe('#build', () => {
+        it('should build root node', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                    .setHeader({
+                        date: '12345',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    'Date: 12345\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'Content-Transfer-Encoding: 7bit\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should not let an own __proto__ key of a header value emit the value raw', (t, done) => {
+            // the per header options are copied off the caller supplied value object, and
+            // `prepared` there means "emit this value verbatim". An own "__proto__" key used
+            // to smuggle that flag in without ever appearing as an own key of the header
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    'x-track': JSON.parse('{"value":"a\\r\\nBcc: attacker@example.com","__proto__":{"prepared":true}}')
+                })
+                .setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(!/^Bcc:/m.test(msg));
+                // the CRLF collapses to a space and the value stays inside its own header
+                assert.ok(/^X-Track: a Bcc: attacker@example\.com\r$/m.test(msg));
+                done();
+            });
+        });
+
+        it('should build child node', (t, done) => {
+            let mb = new MimeNode('multipart/mixed'),
+                childNode = mb.createChild('text/plain').setContent('Hello world!'),
+                expected = 'Content-Type: text/plain\r\nContent-Transfer-Encoding: 7bit\r\n\r\nHello world!\r\n';
+
+            childNode.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should build multipart node', (t, done) => {
+            let mb = new MimeNode('multipart/mixed', {
+                    baseBoundary: 'test'
+                }).setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                }),
+                expected =
+                    'Date: 12345\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                    '\r\n' +
+                    '----_NmP-test-Part_1\r\n' +
+                    'Content-Type: text/plain\r\n' +
+                    'Content-Transfer-Encoding: 7bit\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n' +
+                    '----_NmP-test-Part_1--\r\n';
+
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should not emit a blank line before the boundary when base64 body length is an exact multiple of lineLength (regression #1810)', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            // 114 bytes -> 152 base64 chars = 2 * 76. Before the fix, the
+            // trailing CRLF emitted by the base64 wrapper compounded with the
+            // boundary writer's '\r\n--' prefix, yielding '\r\n\r\n--{boundary}'.
+            mb.createChild('application/octet-stream').setContent(Buffer.alloc(114, 0x61));
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const text = msg.toString();
+                assert.ok(!text.includes('\r\n\r\n--' + mb.boundary + '--'), 'boundary must not be preceded by a blank line');
+                assert.ok(text.includes('\r\n--' + mb.boundary + '--'));
+                done();
+            });
+        });
+
+        it('should not emit a blank line before the internal boundary when an earlier sibling base64 body is an exact multiple of lineLength', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            mb.createChild('application/octet-stream').setContent(Buffer.alloc(114, 0x61));
+            mb.createChild('application/octet-stream').setContent(Buffer.from('hello'));
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const segments = msg.toString().split('--' + mb.boundary);
+                assert.strictEqual(segments.length, 4, 'expected 4 segments: prologue, child 1, child 2, terminator');
+                assert.ok(
+                    segments[1].endsWith('\r\n') && !segments[1].endsWith('\r\n\r\n'),
+                    'body of first child must end with exactly one CRLF before the next boundary'
+                );
+                assert.ok(
+                    segments[2].endsWith('\r\n') && !segments[2].endsWith('\r\n\r\n'),
+                    'body of second child must end with exactly one CRLF before the terminator'
+                );
+                done();
+            });
+        });
+
+        it('should build root with generated headers', (t, done) => {
+            let mb = new MimeNode('text/plain');
+            mb.hostname = 'abc';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Date:\s/m.test(msg), true);
+                assert.strictEqual(/^Message-ID:\s/m.test(msg), true);
+                assert.strictEqual(/^MIME-Version: 1\.0$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should not include bcc missing in output, but in envelope', (t, done) => {
+            let mb = new MimeNode('text/plain').setHeader({
+                from: 'sender@example.com',
+                to: 'receiver@example.com',
+                bcc: 'bcc@example.com'
+            });
+            let envelope = mb.getEnvelope();
+
+            assert.deepStrictEqual(envelope, {
+                from: 'sender@example.com',
+                to: ['receiver@example.com', 'bcc@example.com']
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^From: sender@example.com$/m.test(msg), true);
+                assert.strictEqual(/^To: receiver@example.com$/m.test(msg), true);
+                assert.strictEqual(!/^Bcc:/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should include bcc missing in output and in envelope', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                keepBcc: true
+            }).setHeader({
+                from: 'sender@example.com',
+                to: 'receiver@example.com',
+                bcc: 'bcc@example.com'
+            });
+            let envelope = mb.getEnvelope();
+
+            assert.deepStrictEqual(envelope, {
+                from: 'sender@example.com',
+                to: ['receiver@example.com', 'bcc@example.com']
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^From: sender@example.com$/m.test(msg), true);
+                assert.strictEqual(/^To: receiver@example.com$/m.test(msg), true);
+                assert.strictEqual(/^Bcc: bcc@example.com$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should use set envelope', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    from: 'sender@example.com',
+                    to: 'receiver@example.com',
+                    bcc: 'bcc@example.com'
+                })
+                .setEnvelope({
+                    from: 'U Name, A Name <a@a.a>',
+                    to: 'B Name <b@b.b>, c@c.c',
+                    bcc: 'P P P, <u@u.u>',
+                    fooField: {
+                        barValue: 'foobar'
+                    }
+                });
+            let envelope = mb.getEnvelope();
+
+            assert.deepStrictEqual(envelope, {
+                from: 'a@a.a',
+                to: ['b@b.b', 'c@c.c', 'u@u.u'],
+                fooField: {
+                    barValue: 'foobar'
+                }
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^From: sender@example.com$/m.test(msg), true);
+                assert.strictEqual(/^To: receiver@example.com$/m.test(msg), true);
+                assert.strictEqual(!/^Bcc:/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should have unicode subject', (t, done) => {
+            let mb = new MimeNode('text/plain').setHeader({
+                subject: 'jõgeval istus kägu metsas'
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Subject: =\?UTF-8\?Q\?j=C3=B5geval_istus_k=C3=A4gu_metsas\?=$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should have unicode subject with strange characters', (t, done) => {
+            let mb = new MimeNode('text/plain').setHeader({
+                subject: 'ˆ¸ÁÌÓıÏˇÁÛ^¸\\ÁıˆÌÁÛØ^\\˜Û˝™ˇıÓ¸^\\˜ﬁ^\\·\\˜Ø^£˜#ﬁ^\\£ﬁ^\\£ﬁ^\\'
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(
+                    msg.match(/\bSubject: [^\r]*\r\n( [^\r]*\r\n)*/)[0],
+                    'Subject: =?UTF-8?B?y4bCuMOBw4zDk8Sxw4/Lh8OBw5tewrhcw4HEscuG?=\r\n =?UTF-8?B?w4zDgcObw5heXMucw5vLneKEosuHxLHDk8K4Xlw=?=\r\n =?UTF-8?B?y5zvrIFeXMK3XMucw5hewqPLnCPvrIFeXMKj76yB?=\r\n =?UTF-8?B?XlzCo++sgV5c?=\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should keep 7bit text as is', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent('tere tere');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/\r\n\r\ntere tere\r\n$/.test(msg), true);
+                assert.strictEqual(/^Content-Type: text\/plain$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: 7bit$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should prefer base64', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    subject: 'õõõõ'
+                })
+                .setContent('õõõõõõõõ');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+
+                assert.strictEqual(/^Content-Type: text\/plain; charset=utf-8$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: base64$/m.test(msg), true);
+                assert.strictEqual(/^Subject: =\?UTF-8\?B\?w7XDtcO1w7U=\?=$/m.test(msg), true);
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(msg, 'w7XDtcO1w7XDtcO1w7XDtQ==\r\n');
+                done();
+            });
+        });
+
+        it('should force quoted-printable', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                textEncoding: 'quoted-printable'
+            })
+                .setHeader({
+                    subject: 'õõõõ'
+                })
+                .setContent('õõõõõõõõ');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+
+                assert.strictEqual(/^Content-Type: text\/plain; charset=utf-8$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+                assert.strictEqual(/^Subject: =\?UTF-8\?Q\?=C3=B5=C3=B5=C3=B5=C3=B5\?=$/m.test(msg), true);
+
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(msg, '=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5=C3=B5\r\n');
+                done();
+            });
+        });
+
+        it('should prefer quoted-printable', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent('ooooooooõ');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+
+                assert.strictEqual(/^Content-Type: text\/plain; charset=utf-8$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(msg, 'oooooooo=C3=B5\r\n');
+                done();
+            });
+        });
+
+        it('should not flow text', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent(
+                'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0'
+            );
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+
+                assert.strictEqual(/^Content-Type: text\/plain$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(
+                    msg,
+                    'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should not flow html', (t, done) => {
+            let mb = new MimeNode('text/html').setContent(
+                'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0'
+            );
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: text\/html$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(
+                    msg,
+                    'a b c d e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 0 a b c d=\r\n e f g h i j k l m o p q r s t u w x y z 1 2 3 4 5 6 7 8 9 =\r\n0\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should use 7bit for html', (t, done) => {
+            let mb = new MimeNode('text/html').setContent(
+                'a b c d e f g h i j k l m o p\r\nq r s t u w x y z 1 2 3 4 5 6\r\n7 8 9 0 a b c d e f g h i j k\r\nl m o p q r s t u w x y z\r\n1 2 3 4 5 6 7 8 9 0'
+            );
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: text\/html$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: 7bit$/m.test(msg), true);
+
+                msg = msg.split('\r\n\r\n');
+                msg.shift();
+                msg = msg.join('\r\n\r\n');
+
+                assert.strictEqual(
+                    msg,
+                    'a b c d e f g h i j k l m o p\r\nq r s t u w x y z 1 2 3 4 5 6\r\n7 8 9 0 a b c d e f g h i j k\r\nl m o p q r s t u w x y z\r\n1 2 3 4 5 6 7 8 9 0\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should fetch ascii filename', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                filename: 'jogeva.txt'
+            }).setContent('jogeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/\r\n\r\njogeva\r\n$/.test(msg), true);
+                assert.strictEqual(/^Content-Type: text\/plain; name=jogeva.txt$/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: 7bit$/m.test(msg), true);
+                assert.strictEqual(/^Content-Disposition: attachment; filename=jogeva.txt$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should set unicode filename', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                filename: 'jõgeva.txt'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: text\/plain; charset=utf-8;/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''j%C3%B5geva.txt$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should set dashed filename', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                filename: 'Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------Ɣ------.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(
+                    msg.indexOf(
+                        'Content-Disposition: attachment;\r\n' +
+                            " filename*0*=utf-8''%C6%94------%C6%94------%C6%94------%C6%94;\r\n" +
+                            ' filename*1*=------%C6%94------%C6%94------%C6%94------.pdf'
+                    ) >= 0
+                );
+                done();
+            });
+        });
+
+        it('should clean the content type before the multipart check reads it', (t, done) => {
+            // the type token drives the multipart and charset decisions, so a control char in it
+            // used to make those miss and emit a header claiming a type the node is not set up for
+            let mb = new MimeNode('mult\x01ipart/mixed').setContent('abc');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: multipart\/mixed; boundary=/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should not let a normalizeHeaderKey result inject a header', (t, done) => {
+            // the callback replaces the key on the way into the header, so a line break in
+            // what it returns used to end the header and start one of the caller's own
+            let mb = new MimeNode('text/plain').setContent('x');
+            mb.normalizeHeaderKey = () => 'X-A\r\nX-Injected: yes\r\nX-B';
+            mb.setHeader({ 'x-my': 'v' });
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const headers = msg.toString().split('\r\n\r\n')[0];
+                assert.strictEqual(/^X-Injected: yes$/m.test(headers), false);
+                assert.strictEqual(/^X-AX-Injected: yesX-B: v$/m.test(headers), true);
+                done();
+            });
+        });
+
+        it('should not leave a control char anywhere in the headers', (t, done) => {
+            // a header carries VCHAR and WSP only. every field below used to pass these through
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    subject: 'in\x01voice',
+                    'x-custom': 'a\x7fb',
+                    'message-id': '<a\x01b@example.test>',
+                    'in-reply-to': '<c\x1bd@example.test>',
+                    references: '<e\x00f@example.test>'
+                })
+                .setContent('x');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                const headers = msg.toString().split('\r\n\r\n')[0];
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should encode filename with a tab', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\tvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // the tab has to be encoded, not quoted: a quoted-pair "\t" means a literal
+                // "t" and a raw tab is a fold point that unfolding turns into a space
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%09voice.pdf$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=09voice=2Epdf\?="$/m.test(msg), true);
+                // no raw control char and no bogus quoted-pair anywhere in the headers
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f]|\t/.test(headers), false);
+                assert.strictEqual(/\\t/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should encode filename with a DEL', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\x7fvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // DEL is neither a token character nor qtext, so it used to go out bare and
+                // unquoted in both headers
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%7Fvoice.pdf$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=7Fvoice=2Epdf\?="$/m.test(msg), true);
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/\x7f/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should star every continuation segment that holds percent escapes', (t, done) => {
+            // the trailing ü lands on a line of its own, which used to be emitted under an
+            // unstarred key, so a receiver read the filename back ending in "%C3%BC.txt"
+            let mb = new MimeNode('text/plain', {
+                filename: 'ü' + 'x'.repeat(80) + 'ü.txt'
+            }).setContent('x');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(
+                    msg.indexOf(
+                        'Content-Disposition: attachment;\r\n' +
+                            " filename*0*=utf-8''%C3%BCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;\r\n" +
+                            ' filename*1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;\r\n' +
+                            ' filename*2*=%C3%BC.txt'
+                    ) >= 0
+                );
+                // no continuation segment may carry a percent escape without the trailing star
+                const segments = msg.match(/filename\*\d+\*?=[^;\r\n]*/g) || [];
+                assert.ok(segments.length > 1);
+                assert.strictEqual(
+                    segments.some((segment: string) => !/^filename\*\d+\*=/.test(segment) && /%[0-9A-F]{2}/.test(segment)),
+                    false
+                );
+                done();
+            });
+        });
+
+        it('should encode filename with a line break', (t, done) => {
+            let mb = new MimeNode('application/pdf', {
+                filename: 'in\r\nvoice.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''in%0D%0Avoice.pdf$/m.test(msg), true);
+                // name= used to lose the line break entirely: header value encoding rewrites CR/LF as a space
+                assert.strictEqual(/^Content-Type: application\/pdf; name="=\?UTF-8\?Q\?in=0D=0Avoice=2Epdf\?="$/m.test(msg), true);
+                const headers = msg.split('\r\n\r\n')[0];
+                assert.strictEqual(/\\r|\\n/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should encode filename with a space', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                filename: 'document a.test.pdf'
+            }).setContent('jõgeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: text\/plain; charset=utf-8;/m.test(msg), true);
+                assert.strictEqual(/^Content-Transfer-Encoding: quoted-printable$/m.test(msg), true);
+                assert.strictEqual(/^Content-Disposition: attachment; filename="document a.test.pdf"$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should escape a trailing backslash in filename', (t, done) => {
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'foo\\'
+            }).setContent('x');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Disposition: attachment; filename="foo\\\\"$/m.test(msg), true);
+                // name= used to emit the backslash raw, which escaped the closing quote and left
+                // the parameter as an unterminated quoted-string
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="foo\\\\"$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should escape a backslash inside filename', (t, done) => {
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'a\\b.dat'
+            }).setContent('x');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Disposition: attachment; filename="a\\\\b\.dat"$/m.test(msg), true);
+                // an unescaped backslash here is a quoted-pair, so the receiver would see "ab.dat"
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="a\\\\b\.dat"$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should encode a quote in filename as a mime word', (t, done) => {
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'fo"o.dat'
+            }).setContent('x');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                // a quote never reaches the quoting step, encodeWords turns the whole value into a
+                // mime word first, which is why escaping it there is only a safety net
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''fo%22o.dat$/m.test(msg), true);
+                assert.strictEqual(/^Content-Type: application\/octet-stream; name="=\?UTF-8\?Q\?fo=22o=2Edat\?="$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should not let an unpaired surrogate in filename inject a header parameter', (t, done) => {
+            // an unpaired surrogate makes encodeURIComponent throw, and the fallback used to hand
+            // back ; and = unencoded, so this filename produced a second, attacker named parameter
+            let mb = new MimeNode('application/octet-stream', {
+                filename: 'a\ud800;filename\ud800=evil.exe'
+            }).setContent('x');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                const headers = msg.split('\r\n\r\n')[0];
+                const unfolded = headers.replace(/\r\n[ \t]+/g, ' ');
+
+                // the whole value stays inside the one filename parameter, semicolon and equals
+                // percent encoded, so nothing after it can be read as a parameter of its own
+                assert.strictEqual(
+                    /^Content-Disposition: attachment; filename\*0\*=utf-8''a%EF%BF%BD%3Bfilename%EF%BF%BD%3Devil\.exe$/m.test(unfolded),
+                    true
+                );
+                assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(headers), false);
+                done();
+            });
+        });
+
+        it('should detect content type from filename', (t, done) => {
+            let mb = new MimeNode(false, {
+                filename: 'jogeva.zip'
+            }).setContent('jogeva');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: application\/zip;/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should convert address objects', (t, done) => {
+            let mb = new MimeNode(false).setHeader({
+                from: [
+                    {
+                        name: 'the safewithme õ testuser',
+                        address: 'safewithme.testuser@jõgeva.com'
+                    }
+                ],
+                cc: [
+                    {
+                        name: 'the safewithme testuser',
+                        address: 'safewithme.testuser@jõgeva.com'
+                    }
+                ]
+            });
+
+            assert.deepStrictEqual(mb.getEnvelope(), {
+                from: 'safewithme.testuser@xn--jgeva-dua.com',
+                to: ['safewithme.testuser@xn--jgeva-dua.com']
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^From: =\?UTF-8\?Q\?the_safewithme_=C3=B5_testuser\?=$/m.test(msg), true);
+                assert.strictEqual(/^\s+<safewithme.testuser@xn--jgeva-dua.com>$/m.test(msg), true);
+                assert.strictEqual(/^Cc: the safewithme testuser <safewithme.testuser@xn--jgeva-dua.com>$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should skip empty header', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                    .setHeader({
+                        a: 'b',
+                        cc: '',
+                        dd: [],
+                        o: false,
+                        date: 'zzz',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    'A: b\r\n' +
+                    'Date: zzz\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'Content-Transfer-Encoding: 7bit\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should not process prepared headers', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                    .setHeader({
+                        unprepared: {
+                            value: new Array(100).join('a b')
+                        },
+                        prepared: {
+                            value: new Array(100).join('a b'),
+                            prepared: true
+                        },
+                        unicode: {
+                            value: 'õäöü',
+                            prepared: true
+                        },
+                        date: 'zzz',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    // long folded value
+                    'Unprepared: a ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
+                    ' ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
+                    ' ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
+                    ' ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba\r\n' +
+                    ' ba ba ba b\r\n' +
+                    // long unfolded value
+                    'Prepared: a ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba ba b\r\n' +
+                    // non-ascii value
+                    'Unicode: õäöü\r\n' +
+                    'Date: zzz\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'Content-Transfer-Encoding: 7bit\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: text/plain\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should set default transfer encoding for application content', (t, done) => {
+            let mb = new MimeNode('application/x-my-stuff')
+                    .setHeader({
+                        date: '12345',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    'Date: 12345\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'Content-Transfer-Encoding: base64\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: application/x-my-stuff\r\n' +
+                    '\r\n' +
+                    'SGVsbG8gd29ybGQh\r\n';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should not set transfer encoding for multipart content', (t, done) => {
+            let mb = new MimeNode('multipart/global')
+                    .setHeader({
+                        date: '12345',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    'Date: 12345\r\n' +
+                    'Message-ID: <67890>\r\n' +
+                    'MIME-Version: 1.0\r\n' +
+                    'Content-Type: multipart/global; boundary=abc\r\n' +
+                    '\r\n' +
+                    'Hello world!\r\n' +
+                    '--abc--' +
+                    '\r\n';
+
+            mb.boundary = 'abc';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should not set transfer encoding for message/ content', (t, done) => {
+            let mb = new MimeNode('message/rfc822')
+                    .setHeader({
+                        date: '12345',
+                        'message-id': '67890'
+                    })
+                    .setContent('Hello world!'),
+                expected =
+                    'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should use from domain for message-id', (t, done) => {
+            let mb = new MimeNode('text/plain').setHeader({
+                from: 'test@example.com'
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Message-ID: <[0-9a-f-]+@example\.com>$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should fallback to hostname for message-id', (t, done) => {
+            let mb = new MimeNode('text/plain');
+            mb.hostname = 'abc';
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Message-ID: <[0-9a-f-]+@abc>$/m.test(msg), true);
+                done();
+            });
+        });
+    });
+
+    describe('#getEnvelope', () => {
+        it('should get envelope', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .addHeader({
+                        from: 'From <from@example.com>',
+                        sender: 'Sender <sender@example.com>',
+                        to: 'receiver1@example.com'
+                    })
+                    .addHeader({
+                        to: 'receiver2@example.com',
+                        cc: 'receiver1@example.com, receiver3@example.com',
+                        bcc: 'receiver4@example.com, Rec5 <receiver5@example.com>'
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'from@example.com',
+                    to: [
+                        'receiver1@example.com',
+                        'receiver2@example.com',
+                        'receiver3@example.com',
+                        'receiver4@example.com',
+                        'receiver5@example.com'
+                    ]
+                }
+            );
+
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .addHeader({
+                        sender: 'Sender <sender@example.com>',
+                        to: 'receiver1@example.com'
+                    })
+                    .addHeader({
+                        to: 'receiver2@example.com',
+                        cc: 'receiver1@example.com, receiver3@example.com',
+                        bcc: 'receiver4@example.com, Rec5 <receiver5@example.com>'
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'sender@example.com',
+                    to: [
+                        'receiver1@example.com',
+                        'receiver2@example.com',
+                        'receiver3@example.com',
+                        'receiver4@example.com',
+                        'receiver5@example.com'
+                    ]
+                }
+            );
+        });
+
+        it('should not let an own __proto__ key of an address inject an envelope recipient', () => {
+            // the address is rewritten into a copy, and an own "__proto__" key used to make
+            // that copy inherit `group`, which _convertAddresses walks straight into the
+            // recipient list. The injected address shows up in no own key of the input
+            const to = JSON.parse('{"address":"<>","__proto__":{"group":[{"address":"exfil@attacker.test"}],"name":"Team"}}');
+            const envelope = new MimeNode().setHeader({ from: 'from@example.com', to }).getEnvelope();
+
+            assert.deepStrictEqual(envelope.to, []);
+        });
+
+        it('should not let an own __proto__ key of an envelope mutate the prototype chain', () => {
+            const node = new MimeNode().setEnvelope(
+                JSON.parse('{"from":"from@example.com","to":"to@example.com","__proto__":{"polluted":true}}')
+            );
+            const envelope = node.getEnvelope();
+
+            assert.strictEqual(Object.getPrototypeOf(envelope), Object.prototype);
+            assert.strictEqual(envelope.polluted, undefined);
+            assert.strictEqual(({} as any).polluted, undefined);
+        });
+
+        it('should keep a custom envelope field that shares a name with an Object member', () => {
+            // "constructor" and "prototype" are ordinary own properties when assigned, so
+            // dropping them alongside "__proto__" would discard a legitimate custom field
+            const envelope = new MimeNode().setEnvelope({ from: 'from@example.com', to: 'to@example.com', constructor: 'x' }).getEnvelope();
+
+            assert.strictEqual(envelope.constructor, 'x');
+        });
+
+        it('should keep envelope domains as UTF-8 when local part is non-ASCII', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .setHeader({
+                        from: { name: 'Jõser', address: 'jõser@jõgeva.ee' },
+                        to: { name: 'Jõser', address: 'jõser@jõgeva.ee' }
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'jõser@jõgeva.ee',
+                    to: ['jõser@jõgeva.ee']
+                }
+            );
+        });
+
+        it('should normalize a punycoded envelope back to UTF-8 when local part is non-ASCII', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .setEnvelope({
+                        from: 'jõser@xn--jgeva-dua.ee',
+                        to: ['jõser@xn--jgeva-dua.ee']
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'jõser@jõgeva.ee',
+                    to: ['jõser@jõgeva.ee']
+                }
+            );
+        });
+
+        it('should keep a bare username of an explicit envelope', () => {
+            // an envelope value is an addr-spec, so 'root' is a local username here and not
+            // the display name that the same value would be in a header. Local sendmail
+            // delivery relies on it, and both input shapes have to agree
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'root@localhost', to: ['root'] }).getEnvelope(), {
+                from: 'root@localhost',
+                to: ['root']
+            });
+
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'root@localhost', to: [{ address: 'root' }] }).getEnvelope(), {
+                from: 'root@localhost',
+                to: ['root']
+            });
+        });
+
+        it('should not turn a display name of an explicit envelope into an address', () => {
+            // whitespace makes 'John Doe' a display name rather than a local username, so it
+            // carries no address to deliver to and drops out of the envelope
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'a@example.com', to: ['John Doe'] }).getEnvelope(), {
+                from: 'a@example.com',
+                to: []
+            });
+        });
+
+        it('should still normalize an explicit envelope that carries a quoted local part (security)', () => {
+            assert.deepStrictEqual(new MimeNode().setEnvelope({ from: 'a@evil.com@good.com', to: ['b@evil.com@good.com'] }).getEnvelope(), {
+                from: '"a@evil.com"@good.com',
+                to: ['"b@evil.com"@good.com']
+            });
+        });
+    });
+
+    describe('#messageId', () => {
+        it('should create and return message-Id', () => {
+            let mail = new MimeNode().addHeader({
+                from: 'From <from@example.com>'
+            });
+
+            let messageId = mail.messageId();
+            assert.strictEqual(/^<[\w-]+@example\.com>$/.test(messageId), true);
+            assert.strictEqual(messageId, mail.messageId());
+        });
+    });
+
+    describe('#getAddresses', () => {
+        it('should get address object', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .addHeader({
+                        from: 'From <from@example.com>',
+                        sender: 'Sender <sender@example.com>',
+                        to: 'receiver1@example.com'
+                    })
+                    .addHeader({
+                        to: 'receiver2@example.com',
+                        cc: 'receiver1@example.com, receiver3@example.com',
+                        bcc: 'receiver4@example.com, Rec5 <receiver5@example.com>'
+                    })
+                    .getAddresses(),
+                {
+                    from: [
+                        {
+                            address: 'from@example.com',
+                            name: 'From'
+                        }
+                    ],
+                    sender: [
+                        {
+                            address: 'sender@example.com',
+                            name: 'Sender'
+                        }
+                    ],
+                    to: [
+                        {
+                            address: 'receiver1@example.com',
+                            name: ''
+                        },
+                        {
+                            address: 'receiver2@example.com',
+                            name: ''
+                        }
+                    ],
+                    cc: [
+                        {
+                            address: 'receiver1@example.com',
+                            name: ''
+                        },
+                        {
+                            address: 'receiver3@example.com',
+                            name: ''
+                        }
+                    ],
+                    bcc: [
+                        {
+                            address: 'receiver4@example.com',
+                            name: ''
+                        },
+                        {
+                            address: 'receiver5@example.com',
+                            name: 'Rec5'
+                        }
+                    ]
+                }
+            );
+
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .addHeader({
+                        sender: 'Sender <sender@example.com>',
+                        to: 'receiver1@example.com'
+                    })
+                    .addHeader({
+                        to: 'receiver2@example.com',
+                        cc: 'receiver1@example.com, receiver1@example.com',
+                        bcc: 'receiver4@example.com, Rec5 <receiver5@example.com>'
+                    })
+                    .getAddresses(),
+                {
+                    sender: [
+                        {
+                            address: 'sender@example.com',
+                            name: 'Sender'
+                        }
+                    ],
+                    to: [
+                        {
+                            address: 'receiver1@example.com',
+                            name: ''
+                        },
+                        {
+                            address: 'receiver2@example.com',
+                            name: ''
+                        }
+                    ],
+                    cc: [
+                        {
+                            address: 'receiver1@example.com',
+                            name: ''
+                        }
+                    ],
+                    bcc: [
+                        {
+                            address: 'receiver4@example.com',
+                            name: ''
+                        },
+                        {
+                            address: 'receiver5@example.com',
+                            name: 'Rec5'
+                        }
+                    ]
+                }
+            );
+        });
+    });
+
+    describe('#_parseAddresses', () => {
+        it('should normalize header key', () => {
+            let mb = new MimeNode();
+
+            assert.deepStrictEqual(mb._parseAddresses('test address@example.com'), [
+                {
+                    address: 'address@example.com',
+                    name: 'test'
+                }
+            ]);
+
+            assert.deepStrictEqual(mb._parseAddresses(['test address@example.com']), [
+                {
+                    address: 'address@example.com',
+                    name: 'test'
+                }
+            ]);
+
+            assert.deepStrictEqual(mb._parseAddresses([['test address@example.com']]), [
+                {
+                    address: 'address@example.com',
+                    name: 'test'
+                }
+            ]);
+
+            assert.deepStrictEqual(
+                mb._parseAddresses([
+                    {
+                        address: 'address@example.com',
+                        name: 'test'
+                    }
+                ]),
+                [
+                    {
+                        address: 'address@example.com',
+                        name: 'test'
+                    }
+                ]
+            );
+
+            assert.deepStrictEqual(
+                mb._parseAddresses([
+                    {
+                        address: 'root',
+                        name: 'Charlie Root'
+                    }
+                ]),
+                [
+                    {
+                        address: 'root',
+                        name: 'Charlie Root'
+                    }
+                ]
+            );
+        });
+
+        it('should normalize an address parsed out of a string', () => {
+            let mb = new MimeNode();
+
+            // an object and a string carrying the same address have to come back the same
+            assert.deepStrictEqual(mb._parseAddresses('a@evil.com@good.com'), [{ address: '"a@evil.com"@good.com', name: '' }]);
+            assert.deepStrictEqual(mb._parseAddresses([{ address: 'a@evil.com@good.com' }]), [
+                { address: '"a@evil.com"@good.com', name: '' }
+            ]);
+        });
+
+        it('should normalize the addresses of a parsed group', () => {
+            let mb = new MimeNode();
+
+            assert.deepStrictEqual(mb._parseAddresses('Team: a@evil.com@good.com, b@example.com;'), [
+                {
+                    name: 'Team',
+                    group: [
+                        { address: '"a@evil.com"@good.com', name: '' },
+                        { address: 'b@example.com', name: '' }
+                    ]
+                }
+            ]);
+        });
+
+        it('should not modify the address object it was given', () => {
+            let mb = new MimeNode();
+            let input = { address: 'a,b@good.com' };
+
+            let parsed = mb._parseAddresses([input]);
+
+            assert.deepStrictEqual(input, { address: 'a,b@good.com' });
+            assert.strictEqual(parsed[0].address, '"a,b"@good.com');
+        });
+    });
+
+    describe('#_normalizeHeaderKey', () => {
+        it('should normalize header key', () => {
+            let mb = new MimeNode();
+
+            assert.strictEqual(mb._normalizeHeaderKey('key'), 'Key');
+            assert.strictEqual(mb._normalizeHeaderKey('mime-vERSION'), 'MIME-Version');
+            assert.strictEqual(mb._normalizeHeaderKey('-a-long-name'), '-A-Long-Name');
+            assert.strictEqual(mb._normalizeHeaderKey('some-spf'), 'Some-SPF');
+            assert.strictEqual(mb._normalizeHeaderKey('dkim-some'), 'DKIM-Some');
+            assert.strictEqual(mb._normalizeHeaderKey('x-smtpapi'), 'X-SMTPAPI');
+            assert.strictEqual(mb._normalizeHeaderKey('message-id'), 'Message-ID');
+            assert.strictEqual(mb._normalizeHeaderKey('CONTENT-FEATUres'), 'Content-features');
+        });
+
+        it('should strip control chars from a header key', () => {
+            // a field name is printable ascii without the colon, there is no construct
+            // around it that could carry one of these
+            let mb = new MimeNode();
+
+            assert.strictEqual(mb._normalizeHeaderKey('x-cu\x01st\x7fom'), 'X-Custom');
+        });
+    });
+
+    describe('#_handleContentType', () => {
+        it('should do nothing on non multipart', () => {
+            let mb = new MimeNode();
+            assert.ok(!mb.boundary);
+            mb._handleContentType({
+                value: 'text/plain'
+            });
+            assert.strictEqual(mb.boundary, false);
+            assert.strictEqual(mb.multipart, false);
+        });
+
+        it('should use provided boundary', () => {
+            let mb = new MimeNode();
+            assert.ok(!mb.boundary);
+            mb._handleContentType({
+                value: 'multipart/mixed',
+                params: {
+                    boundary: 'abc'
+                }
+            });
+            assert.strictEqual(mb.boundary, 'abc');
+            assert.strictEqual(mb.multipart, 'mixed');
+        });
+
+        it('should generate boundary', t => {
+            let mb = new MimeNode();
+            t.mock.method(mb, '_generateBoundary', () => 'def');
+
+            assert.ok(!mb.boundary);
+            mb._handleContentType({
+                value: 'multipart/mixed',
+                params: {}
+            });
+            assert.strictEqual(mb.boundary, 'def');
+            assert.strictEqual(mb.multipart, 'mixed');
+            t.mock.restoreAll();
+        });
+    });
+
+    describe('#_generateBoundary ', () => {
+        it('should genereate boundary string', () => {
+            let mb = new MimeNode();
+            (mb as any)._nodeId = 'abc';
+            mb.rootNode.baseBoundary = 'def';
+            assert.strictEqual(mb._generateBoundary(), '--_NmP-def-Part_abc');
+        });
+    });
+
+    describe('#_encodeHeaderValue', () => {
+        it('should do noting if possible', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'test value'), 'test value');
+        });
+
+        it('should encode non ascii characters', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'test jõgeva value'), '=?UTF-8?Q?test_j=C3=B5geva_value?=');
+        });
+
+        it('should encode a control char', () => {
+            // a header value can only carry VCHAR and WSP, so these have to become an encoded word
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'in\x01voice'), '=?UTF-8?Q?in=01voice?=');
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'a\x7fb'), '=?UTF-8?Q?a=7Fb?=');
+        });
+
+        it('should keep a tab in a header value', () => {
+            // HT is valid folding whitespace here, unlike in a header parameter
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('x-my', 'a\tb'), 'a\tb');
+        });
+
+        it('should format references', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('references', 'abc def'), '<abc> <def>');
+            assert.strictEqual(mb._encodeHeaderValue('references', ['abc', 'def']), '<abc> <def>');
+        });
+
+        it('should strip control chars from references', () => {
+            // a msg-id is structured, an encoded word inside the brackets would be literal text
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('references', 'a\x00b c\x7fd'), '<ab> <cd>');
+        });
+
+        it('should keep tab separated references apart', () => {
+            // HT separates the ids of an unfolded References header, so stripping it would
+            // merge them into a single unusable token
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('references', '<a@x.test>\t<b@x.test>'), '<a@x.test> <b@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', '<a@x.test>\t<b@x.test>'), '<a@x.test>\t<b@x.test>');
+        });
+
+        it('should format message-id', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('message-id', 'abc'), '<abc>');
+        });
+
+        it('should strip control chars from message-id', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('message-id', 'a\x01b'), '<ab>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', 'c\x1bd'), '<cd>');
+        });
+
+        it('should format addresses', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._encodeHeaderValue('from', {
+                    name: 'the safewithme testuser',
+                    address: 'safewithme.testuser@jõgeva.com'
+                }),
+                'the safewithme testuser <safewithme.testuser@xn--jgeva-dua.com>'
+            );
+        });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._encodeHeaderValue('from', {
+                    name: 'Jõser',
+                    address: 'jõser@jõgeva.ee'
+                }),
+                '=?UTF-8?Q?J=C3=B5ser?= <jõser@jõgeva.ee>'
+            );
+        });
+    });
+
+    describe('#_convertAddresses', () => {
+        it('should convert address object to a string', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: 'Jõgeva Ants',
+                        address: 'ants@jõgeva.ee'
+                    },
+                    {
+                        name: 'Composers',
+                        group: [
+                            {
+                                address: 'sebu@example.com',
+                                name: 'Bach, Sebastian'
+                            },
+                            {
+                                address: 'mozart@example.com',
+                                name: 'Mozzie'
+                            }
+                        ]
+                    }
+                ]),
+                '=?UTF-8?Q?J=C3=B5geva_Ants?= <ants@xn--jgeva-dua.ee>, Composers:"Bach, Sebastian" <sebu@example.com>, Mozzie <mozart@example.com>;'
+            );
+        });
+
+        it('should keep ascii name as is', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: 'O Vigala Sass',
+                        address: 'a@b.c'
+                    }
+                ]),
+                'O Vigala Sass <a@b.c>'
+            );
+        });
+
+        it('should encode single quote', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: "O'Vigala Sass",
+                        address: 'a@b.c'
+                    }
+                ]),
+                '"O\'Vigala Sass" <a@b.c>'
+            );
+        });
+
+        it('should include name in quotes for special symbols', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: 'Sass, Vigala',
+                        address: 'a@b.c'
+                    }
+                ]),
+                '"Sass, Vigala" <a@b.c>'
+            );
+        });
+
+        it('should escape quotes', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: '"Vigala Sass"',
+                        address: 'a@b.c'
+                    }
+                ]),
+                '"\\"Vigala Sass\\"" <a@b.c>'
+            );
+        });
+
+        it('should mime encode unicode names', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: '"Jõgeva Sass"',
+                        address: 'a@b.c'
+                    }
+                ]),
+                '=?UTF-8?Q?=22J=C3=B5geva_Sass=22?= <a@b.c>'
+            );
+        });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([
+                    {
+                        name: 'Jõgeva Ants',
+                        address: 'jõser@jõgeva.ee'
+                    }
+                ]),
+                '=?UTF-8?Q?J=C3=B5geva_Ants?= <jõser@jõgeva.ee>'
+            );
+        });
+
+        it('should keep a plain address outside of angle brackets', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(
+                mb._convertAddresses([{ address: 'user@example.com' }, { address: 'other@example.com' }]),
+                'user@example.com, other@example.com'
+            );
+        });
+
+        it('should wrap an address carrying a special into angle brackets', () => {
+            let mb = new MimeNode();
+            // a quoted local part with no space in it used to be emitted bare, so a parser
+            // splitting the list on ',' before becoming quote-aware saw two recipients
+            assert.strictEqual(
+                mb._convertAddresses([{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]),
+                '<"a,b"@good.com>, <"c;d"@good.com>'
+            );
+        });
+
+        it('should emit as many recipients as the envelope carries (security)', () => {
+            // a domain can not be quoted, so an unnormalizable one is only unambiguous inside
+            // angle brackets. Without them the ',' in the domain adds a recipient to the
+            // visible header that the envelope never had
+            let mb = new MimeNode();
+            [
+                [{ address: 'a@good.com,victim@evil.com' }],
+                [{ address: 'a@good.com;victim@evil.com' }],
+                [{ address: '"a"@evil.com"@good.com' }, { address: 'victim@example.net' }],
+                [{ address: '"a\\"@good.com' }, { address: 'victim@example.net' }],
+                [{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]
+            ].forEach(list => {
+                let envelope: MimeNodeAddress[] = [];
+                let header = mb._convertAddresses(list, envelope);
+                let parsed = addressparser(header);
+
+                assert.strictEqual(parsed.length, envelope.length);
+                assert.deepStrictEqual(
+                    parsed.map(entry => entry.address),
+                    envelope.map(entry => entry.address)
+                );
+            });
+        });
+    });
+
+    describe('#_normalizeAddress', () => {
+        it('should punycode the domain when local part is ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@jõgeva.ee'), 'safe@xn--jgeva-dua.ee');
+        });
+
+        it('should keep ASCII domain unchanged', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@example.com'), 'safe@example.com');
+        });
+
+        it('should not leave DEL in an address', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('a\x7fb@ex\x7fample.test'), '"a b"@ex ample.test');
+        });
+
+        it('should keep domain as UTF-8 when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser@jõgeva.ee'), 'jõser@jõgeva.ee');
+        });
+
+        it('should decode an already punycoded domain when local part is non-ASCII', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser@xn--jgeva-dua.ee'), 'jõser@jõgeva.ee');
+        });
+
+        it('should lowercase the domain regardless of branch', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('safe@EXAMPLE.COM'), 'safe@example.com');
+            assert.strictEqual(mb._normalizeAddress('jõser@JÕGEVA.EE'), 'jõser@jõgeva.ee');
+        });
+
+        it('should fall back to the supplied domain when punycode throws', () => {
+            let mb = new MimeNode();
+            // 'xn--$.com' is a malformed punycode label that makes punycode.toUnicode throw "Invalid input"
+            assert.strictEqual(mb._normalizeAddress('jõser@xn--$.com'), 'jõser@xn--$.com');
+        });
+
+        it('should re-quote a quoted local-part that lost its quotes in parsing (security)', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('user@evil.com@good.com'), '"user@evil.com"@good.com');
+        });
+
+        it('should leave an intact quoted local-part untouched', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('"user@evil.com"@good.com'), '"user@evil.com"@good.com');
+        });
+
+        it('should escape quotes and backslashes when quoting a local-part', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('a"b\\c@good.com'), '"a\\"b\\\\c"@good.com');
+        });
+
+        it('should keep a bare dot-atom local-part unquoted', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress("u.s-e+r!#$%&'*=?^_`{|}~@example.com"), "u.s-e+r!#$%&'*=?^_`{|}~@example.com");
+        });
+
+        it('should quote local-part specials without touching SMTPUTF8 bytes', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser:pärnu@example.com'), '"jõser:pärnu"@example.com');
+        });
+
+        it('should re-quote a local-part that only starts and ends with a quote (security)', () => {
+            let mb = new MimeNode();
+            // starting and ending with a quote does not make it one quoted-string, the inner
+            // quote ends the first one and leaves '@evil.com' outside of it
+            assert.strictEqual(mb._normalizeAddress('"a"@evil.com"@good.com'), '"\\"a\\"@evil.com\\""@good.com');
+        });
+
+        it('should re-quote a local-part whose closing quote is a quoted-pair (security)', () => {
+            let mb = new MimeNode();
+            // the backslash escapes the quote that looks like the closing one, so the
+            // quoted-string never terminates
+            assert.strictEqual(mb._normalizeAddress('"a\\"@good.com'), '"\\"a\\\\\\""@good.com');
+        });
+
+        it('should quote a local-part with dots outside dot-atom positions', () => {
+            let mb = new MimeNode();
+            // dot-atom-text is 1*atext *("." 1*atext), so a leading, trailing or doubled dot
+            // is not a valid dot-atom and a strict receiver rejects the bare form
+            assert.strictEqual(mb._normalizeAddress('.user@example.com'), '".user"@example.com');
+            assert.strictEqual(mb._normalizeAddress('user.@example.com'), '"user."@example.com');
+            assert.strictEqual(mb._normalizeAddress('us..er@example.com'), '"us..er"@example.com');
+        });
+
+        it('should quote an empty local-part', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('@example.com'), '""@example.com');
+        });
+
+        it('should keep an empty address empty', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress(''), '');
+            assert.strictEqual(mb._normalizeAddress(false), '');
+        });
+
+        it('should quote a bare username that carries a special', () => {
+            let mb = new MimeNode();
+            // no '@' to split on, but an unquoted ',' still reads as a recipient separator
+            assert.strictEqual(mb._normalizeAddress('a,b'), '"a,b"');
+            assert.strictEqual(mb._normalizeAddress('root'), 'root');
+        });
+
+        it('should be idempotent', () => {
+            let mb = new MimeNode();
+            ['"a"@evil.com"@good.com', 'user@evil.com@good.com', 'a"b\\c@good.com', '@example.com', 'a,b', 'safe@jõgeva.ee'].forEach(
+                address => {
+                    let once = mb._normalizeAddress(address);
+                    assert.strictEqual(mb._normalizeAddress(once), once);
+                }
+            );
+        });
+    });
+
+    describe('#_generateMessageId', () => {
+        it('should generate uuid-looking message-id', () => {
+            let mb = new MimeNode();
+            let mid = mb._generateMessageId();
+            assert.strictEqual(/^<[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@.*>/.test(mid), true);
+        });
+    });
+
+    it('should use default header keys', (t, done) => {
+        let mb = new MimeNode('text/plain');
+        mb.addHeader('test', 'test');
+        mb.addHeader('BEST', 'best');
+
+        mb.build((err, msg: any) => {
+            assert.ok(!err);
+            msg = msg.toString();
+            assert.ok(/^Test: test$/m.test(msg));
+            assert.ok(/^Best: best$/m.test(msg));
+            done();
+        });
+    });
+
+    it('should use custom header keys', (t, done) => {
+        let mb = new MimeNode('text/plain', {
+            normalizeHeaderKey: key => key.toUpperCase()
+        });
+        mb.addHeader('test', 'test');
+        mb.addHeader('BEST', 'best');
+
+        mb.build((err, msg: any) => {
+            assert.ok(!err);
+            msg = msg.toString();
+            assert.ok(/^TEST: test$/m.test(msg));
+            assert.ok(/^BEST: best$/m.test(msg));
+            done();
+        });
+    });
+
+    describe('Attachment streaming', () => {
+        let port = 10337;
+        let server: http.Server;
+
+        beforeEach((t, done) => {
+            server = http.createServer((req, res) => {
+                res.writeHead(200, {
+                    'Content-Type': 'text/plain'
+                });
+                let data = Buffer.from(new Array(1024 + 1).join('ä'), 'utf-8');
+                let i = 0;
+                let sendByte = () => {
+                    if (i >= data.length) {
+                        return res.end();
+                    }
+                    res.write(Buffer.from([data[i++]]));
+                    setImmediate(sendByte);
+                };
+
+                sendByte();
+            });
+
+            server.listen(port, done);
+        });
+
+        afterEach((t, done) => {
+            server.close(done);
+        });
+
+        it('should pipe URL as an attachment', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'http://localhost:' + port
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^=C3=A4/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should reject URL attachment', (t, done) => {
+            let mb = new MimeNode('text/plain', {
+                disableUrlAccess: true
+            }).setContent({
+                href: 'http://localhost:' + port
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                // pin the layer: disableUrlAccess is refused here, an unusable scheme is
+                // refused by nmfetch and reports EFETCH instead
+                assert.strictEqual(err.code, 'EURLACCESS');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should reject an URL for a child of a closed root', (t, done) => {
+            let mb = new MimeNode('multipart/mixed', { disableUrlAccess: true });
+            mb.createChild('text/plain').setContent({ href: 'http://localhost:' + port });
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EURLACCESS');
+                done();
+            });
+        });
+
+        it('should reject non-http(s) URL attachment', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'file:///etc/passwd'
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should not take the process down on an unparseable URL attachment', (t, done) => {
+            // the host holds a byte the URL parser refuses, which used to throw out of a
+            // setImmediate with no callback and no error event to catch it
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'http://localhost\u0000.example.com/x'
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        for (let href of [' http://localhost:PORT', '\r\nhttp://localhost:PORT', 'http:/localhost:PORT']) {
+            it('should pipe URL as an attachment for ' + JSON.stringify(href), (t, done) => {
+                // the URL parser normalizes surrounding whitespace and a slash-less
+                // authority, so these resolve to the same host the plain form does and
+                // must not be refused on the shape of the raw string
+                let mb = new MimeNode('text/plain').setContent({
+                    href: href.replace('PORT', port as any)
+                });
+
+                mb.build((err, msg) => {
+                    assert.ok(!err);
+                    assert.strictEqual(/^=C3=A4/m.test(msg.toString()), true);
+                    done();
+                });
+            });
+        }
+
+        it('should return an error on invalid url', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent({
+                href: 'http://__should_not_exist:58888'
+            });
+
+            mb.build(err => {
+                assert.ok(err);
+                done();
+            });
+        });
+
+        it('should pipe file as an attachment', (t, done) => {
+            let mb = new MimeNode('application/octet-stream').setContent({
+                path: __dirname + '/fixtures/attachment.bin'
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^w7VrdmEK$/m.test(msg), true);
+                done();
+            });
+        });
+
+        it('should reject file as an attachment', (t, done) => {
+            let mb = new MimeNode('application/octet-stream', {
+                disableFileAccess: true
+            }).setContent({
+                path: __dirname + '/fixtures/attachment.bin'
+            });
+
+            mb.build((err, msg) => {
+                assert.ok(err);
+                assert.ok(!msg);
+                done();
+            });
+        });
+
+        it('should reject a file for a child of a closed root', (t, done) => {
+            // createChild only sees the options the caller hands it, so the child used to
+            // start out with file access open under a root that had closed it
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            mb.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            });
+        });
+
+        it('should reject a file for a grandchild attached before its parent was', (t, done) => {
+            // the subtree is assembled before it is hung on the closed root, so the answer
+            // has to be read off the parent chain rather than copied down on append
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            let branch = new MimeNode('multipart/related');
+            branch.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+            mb.appendChild(branch);
+
+            mb.build(err => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'EFILEACCESS');
+                done();
+            });
+        });
+
+        it('should not read a file for a child re-parented into a second tree', (t, done) => {
+            // appending the node elsewhere used to re-point its parent chain at an open root
+            // while the closed root still streamed it
+            let mb = new MimeNode('multipart/mixed', { disableFileAccess: true });
+            let child = mb.createChild('application/octet-stream');
+            child.setContent({ path: __dirname + '/fixtures/attachment.bin' });
+            new MimeNode('multipart/mixed').appendChild(child);
+
+            const encoded = fs.readFileSync(__dirname + '/fixtures/attachment.bin').toString('base64');
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.ok(!msg.toString().includes(encoded));
+                done();
+            });
+        });
+
+        it('should resolve a file for a child of an open root', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            mb.createChild('application/octet-stream').setContent({ path: __dirname + '/fixtures/attachment.bin' });
+
+            mb.build((err, msg) => {
+                assert.ok(!err);
+                assert.ok(msg.toString().length);
+                done();
+            });
+        });
+
+        it('should return an error on invalid file path', (t, done) => {
+            let mb = new MimeNode('text/plain').setContent({
+                path: '/ASfsdfsdf/Sdgsgdfg/SDFgdfgdfg'
+            });
+
+            mb.build(err => {
+                assert.ok(err);
+                done();
+            });
+        });
+
+        it('should return a error for an errored stream', (t, done) => {
+            let s = new PassThrough();
+            let mb = new MimeNode('text/plain').setContent(s);
+
+            s.write('abc');
+            s.emit('error', new Error('Stream error'));
+
+            setTimeout(() => {
+                mb.build(err => {
+                    assert.ok(err);
+                    done();
+                });
+            }, 100);
+        });
+
+        it('should return a stream error', (t, done) => {
+            let s = new PassThrough();
+            let mb = new MimeNode('text/plain').setContent(s);
+
+            mb.build(err => {
+                assert.ok(err);
+                done();
+            });
+
+            s.write('abc');
+            setTimeout(() => {
+                s.emit('error', new Error('Stream error'));
+            }, 100);
+        });
+    });
+
+    describe('#transform', () => {
+        it('should pipe through provided stream', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('Hello world!');
+
+            let expected =
+                'Date:\t12345\r\n' +
+                'Message-ID:\t<67890>\r\n' +
+                'Content-Transfer-Encoding:\t7bit\r\n' +
+                'MIME-Version:\t1.0\r\n' +
+                'Content-Type:\ttext/plain\r\n' +
+                '\r\n' +
+                'Hello\tworld!\r\n';
+
+            // Transform stream that replaces all spaces with tabs
+            let transform = new Transform();
+            transform._transform = function (chunk, encoding: any, done) {
+                if (encoding !== 'buffer') {
+                    chunk = Buffer.from(chunk, encoding);
+                }
+                for (let i = 0, len = chunk.length; i < len; i++) {
+                    if (chunk[i] === 0x20) {
+                        chunk[i] = 0x09;
+                    }
+                }
+                this.push(chunk);
+                done();
+            };
+
+            mb.transform(transform);
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+    });
+
+    describe('#processFunc', () => {
+        it('should pipe through provided process function', (t, done) => {
+            let mb = new MimeNode('text/plain')
+                .setHeader({
+                    date: '12345',
+                    'message-id': '67890'
+                })
+                .setContent('Hello world!');
+
+            let expected =
+                'Date:\t12345\r\n' +
+                'Message-ID:\t<67890>\r\n' +
+                'Content-Transfer-Encoding:\t7bit\r\n' +
+                'MIME-Version:\t1.0\r\n' +
+                'Content-Type:\ttext/plain\r\n' +
+                '\r\n' +
+                'Hello\tworld!\r\n';
+
+            // Transform stream that replaces all spaces with tabs
+            let transform = new Transform();
+            transform._transform = function (chunk, encoding: any, done) {
+                if (encoding !== 'buffer') {
+                    chunk = Buffer.from(chunk, encoding);
+                }
+                for (let i = 0, len = chunk.length; i < len; i++) {
+                    if (chunk[i] === 0x20) {
+                        chunk[i] = 0x09;
+                    }
+                }
+                this.push(chunk);
+                done();
+            };
+
+            mb.processFunc(input => {
+                setImmediate(() => input.pipe(transform));
+                return transform;
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+    });
+
+    describe('Raw content', () => {
+        it('should return pregenerated content', (t, done) => {
+            let expected = new Array(100).join('Test\n');
+            let mb = new MimeNode('text/plain').setRaw(expected);
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should return pregenerated content for a child node', (t, done) => {
+            let expected = new Array(100).join('Test\n');
+            let mb = new MimeNode('multipart/mixed', {
+                baseBoundary: 'test'
+            }).setHeader({
+                date: '12345',
+                'message-id': '67890'
+            });
+            let child = mb.createChild();
+            child.setRaw(expected);
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(
+                    msg,
+
+                    'Date: 12345\r\n' +
+                        'Message-ID: <67890>\r\n' +
+                        'MIME-Version: 1.0\r\n' +
+                        'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                        '\r\n' +
+                        '----_NmP-test-Part_1\r\n' +
+                        expected +
+                        '\r\n' +
+                        '----_NmP-test-Part_1--\r\n'
+                );
+                done();
+            });
+        });
+
+        it('should return pregenerated content from a stream', (t, done) => {
+            let expected = new Array(100).join('Test\n');
+            let raw = new PassThrough();
+            let mb = new MimeNode('text/plain').setRaw(raw);
+
+            setImmediate(() => {
+                raw.end(expected);
+            });
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(msg, expected);
+                done();
+            });
+        });
+
+        it('should catch error from a raw stream 1', (t, done) => {
+            let raw = new PassThrough();
+            let mb = new MimeNode('text/plain').setRaw(raw);
+
+            raw.emit('error', new Error('Stream error'));
+
+            mb.build(err => {
+                assert.ok(err);
+                done();
+            });
+        });
+
+        it('should catch error from a raw stream 2', (t, done) => {
+            let raw = new PassThrough();
+            let mb = new MimeNode('text/plain').setRaw(raw);
+
+            mb.build(err => {
+                assert.ok(err);
+                done();
+            });
+
+            setImmediate(() => {
+                raw.emit('error', new Error('Stream error'));
+            });
+        });
+    });
+    describe('recipient list scaling', () => {
+        const uniqueRecipients = (count: number) => {
+            const list = new Array(count);
+            for (let i = 0; i < count; i++) {
+                list[i] = 'u' + i + '@example.com';
+            }
+            return list;
+        };
+
+        // Recipients used to be deduped with uniqueList.some(), a linear scan per address,
+        // so a list of distinct recipients cost O(n^2). 100k took ~35s. The budget sits far
+        // above the linear cost (~100ms) and far below the quadratic one.
+        it('should build an envelope for a large unique recipient list in linear time', () => {
+            const count = 100000;
+            const recipients = uniqueRecipients(count);
+
+            const started = Date.now();
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', recipients.join(','));
+            const envelope = mb.getEnvelope();
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(envelope.to.length, count);
+            assert.ok(elapsed < 5000, `building ${count} recipients took ${elapsed}ms`);
+        });
+
+        // _parseAddresses flattened with concat.apply, which spreads every parsed entry
+        // into arguments and threw "Maximum call stack size exceeded" from about 124k
+        // recipients upwards. A large Bcc list reaches that on its own, no crafted input.
+        it('should accept a recipient array past the argument limit', () => {
+            const count = 200000;
+            const recipients = uniqueRecipients(count);
+            const mb = new MimeNode('text/plain');
+
+            assert.doesNotThrow(() => {
+                mb.setHeader('To', recipients);
+            });
+            assert.strictEqual(mb.getEnvelope().to.length, count);
+        });
+
+        // The dedupe set has to outlive one _convertAddresses call. Seeding it per call is
+        // O(headers x recipients), and header count is not bounded by three: `headers: { to:
+        // [...] }` emits one To header per entry, which made this shape slower than the
+        // linear-scan it replaced.
+        it('should stay linear when recipients are spread over many headers', () => {
+            const count = 20000;
+
+            const started = Date.now();
+            const mb = new MimeNode('text/plain');
+            for (let i = 0; i < count; i++) {
+                mb.addHeader('To', 'u' + i + '@example.com');
+            }
+            const envelope = mb.getEnvelope();
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(envelope.to.length, count);
+            assert.ok(elapsed < 2000, `${count} single-recipient headers took ${elapsed}ms`);
+        });
+
+        it('should dedupe recipients across To, Cc and Bcc', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'a@example.com, a@example.com, b@example.com');
+            mb.setHeader('Cc', 'b@example.com, c@example.com');
+            mb.setHeader('Bcc', 'a@example.com, d@example.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['a@example.com', 'b@example.com', 'c@example.com', 'd@example.com']);
+        });
+
+        it('should dedupe a group against the addresses around it', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'x@example.com, grp: x@example.com, y@example.com;, y@example.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['x@example.com', 'y@example.com']);
+        });
+
+        it('should keep the rendered header list intact while deduping the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'A <a@example.com>, a@example.com, b@example.com');
+
+            assert.strictEqual(mb.getHeader('To'), 'A <a@example.com>, a@example.com, b@example.com');
+            assert.deepStrictEqual(mb.getEnvelope().to, ['a@example.com', 'b@example.com']);
+        });
+    });
+    describe('comment handling in recipients', () => {
+        it('should deliver to the domain before a comment, not the text after it', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('From', 'app@good-corp.com');
+            mb.setHeader('To', 'user@good-corp.com(x)evil.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
+        });
+
+        it('should keep a comment beside the @ inside the same address', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'user@(x)good-corp.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
+        });
+    });
+    describe('UTS-46 domain encoding', () => {
+        // The bundled Punycode codec maps nothing, so an ignored or mapped code point
+        // encoded to a different A-label than every conformant parser. An application that
+        // allow-listed 'company.com' with url.domainToASCII approved the recipient while
+        // Nodemailer delivered to 'xn--company-pka.com'.
+        it('should fold away an ignored code point like a validator does', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('victim@compa\u00ADny.com'), 'victim@company.com');
+        });
+
+        it('should map full width characters to their canonical form', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('victim@\uFF43\uFF4F\uFF4D\uFF50\uFF41\uFF4E\uFF59.com'), 'victim@company.com');
+        });
+
+        it('should agree with url.domainToASCII on every encodable domain', () => {
+            const mb = new MimeNode('text/plain');
+            const domains = [
+                'compa\u00ADny.com',
+                'exa\u0301mple.com',
+                'jõgeva.ee',
+                'münchen.de',
+                'пример.рф',
+                '日本.jp',
+                'xn--jgeva-dua.ee',
+                'EXAMPLE.COM',
+                'example.com'
+            ];
+
+            for (const domain of domains) {
+                const reference = urlModule.domainToASCII(domain.toLowerCase());
+                const encoded = mb
+                    ._normalizeAddress('user@' + domain)
+                    .split('@')
+                    .pop();
+                assert.strictEqual(encoded, reference, domain);
+            }
+        });
+
+        it('should map the domain for an SMTPUTF8 address too', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('käsu@compa\u00ADny.com'), 'käsu@company.com');
+            assert.strictEqual(mb._normalizeAddress('käsu@jõgeva.ee'), 'käsu@jõgeva.ee');
+        });
+
+        // domainToASCII returns an empty string for anything that is not a hostname, so
+        // these have to fall through to the bundled codec and stay as supplied.
+        it('should leave address literals and non hostnames alone', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('user@[127.0.0.1]'), 'user@[127.0.0.1]');
+            assert.strictEqual(mb._normalizeAddress('user@[IPv6:::1]'), 'user@[ipv6:::1]');
+            assert.strictEqual(mb._normalizeAddress('user@ex_ample.com'), 'user@ex_ample.com');
+        });
+
+        // domainToASCII and domainToUnicode are host parsers, not IDNA mappers: they cut the
+        // host at '/', '\\', '?' and '#' and percent-decode. Passing a domain through them
+        // unguarded turned 'attacker.example/mail.corp.example', which the bundled codec
+        // leaves unroutable, into deliverable mail for 'attacker.example', so an application
+        // allow-listing by suffix would approve one domain and send to another.
+        it('should not let a URL delimiter truncate the domain', () => {
+            const mb = new MimeNode('text/plain');
+
+            for (const domain of [
+                'attacker.example/mail.corp.example',
+                'attacker.example\\mail.corp.example',
+                'attacker.example?mail.corp.example',
+                'attacker.example#mail.corp.example',
+                'attacker.example%2email.corp.example'
+            ]) {
+                assert.strictEqual(mb._normalizeAddress('user@' + domain), 'user@' + domain, domain);
+            }
+        });
+
+        it('should keep a truncating domain out of the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'user@attacker.example/mail.corp.example');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@attacker.example/mail.corp.example']);
+        });
+
+        it('should carry the mapped domain into the envelope', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'victim@compa\u00ADny.com');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['victim@company.com']);
+        });
+    });
+});

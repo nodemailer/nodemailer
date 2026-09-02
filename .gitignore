@@ -1,9 +1,12 @@
 node_modules
 coverage/
+dist/
 npm-debug.log
 .DS_Store
 test/dkim/cache/message.*
 .npmrc
 examples/test-send.js
 *.patch
+*.tsbuildinfo
 .claude
+src/package-info.ts

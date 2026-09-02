@@ -1,8 +1,10 @@
 /* eslint no-console: 0 */
 
-'use strict';
+import nodemailer from 'nodemailer';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const nodemailer = require('../lib/nodemailer');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Generate SMTP service account from ethereal.email
 nodemailer.createTestAccount((err, account) => {

@@ -1,8 +1,6 @@
-'use strict';
+import nodemailer from 'nodemailer';
 
-let nodemailer = require('../lib/nodemailer');
-
-const { SESv2Client, SendEmailCommand } = require('@aws-sdk/client-sesv2');
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 /* --- Change these values to test --- */
 
