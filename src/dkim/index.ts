@@ -11,7 +11,7 @@ import crypto from 'node:crypto';
 import { copyOwnKeys } from '../shared/objects.js';
 
 const DKIM_ALGO = 'sha256';
-const MAX_MESSAGE_SIZE = 2 * 1024 * 1024; // buffer messages larger than this to disk
+const MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // buffer messages larger than this to disk
 
 /*
 // Usage:
