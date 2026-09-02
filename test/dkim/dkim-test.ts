@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
+import { dkimVerify } from 'mailauth';
 import DKIM from '../../src/dkim/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -313,5 +314,84 @@ teine rida
             assert.ok(output.usingCache);
             done();
         });
+    });
+});
+
+describe('DKIM signatures verified by mailauth', { timeout: 100 * 1000 }, () => {
+    // raw messages that were not built by nodemailer, signed here and verified by an
+    // independent implementation
+    const keyPair = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const dnsRecord = 'v=DKIM1; k=rsa; p=' + keyPair.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+    const resolver = async (name: string, rr: string) => {
+        if (rr === 'TXT' && name === 'test._domainkey.example.com') {
+            return [[dnsRecord]];
+        }
+        const err: NodeJS.ErrnoException = new Error('queryTxt ENOTFOUND ' + name);
+        err.code = 'ENOTFOUND';
+        throw err;
+    };
+
+    const dkim = new DKIM({
+        domainName: 'example.com',
+        keySelector: 'test',
+        privateKey: keyPair.privateKey.export({ type: 'pkcs1', format: 'pem' }) as string
+    });
+
+    const signMessage = (input: Buffer | string): Promise<Buffer> =>
+        new Promise((resolve, reject) => {
+            const chunks: Buffer[] = [];
+            const output = dkim.sign(input);
+            output.on('data', chunk => chunks.push(chunk));
+            output.on('error', reject);
+            output.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+
+    const verify = async (message: Buffer) => {
+        const result = await dkimVerify(message, { resolver });
+        return result.results.map((entry: any) => entry.status.result);
+    };
+
+    const cases: [string, Buffer | string][] = [
+        ['body without a final line break', 'From: a@example.com\r\nSubject: x\r\n\r\nabc'],
+        ['body with trailing whitespace only lines', 'From: a@example.com\r\nSubject: x\r\n\r\nabc \t\r\n  \r\n\t\r\n\r\n'],
+        ['body of a single byte', 'From: a@example.com\r\nSubject: x\r\n\r\nA'],
+        ['empty body', 'From: a@example.com\r\nSubject: x\r\n\r\n'],
+        ['body of empty lines only', 'From: a@example.com\r\nSubject: x\r\n\r\n\r\n\r\n'],
+        ['LF line endings', 'From: a@example.com\nSubject: x\n\nline 1\nline 2\n'],
+        ['tabs and runs of spaces in the body', 'From: a@example.com\r\nSubject: x\r\n\r\na \t b   c\t\r\n\td\r\n'],
+        ['folded header with tabs', 'From: a@example.com\r\nSubject: first\r\n\tsecond  \r\n \t third\r\n\r\nbody\r\n'],
+        ['UTF-8 header with an ideographic space', Buffer.from('From: a@example.com\r\nSubject: 日本　語\r\n\r\nbody\r\n')],
+        ['8-bit header bytes', Buffer.from('From: a@example.com\r\nSubject: j\xf5geva\r\n\r\nbody\r\n', 'binary')],
+        ['duplicate header fields', 'Subject: first\r\nFrom: a@example.com\r\nSubject: second\r\n\r\nbody\r\n'],
+        ['multipart fixture message', fs.readFileSync(__dirname + '/fixtures/message1.eml')]
+    ];
+
+    for (const [name, message] of cases) {
+        it('should sign a message with a ' + name, async () => {
+            const signed = await signMessage(message);
+            assert.deepStrictEqual(await verify(signed), ['pass']);
+            // the message itself is not changed
+            assert.ok(signed.subarray(signed.length - Buffer.byteLength(message)).equals(Buffer.from(message)));
+        });
+    }
+
+    it('should sign a message without a body', async () => {
+        const signed = await signMessage('From: a@example.com\r\nSubject: x');
+        assert.ok(signed.toString().startsWith('DKIM-Signature: '));
+        assert.ok(signed.toString().endsWith('\r\nFrom: a@example.com\r\nSubject: x'));
+        // the verifier expects a header separator, an empty body does not change the signature
+        assert.deepStrictEqual(await verify(Buffer.concat([signed, Buffer.from('\r\n\r\n')])), ['pass']);
+    });
+
+    it('should produce a signature that does not verify once the body changes', async () => {
+        const signed = await signMessage('From: a@example.com\r\nSubject: x\r\n\r\nabc\r\n');
+        const tampered = Buffer.concat([signed, Buffer.from('more\r\n')]);
+        assert.notDeepStrictEqual(await verify(tampered), ['pass']);
+    });
+
+    it('should produce a signature that does not verify once a signed header changes', async () => {
+        const signed = await signMessage('From: a@example.com\r\nSubject: x\r\n\r\nabc\r\n');
+        const tampered = Buffer.from(signed.toString().replace('Subject: x', 'Subject: y'));
+        assert.notDeepStrictEqual(await verify(tampered), ['pass']);
     });
 });

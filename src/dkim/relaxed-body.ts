@@ -3,6 +3,15 @@
 import { Transform, type TransformCallback } from 'node:stream';
 import crypto from 'node:crypto';
 
+const CHAR_CR = 0x0d;
+const CHAR_LF = 0x0a;
+const CHAR_SPACE = 0x20;
+const CHAR_TAB = 0x09;
+
+const CRLF = Buffer.from('\r\n');
+// a run of empty lines is hashed from this buffer in slices
+const EMPTY_LINES = Buffer.alloc(4096, CRLF);
+
 /**
  * Options for the relaxed body hash stream
  */
@@ -13,126 +22,132 @@ export interface RelaxedBodyOptions {
     debug?: boolean;
 }
 
+/**
+ * Passes the message body through unchanged and hashes its relaxed
+ * canonicalization (RFC 6376 section 3.4.4) on the side: whitespace at the end
+ * of a line is dropped, runs of whitespace within a line become a single space,
+ * every line ends with CRLF, empty lines at the end of the body are ignored and
+ * a non-empty body always ends with CRLF. Bytes are canonicalized as they arrive,
+ * so a line of any length costs constant memory.
+ */
 export default class RelaxedBody extends Transform {
-    chunkBuffer: Buffer[];
-    chunkBufferLen: number;
     bodyHash: crypto.Hash;
-    remainder: string;
+    /** Bytes of the original body seen so far */
     byteLength: number;
     debug: boolean | undefined;
     _debugBody: Buffer[] | false;
 
+    /** The current line has bytes that survive canonicalization */
+    _lineHasContent: boolean;
+    /** Whitespace that ends up as a single space if more content follows on the line */
+    _pendingWsp: boolean;
+    /** A CR that is part of the line ending if LF follows, otherwise content */
+    _pendingCr: boolean;
+    /** Empty lines that are hashed only once a non-empty line follows them */
+    _pendingEmptyLines: number;
+
     constructor(options?: RelaxedBodyOptions) {
         super();
         options = options || {};
-        this.chunkBuffer = [];
-        this.chunkBufferLen = 0;
         this.bodyHash = crypto.createHash(options.hashAlgo || 'sha256');
-        this.remainder = '';
         this.byteLength = 0;
 
         this.debug = options.debug;
         this._debugBody = options.debug ? [] : false;
+
+        this._lineHasContent = false;
+        this._pendingWsp = false;
+        this._pendingCr = false;
+        this._pendingEmptyLines = 0;
     }
 
-    updateHash(data: Buffer): void {
-        let chunk: Buffer | false = data;
-        let bodyStr: string;
+    _hashCanonical(data: Buffer): void {
+        if (!data.length) {
+            return;
+        }
+        this.bodyHash.update(data);
+        if (this._debugBody) {
+            this._debugBody.push(Buffer.from(data));
+        }
+    }
 
-        // find next remainder
-        let nextRemainder = '';
+    _hashEmptyLines(): void {
+        while (this._pendingEmptyLines > 0) {
+            const count = Math.min(this._pendingEmptyLines, EMPTY_LINES.length / 2);
+            this._hashCanonical(EMPTY_LINES.subarray(0, count * 2));
+            this._pendingEmptyLines -= count;
+        }
+    }
 
-        // This crux finds and removes the spaces from the last line and the newline characters after the last non-empty line
-        // If we get another chunk that does not match this description then we can restore the previously processed data
-        let state = 'file';
-        for (let i = chunk.length - 1; i >= 0; i--) {
+    /**
+     * Writes a content byte, with the space a pending run of whitespace collapses to,
+     * into the output buffer and returns the new write position. Kept a method rather
+     * than a closure so the write position stays a plain local in the byte loop
+     */
+    _emitContent(out: Buffer, outPos: number, c: number): number {
+        if (!this._lineHasContent) {
+            if (this._pendingEmptyLines) {
+                // the first content byte of a line is where the empty lines before it
+                // become part of the body, so hash what is in the buffer before them
+                this._hashCanonical(out.subarray(0, outPos));
+                outPos = 0;
+                this._hashEmptyLines();
+            }
+            this._lineHasContent = true;
+        }
+        if (this._pendingWsp) {
+            out[outPos++] = CHAR_SPACE;
+            this._pendingWsp = false;
+        }
+        out[outPos++] = c;
+        return outPos;
+    }
+
+    updateHash(chunk: Buffer, final?: boolean): void {
+        // every byte contributes itself at most once, plus a CR for a bare LF
+        // and, once per chunk, a pending space and CR carried over from before
+        const out = Buffer.allocUnsafe(chunk.length * 2 + 2);
+        let outPos = 0;
+
+        for (let i = 0; i < chunk.length; i++) {
             const c = chunk[i];
 
-            if (state === 'file' && (c === 0x0a || c === 0x0d)) {
-                // do nothing, found \n or \r at the end of chunk, stil end of file
-            } else if (state === 'file' && (c === 0x09 || c === 0x20)) {
-                // switch to line ending mode, this is the last non-empty line
-                state = 'line';
-            } else if (state === 'line' && (c === 0x09 || c === 0x20)) {
-                // do nothing, found ' ' or \t at the end of line, keep processing the last non-empty line
-            } else if (state === 'file' || state === 'line') {
-                // non line/file ending character found, switch to body mode
-                state = 'body';
-                if (i === chunk.length - 1) {
-                    // final char is not part of line end or file end, so do nothing
-                    break;
+            if (c === CHAR_LF) {
+                // end of line, a CR right before it and any trailing whitespace are dropped
+                if (this._lineHasContent) {
+                    out[outPos++] = CHAR_CR;
+                    out[outPos++] = CHAR_LF;
+                    this._lineHasContent = false;
+                } else {
+                    this._pendingEmptyLines++;
                 }
-            }
-
-            if (i === 0) {
-                // reached to the beginning of the chunk, check if it is still about the ending
-                // and if the remainder also matches
-                if (
-                    (state === 'file' && (!this.remainder || /[\r\n]$/.test(this.remainder))) ||
-                    (state === 'line' && (!this.remainder || /[ \t]$/.test(this.remainder)))
-                ) {
-                    // keep everything
-                    this.remainder += chunk.toString('binary');
-                    return;
-                } else if (state === 'line' || state === 'file') {
-                    // process existing remainder as normal line but store the current chunk
-                    nextRemainder = chunk.toString('binary');
-                    chunk = false;
-                    break;
-                }
-            }
-
-            if (state !== 'body') {
+                this._pendingWsp = false;
+                this._pendingCr = false;
                 continue;
             }
 
-            // reached first non ending byte
-            nextRemainder = chunk.slice(i + 1).toString('binary');
-            chunk = chunk.slice(0, i + 1);
-            break;
-        }
+            if (this._pendingCr) {
+                // not followed by LF, so the CR is content
+                outPos = this._emitContent(out, outPos, CHAR_CR);
+                this._pendingCr = false;
+            }
 
-        let needsFixing = !!this.remainder;
-        if (chunk && !needsFixing) {
-            // check if we even need to change anything
-            for (let i = 0, len = chunk.length; i < len; i++) {
-                if (i && chunk[i] === 0x0a && chunk[i - 1] !== 0x0d) {
-                    // missing \r before \n
-                    needsFixing = true;
-                    break;
-                } else if (i && chunk[i] === 0x0d && chunk[i - 1] === 0x20) {
-                    // trailing WSP found
-                    needsFixing = true;
-                    break;
-                } else if (i && chunk[i] === 0x20 && chunk[i - 1] === 0x20) {
-                    // multiple spaces found, needs to be replaced with just one
-                    needsFixing = true;
-                    break;
-                } else if (chunk[i] === 0x09) {
-                    // TAB found, needs to be replaced with a space
-                    needsFixing = true;
-                    break;
-                }
+            if (c === CHAR_CR) {
+                this._pendingCr = true;
+            } else if (c === CHAR_SPACE || c === CHAR_TAB) {
+                this._pendingWsp = true;
+            } else {
+                outPos = this._emitContent(out, outPos, c);
             }
         }
 
-        if (needsFixing) {
-            bodyStr = this.remainder + (chunk ? chunk.toString('binary') : '');
-            this.remainder = nextRemainder;
-            bodyStr = bodyStr
-                .replace(/\r?\n/g, '\n') // use js line endings
-                .replace(/[ \t]*$/gm, '') // remove line endings, rtrim
-                .replace(/[ \t]+/gm, ' ') // single spaces
-                .replace(/\n/g, '\r\n'); // restore rfc822 line endings
-            chunk = Buffer.from(bodyStr, 'binary');
-        } else if (nextRemainder) {
-            this.remainder = nextRemainder;
+        if (final && this._pendingCr) {
+            // a CR at the very end of the body is content
+            outPos = this._emitContent(out, outPos, CHAR_CR);
+            this._pendingCr = false;
         }
 
-        if (this.debug) {
-            (this._debugBody as Buffer[]).push(chunk as Buffer);
-        }
-        this.bodyHash.update(chunk as Buffer);
+        this._hashCanonical(out.subarray(0, outPos));
     }
 
     override _transform(chunk: Buffer | string, encoding: BufferEncoding, callback: TransformCallback): void {
@@ -152,15 +167,11 @@ export default class RelaxedBody extends Transform {
     }
 
     override _flush(callback: TransformCallback): void {
-        // generate final hash and emit it
-        if (/[\r\n]$/.test(this.remainder) && this.byteLength > 2) {
-            // add terminating line end
-            this.bodyHash.update(Buffer.from('\r\n'));
-        }
-        if (!this.byteLength) {
-            // emit empty line buffer to keep the stream flowing
-            this.push(Buffer.from('\r\n'));
-            // this.bodyHash.update(Buffer.from('\r\n'));
+        this.updateHash(Buffer.alloc(0), true);
+
+        if (this._lineHasContent) {
+            // the body does not end with a line break, add one
+            this._hashCanonical(CRLF);
         }
 
         this.emit('hash', this.bodyHash.digest('base64'), this.debug ? Buffer.concat(this._debugBody as Buffer[]) : false);

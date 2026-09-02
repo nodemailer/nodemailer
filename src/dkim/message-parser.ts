@@ -6,7 +6,7 @@ import { Transform, type TransformCallback, type TransformOptions } from 'node:s
 export interface MessageParserHeaderLine {
     /** Lowercase header field name */
     key: string;
-    /** Full header line, folded continuation lines included */
+    /** Full header line, folded continuation lines included, one character per byte ('binary' encoding) */
     line: string;
 }
 
@@ -96,7 +96,7 @@ export default class MessageParser extends Transform {
             this.rawHeaders = Buffer.concat(this.headerChunks as Buffer[], this.headerBytes);
             this.headerChunks = null;
             this.emit('headers', this.parseHeaders());
-            if (data.length - 1 > headerPos) {
+            if (data.length > headerPos) {
                 const chunk = data.slice(headerPos);
                 this.bodySize += chunk.length;
                 // this would be the first chunk of data sent downstream
@@ -141,26 +141,33 @@ export default class MessageParser extends Transform {
 
     override _flush(callback: TransformCallback): void {
         if (this.headerChunks) {
-            const chunk = Buffer.concat(this.headerChunks, this.headerBytes);
-            this.bodySize += chunk.length;
-            this.push(chunk);
+            // no empty line was seen, so the message consists of headers only
+            this.rawHeaders = Buffer.concat(this.headerChunks, this.headerBytes);
             this.headerChunks = null;
+            this.emit('headers', this.parseHeaders());
         }
         callback();
     }
 
     parseHeaders(): MessageParserHeaderLine[] {
-        const lines = (this.rawHeaders || '').toString().split(/\r?\n/);
+        // the header bytes are kept as they are, one character per byte, so the
+        // signature covers exactly the bytes the receiving side canonicalizes
+        // Only SP and HTAB fold a line, and only they are trimmed from the field name, the
+        // same whitespace the relaxed canonicalization in sign.ts works with
+        const lines = (this.rawHeaders || Buffer.alloc(0)).toString('binary').split(/\r?\n/);
         for (let i = lines.length - 1; i > 0; i--) {
-            if (/^\s/.test(lines[i])) {
+            if (/^[ \t]/.test(lines[i])) {
                 lines[i - 1] += '\n' + lines[i];
                 lines.splice(i, 1);
             }
         }
         return lines
-            .filter(line => line.trim())
+            .filter(line => /[^ \t\r]/.test(line))
             .map(line => ({
-                key: line.substr(0, line.indexOf(':')).trim().toLowerCase(),
+                key: line
+                    .substr(0, line.indexOf(':'))
+                    .replace(/^[ \t]+|[ \t]+$/g, '')
+                    .toLowerCase(),
                 line
             }));
     }

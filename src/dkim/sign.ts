@@ -32,7 +32,7 @@ export interface DKIMSignOptions extends DKIMKey {
  * Canonicalized headers and the list of field names that went into them
  */
 export interface DKIMRelaxedHeaders {
-    /** Relaxed header lines, each terminated with CRLF */
+    /** Relaxed header lines, each terminated with CRLF, one character per byte ('binary' encoding) */
     headers: string;
     /** Colon separated list of the field names that were included */
     fieldNames: string;
@@ -70,7 +70,8 @@ function sign(headers: MessageParserHeaderLine[], hashAlgo: string, bodyHash: st
     canonicalizedHeaderData.headers += 'dkim-signature:' + relaxedHeaderLine(dkimHeader);
 
     const signer = crypto.createSign(('rsa-' + hashAlgo).toUpperCase());
-    signer.update(canonicalizedHeaderData.headers);
+    // the header lines are 'binary' strings, so this reproduces the original header bytes
+    signer.update(canonicalizedHeaderData.headers, 'latin1');
     let signature: string;
     try {
         signature = signer.sign(options.privateKey as DKIMPrivateKey, 'base64');
@@ -154,10 +155,16 @@ function relaxedHeaders(headers: MessageParserHeaderLine[], fieldNames?: string,
     };
 }
 
+/**
+ * Relaxed canonicalization of a header field value (RFC 6376 section 3.4.2): unfold, turn
+ * every run of SP and HTAB into a single SP and drop the whitespace next to the colon and
+ * at the end. Only SP and HTAB count as whitespace, so bytes that decode to other space
+ * characters, such as a non-breaking space in a UTF-8 header, stay as they are
+ */
 function relaxedHeaderLine(line: string): string {
     return line
         .substr(line.indexOf(':') + 1)
         .replace(/\r?\n/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+        .replace(/[ \t]+/g, ' ')
+        .replace(/^ | $/g, '');
 }
