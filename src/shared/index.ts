@@ -494,11 +494,10 @@ export const parseConnectionUrl = (str?: string | null): ConnectionUrlOptions =>
         options.host = url.hostname;
     }
 
-    if (url.auth) {
-        const auth = url.auth.split(':');
+    if (url.username || url.password) {
         options.auth = {
-            user: auth.shift() as string,
-            pass: auth.join(':')
+            user: url.username || '',
+            pass: url.password || ''
         };
     }
 
