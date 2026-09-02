@@ -718,6 +718,22 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             });
         });
 
+        it('should resolve when the runtime has no interface table', (t, done) => {
+            // Cloudflare Workers report no network interfaces at all, that must not
+            // disable every address family and skip the resolver
+            Object.keys(shared.networkInterfaces!).forEach(key => {
+                delete shared.networkInterfaces![key];
+            });
+
+            shared.resolveHostname({ host: 'ipv4.single.dev.ethereal.email' }, (err, result: any) => {
+                assert.ok(!err);
+                assert.strictEqual(result.servername, 'ipv4.single.dev.ethereal.email');
+                assert.strictEqual(result.host, '95.216.108.161');
+                assert.ok(result._addresses.includes('95.216.108.161'));
+                done();
+            });
+        });
+
         it('should fail missing address', (t, done) => {
             shared.resolveHostname({ host: 'missing.single.dev.ethereal.email' }, err => {
                 assert.ok(err);

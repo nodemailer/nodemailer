@@ -202,17 +202,14 @@ try {
 }
 
 const isFamilySupported = (family: number | string, allowInternal?: boolean): boolean => {
-    const ifaces = networkInterfaces;
-    if (!ifaces) {
-        // hope for the best
+    const addresses = Object.values(networkInterfaces || {}).flat() as os.NetworkInterfaceInfo[];
+    if (!addresses.length) {
+        // hope for the best. Runtimes without an interface table (Cloudflare
+        // Workers) report an empty object rather than throwing
         return true;
     }
 
-    return Object.keys(ifaces)
-        .map(key => ifaces[key] as os.NetworkInterfaceInfo[])
-        .reduce((acc, val) => acc.concat(val), [] as os.NetworkInterfaceInfo[])
-        .filter(i => !i.internal || allowInternal)
-        .some(i => i.family === 'IPv' + family || i.family === family);
+    return addresses.filter(i => !i.internal || allowInternal).some(i => i.family === 'IPv' + family || i.family === family);
 };
 
 const resolve = (

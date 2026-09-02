@@ -124,6 +124,8 @@
         "test": "node --import tsx --test --test-concurrency=1 $(find test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
         "pretest:coverage": "npm run build",
         "test:coverage": "c8 node --import tsx --test --test-concurrency=1 $(find test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
+        "pretest:bun": "npm run build",
+        "test:bun": "bun test --timeout 60000 $(find ./test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
         "format": "prettier --write \"**/*.{js,cjs,ts,json,md}\"",
         "format:check": "prettier --check \"**/*.{js,cjs,ts,json,md}\"",
         "lint": "eslint . && npm run typecheck",

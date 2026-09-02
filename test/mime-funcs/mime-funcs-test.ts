@@ -90,7 +90,9 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
                     assert.ok(/^=\\?UTF-8\\?Q\\?(?:[^=]|=[0-9A-F]{2})*\\?=$/i.test(word), 'invalid encoded word ' + JSON.stringify(word));
                 }
             `;
-            const res = child_process.spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script], {
+            // Bun runs TypeScript natively, so the tsx loader is only registered under Node
+            const loaderArgs = process.versions.bun ? [] : ['--import', 'tsx'];
+            const res = child_process.spawnSync(process.execPath, [...loaderArgs, '--input-type=module', '-e', script], {
                 timeout: 30 * 1000,
                 encoding: 'utf8'
             });

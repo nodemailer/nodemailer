@@ -25,6 +25,22 @@ jobs:
             - run: npm run format:check
             - run: npm test
 
+    # The library is used from Bun as well: the ESM build and the same test
+    # suite are run under the latest Bun release
+    bun:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v5
+              with:
+                  node-version: 24.x
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+            - run: npm install
+            - run: npm run test:bun
+
     # Coverage is gated separately on a single Node.js version: c8's dependency
     # chain (yargs) is not yet loadable on Node.js 26, and coverage numbers are
     # the same across versions, so there is no need to run it across the matrix.

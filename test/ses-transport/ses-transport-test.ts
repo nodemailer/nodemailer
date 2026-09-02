@@ -373,7 +373,9 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
             'setTimeout(() => { process.stdout.write("RESULT:" + JSON.stringify({ calls, secondErr })); process.exit(0); }, 100);'
         ].join('\n');
 
-        const out = execFileSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script], { encoding: 'utf8' });
+        // Bun runs TypeScript natively, so the tsx loader is only registered under Node
+        const loaderArgs = process.versions.bun ? [] : ['--import', 'tsx'];
+        const out = execFileSync(process.execPath, [...loaderArgs, '--input-type=module', '-e', script], { encoding: 'utf8' });
         const m = out.match(/RESULT:(\{.*\})/);
         assert.ok(m, 'child did not emit a result: ' + out);
         const res = JSON.parse(m[1]);
