@@ -6,6 +6,26 @@ import * as shared from '../../src/shared/index.js';
 import Cookies from '../../src/fetch/cookies.js';
 
 describe('URL wrapper Tests', { timeout: 10 * 1000 }, () => {
+    // hosts the legacy parser truncates (the rest becomes the path, so every one of these
+    // would become a request to 'localhost'), keeps with a control character, or that the
+    // WHATWG parser accepts as an opaque host of a non-special scheme and decodes badly
+    const badHosts = [
+        'localhost\u0000.example.com',
+        'localhost%00.example.com',
+        'localhost%2f.example.com',
+        'localhost .example.com',
+        'localhost<.example.com',
+        'localhost|.example.com',
+        'localhost:80abc.example.com',
+        'local\x01host',
+        'localhost\x7f',
+        'localhost%3a80.example.com',
+        'localhost%40.example.com'
+    ];
+
+    // the newer legacy parser rejects a bad port itself, with its own error code
+    const rejected = (err: Error & { code?: string }) => ['ERR_INVALID_URL', 'ERR_INVALID_ARG_VALUE'].includes(err.code as string);
+
     describe('parse', () => {
         it('should map a full URL to legacy-shaped fields', () => {
             const parsed = urllib.parse('https://user:pass@example.com:8443/a/b?x=1&y=2#frag');
@@ -68,6 +88,64 @@ describe('URL wrapper Tests', { timeout: 10 * 1000 }, () => {
             assert.strictEqual(parsed.auth, 'user:pass');
 
             assert.strictEqual(urllib.parse('direct:').protocol, 'direct:');
+        });
+
+        it('should reject a host the legacy parser would truncate or keep with a control character', () => {
+            for (const host of badHosts) {
+                assert.throws(() => urllib.parse('http://' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.parse('http://user:pass@' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.parse('smtps://' + host + ':465'), rejected, JSON.stringify(host));
+                // the legacy parser skips leading whitespace before it reads the scheme
+                assert.throws(() => urllib.parse(' \thttp://' + host + '/x'), rejected, JSON.stringify(host));
+                // a scheme the legacy parser accepts but WHATWG does not, and an empty authority
+                assert.throws(() => urllib.parse('1http://' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.parse('http:///' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.parse('http:/' + host + '/x'), rejected, JSON.stringify(host));
+            }
+        });
+
+        it('should still fall back to the legacy parser when it reads the whole authority', () => {
+            // an out-of-range port is refused by WHATWG but kept as is by the legacy parser
+            let parsed = urllib.parse('http://user:pass@Example.com:99999/x?y=1');
+            assert.strictEqual(parsed.hostname, 'example.com');
+            assert.strictEqual(parsed.port, '99999');
+            assert.strictEqual(parsed.auth, 'user:pass');
+            assert.strictEqual(parsed.pathname, '/x');
+
+            // the legacy parser lowercases and IDNA maps the host, the comparison must too
+            parsed = urllib.parse('http://Müller.example.:99999/');
+            assert.strictEqual(parsed.hostname, 'xn--mller-kva.example.');
+            assert.strictEqual(parsed.port, '99999');
+
+            parsed = urllib.parse('http://[::1]:99999/');
+            assert.strictEqual(parsed.hostname, '::1');
+            assert.strictEqual(parsed.port, '99999');
+        });
+
+        it('should reject a bracketed host that is not an IPv6 literal', () => {
+            assert.throws(() => urllib.parse('http://[evil.example]:99999/'), rejected);
+            assert.throws(() => urllib.parse('http://[1.2.3.4]:99999/'), rejected);
+        });
+
+        it('should IDNA map the host of a non-special scheme like the legacy parser did', () => {
+            assert.strictEqual(urllib.parse('smtp://MÜLLER.example:25').hostname, 'xn--mller-kva.example');
+            assert.strictEqual(urllib.parse('smtp://EXAMPLE.COM:25').hostname, 'example.com');
+            assert.strictEqual(urllib.parse('smtps://ｅｘａｍｐｌｅ.com:465').hostname, 'example.com');
+            assert.strictEqual(urllib.parse('smtp://[::1]:25').hostname, '::1');
+            assert.throws(() => urllib.parse('smtps://localhost%2500.example.com:465'), rejected);
+        });
+
+        it('should keep the slash-less form of a value with surrounding whitespace', () => {
+            for (const input of [
+                'smtp:user:pass@mail.example.com:25\n',
+                '\r\nsmtp:user:pass@mail.example.com:25\r\n',
+                ' smtp:user:pass@mail.example.com:25 '
+            ]) {
+                const parsed = urllib.parse(input);
+                assert.strictEqual(parsed.hostname, 'mail.example.com', JSON.stringify(input));
+                assert.strictEqual(parsed.port, '25', JSON.stringify(input));
+                assert.strictEqual(parsed.auth, 'user:pass', JSON.stringify(input));
+            }
         });
 
         it('should not throw on empty input', () => {
@@ -172,6 +250,25 @@ describe('URL wrapper Tests', { timeout: 10 * 1000 }, () => {
 
         it('should return an absolute target unchanged', () => {
             assert.strictEqual(urllib.resolve('http://example.com/a', 'https://other.com/x'), 'https://other.com/x');
+        });
+
+        it('should reject a host the legacy resolver would truncate', () => {
+            for (const host of badHosts) {
+                assert.throws(() => urllib.resolve('http://example.com/a', 'http://' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.resolve('http://' + host + '/a', 'x'), rejected, JSON.stringify(host));
+                // a scheme-relative or backslash target decides the host of the result as well
+                assert.throws(() => urllib.resolve('http://example.com/a', '//' + host + '/x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.resolve('http://example.com/a', '\\\\' + host + '\\x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.resolve('http://example.com/a', 'https:///' + host + '/x'), rejected, JSON.stringify(host));
+                // a scheme-relative base is read as a host by the legacy resolver as well
+                assert.throws(() => urllib.resolve('//' + host + '/a', 'x'), rejected, JSON.stringify(host));
+                assert.throws(() => urllib.resolve('http://example.com/a', ' http://' + host + '/x'), rejected, JSON.stringify(host));
+            }
+        });
+
+        it('should still fall back to the legacy resolver for an out-of-range port', () => {
+            assert.strictEqual(urllib.resolve('http://example.com:99999/a/b', 'c'), 'http://example.com:99999/a/c');
+            assert.strictEqual(urllib.resolve('http://example.com/a/b', '//other.example:99999/c'), 'http://other.example:99999/c');
         });
     });
 

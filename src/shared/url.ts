@@ -14,6 +14,7 @@
 //  - a literal unescaped ':' inside a password is percent-encoded by WHATWG;
 //    such passwords should be percent-encoded by the caller anyway.
 
+import net from 'node:net';
 import urllib from 'node:url';
 import * as punycode from '../punycode/index.js';
 
@@ -35,7 +36,67 @@ export interface ParsedUrl {
 
 // Matches a "scheme:" not followed by "//" (and with something after it), used
 // to re-insert the authority separator the legacy parser did not require.
-const SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)(.+)$/;
+const SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)([\s\S]+)$/;
+
+// Leading and trailing C0 controls and spaces, which the WHATWG parser strips before it
+// looks at the input. Stripped up front so that the slash-less form is recognized in a
+// value read from a file with a trailing newline as well.
+const SURROUNDING_WHITESPACE = /^[\x00-\x20]+|[\x00-\x20]+$/g;
+
+// Leading characters legacy url.parse() skips before it reads the scheme
+const LEGACY_TRIM = /^[\x00-\x20\u00a0\ufeff]+/;
+
+// The authority of a "scheme://authority/..." or a scheme-relative "//authority/..."
+// string: the scheme, if any (anything the legacy parser takes for one, it is less strict
+// than WHATWG about the first character), and what the legacy parser has to report as the
+// host once the userinfo is removed, see legacyParse. The legacy parser treats a backslash
+// as a slash.
+const AUTHORITY = /^([a-zA-Z0-9+.-]+:)?[\\/]{2}([^\\/?#]*)/;
+
+// The WHATWG forbidden domain code points, except '%' which an opaque host may carry: the
+// C0 control characters, space, DEL and the URL delimiters. CONTROL_CHARS is the C0 and DEL
+// subset, checked on its own in legacyParse where the host string still carries the port
+// and IPv6 brackets.
+const FORBIDDEN_HOST_CHARS = /[\x00-\x20#/:<>?@[\\\]^|\x7f]/;
+const CONTROL_CHARS = /[\x00-\x1f\x7f]/;
+
+// The error the WHATWG parser throws, for a host that only fails the checks in this module
+function invalidUrl(input: string): Error {
+    const err = new TypeError('Invalid URL') as Error & { code: string; input: string };
+    err.code = 'ERR_INVALID_URL';
+    err.input = input;
+    return err;
+}
+
+// Legacy url.parse() for input the WHATWG parser refused. The legacy parser does not
+// reject a host it can not represent: a NUL byte, a percent-encoded byte, a space or a
+// '<' inside the host ends the host early and the rest becomes the path, so
+// 'localhost%00.example.com' silently turns into a request to 'localhost'. When the
+// input has an authority that the legacy parser reads as the host (always for
+// "scheme://", for "//host" only when slashesDenoteHost is set, as url.resolve() does
+// for its target), the legacy result is accepted only if that host is the whole written
+// authority, lowercased and IDNA mapped the way the legacy parser does it, and carries
+// no control character. A legacy result with a host (an empty one included, 'http:///x'
+// is a request to localhost) that no such authority accounts for is refused as well.
+// Otherwise the WHATWG error is reported. Relative input has no authority to check and
+// keeps the legacy behavior.
+function legacyParse(input: string, parseQueryString: boolean | undefined, whatwgError: unknown, slashesDenoteHost?: boolean): ParsedUrl {
+    const parsed = urllib.parse(input, parseQueryString as false, slashesDenoteHost);
+    const authority = AUTHORITY.exec(input.replace(LEGACY_TRIM, ''));
+    if (authority && (authority[1] || parsed.hostname !== null)) {
+        const written = authority[2].slice(authority[2].lastIndexOf('@') + 1);
+        if (!written || CONTROL_CHARS.test(written) || (parsed.host || '').toLowerCase() !== punycode.toASCII(written.toLowerCase())) {
+            throw whatwgError;
+        }
+        // the legacy parser takes any bracketed value for an IPv6 literal
+        if (written.charAt(0) === '[' && !net.isIPv6(written.slice(1, written.indexOf(']')))) {
+            throw whatwgError;
+        }
+    } else if (parsed.hostname !== null) {
+        throw whatwgError;
+    }
+    return parsed;
+}
 
 // decodeURIComponent that never throws. Legacy url.parse() decodes the auth
 // component but tolerates malformed percent sequences, so mirror that.
@@ -52,9 +113,10 @@ function safeDecode(str: string): string {
 // percent-encodes a non-ASCII host instead of IDNA-mapping it. Both forms are
 // un-resolvable when handed to net/dns/http.request, which is what every call
 // site does, so map them back to what legacy url.parse() returned: the bare
-// address and the punycode form. Idempotent on plain ASCII and already-punycode
-// hosts, so special-scheme hosts (already IDNA-mapped by WHATWG) pass through.
-function normalizeHostname(raw: string): string {
+// address and the IDNA mapped (lowercased, punycode) form. Idempotent on plain
+// ASCII and already-punycode hosts, so special-scheme hosts (already IDNA-mapped
+// by WHATWG) pass through.
+function normalizeHostname(raw: string, href: string): string {
     const hostname = raw || '';
     if (!hostname) {
         // Host-less URL (e.g. 'direct:'): legacy returned '' here, not null;
@@ -64,11 +126,18 @@ function normalizeHostname(raw: string): string {
     if (hostname.charAt(0) === '[' && hostname.charAt(hostname.length - 1) === ']') {
         return hostname.slice(1, -1);
     }
-    return punycode.toASCII(safeDecode(hostname));
+    const decoded = safeDecode(hostname);
+    // domainToASCII applies the WHATWG host rules (IDNA mapping included) and returns an
+    // empty string for a host it refuses, the forbidden characters among them
+    const mapped = FORBIDDEN_HOST_CHARS.test(decoded) ? '' : urllib.domainToASCII(decoded);
+    if (!mapped) {
+        throw invalidUrl(href);
+    }
+    return mapped;
 }
 
 export const parse = (input?: string | null, parseQueryString?: boolean): ParsedUrl => {
-    input = input || '';
+    input = (input || '').replace(SURROUNDING_WHITESPACE, '');
 
     // Legacy url.parse() parses a "user:pass@host:port" authority that follows
     // the scheme even without the "//" separator, for schemes outside its
@@ -85,17 +154,17 @@ export const parse = (input?: string | null, parseQueryString?: boolean): Parsed
     let u: URL;
     try {
         u = new URL(normalized);
-    } catch (_err) {
+    } catch (err) {
         // WHATWG rejects some input the legacy parser tolerated (empty/relative
         // strings, scheme-relative '//host/path', out-of-range ports, ...). Fall
         // back to the legacy parser so behavior, including the downstream errors
         // callers rely on, is preserved. This is the only path that can still
         // emit a deprecation warning; it fires for anything WHATWG cannot
         // represent, including legitimate relative URLs, not just malformed input.
-        return urllib.parse(input, parseQueryString as false);
+        return legacyParse(normalized, parseQueryString, err);
     }
 
-    const hostname = normalizeHostname(u.hostname);
+    const hostname = normalizeHostname(u.hostname, u.href);
     const port = u.port || null;
     const pathname = u.pathname || null;
     const search = u.search || null;
@@ -148,8 +217,12 @@ export const parse = (input?: string | null, parseQueryString?: boolean): Parsed
 export const resolve = (from: string, to: string): string => {
     try {
         return new URL(to, from).href;
-    } catch (_err) {
-        // Malformed target, fall back to the legacy resolver.
+    } catch (err) {
+        // Malformed target, fall back to the legacy resolver, but only when the legacy
+        // parser reads the same host out of both inputs that was written. The target
+        // decides the host when it is absolute or scheme-relative, the base otherwise
+        legacyParse(from, false, err, true);
+        legacyParse(to, false, err, true);
         return urllib.resolve(from, to);
     }
 };
