@@ -130,6 +130,11 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
             assert.strictEqual(typeof require(subpath('fetch')).Cookies, 'function');
         });
 
+        it('serves the well-known services JSON through its historical path', () => {
+            const services = require(subpath('well-known/services.json'));
+            assert.deepStrictEqual(services, JSON.parse(fs.readFileSync(path.join(root, 'src', 'well-known', 'services.json'), 'utf8')));
+        });
+
         it('keeps deep imports of utility modules returning their functions', () => {
             for (const [name, member] of [
                 ['shared', 'getLogger'],

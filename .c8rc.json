@@ -5,7 +5,7 @@
     "temp-directory": "./coverage/.tmp",
     "reporter": ["text-summary", "html"],
     "include": ["src/**/*.ts"],
-    "exclude": ["src/package-info.ts"],
+    "exclude": ["src/package-info.ts", "src/well-known/services.ts"],
     "exclude-after-remap": true,
     "lines": 85
 }

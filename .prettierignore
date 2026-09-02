@@ -6,3 +6,4 @@ build
 .nyc_output
 package-lock.json
 CHANGELOG.md
+src/well-known/services.ts

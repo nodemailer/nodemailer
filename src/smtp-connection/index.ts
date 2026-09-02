@@ -2412,6 +2412,7 @@ declare namespace SMTPConnection {
     export type SentMessageInfo = SMTPConnectionSendInfo;
     export type CustomAuthenticationContext = SMTPConnectionCustomAuthContext;
     export type CustomAuthenticationResponse = SMTPConnectionCustomAuthResponse;
+    export type CustomAuthenticationHandlers = SMTPConnectionCustomAuthHandlers;
 }
 
 export default SMTPConnection;

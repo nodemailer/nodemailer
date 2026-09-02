@@ -6,6 +6,9 @@
     "main": "./dist/cjs/nodemailer.js",
     "typesVersions": {
         "*": {
+            "lib/well-known/services.json": [
+                "dist/well-known/services.json"
+            ],
             "lib/*": [
                 "dist/cjs/*/index.d.ts",
                 "dist/cjs/*.d.ts"
@@ -93,6 +96,7 @@
             "import": "./dist/esm/well-known/index.js",
             "require": "./dist/cjs/well-known/index.js"
         },
+        "./lib/well-known/services.json": "./dist/well-known/services.json",
         "./lib/xoauth2": {
             "import": "./dist/esm/xoauth2/index.js",
             "require": "./dist/cjs/xoauth2/index.js"
@@ -115,7 +119,7 @@
     ],
     "scripts": {
         "build": "node scripts/build.js",
-        "typecheck": "node scripts/build.js --package-info-only && tsc -p tsconfig.json",
+        "typecheck": "node scripts/build.js --generate-only && tsc -p tsconfig.json",
         "pretest": "npm run build",
         "test": "node --import tsx --test --test-concurrency=1 $(find test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
         "pretest:coverage": "npm run build",

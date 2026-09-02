@@ -1,4 +1,28 @@
-import { services, type WellKnownServiceDefinition } from './services.js';
+import { services } from './services.js';
+
+/**
+ * Connection settings of a well-known e-mail service
+ */
+export interface WellKnownServiceDefinition {
+    /** Human readable description of the service */
+    description?: string;
+    /** Domains of e-mail addresses hosted by the service */
+    domains?: string[];
+    /** Alternative names the service can be looked up by */
+    aliases?: string[];
+    /** SMTP hostname */
+    host?: string;
+    /** SMTP port (a numeric string in a few entries) */
+    port?: number | string;
+    /** true for implicit TLS (usually port 465) */
+    secure?: boolean;
+    /** Preferred authentication method */
+    authMethod?: string;
+    /** Set to true to require STARTTLS on a plaintext connection */
+    requireTLS?: boolean;
+    /** Set to true to skip STARTTLS */
+    ignoreTLS?: boolean;
+}
 
 /**
  * SMTP settings of a well-known service, without the lookup keys
