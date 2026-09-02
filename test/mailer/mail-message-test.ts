@@ -1,10 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import MailMessage from '../../src/mailer/mail-message.js';
+import MailComposer from '../../src/mail-composer/index.js';
 import nodemailer from '../../src/nodemailer.js';
+import type { SendMailOptions } from '../../src/nodemailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('MailMessage Tests', () => {
     describe('constructor', () => {
@@ -231,6 +235,318 @@ describe('MailMessage Tests', () => {
                 assert.strictEqual(pluginErr.code, 'EFILEACCESS');
                 done();
             });
+        });
+    });
+});
+
+describe('MailMessage content handling', () => {
+    const mailer: any = { options: {}, _defaults: {} };
+    const fixtures = path.join(__dirname, '..', 'json-transport', 'fixtures');
+
+    // a message with its MIME tree compiled, the state normalize() runs in
+    const compiled = (data: any): MailMessage => {
+        const message = new MailMessage(mailer, data);
+        message.message = new MailComposer(message.data).compile();
+        return message;
+    };
+
+    // renders a message through the stream transport
+    const render = (data: SendMailOptions): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const transporter = nodemailer.createTransport({ streamTransport: true, buffer: true });
+            transporter.sendMail(data, (err, info) => (err ? reject(err) : resolve((info.message as Buffer).toString())));
+        });
+
+    const headerLines = (raw: string): string[] =>
+        raw
+            .split('\r\n\r\n')[0]
+            .replace(/\r\n[ \t]+/g, ' ')
+            .split('\r\n');
+
+    // header keys are compared without case, the message title-cases them
+    const hasHeader = (lines: string[], expected: string): boolean => lines.some(line => line.toLowerCase() === expected.toLowerCase());
+
+    describe('resolveAll', () => {
+        it('should parse the address fields of the message data', (t, done) => {
+            const message = new MailMessage(mailer, {
+                from: 'Sender <a@example.com>, second@example.com',
+                to: 'b@example.com, C <c@example.com>',
+                cc: '',
+                sender: ['s1@example.com', 's2@example.com'] as any
+            });
+
+            message.resolveAll((err, data) => {
+                assert.ok(!err);
+                // from and sender are single addresses, the first one wins
+                assert.deepStrictEqual(data.from, { address: 'a@example.com', name: 'Sender' });
+                assert.deepStrictEqual(data.sender, { address: 's1@example.com', name: '' });
+                assert.deepStrictEqual(data.to, [
+                    { address: 'b@example.com', name: '' },
+                    { address: 'c@example.com', name: 'C' }
+                ]);
+                // an address field that was set but holds nothing is cleared, an unset one is left alone
+                assert.strictEqual(data.cc, null);
+                assert.ok(!('bcc' in data));
+                assert.ok(!('replyTo' in data));
+                done();
+            });
+        });
+
+        it('should read the addresses from the compiled message when there is one', (t, done) => {
+            const message = compiled({
+                from: 'Compiled <x@example.com>',
+                to: 'y@example.com',
+                replyTo: 'Reply <r@example.com>'
+            });
+            // the message data is not consulted once the headers exist
+            message.data.from = 'ignored@example.com';
+
+            message.resolveAll((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.from, { address: 'x@example.com', name: 'Compiled' });
+                assert.deepStrictEqual(data.to, [{ address: 'y@example.com', name: '' }]);
+                assert.deepStrictEqual(data.replyTo, [{ address: 'r@example.com', name: 'Reply' }]);
+                done();
+            });
+        });
+
+        it('should resolve the alternatives into content nodes', (t, done) => {
+            const message = new MailMessage(mailer, {
+                alternatives: [
+                    { contentType: 'text/x-custom', content: 'alt' },
+                    { contentType: 'text/x-other', content: Buffer.from('buf') }
+                ]
+            });
+
+            message.resolveAll((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.alternatives![0], { content: 'alt', contentType: 'text/x-custom' });
+                assert.strictEqual(data.alternatives![1].contentType, 'text/x-other');
+                assert.ok(Buffer.isBuffer(data.alternatives![1].content));
+                assert.strictEqual((data.alternatives![1].content as Buffer).toString(), 'buf');
+                done();
+            });
+        });
+
+        it('should derive the file name and content type of the attachments', (t, done) => {
+            const message = new MailMessage(mailer, {
+                attachments: [
+                    { content: 'plain', contentType: 'text/plain' },
+                    { path: path.join(fixtures, 'image.png') },
+                    { content: 'raw' },
+                    { filename: 'named', content: 'x' },
+                    // the content is used as it is, the href only names the file
+                    { href: 'http://127.0.0.1:1/dir/report.pdf?download=1', content: 'inline' }
+                ]
+            });
+
+            message.resolveAll((err, data) => {
+                assert.ok(!err);
+                const attachments = data.attachments!;
+                assert.strictEqual(attachments[0].filename, 'attachment-1.txt');
+                assert.strictEqual(attachments[0].contentType, 'text/plain');
+                assert.strictEqual(attachments[1].filename, 'image.png');
+                assert.strictEqual(attachments[1].contentType, 'image/png');
+                assert.ok(Buffer.isBuffer(attachments[1].content));
+                assert.strictEqual(attachments[2].filename, 'attachment-3.bin');
+                assert.strictEqual(attachments[2].contentType, 'application/octet-stream');
+                assert.strictEqual(attachments[3].filename, 'named');
+                assert.strictEqual(attachments[3].contentType, 'application/octet-stream');
+                assert.strictEqual(attachments[4].filename, 'report.pdf');
+                assert.strictEqual(attachments[4].contentType, 'application/pdf');
+                assert.strictEqual(attachments[4].content, 'inline');
+                done();
+            });
+        });
+
+        it('should pass a content error on', (t, done) => {
+            const message = new MailMessage(mailer, { html: { path: path.join(fixtures, 'does-not-exist.html') } });
+
+            message.resolveAll((err: any) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ENOENT');
+                done();
+            });
+        });
+    });
+
+    describe('normalize', () => {
+        it('should add the envelope and the message id and flatten the content fields', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                html: Buffer.from('<p>hi</p>'),
+                text: 'plain',
+                watchHtml: { content: 'watch' },
+                amp: { content: Buffer.from('<html amp4email>') }
+            });
+
+            message.normalize((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.envelope, { from: 'a@example.com', to: ['b@example.com'] });
+                assert.strictEqual(data.messageId, message.message!.messageId());
+                assert.ok(/^<[^@]+@example\.com>$/.test(data.messageId as string));
+                assert.strictEqual(data.html, '<p>hi</p>');
+                assert.strictEqual(data.text, 'plain');
+                assert.strictEqual(data.watchHtml, 'watch');
+                assert.strictEqual(data.amp, '<html amp4email>');
+                done();
+            });
+        });
+
+        it('should encode binary content of the ical event, alternatives and attachments as base64', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                icalEvent: { content: Buffer.from('BEGIN:VCALENDAR') },
+                alternatives: [
+                    { contentType: 'text/x-custom', content: Buffer.from('alt') },
+                    { contentType: 'text/x-text', content: 'kept' }
+                ],
+                attachments: [
+                    { filename: 'a.txt', content: Buffer.from('att') },
+                    { filename: 'b.txt', content: 'kept' }
+                ]
+            });
+
+            message.normalize((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.icalEvent, { content: 'QkVHSU46VkNBTEVOREFS', encoding: 'base64' });
+                assert.deepStrictEqual(data.alternatives![0], { content: 'YWx0', contentType: 'text/x-custom', encoding: 'base64' });
+                assert.deepStrictEqual(data.alternatives![1], { content: 'kept', contentType: 'text/x-text' });
+                assert.deepStrictEqual(data.attachments![0], {
+                    content: 'YXR0',
+                    filename: 'a.txt',
+                    contentType: 'text/plain',
+                    encoding: 'base64'
+                });
+                assert.deepStrictEqual(data.attachments![1], { content: 'kept', filename: 'b.txt', contentType: 'text/plain' });
+                done();
+            });
+        });
+
+        it('should flatten the headers to strings', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                headers: {
+                    'x-plain': 'value',
+                    'x-list': ['first', 'second'],
+                    'x-prepared': { prepared: true, value: 'prepared value' },
+                    'x-empty': '',
+                    references: '<a@example.com> b@example.com'
+                }
+            });
+
+            message.normalize((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.normalizedHeaders, {
+                    'x-plain': 'value',
+                    'x-list': 'first',
+                    'x-prepared': 'prepared value',
+                    references: '<a@example.com> <b@example.com>'
+                });
+                done();
+            });
+        });
+
+        it('should skip a __proto__ header key', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                headers: JSON.parse('{"__proto__": {"x-injected": "yes"}, "x-plain": "value"}')
+            });
+
+            message.normalize((err, data) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(data.normalizedHeaders, { 'x-plain': 'value' });
+                assert.strictEqual(Object.getPrototypeOf(data.normalizedHeaders), Object.prototype);
+                done();
+            });
+        });
+
+        it('should add the list headers, references and in-reply-to', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                list: {
+                    unsubscribe: 'unsub@example.com',
+                    help: ['https://example.com/help', 'ftp://example.com/help.txt'],
+                    id: { url: 'list.example.com', comment: 'The List' }
+                },
+                references: ['<r1@example.com>', 'r2@example.com'],
+                inReplyTo: 'parent@example.com'
+            });
+
+            message.normalize((err, data) => {
+                assert.ok(!err);
+                assert.strictEqual(data.normalizedHeaders!['list-unsubscribe'], '<mailto:unsub@example.com>');
+                assert.strictEqual(data.normalizedHeaders!['list-help'], '<https://example.com/help>, <ftp://example.com/help.txt>');
+                assert.strictEqual(data.normalizedHeaders!['list-id'], '"The List" <list.example.com>');
+                assert.strictEqual(data.normalizedHeaders!.references, '<r1@example.com> <r2@example.com>');
+                assert.strictEqual(data.normalizedHeaders!['in-reply-to'], '<parent@example.com>');
+                done();
+            });
+        });
+
+        it('should pass a content error on', (t, done) => {
+            const message = compiled({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                text: { path: path.join(fixtures, 'does-not-exist.txt') }
+            });
+
+            message.normalize((err: any) => {
+                assert.ok(err);
+                assert.strictEqual(err.code, 'ENOENT');
+                done();
+            });
+        });
+    });
+
+    describe('generated headers', () => {
+        const base: SendMailOptions = { from: 'a@example.com', to: 'b@example.com', subject: 'headers', text: 'hi' };
+
+        it('should add the priority headers of a high priority message', async () => {
+            const lines = headerLines(await render({ ...base, priority: 'high' }));
+
+            assert.ok(lines.includes('X-Priority: 1 (Highest)'), lines.join('\n'));
+            // the header key goes out title-cased by the message
+            assert.ok(hasHeader(lines, 'X-MSMail-Priority: High'), lines.join('\n'));
+            assert.ok(lines.includes('Importance: High'), lines.join('\n'));
+        });
+
+        it('should add the priority headers of a low priority message', async () => {
+            const lines = headerLines(await render({ ...base, priority: 'LOW' }));
+
+            assert.ok(lines.includes('X-Priority: 5 (Lowest)'), lines.join('\n'));
+            assert.ok(hasHeader(lines, 'X-MSMail-Priority: Low'), lines.join('\n'));
+            assert.ok(lines.includes('Importance: Low'), lines.join('\n'));
+        });
+
+        it('should not add priority headers for a normal priority', async () => {
+            const lines = headerLines(await render({ ...base, priority: 'normal' }));
+
+            assert.ok(!lines.some(line => /^(X-Priority|X-MSMail-Priority|Importance):/.test(line)), lines.join('\n'));
+        });
+
+        it('should add the X-Mailer header from xMailer', async () => {
+            const lines = headerLines(await render({ ...base, xMailer: 'Test Mailer 1.0' }));
+
+            assert.ok(lines.includes('X-Mailer: Test Mailer 1.0'), lines.join('\n'));
+        });
+    });
+
+    describe('_formatListUrl', () => {
+        it('should wrap urls and addresses in angle brackets', () => {
+            const message = new MailMessage(mailer, {});
+
+            assert.strictEqual(message._formatListUrl('https://example.com/u'), '<https://example.com/u>');
+            assert.strictEqual(message._formatListUrl('mailto:u@example.com'), '<mailto:u@example.com>');
+            assert.strictEqual(message._formatListUrl('ftp://example.com/x'), '<ftp://example.com/x>');
+            assert.strictEqual(message._formatListUrl('u@example.com'), '<mailto:u@example.com>');
+            assert.strictEqual(message._formatListUrl('example.com/u'), '<http://example.com/u>');
+            assert.strictEqual(message._formatListUrl(' <https://example.com/u> '), '<https://example.com/u>');
         });
     });
 });

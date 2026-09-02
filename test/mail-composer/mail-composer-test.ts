@@ -1225,6 +1225,341 @@ describe('MailComposer unit tests', () => {
                 done();
             });
         });
+
+        it('should create an empty text node when there is no content', (t, done) => {
+            let data = {
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000'
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: text/plain\r\n' +
+                '\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should force the transfer encoding of text nodes with the encoding option', (t, done) => {
+            let data = {
+                text: 'abc',
+                html: 'def',
+                encoding: 'base64',
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000'
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/alternative; boundary="--_NmP-test-Part_1"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                '\r\n' +
+                'YWJj\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/html; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                '\r\n' +
+                'ZGVm\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let mail = new MailComposer(data).compile();
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should nest the related node in the mixed node when there is no text alternative', (t, done) => {
+            let data = {
+                html: '<img src="cid:img1">',
+                attachments: [
+                    {
+                        content: 'PNGDATA',
+                        cid: 'img1',
+                        contentType: 'image/png',
+                        filename: 'a.png'
+                    },
+                    {
+                        content: 'doc',
+                        filename: 'b.txt'
+                    }
+                ],
+                baseBoundary: 'test',
+                messageId: 'zzzzzz',
+                date: 'Sat, 21 Jun 2014 10:52:44 +0000'
+            };
+
+            let expected =
+                '' +
+                'Message-ID: <zzzzzz>\r\n' +
+                'Date: Sat, 21 Jun 2014 10:52:44 +0000\r\n' +
+                'MIME-Version: 1.0\r\n' +
+                'Content-Type: multipart/mixed; boundary="--_NmP-test-Part_1"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: multipart/related; type="text/html";\r\n' +
+                ' boundary="--_NmP-test-Part_2"\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_2\r\n' +
+                'Content-Type: text/html; charset=utf-8\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
+                '\r\n' +
+                '<img src="cid:img1">\r\n' +
+                '----_NmP-test-Part_2\r\n' +
+                'Content-Type: image/png; name=a.png\r\n' +
+                'Content-ID: <img1>\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: inline; filename=a.png\r\n' +
+                '\r\n' +
+                'UE5HREFUQQ==\r\n' +
+                '----_NmP-test-Part_2--\r\n' +
+                '\r\n' +
+                '----_NmP-test-Part_1\r\n' +
+                'Content-Type: text/plain; name=b.txt\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                'Content-Disposition: attachment; filename=b.txt\r\n' +
+                '\r\n' +
+                'ZG9j\r\n' +
+                '----_NmP-test-Part_1--\r\n';
+
+            let compiler = new MailComposer(data);
+            let mail = compiler.compile();
+            assert.strictEqual(compiler._useMixed, true);
+            assert.strictEqual(compiler._useRelated, true);
+            assert.strictEqual(compiler._useAlternative, false);
+
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.strictEqual(message.toString(), expected);
+                done();
+            });
+        });
+
+        it('should map an http path of an attachment to an href', () => {
+            let compiler = new MailComposer({
+                attachments: [
+                    {
+                        path: 'http://localhost:1/dir/file.txt?x=1'
+                    }
+                ]
+            });
+
+            let attachments = compiler.getAttachments(false);
+            assert.strictEqual(attachments.attached.length, 1);
+            assert.deepStrictEqual(attachments.attached[0].content, {
+                href: 'http://localhost:1/dir/file.txt?x=1',
+                httpHeaders: undefined,
+                tls: undefined
+            });
+            // the filename comes from the url path, without the query string
+            assert.strictEqual(attachments.attached[0].filename, 'file.txt');
+            assert.strictEqual(attachments.attached[0].contentType, 'text/plain');
+            // the input is rewritten as well, so the url is never read as a file path
+            assert.strictEqual(compiler.mail.attachments![0].href, 'http://localhost:1/dir/file.txt?x=1');
+            assert.strictEqual(compiler.mail.attachments![0].path, undefined);
+        });
+
+        it('should keep the request headers and tls settings of an href attachment', () => {
+            let compiler = new MailComposer({
+                attachments: [
+                    {
+                        href: 'https://localhost:1/image.png',
+                        httpHeaders: { 'x-token': 'secret' },
+                        tls: { rejectUnauthorized: false },
+                        cid: 'img1'
+                    }
+                ]
+            });
+
+            let attachments = compiler.getAttachments(true);
+            assert.strictEqual(attachments.attached.length, 0);
+            assert.deepStrictEqual(attachments.related, [
+                {
+                    contentType: 'image/png',
+                    contentDisposition: 'inline',
+                    contentTransferEncoding: 'base64',
+                    filename: 'image.png',
+                    cid: 'img1',
+                    content: {
+                        href: 'https://localhost:1/image.png',
+                        httpHeaders: { 'x-token': 'secret' },
+                        tls: { rejectUnauthorized: false }
+                    }
+                }
+            ]);
+        });
+
+        it('should map an http path of an alternative to an href', () => {
+            let compiler = new MailComposer({
+                text: 'abc',
+                html: {
+                    path: 'http://localhost:1/page.html'
+                },
+                alternatives: [
+                    {
+                        path: 'https://localhost:1/dir/alt.html?x=1',
+                        contentType: 'text/x-custom'
+                    }
+                ]
+            });
+
+            let alternatives = compiler.getAlternatives();
+            assert.strictEqual(alternatives.length, 3);
+            assert.deepStrictEqual(alternatives[1], {
+                contentType: 'text/html; charset=utf-8',
+                contentTransferEncoding: undefined,
+                content: {
+                    href: 'http://localhost:1/page.html'
+                }
+            });
+            assert.deepStrictEqual(alternatives[2], {
+                contentType: 'text/x-custom',
+                contentTransferEncoding: undefined,
+                content: {
+                    href: 'https://localhost:1/dir/alt.html?x=1'
+                }
+            });
+        });
+
+        it('should keep the filename of an alternative', (t, done) => {
+            let compiler = new MailComposer({
+                alternatives: [
+                    {
+                        filename: 'alt.txt',
+                        content: 'x'
+                    }
+                ]
+            });
+
+            assert.deepStrictEqual(compiler.getAlternatives(), [
+                {
+                    contentType: 'text/plain',
+                    contentTransferEncoding: undefined,
+                    filename: 'alt.txt',
+                    content: 'x'
+                }
+            ]);
+
+            compiler.compile().build((err, message) => {
+                assert.ok(!err);
+                let msg = message.toString();
+                assert.ok(/^Content-Type: text\/plain; name=alt.txt$/m.test(msg));
+                assert.ok(/^Content-Disposition: attachment; filename=alt.txt$/m.test(msg));
+                done();
+            });
+        });
+
+        it('should map an http path of the icalEvent to an href', () => {
+            let compiler = new MailComposer({
+                text: 'def',
+                icalEvent: {
+                    path: 'http://localhost:1/invite.ics',
+                    httpHeaders: { 'x-token': 'secret' }
+                }
+            });
+
+            let event = compiler._getIcalEvent();
+            assert.deepStrictEqual(event.content, {
+                href: 'http://localhost:1/invite.ics',
+                httpHeaders: { 'x-token': 'secret' },
+                _resolve: true
+            });
+            assert.strictEqual(event.path, undefined);
+            assert.strictEqual(event.href, undefined);
+            // the alternative and the attachment share the same normalized event
+            assert.strictEqual(compiler._getIcalEvent(), event);
+        });
+
+        it('should fetch attachments and alternatives given as an url', (t, done) => {
+            let requests: { url: string; header: string | undefined }[] = [];
+            let server = http.createServer((req, res) => {
+                requests.push({ url: req.url as string, header: req.headers['x-test'] as string | undefined });
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('content of ' + req.url);
+            });
+
+            server.listen(0, () => {
+                let base = 'http://localhost:' + (server.address() as AddressInfo).port;
+                let data = {
+                    text: 'abc',
+                    html: {
+                        path: base + '/page.html'
+                    },
+                    attachments: [
+                        {
+                            path: base + '/file.txt',
+                            httpHeaders: { 'x-test': 'yes' }
+                        }
+                    ]
+                };
+
+                let mail = new MailComposer(data).compile();
+                mail.build((err, message) => {
+                    server.close(() => {
+                        assert.ok(!err);
+                        let msg = message.toString();
+                        assert.ok(msg.includes('\r\n\r\ncontent of /page.html\r\n'));
+                        assert.ok(msg.includes('Content-Disposition: attachment; filename=file.txt'));
+                        assert.ok(msg.includes(Buffer.from('content of /file.txt').toString('base64')));
+                        assert.deepStrictEqual(
+                            requests.sort((a, b) => a.url.localeCompare(b.url)),
+                            [
+                                { url: '/file.txt', header: 'yes' },
+                                { url: '/page.html', header: undefined }
+                            ]
+                        );
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('should return empty content for a data url over the size limit', () => {
+            // the limit is 52428800 chars of data url, the payload alone is one over it
+            let filler = 'A'.repeat(52428801);
+            let compiler = new MailComposer({
+                attachments: [
+                    {
+                        path: 'data:image/png;base64,' + filler
+                    },
+                    {
+                        href: 'data:' + 'x'.repeat(300) + ',' + filler,
+                        contentType: 'text/x-preset'
+                    }
+                ]
+            });
+
+            let attached = compiler.getAttachments(false).attached;
+            assert.strictEqual(attached.length, 2);
+
+            // the content type is still read from the data url header
+            assert.strictEqual(attached[0].contentType, 'image/png');
+            assert.strictEqual(attached[0].filename, 'attachment-1.png');
+            assert.ok(Buffer.isBuffer(attached[0].content));
+            assert.strictEqual((attached[0].content as Buffer).length, 0);
+
+            // a preset content type wins, and a header past 200 chars is not parsed at all
+            assert.strictEqual(attached[1].contentType, 'text/x-preset');
+            assert.strictEqual(attached[1].filename, 'attachment-2.txt');
+            assert.ok(Buffer.isBuffer(attached[1].content));
+            assert.strictEqual((attached[1].content as Buffer).length, 0);
+        });
     });
 });
 

@@ -199,6 +199,54 @@ describe('Cookie Tests', () => {
             assert.strictEqual(biskviit.cookies[0].name, 'zzz');
             assert.strictEqual(biskviit.cookies[0].value, 'def');
         });
+
+        it('should ignore a cookie without a name', () => {
+            assert.strictEqual(biskviit.add({}), false);
+            assert.strictEqual(biskviit.add({ value: 'abc', domain: 'example.com', path: '/' }), false);
+            assert.strictEqual(biskviit.cookies.length, 0);
+        });
+
+        it('should remove an existing cookie when the update has expired', () => {
+            biskviit.add({
+                name: 'zzz',
+                value: 'abc',
+                path: '/',
+                expires: new Date(Date.now() + 10000),
+                domain: 'example.com',
+                secure: false,
+                httponly: false
+            });
+            assert.strictEqual(biskviit.cookies.length, 1);
+
+            // a Set-Cookie with a past expiry date is how a server deletes a cookie
+            assert.strictEqual(
+                biskviit.add({
+                    name: 'zzz',
+                    value: 'def',
+                    path: '/',
+                    expires: new Date(Date.now() - 10000),
+                    domain: 'example.com',
+                    secure: false,
+                    httponly: false
+                }),
+                false
+            );
+            assert.strictEqual(biskviit.cookies.length, 0);
+        });
+
+        it('should not store a new cookie that has already expired', () => {
+            assert.strictEqual(
+                biskviit.add({
+                    name: 'zzz',
+                    value: 'abc',
+                    path: '/',
+                    expires: new Date(Date.now() - 10000),
+                    domain: 'example.com'
+                }),
+                true
+            );
+            assert.strictEqual(biskviit.cookies.length, 0);
+        });
     });
 
     describe('#match', () => {
@@ -277,6 +325,34 @@ describe('Cookie Tests', () => {
                 name: 'theme',
                 value: 'plain'
             });
+        });
+
+        it('should skip empty parts', () => {
+            assert.deepStrictEqual(biskviit.parse('; theme=plain; ; Path=/;'), {
+                name: 'theme',
+                value: 'plain',
+                path: '/'
+            });
+        });
+
+        it('should derive the expiry date from max-age', () => {
+            let before = Date.now();
+            let cookie = biskviit.parse('theme=plain; Max-Age=60');
+            let after = Date.now();
+
+            assert.strictEqual(cookie.name, 'theme');
+            assert.ok(cookie.expires instanceof Date);
+            assert.ok(cookie.expires.getTime() >= before + 60 * 1000);
+            assert.ok(cookie.expires.getTime() <= after + 60 * 1000);
+        });
+
+        it('should treat an unparseable max-age as an immediate expiry', () => {
+            let before = Date.now();
+            let cookie = biskviit.parse('theme=plain; Max-Age=soon');
+
+            assert.ok(cookie.expires instanceof Date);
+            assert.ok(cookie.expires.getTime() >= before);
+            assert.ok(cookie.expires.getTime() <= Date.now());
         });
     });
 
@@ -441,6 +517,27 @@ describe('Cookie Tests', () => {
                     }
                 ]
             );
+        });
+
+        it('should use the sessionTimeout option for a cookie without an expiry date', () => {
+            let jar = new Cookies({ sessionTimeout: 10 });
+            let before = Date.now();
+
+            jar.set('theme=plain', 'https://foo.com/');
+
+            assert.strictEqual(jar.cookies.length, 1);
+            let expires = (jar.cookies[0].expires as Date).getTime();
+            assert.ok(expires >= before + 10 * 1000);
+            assert.ok(expires <= Date.now() + 10 * 1000);
+        });
+
+        it('should drop a cookie that is set to an empty value', () => {
+            biskviit.set('theme=plain', 'https://foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'theme=plain');
+
+            assert.strictEqual(biskviit.set('theme=', 'https://foo.com/'), false);
+            assert.strictEqual(biskviit.get('https://foo.com/'), '');
+            assert.strictEqual(biskviit.cookies.length, 0);
         });
     });
 });

@@ -124,5 +124,46 @@ describe('Quoted-Printable Tests', () => {
                 done();
             });
         });
+
+        it('should skip an empty chunk', (t, done) => {
+            const encoder = new qp.Encoder();
+            let output = '';
+
+            encoder.on('data', chunk => {
+                output += chunk.toString();
+            });
+
+            encoder.on('end', () => {
+                assert.strictEqual(output, 'abc');
+                assert.strictEqual(encoder.inputBytes, 3);
+                assert.strictEqual(encoder.outputBytes, 3);
+                done();
+            });
+
+            encoder.write(Buffer.alloc(0));
+            encoder.write(Buffer.from('abc'));
+            encoder.end();
+        });
+
+        it('should not wrap lines when lineLength is false', (t, done) => {
+            const encoder = new qp.Encoder({ lineLength: false });
+            const input = 'õ'.repeat(40);
+            let output = '';
+
+            encoder.on('data', chunk => {
+                output += chunk.toString();
+            });
+
+            encoder.on('end', () => {
+                // 40 two byte characters encode to 240 chars, well past the default 76 char line
+                assert.strictEqual(output, '=C3=B5'.repeat(40));
+                assert.strictEqual(output, qp.encode(input));
+                assert.strictEqual(encoder.inputBytes, 80);
+                assert.strictEqual(encoder.outputBytes, 240);
+                done();
+            });
+
+            encoder.end(Buffer.from(input));
+        });
     });
 });

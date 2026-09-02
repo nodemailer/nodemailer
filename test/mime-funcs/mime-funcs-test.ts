@@ -48,6 +48,13 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mimeFuncs.hasLongerLines('abc\ndef', 5), false);
             assert.strictEqual(mimeFuncs.hasLongerLines('juf\nabcdef\nghi', 5), true);
         });
+
+        it('should assume long lines for a string over 128kB without scanning it', () => {
+            // every line is a single character, but the size cut-off answers first
+            const str = 'a\n'.repeat(70 * 1024);
+            assert.strictEqual(mimeFuncs.hasLongerLines(str, 5), true);
+            assert.strictEqual(mimeFuncs.hasLongerLines(str.substr(0, 1000), 5), false);
+        });
     });
 
     describe('#encodeWord', () => {
@@ -167,6 +174,32 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
                 ],
                 mimeFuncs.buildHeaderParam('title', 'this is just a title', 500)
             );
+        });
+
+        it('should keep the remainder of a split ascii value', () => {
+            // 22 characters at 5 per part leave a partial last part
+            assert.deepStrictEqual(mimeFuncs.buildHeaderParam('title', 'this is just a title!!', 5), [
+                {
+                    key: 'title*0',
+                    value: 'this '
+                },
+                {
+                    key: 'title*1',
+                    value: 'is ju'
+                },
+                {
+                    key: 'title*2',
+                    value: 'st a '
+                },
+                {
+                    key: 'title*3',
+                    value: 'title'
+                },
+                {
+                    key: 'title*4',
+                    value: '!!'
+                }
+            ]);
         });
 
         it('should encode and split ascii', () => {
@@ -394,6 +427,23 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
 
             assert.deepStrictEqual(mimeFuncs.parseHeaderValue(str), obj);
         });
+
+        it('should keep a trailing parameter that has no value', () => {
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('text/plain; charset'), {
+                value: 'text/plain',
+                params: {
+                    charset: ''
+                }
+            });
+
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('text/plain; charset=utf-8; FLOWED'), {
+                value: 'text/plain',
+                params: {
+                    charset: 'utf-8',
+                    flowed: ''
+                }
+            });
+        });
     });
 
     describe('#_buildHeaderValue', () => {
@@ -548,6 +598,20 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             );
         });
 
+        it('should quote the continuation parts of a long plain ascii value', () => {
+            // 75 chars or more go through the rfc2231 continuation split even when ascii, and
+            // an unencoded part that holds a space still needs quotes to stay one parameter
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'attachment',
+                    params: {
+                        filename: 'a long file name with spaces in it that goes on and on and on and on and on.txt'
+                    }
+                }),
+                'attachment; filename*0="a long file name with spaces in it that goes on an"; filename*1="d on and on and on and on.txt"'
+            );
+        });
+
         // For exhaustive list of special characters
         // Refer: https://www.w3.org/Protocols/rfc1341/4_Content-Type.html
         it('should quote filename with special characters', () => {
@@ -657,6 +721,43 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
                     'Subject:\r\n =?UTF-8?Q?=CB=86=C2=B8=C3=81=C3=8C=C3=93=C4=B1=C3=8F=CB=87=C3=81=C3=9B^=C2=B8\\=C3=81=C4=B1=CB=86=C3=8C=C3=81=C3=9B=C3=98^\\=CB=9C=C3=9B=CB=9D=E2=84=A2=CB=87=C4=B1=C3=93=C2=B8^\\=CB=9C=EF=AC=81^\\=C2=B7\\=CB=9C=C3=98^=C2=A3=CB=9C#=EF=AC=81^\\=C2=A3=EF=AC=81^\\=C2=A3=EF=AC=81^\\?=';
 
             assert.strictEqual(outputStr, mimeFuncs.foldLines(inputStr, 76));
+        });
+
+        it('should extend a line to the end of a word longer than the line length', () => {
+            // there is no whitespace to fold on inside the first 76 chars, so the line
+            // runs on to the end of the word and the fold lands after it
+            const word = 'a'.repeat(80);
+
+            assert.strictEqual(mimeFuncs.foldLines(word + ' b', 76), word + '\r\n b');
+            assert.strictEqual(
+                mimeFuncs.foldLines('Subject: ' + 'a'.repeat(100) + ' tail', 76),
+                'Subject:\r\n ' + 'a'.repeat(100) + '\r\n tail'
+            );
+        });
+
+        it('should keep the space on the folded line for flowed text', () => {
+            const word = 'a'.repeat(80);
+
+            assert.strictEqual(mimeFuncs.foldLines(word + ' b c', 76, true), word + ' \r\nb c');
+        });
+
+        it('should not fold a line that fits exactly', () => {
+            assert.strictEqual(mimeFuncs.foldLines('a'.repeat(76), 76), 'a'.repeat(76));
+        });
+    });
+
+    describe('#encodeURICharComponent', () => {
+        it('should percent encode a single byte character', () => {
+            assert.strictEqual(mimeFuncs.encodeURICharComponent(' '), '%20');
+            assert.strictEqual(mimeFuncs.encodeURICharComponent('\x01'), '%01');
+            assert.strictEqual(mimeFuncs.encodeURICharComponent('ä'), '%E4');
+        });
+    });
+
+    describe('#safeEncodeURIComponent', () => {
+        it('should also encode the characters encodeURIComponent leaves alone', () => {
+            assert.strictEqual(mimeFuncs.safeEncodeURIComponent("a*'()b"), 'a%2A%27%28%29b');
+            assert.strictEqual(mimeFuncs.safeEncodeURIComponent('x y'), 'x%20y');
         });
     });
 });
