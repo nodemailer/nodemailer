@@ -1403,6 +1403,12 @@ class SMTPConnection extends EventEmitter {
         this._destroyed = true;
         // keep the documented public flag in sync with the private state
         this.destroyed = true;
+        // a connection the server dropped before the greeting would otherwise keep
+        // the greeting timer, and with it the process, alive until it fires
+        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
+        clearTimeout(this._greetingTimeout as NodeJS.Timeout);
+        this._connectionTimeout = false;
+        this._greetingTimeout = false;
         this.emit('end');
     }
 
