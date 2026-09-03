@@ -301,6 +301,20 @@ function decodeServerResponse(str: string): string {
 }
 
 /**
+ * True when the last line of a queued reply is a continuation ("250-..."), which means
+ * the rest of the reply is still on its way.
+ *
+ * Called with the byte-container form the queue holds (see _onData): the check only looks
+ * at leading ASCII digits and '-' of the last line, and a UTF-8 continuation byte is never
+ * 0x0A, so line boundaries and the tested prefix are the same before and after decoding.
+ * The last line is read with lastIndexOf rather than split() because a queue entry grows
+ * with every chunk appended to it and only its final line matters.
+ */
+function isPartialResponse(str: string): boolean {
+    return /^\d+-/.test(str.slice(str.lastIndexOf('\n') + 1));
+}
+
+/**
  * Generates a SMTP connection object
  *
  * Optional options object takes the following possible properties:
@@ -1254,7 +1268,7 @@ class SMTPConnection extends EventEmitter {
         for (let i = 0, len = lines.length; i < len; i++) {
             if (this._responseQueue.length) {
                 lastline = this._responseQueue[this._responseQueue.length - 1];
-                if (/^\d+-/.test(lastline.split('\n').pop() as string)) {
+                if (isPartialResponse(lastline)) {
                     this._responseQueue[this._responseQueue.length - 1] += '\n' + lines[i];
                     continue;
                 }
@@ -1264,7 +1278,7 @@ class SMTPConnection extends EventEmitter {
 
         if (this._responseQueue.length) {
             lastline = this._responseQueue[this._responseQueue.length - 1];
-            if (/^\d+-/.test(lastline.split('\n').pop() as string)) {
+            if (isPartialResponse(lastline)) {
                 return;
             }
         }
@@ -1506,14 +1520,15 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
-        let str = (this.lastServerResponse = decodeServerResponse(raw));
-
-        if (/^\d+-/.test(str.split('\n').pop() as string)) {
-            // last line is still a continuation: put the partial response back on the
-            // queue and wait for the rest rather than dropping it
+        if (isPartialResponse(raw)) {
+            // the rest of the reply is still on its way: put it back on the queue and wait
+            // rather than dropping it. It has not been received in full, so it must not be
+            // reported as the last server response either
             this._responseQueue.unshift(raw);
             return;
         }
+
+        const str = (this.lastServerResponse = decodeServerResponse(raw));
 
         if (this.options.debug || this.options.transactionLog) {
             this.logger.debug(

@@ -264,9 +264,14 @@ describe('SMTP-Connection Tests', () => {
         it('does not drop an incomplete multiline response left at the queue front', () => {
             const conn = new SMTPConnection({ logger: false });
             conn._responseQueue = ['250-partial'];
+            conn._responseActions = [() => assert.fail('an incomplete response must not consume an action')];
+            conn.lastServerResponse = '250 previous';
             conn._processResponse();
             // the partial line must be put back, not consumed/dropped
             assert.deepStrictEqual(conn._responseQueue, ['250-partial']);
+            // and it has not been received in full, so it is not the last server response
+            assert.strictEqual(conn.lastServerResponse, '250 previous');
+            assert.strictEqual(conn._responseActions.length, 1);
         });
 
         it('absorbs a late teardown error from a failed fallback socket', (t, done) => {
