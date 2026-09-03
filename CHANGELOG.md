@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## [10.0.0](https://github.com/nodemailer/nodemailer/compare/v9.1.1...v10.0.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* Node.js 20 or newer is required. The Node.js 6 syntax compatibility check and the .npmignore file are gone.
+
+### Features
+
+* keep the @types/nodemailer type layout working ([1cc5356](https://github.com/nodemailer/nodemailer/commit/1cc535627e1bb672214b09fa4cc503567275fd7f))
+* migrate to TypeScript with ES module and CommonJS builds ([f7cbf83](https://github.com/nodemailer/nodemailer/commit/f7cbf8384e0ea6055efcc514afb8bc070ac3a2b1))
+
+
+### Bug Fixes
+
+* apply the other keys of a configuration object next to its url ([29610f9](https://github.com/nodemailer/nodemailer/commit/29610f9fe04dbd8af04c4a3362f3b68d293592da))
+* **dkim:** canonicalize raw messages the way verifiers do ([2c84b11](https://github.com/nodemailer/nodemailer/commit/2c84b117d4d138751e9ffa8607f3796771bb5e66))
+* keep a transporter assignable to the plain Transporter type ([8bf55fb](https://github.com/nodemailer/nodemailer/commit/8bf55fb177cf155b24d6bb86a7cd86670146d551))
+* **shared:** keep a colon in the user name of a connection or proxy url ([6acf4b6](https://github.com/nodemailer/nodemailer/commit/6acf4b67d919971f516f58940113c9b8598b2254))
+* **shared:** refuse URL hosts the legacy parser would truncate ([17a5068](https://github.com/nodemailer/nodemailer/commit/17a5068f06e62fc04e1d5545ed70d4248bef258e))
+* **shared:** resolve hostnames when the runtime has no interface table ([8b03240](https://github.com/nodemailer/nodemailer/commit/8b032407135ea05ae377e623a7021705a4a139d0))
+* **smtp-connection:** clear the timers of a connection dropped before the greeting ([01dcaa0](https://github.com/nodemailer/nodemailer/commit/01dcaa05b212aafc33747041027fb8c66497e0eb))
+* **smtp-connection:** keep an incomplete server reply out of lastServerResponse ([1a6e427](https://github.com/nodemailer/nodemailer/commit/1a6e4271adb808509adf11832ad1adfdfc05c31b))
+* **smtp-pool:** free the pool slot when the proxy socket can not be opened ([204a344](https://github.com/nodemailer/nodemailer/commit/204a344f7e4068ff41385195ee394a223ebadd84))
+* **well-known:** keep nodemailer/lib/well-known/services.json available ([367730c](https://github.com/nodemailer/nodemailer/commit/367730cce85bc78c7804405c2cc7d89d93aafdd1))
+
 ## [9.1.1](https://github.com/nodemailer/nodemailer/compare/v9.1.0...v9.1.1) (2026-09-01)
 
 
