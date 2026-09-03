@@ -42,7 +42,7 @@ const delimiter = '-'; // '\x2D'
 /** Regular expressions */
 const regexPunycode = /^xn--/;
 const regexNonASCII = /[^\0-\x7F]/; // Note: U+007F DEL is excluded too.
-const regexSeparators = /[\x2E。．｡]/g; // RFC 3490 separators
+const regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
 
 /** Error messages */
 const errors = {
