@@ -7,7 +7,7 @@ import type { NodemailerError } from '../errors.js';
 import LeWindows from '../mime-node/le-windows.js';
 import MimeNode, { type MimeNodeAddressInput, type MimeNodeEnvelope, type MimeNodeHeader } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
+import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
 
 /**
  * Options for the SES transport
@@ -31,7 +31,7 @@ export interface SESTransportOptions extends TransportOptions {
 /**
  * The value the SES transport hands to the send callback
  */
-export interface SESSentMessageInfo {
+export interface SESSentMessageInfo extends SentMessageInfo {
     /** The envelope the message was sent with */
     envelope: MimeNodeEnvelope;
     /** Message-ID built from the MessageId SES returned */

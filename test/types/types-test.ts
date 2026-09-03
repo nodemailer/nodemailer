@@ -76,5 +76,11 @@ describe('Type surface', () => {
         const transporter: Mail<CustomInfo> = nodemailer.createTransport(transport);
         const info = await transporter.sendMail({ from: 'sender@example.com', to: 'recipient@example.com', text: 'hello' });
         assert.strictEqual(info.custom, true);
+
+        // a transport from outside this package is held by the plain Transporter type as
+        // well, which needs Mail to stay covariant in the message type
+        const plain: Transporter = transporter;
+        const result: SentMessageInfo = await plain.sendMail({ from: 'sender@example.com', to: 'recipient@example.com', text: 'hello' });
+        assert.strictEqual(result.custom, true);
     });
 });

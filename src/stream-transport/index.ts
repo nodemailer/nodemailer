@@ -6,7 +6,7 @@ import LeWindows from '../mime-node/le-windows.js';
 import LeUnix from '../mime-node/le-unix.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the Stream transport
@@ -23,7 +23,7 @@ export interface StreamTransportOptions extends TransportOptions {
 /**
  * The value the Stream transport hands to the send callback
  */
-export interface StreamSentMessageInfo {
+export interface StreamSentMessageInfo extends SentMessageInfo {
     /** The envelope the message was generated with */
     envelope: MimeNodeEnvelope;
     /** Message-ID value of the message */

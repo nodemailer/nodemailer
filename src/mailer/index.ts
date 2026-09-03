@@ -46,7 +46,11 @@ const DEFAULT_MAX_RECIPIENTS = 100000;
 
 /**
  * The base shape of the object a transport hands back for a sent message. Every bundled
- * transport sets the envelope and the Message-ID, the rest depends on the transport
+ * transport sets the envelope and the Message-ID, the rest depends on the transport.
+ *
+ * The index signature keeps a transport specific field readable through this type, and it
+ * is also what a result type has to inherit to stay assignable to it, so the result type
+ * of a transport outside this package has to extend this interface rather than restate it
  */
 export interface SentMessageInfo {
     /** The envelope the message was sent with */
@@ -202,11 +206,15 @@ export type Transporter<T = SentMessageInfo> = Mail<T>;
  * @constructor
  * @param transporter Transport object instance to pass the mails to
  */
-class Mail<T = SentMessageInfo> extends EventEmitter {
+class Mail<out T = SentMessageInfo> extends EventEmitter {
     options: TransportOptions;
     _defaults: MailDefaults;
-    _defaultPlugins: { [step: string]: PluginFunction<T>[] };
-    _userPlugins: { [step: string]: PluginFunction<T>[] };
+    // Not PluginFunction<T>: T in a plugin parameter would make Mail<T> invariant, and a
+    // Mail<SMTPSentMessageInfo> would stop being assignable to the plain Transporter type.
+    // The out annotation above makes tsc report that here rather than at the call sites.
+    // use() still takes a PluginFunction<T>
+    _defaultPlugins: { [step: string]: PluginFunction<any>[] };
+    _userPlugins: { [step: string]: PluginFunction<any>[] };
     meta: Map<string, any>;
     dkim: DKIM | false;
     transporter: Transport<T>;

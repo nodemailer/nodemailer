@@ -3,7 +3,7 @@ import * as shared from '../shared/index.js';
 import type { Logger } from '../shared/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type { default as MailMessage, MailMessageData } from '../mailer/mail-message.js';
-import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the JSON transport
@@ -18,7 +18,7 @@ export interface JSONTransportOptions extends TransportOptions {
 /**
  * The value the JSON transport hands to the send callback
  */
-export interface JSONSentMessageInfo {
+export interface JSONSentMessageInfo extends SentMessageInfo {
     /** The envelope the message was generated with */
     envelope: MimeNodeEnvelope;
     /** Message-ID value of the message */

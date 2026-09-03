@@ -13,7 +13,7 @@ import type { Socket } from 'node:net';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
+import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 
 /**
@@ -82,11 +82,16 @@ export interface SMTPTransportOptions extends SMTPConnectionOptions, TransportOp
 /**
  * Result of a sent message, the connection result plus the envelope and the Message-ID
  */
-export interface SMTPSentMessageInfo extends SMTPConnectionSendInfo {
+export interface SMTPSentMessageInfo extends SMTPConnectionSendInfo, SentMessageInfo {
     /** Envelope the message was sent with */
     envelope: MimeNodeEnvelope;
     /** Message-ID value of the sent message */
     messageId: string;
+    // both base types name these, so they have to be restated to pick the connection shape
+    /** Recipients the server accepted */
+    accepted: string[];
+    /** Recipients the server rejected */
+    rejected: string[];
 }
 
 /**

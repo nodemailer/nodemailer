@@ -8,7 +8,7 @@ import LeWindows from '../mime-node/le-windows.js';
 import LeUnix from '../mime-node/le-unix.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, SendMailOptions, TransportOptions } from '../mailer/index.js';
+import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions } from '../mailer/index.js';
 
 /**
  * Options for the Sendmail transport
@@ -27,7 +27,7 @@ export interface SendmailTransportOptions extends TransportOptions {
 /**
  * The value the Sendmail transport hands to the send callback
  */
-export interface SendmailSentMessageInfo {
+export interface SendmailSentMessageInfo extends SentMessageInfo {
     /** The envelope the message was sent with */
     envelope: MimeNodeEnvelope;
     /** Message-ID value of the message */
