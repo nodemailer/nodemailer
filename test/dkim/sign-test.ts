@@ -96,6 +96,18 @@ describe('DKIM Sign Tests', () => {
         );
     });
 
+    it('should return false when the private key can not sign', () => {
+        // an unusable key must not throw out of sign(): the caller treats false as
+        // "no signature" and sends the message unsigned rather than failing the send
+        const dkimField = sign([{ key: 'from', line: 'From: andris@node.ee' }], 'sha256', 'z6TUz85EdYrACGMHYgZhJGvVy5oQI0dooVMKa2ZT7c4=', {
+            domainName: 'node.ee',
+            keySelector: 'dkim',
+            privateKey: 'not a pem key'
+        });
+
+        assert.strictEqual(dkimField, false);
+    });
+
     it('should strip control chars from the domain and the selector', () => {
         // both are interpolated straight into the header, where neither the tag list nor a
         // domain name has any way to carry them
