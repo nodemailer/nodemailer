@@ -644,7 +644,7 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
     });
 
     it('should reject a self-signed cert by default', (t, done) => {
-        // no tls option provided — certificates must be validated by default
+        // no tls option provided, certificates must be validated by default
         let req = nmfetch('https://localhost:' + HTTPS_PORT);
         req.on('data', () => {});
         req.on('error', err => {

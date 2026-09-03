@@ -6,13 +6,13 @@ reports seriously and aim to respond quickly.
 ## Supported Versions
 
 Security fixes are released only against the latest major version. We do not
-backport patches to older majors — upgrading to the current release line is the
-supported way to receive security updates.
+backport patches to older majors, so upgrading to the current release line is
+the supported way to receive security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 9.x     | :white_check_mark: |
-| < 9.0   | :x:                |
+| 10.x    | :white_check_mark: |
+| < 10.0  | :x:                |
 
 If you are on an older major, please upgrade. See the migration notes at
 <https://nodemailer.com/> before updating.
@@ -41,7 +41,7 @@ When reporting, please include as much of the following as you can:
 - Any suggested remediation, if you have one.
 
 Nodemailer is maintained by a single person, so there is no guaranteed response
-time — sometimes reports are handled within hours, sometimes they take longer.
+time: sometimes reports are handled within hours, sometimes they take longer.
 Accepted issues are fixed in a new release and coordinated through a GitHub
 Security Advisory, and reporters who wish to be named are credited.
 
@@ -49,12 +49,12 @@ Security Advisory, and reporters who wish to be named are credited.
 
 We track and disclose vulnerabilities through GitHub Security Advisories. We do
 not request or manage CVE identifiers ourselves. If you need a CVE assigned for a
-reported issue, please request one yourself — for example, through GitHub's own
+reported issue, please request one yourself, for example through GitHub's own
 CVE request flow on the published advisory, or another CNA.
 
 ## Scope
 
-In scope: the `nodemailer` package source in this repository — message and MIME
+In scope: the `nodemailer` package source in this repository: message and MIME
 generation, SMTP/LMTP client behaviour, address parsing, header handling, DKIM
 signing, and the bundled transports.
 

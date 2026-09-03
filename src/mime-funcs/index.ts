@@ -68,7 +68,7 @@ export function quoteString(value?: string): string {
 /**
  * Checks if a multi line string containes lines longer than the selected value.
  *
- * Useful when detecting if a mail message needs any processing at all –
+ * Useful when detecting if a mail message needs any processing at all:
  * if only plaintext characters are used and lines are short, then there is
  * no need to encode the values in any way. If the value is plaintext but has
  * longer lines then allowed, then use format=flowed
