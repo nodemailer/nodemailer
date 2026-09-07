@@ -15,6 +15,7 @@ export default class LeWindows extends Transform {
 
     /**
      * Escapes dots
+     * @internal
      */
     override _transform(chunk: Buffer, encoding: BufferEncoding, done: TransformCallback): void {
         let buf: Buffer;

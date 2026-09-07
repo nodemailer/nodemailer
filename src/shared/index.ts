@@ -43,7 +43,7 @@ export interface ResolvedHostname {
     servername?: string | false | undefined;
     /** Address to connect to, picked at random from the resolved addresses */
     host?: string | null | undefined;
-    /** All resolved addresses, for connection fallback support */
+    /** All resolved addresses, for connection fallback support @internal */
     _addresses?: string[] | undefined;
     /** Whether the value came from the DNS cache */
     cached?: boolean | undefined;
@@ -186,7 +186,9 @@ const CACHE_CLEANUP_INTERVAL = 30 * 1000; // Minimum 30 seconds between cleanups
 const MAX_CACHE_SIZE = 1000; // Maximum number of entries in cache
 
 let lastCacheCleanup = 0;
+/** @internal */
 export const _lastCacheCleanup = () => lastCacheCleanup;
+/** @internal */
 export const _resetCacheCleanup = () => {
     lastCacheCleanup = 0;
 };
@@ -538,6 +540,7 @@ export const parseConnectionUrl = (str?: string | null): ConnectionUrlOptions =>
     return options;
 };
 
+/** @internal */
 export const _logFunc = (
     logger: ExternalLogger,
     level: string,

@@ -36,7 +36,9 @@ export default class PoolResource extends EventEmitter {
      */
     declare auth?: SMTPTransportAuth | undefined;
 
+    /** @internal */
     _connection: boolean;
+    /** @internal */
     _connected: boolean;
 
     messages: number;

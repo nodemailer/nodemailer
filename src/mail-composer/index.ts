@@ -174,12 +174,19 @@ class MailComposer {
     message: MimeNode | false;
 
     // set by compile, declared without a runtime field to keep the shape the constructor produces
+    /** @internal */
     declare _alternatives: MailComposerAlternative[];
+    /** @internal */
     declare _htmlNode: MailComposerAlternative | undefined;
+    /** @internal */
     declare _attachments: MailComposerAttachments;
+    /** @internal */
     declare _useRelated: boolean;
+    /** @internal */
     declare _useAlternative: boolean;
+    /** @internal */
     declare _useMixed: boolean | number;
+    /** @internal */
     declare _icalEvent: MailComposerIcalEvent | undefined;
 
     constructor(mail?: MailComposerOptions) {
@@ -367,6 +374,7 @@ class MailComposer {
      * and the buffered result is reused by the second node.
      *
      * @returns Normalized icalEvent data
+     * @internal
      */
     _getIcalEvent(): MailComposerIcalEvent {
         if (!this._icalEvent) {
@@ -550,6 +558,7 @@ class MailComposer {
      *
      * @param parentNode Parent for this note. If it does not exist, a root node is created
      * @returns MimeNode node element
+     * @internal
      */
     _createMixed(parentNode?: MimeNode): MimeNode {
         const node = parentNode
@@ -594,6 +603,7 @@ class MailComposer {
      *
      * @param parentNode Parent for this note. If it does not exist, a root node is created
      * @returns MimeNode node element
+     * @internal
      */
     _createAlternative(parentNode?: MimeNode): MimeNode {
         const node = parentNode
@@ -629,6 +639,7 @@ class MailComposer {
      *
      * @param parentNode Parent for this note. If it does not exist, a root node is created
      * @returns MimeNode node element
+     * @internal
      */
     _createRelated(parentNode?: MimeNode): MimeNode {
         const node = parentNode
@@ -661,6 +672,7 @@ class MailComposer {
      * @param parentNode Parent for this note. If it does not exist, a root node is created
      * @param element Node data
      * @returns MimeNode node element
+     * @internal
      */
     _createContentNode(parentNode: MimeNode | false, element?: MailComposerAttachment): MimeNode {
         element = element || {};
@@ -732,6 +744,7 @@ class MailComposer {
      *
      * @param element Content element
      * @return Parsed element
+     * @internal
      */
     _processDataUrl<T extends MailComposerAlternative>(element: T): T {
         const dataUrl = element.path || element.href;

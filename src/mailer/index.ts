@@ -208,12 +208,15 @@ export type Transporter<T = SentMessageInfo> = Mail<T>;
  */
 class Mail<out T = SentMessageInfo> extends EventEmitter {
     options: TransportOptions;
+    /** Message defaults given to createTransport, kept public because the DefinitelyTyped typings declared it */
     _defaults: MailDefaults;
     // Not PluginFunction<T>: T in a plugin parameter would make Mail<T> invariant, and a
     // Mail<SMTPSentMessageInfo> would stop being assignable to the plain Transporter type.
     // The out annotation above makes tsc report that here rather than at the call sites.
     // use() still takes a PluginFunction<T>
+    /** @internal */
     _defaultPlugins: { [step: string]: PluginFunction<any>[] };
+    /** @internal */
     _userPlugins: { [step: string]: PluginFunction<any>[] };
     meta: Map<string, any>;
     dkim: DKIM | false;
@@ -489,6 +492,7 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
         );
     }
 
+    /** @internal */
     _processPlugins(step: string, mail: MailMessage<T>, callback: PluginCallback): void {
         step = (step || '').toString();
 
@@ -646,6 +650,7 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
         };
     }
 
+    /** @internal */
     _convertDataImages(mail: MailMessage<T>, callback: PluginCallback): void {
         if ((!this.options.attachDataUrls && !mail.data.attachDataUrls) || !mail.data.html) {
             return callback();

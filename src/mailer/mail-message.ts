@@ -28,7 +28,7 @@ import type { SentMessageInfo } from './index.js';
 export interface SendMailOptions extends MailComposerOptions {
     /** DKIM signing options for this message, used instead of the ones of the transporter */
     dkim?: DKIMOptions | undefined;
-    /** Extra DKIM options for this message, merged over the options of the signer */
+    /** Extra DKIM options for this message, merged over the options of the signer @internal */
     _dkim?: DKIMOptions | undefined;
     /** Recipients allowed on this message, 0 disables the limit, defaults to 100000 */
     maxRecipients?: number | undefined;
@@ -390,6 +390,7 @@ export default class MailMessage<T = SentMessageInfo> {
         });
     }
 
+    /** @internal */
     _getListHeaders(listData: MailComposerListHeaders): MailMessageListHeader[] {
         // make sure an url looks like <protocol:url>
         return Object.keys(listData).map(key => ({
@@ -443,6 +444,7 @@ export default class MailMessage<T = SentMessageInfo> {
         }));
     }
 
+    /** @internal */
     _formatListUrl(url: string): string {
         // a url has no way to carry a control char or DEL, and the angle brackets around it
         // are not a quoting construct, so anything left here lands in the header raw

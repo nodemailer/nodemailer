@@ -380,12 +380,13 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Store incomplete messages coming from the server
-     * @private
+     * @internal
      */
     _remainder: string;
 
     /**
      * Unprocessed responses from the server
+     * @internal
      */
     _responseQueue: string[];
 
@@ -399,7 +400,7 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Lists supported auth mechanisms
-     * @private
+     * @internal
      */
     _supportedAuth: string[];
 
@@ -411,101 +412,108 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Includes current envelope (from, to)
-     * @private
+     * @internal
      */
     _envelope: SMTPConnectionEnvelope | false;
 
     /**
      * Lists supported extensions
-     * @private
+     * @internal
      */
     _supportedExtensions: string[];
 
     /**
      * Defines the maximum allowed size for a single message
-     * @private
+     * @internal
      */
     _maxAllowedSize: number;
 
     /**
      * Function queue to run if a data chunk comes from the server
-     * @private
+     * @internal
      */
     _responseActions: SMTPConnectionResponseAction[];
+    /** @internal */
     _recipientQueue: string[];
 
     /**
      * Timeout variable for waiting the greeting
-     * @private
+     * @internal
      */
     _greetingTimeout: NodeJS.Timeout | false;
 
     /**
      * Timeout variable for waiting the connection to start
-     * @private
+     * @internal
      */
     _connectionTimeout: NodeJS.Timeout | false;
 
     /**
      * If the socket is deemed already closed
-     * @private
+     * @internal
      */
     _destroyed: boolean;
 
     /**
      * If the socket is already being closed
-     * @private
+     * @internal
      */
     _closing: boolean;
 
     /**
      * Message DATA stream currently piped to the socket, if any. Tracked so
      * close() can unpipe it before tearing the socket down.
-     * @private
+     * @internal
      */
     _currentDataStream: DataStream | false;
 
     /**
      * Callbacks for socket's listeners
+     * @internal
      */
     _onSocketData: (chunk: Buffer) => void;
+    /** @internal */
     _onSocketError: (error: Error) => void;
+    /** @internal */
     _onSocketClose: () => void;
+    /** @internal */
     _onSocketEnd: () => void;
+    /** @internal */
     _onSocketTimeout: () => void;
 
     /**
      * Connection-phase error handler (supports fallback to alternative addresses)
+     * @internal
      */
     _onConnectionSocketError: (err: Error) => void;
 
     /**
      * Connection attempt counter for fallback race condition protection
-     * @private
+     * @internal
      */
     _connectionAttemptId: number;
 
     /**
      * Alternative resolved addresses to try when the connection fails, set by connect()
-     * @private
+     * @internal
      */
     _fallbackAddresses?: string[] | undefined;
 
     /**
      * Options of the current connection attempt, set by connect()
-     * @private
+     * @internal
      */
     _connectOpts?: SMTPConnectionConnectOptions | undefined;
 
     /**
      * Authentication data, set by login()
-     * @private
+     * @internal
      */
     _auth!: SMTPConnectionAuth;
 
     /**
      * Selected SASL method, set by login()
-     * @private
+     * @internal
      */
     _authMethod!: string | false;
 
@@ -517,19 +525,19 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * EHLO response lines, without the greeting line
-     * @private
+     * @internal
      */
     _ehloLines?: string[] | undefined;
 
     /**
      * True if SMTPUTF8 was declared for the current envelope
-     * @private
+     * @internal
      */
     _usingSmtpUtf8?: boolean | undefined;
 
     /**
      * True if BODY=8BITMIME was declared for the current envelope
-     * @private
+     * @internal
      */
     _using8BitMime?: boolean | undefined;
 
@@ -728,6 +736,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param opts Connection options (modified in place)
      * @param callback Called with resolved data on success
+     * @internal
      */
     _resolveAndConnect(opts: SMTPConnectionConnectOptions, callback: (resolved: shared.ResolvedHostname) => void): void {
         return shared.resolveHostname(opts, (err, resolved) => {
@@ -760,6 +769,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param opts Connection options
      * @param secure Whether to use TLS
+     * @internal
      */
     _connectToHost(opts: SMTPConnectionConnectOptions, secure: boolean): void {
         // If the client was closed while DNS resolution was in flight, do not open
@@ -794,6 +804,7 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Sets up connection timeout and error handlers
+     * @internal
      */
     _setupConnectionHandlers(): void {
         this._connectionTimeout = setTimeout(() => {
@@ -808,6 +819,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param err Error object or message
      * @param code Error code
+     * @internal
      */
     _onConnectionError(err: Error | string, code: string): void {
         clearTimeout(this._connectionTimeout as NodeJS.Timeout);
@@ -1189,6 +1201,7 @@ class SMTPConnection extends EventEmitter {
      * the server is opened
      *
      * @event
+     * @internal
      */
     _onConnect(): void {
         const socket = this._socket as net.Socket;
@@ -1253,6 +1266,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @event
      * @param chunk Data chunk coming from the server
+     * @internal
      */
     _onData(chunk: Buffer): void {
         if (this._destroyed || !chunk || !chunk.length) {
@@ -1292,6 +1306,7 @@ class SMTPConnection extends EventEmitter {
      * @event
      * @param err Error object
      * @param type Error name
+     * @internal
      */
     _onError(err: NodemailerError | string, type: string | false, data: string | false, command: string | false): void {
         clearTimeout(this._connectionTimeout as NodeJS.Timeout);
@@ -1317,6 +1332,7 @@ class SMTPConnection extends EventEmitter {
         this.close();
     }
 
+    /** @internal */
     _formatError(message: Error | string, type?: string | false, response?: string | false, command?: string | false): NodemailerError {
         let err: NodemailerError;
 
@@ -1351,6 +1367,7 @@ class SMTPConnection extends EventEmitter {
      * 'close' listener for the socket
      *
      * @event
+     * @internal
      */
     _onClose(): void {
         let serverResponse: string | false = false;
@@ -1389,6 +1406,7 @@ class SMTPConnection extends EventEmitter {
      * 'end' listener for the socket
      *
      * @event
+     * @internal
      */
     _onEnd(): void {
         if (this._socket && !this._socket.destroyed) {
@@ -1402,6 +1420,7 @@ class SMTPConnection extends EventEmitter {
      * 'timeout' listener for the socket
      *
      * @event
+     * @internal
      */
     _onTimeout(): void {
         return this._onError(new Error('Timeout'), 'ETIMEDOUT', false, 'CONN');
@@ -1409,6 +1428,7 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Destroys the client, emits 'end'
+     * @internal
      */
     _destroy(): void {
         if (this._destroyed) {
@@ -1431,6 +1451,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param callback Callback function to run when the connection
      *        has been secured
+     * @internal
      */
     _upgradeConnection(callback: (err: Error | null, secured?: boolean) => void): void {
         // RFC 3207 section 6: the client MUST discard any knowledge obtained from
@@ -1505,6 +1526,7 @@ class SMTPConnection extends EventEmitter {
 
     /**
      * Processes queued responses from the server
+     * @internal
      */
     _processResponse(): boolean | void {
         if (!this._responseQueue.length) {
@@ -1554,6 +1576,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param str String to be sent to the server
      * @param logStr Optional string to be used for logging instead of the actual string
+     * @internal
      */
     _sendCommand(str: string, logStr?: string): void {
         if (this._destroyed) {
@@ -1586,6 +1609,7 @@ class SMTPConnection extends EventEmitter {
      *        {from:'...', to:['...']}
      *        or
      *        {from:{address:'...',name:'...'}, to:[address:'...',name:'...']}
+     * @internal
      */
     _setEnvelope(envelope: SMTPEnvelope | undefined, callback: SMTPConnectionSendCallback): void {
         const args: string[] = [];
@@ -1703,6 +1727,7 @@ class SMTPConnection extends EventEmitter {
         this._sendCommand('MAIL FROM:<' + this._envelope.from + '>' + (args.length ? ' ' + args.join(' ') : ''));
     }
 
+    /** @internal */
     _setDsnEnvelope(params: SMTPEnvelopeDsn): SMTPEnvelopeDsn {
         let ret = (params.ret || params.return || '').toString().toUpperCase() || null;
         if (ret) {
@@ -1751,6 +1776,7 @@ class SMTPConnection extends EventEmitter {
         };
     }
 
+    /** @internal */
     _getDsnRcptToArgs(): string {
         const envelope = this._envelope as SMTPConnectionEnvelope;
         const args: string[] = [];
@@ -1767,6 +1793,7 @@ class SMTPConnection extends EventEmitter {
         return args.length ? ' ' + args.join(' ') : '';
     }
 
+    /** @internal */
     _createSendStream(callback: SMTPConnectionResponseCallback): DataStream {
         const envelope = this._envelope as SMTPConnectionEnvelope;
         const dataStream = new DataStream();
@@ -1832,6 +1859,7 @@ class SMTPConnection extends EventEmitter {
      * SMTP session by sending EHLO command
      *
      * @param str Message from the server
+     * @internal
      */
     _actionGreeting(str: string): void {
         clearTimeout(this._greetingTimeout as NodeJS.Timeout);
@@ -1855,6 +1883,7 @@ class SMTPConnection extends EventEmitter {
      * error, emit 'error', otherwise treat this as an EHLO response
      *
      * @param str Message from the server
+     * @internal
      */
     _actionLHLO(str: string): void {
         if (str.charAt(0) !== '2') {
@@ -1872,6 +1901,7 @@ class SMTPConnection extends EventEmitter {
      * authentication phase.
      *
      * @param str Message from the server
+     * @internal
      */
     _actionEHLO(str: string): void {
         let match: RegExpMatchArray | null;
@@ -1975,6 +2005,7 @@ class SMTPConnection extends EventEmitter {
      * error, emit 'error', otherwise move into the authentication phase.
      *
      * @param str Message from the server
+     * @internal
      */
     _actionHELO(str: string): void {
         if (str.charAt(0) !== '2') {
@@ -1994,6 +2025,7 @@ class SMTPConnection extends EventEmitter {
      * succeedes restart the EHLO
      *
      * @param str Message from the server
+     * @internal
      */
     _actionSTARTTLS(str: string): void {
         if (str.charAt(0) !== '2') {
@@ -2047,6 +2079,7 @@ class SMTPConnection extends EventEmitter {
      * hosts invalidly use a longer message than VXNlcm5hbWU6
      *
      * @param str Message from the server
+     * @internal
      */
     _actionAUTH_LOGIN_USER(str: string, callback: SMTPConnectionCallback): void {
         if (!/^334[ -]/.test(str)) {
@@ -2070,6 +2103,7 @@ class SMTPConnection extends EventEmitter {
      * base64 encoded again.
      *
      * @param str Message from the server
+     * @internal
      */
     _actionAUTH_CRAM_MD5(str: string, callback: SMTPConnectionCallback): void {
         const challengeMatch = str.match(/^334\s+(.+)$/);
@@ -2104,6 +2138,7 @@ class SMTPConnection extends EventEmitter {
      * the user can be considered logged in. Start waiting for a message to send
      *
      * @param str Message from the server
+     * @internal
      */
     _actionAUTH_CRAM_MD5_PASS(str: string, callback: SMTPConnectionCallback): void {
         if (!str.match(/^235\s+/)) {
@@ -2130,6 +2165,7 @@ class SMTPConnection extends EventEmitter {
      * response needs to be base64 encoded password.
      *
      * @param str Message from the server
+     * @internal
      */
     _actionAUTH_LOGIN_PASS(str: string, callback: SMTPConnectionCallback): void {
         if (!/^334[ -]/.test(str)) {
@@ -2153,6 +2189,7 @@ class SMTPConnection extends EventEmitter {
      * the user can be considered logged in. Start waiting for a message to send
      *
      * @param str Message from the server
+     * @internal
      */
     _actionAUTHComplete(str: string, isRetry: boolean | SMTPConnectionCallback, callback?: SMTPConnectionCallback): void {
         if (!callback && typeof isRetry === 'function') {
@@ -2205,6 +2242,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a MAIL FROM: command
      *
      * @param str Message from the server
+     * @internal
      */
     _actionMAIL(str: string, callback: SMTPConnectionSendCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
@@ -2237,6 +2275,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a RCPT TO: command
      *
      * @param str Message from the server
+     * @internal
      */
     _actionRCPT(str: string, callback: SMTPConnectionSendCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
@@ -2283,6 +2322,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a DATA command
      *
      * @param str Message from the server
+     * @internal
      */
     _actionDATA(str: string, callback: SMTPConnectionSendCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
@@ -2313,6 +2353,7 @@ class SMTPConnection extends EventEmitter {
      * We expect a single response that defines if the sending succeeded or failed
      *
      * @param str Message from the server
+     * @internal
      */
     _actionSMTPStream(str: string, callback: SMTPConnectionResponseCallback): void {
         if (Number(str.charAt(0)) !== 2) {
@@ -2329,6 +2370,7 @@ class SMTPConnection extends EventEmitter {
      * @param recipient The recipient this response applies to
      * @param final Is this the final recipient?
      * @param str Message from the server
+     * @internal
      */
     _actionLMTPStream(recipient: string, final: boolean, str: string, callback: SMTPConnectionResponseCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
@@ -2350,6 +2392,7 @@ class SMTPConnection extends EventEmitter {
         }
     }
 
+    /** @internal */
     _handleXOauth2Token(isRetry: boolean, callback: SMTPConnectionCallback): void {
         (this._auth.oauth2 as XOAuth2).getToken(isRetry, (err, accessToken) => {
             if (err) {
@@ -2379,7 +2422,7 @@ class SMTPConnection extends EventEmitter {
     /**
      *
      * @param command
-     * @private
+     * @internal
      */
     _isDestroyedMessage(command: string): string | undefined {
         if (this._destroyed) {
@@ -2397,6 +2440,7 @@ class SMTPConnection extends EventEmitter {
         }
     }
 
+    /** @internal */
     _getHostname(): string {
         // defaul hostname is machine hostname or [IP]
         let defaultHostname: string;

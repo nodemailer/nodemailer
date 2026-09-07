@@ -61,7 +61,9 @@ export class Encoder extends Transform {
     options: EncoderOptions;
     inputBytes: number;
     outputBytes: number;
+    /** @internal */
     _curLine: string;
+    /** @internal */
     _remainingBytes: Buffer | false;
 
     constructor(options?: EncoderOptions) {
@@ -79,6 +81,7 @@ export class Encoder extends Transform {
         this.outputBytes = 0;
     }
 
+    /** @internal */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding | 'buffer', done: TransformCallback): void {
         let buf = encoding !== 'buffer' ? Buffer.from(chunk as string, encoding) : (chunk as Buffer);
 
@@ -127,6 +130,7 @@ export class Encoder extends Transform {
         setImmediate(done);
     }
 
+    /** @internal */
     override _flush(done: TransformCallback): void {
         if (this._remainingBytes && this._remainingBytes.length) {
             this._curLine += encode(this._remainingBytes);

@@ -35,15 +35,16 @@ export default class RelaxedBody extends Transform {
     /** Bytes of the original body seen so far */
     byteLength: number;
     debug: boolean | undefined;
+    /** @internal */
     _debugBody: Buffer[] | false;
 
-    /** The current line has bytes that survive canonicalization */
+    /** The current line has bytes that survive canonicalization @internal */
     _lineHasContent: boolean;
-    /** Whitespace that ends up as a single space if more content follows on the line */
+    /** Whitespace that ends up as a single space if more content follows on the line @internal */
     _pendingWsp: boolean;
-    /** A CR that is part of the line ending if LF follows, otherwise content */
+    /** A CR that is part of the line ending if LF follows, otherwise content @internal */
     _pendingCr: boolean;
-    /** Empty lines that are hashed only once a non-empty line follows them */
+    /** Empty lines that are hashed only once a non-empty line follows them @internal */
     _pendingEmptyLines: number;
 
     constructor(options?: RelaxedBodyOptions) {
@@ -61,6 +62,7 @@ export default class RelaxedBody extends Transform {
         this._pendingEmptyLines = 0;
     }
 
+    /** @internal */
     _hashCanonical(data: Buffer): void {
         if (!data.length) {
             return;
@@ -71,6 +73,7 @@ export default class RelaxedBody extends Transform {
         }
     }
 
+    /** @internal */
     _hashEmptyLines(): void {
         while (this._pendingEmptyLines > 0) {
             const count = Math.min(this._pendingEmptyLines, EMPTY_LINES.length / 2);
@@ -83,6 +86,7 @@ export default class RelaxedBody extends Transform {
      * Writes a content byte, with the space a pending run of whitespace collapses to,
      * into the output buffer and returns the new write position. Kept a method rather
      * than a closure so the write position stays a plain local in the byte loop
+     * @internal
      */
     _emitContent(out: Buffer, outPos: number, c: number): number {
         if (!this._lineHasContent) {
@@ -150,6 +154,7 @@ export default class RelaxedBody extends Transform {
         this._hashCanonical(out.subarray(0, outPos));
     }
 
+    /** @internal */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding, callback: TransformCallback): void {
         if (!chunk || !chunk.length) {
             return callback();
@@ -166,6 +171,7 @@ export default class RelaxedBody extends Transform {
         callback();
     }
 
+    /** @internal */
     override _flush(callback: TransformCallback): void {
         this.updateHash(Buffer.alloc(0), true);
 

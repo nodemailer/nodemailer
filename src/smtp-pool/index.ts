@@ -94,10 +94,15 @@ class SMTPPool extends EventEmitter {
     logger: shared.Logger;
     name: string;
     version: string;
+    /** @internal */
     _rateLimit: SMTPPoolRateLimit;
+    /** @internal */
     _closed: boolean;
+    /** @internal */
     _queue: SMTPPoolQueueEntry[];
+    /** @internal */
     _connections: PoolResource[];
+    /** @internal */
     _connectionCounter: number;
     idling: boolean;
 
@@ -286,6 +291,7 @@ class SMTPPool extends EventEmitter {
     /**
      * Check the queue and available connections. If there is a message to be sent and there is
      * an available connection, then use this connection to send the mail
+     * @internal
      */
     _processMessages(): void {
         // do nothing if already closed
@@ -371,6 +377,7 @@ class SMTPPool extends EventEmitter {
 
     /**
      * Creates a new pool resource
+     * @internal
      */
     _createConnection(): PoolResource {
         const connection = new PoolResource(this);
@@ -499,6 +506,7 @@ class SMTPPool extends EventEmitter {
         return connection;
     }
 
+    /** @internal */
     _shouldRequeuOnConnectionClose(queueEntry: SMTPPoolQueueEntry): boolean {
         if (this.options.maxRequeues === undefined || this.options.maxRequeues < 0) {
             return true;
@@ -507,6 +515,7 @@ class SMTPPool extends EventEmitter {
         return queueEntry.requeueAttempts < this.options.maxRequeues;
     }
 
+    /** @internal */
     _failDeliveryOnConnectionClose(connection: PoolResource): void {
         if (connection.queueEntry && connection.queueEntry.callback) {
             try {
@@ -528,6 +537,7 @@ class SMTPPool extends EventEmitter {
         }
     }
 
+    /** @internal */
     _requeueEntryOnConnectionClose(connection: PoolResource): void {
         (connection.queueEntry as SMTPPoolQueueEntry).requeueAttempts += 1;
         this.logger.debug(
@@ -548,6 +558,7 @@ class SMTPPool extends EventEmitter {
 
     /**
      * Continue to process message if the pool hasn't closed
+     * @internal
      */
     _continueProcessing(): void {
         if (this._closed) {
@@ -561,6 +572,7 @@ class SMTPPool extends EventEmitter {
      * Remove resource from pool
      *
      * @param connection The PoolResource to remove
+     * @internal
      */
     _removeConnection(connection: PoolResource): void {
         const index = this._connections.indexOf(connection);
@@ -574,6 +586,7 @@ class SMTPPool extends EventEmitter {
      * Checks if connections have hit current rate limit and if so, queues the availability callback
      *
      * @param callback Callback function to run once rate limiter has been cleared
+     * @internal
      */
     _checkRateLimit(callback: () => void): void {
         if (!this._rateLimit.limit) {
@@ -603,6 +616,7 @@ class SMTPPool extends EventEmitter {
 
     /**
      * Clears current rate limit limitation and runs paused callback
+     * @internal
      */
     _clearRateLimit(): void {
         clearTimeout(this._rateLimit.timeout as NodeJS.Timeout);

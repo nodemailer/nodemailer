@@ -23,6 +23,7 @@ export default class DataStream extends Transform {
 
     /**
      * Escapes dots
+     * @internal
      */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding, done: TransformCallback): void {
         const chunks: Buffer[] = [];
@@ -89,6 +90,7 @@ export default class DataStream extends Transform {
 
     /**
      * Finalizes the stream with a dot on a single line
+     * @internal
      */
     override _flush(done: TransformCallback): void {
         let buf: Buffer;

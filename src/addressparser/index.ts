@@ -4,7 +4,7 @@
 export interface AddressParserOptions {
     /** Flatten groups into a single list of mailboxes */
     flatten?: boolean | undefined;
-    /** Internal recursion depth counter (do not set manually) */
+    /** Internal recursion depth counter (do not set manually) @internal */
     _depth?: number | undefined;
 }
 

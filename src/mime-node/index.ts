@@ -117,9 +117,9 @@ export interface MimeNodeContentObject {
     httpHeaders?: OutgoingHttpHeaders | undefined;
     /** TLS settings for a URL fetch, see nmfetch */
     tls?: { [key: string]: any } | undefined;
-    /** Read the content once and reuse the buffered value for every stream. MailComposer sets it on the icalEvent content, which is used twice */
+    /** Read the content once and reuse the buffered value for every stream. MailComposer sets it on the icalEvent content, which is used twice @internal */
     _resolve?: boolean | undefined;
-    /** The buffered content once _resolve has run */
+    /** The buffered content once _resolve has run @internal */
     _resolvedValue?: Buffer | undefined;
 }
 
@@ -272,13 +272,21 @@ class MimeNode {
     hostname: string | undefined;
     newline: string | undefined;
     childNodes: MimeNode[];
+    /** @internal */
     _nodeId: number;
+    /** @internal */
     _headers: MimeNodeHeader[];
+    /** @internal */
     _isPlainText: boolean;
+    /** @internal */
     _hasLongLines: boolean;
+    /** @internal */
     _envelope: MimeNodeEnvelope | false;
+    /** @internal */
     _raw: MimeNodeContent | Error | false;
+    /** @internal */
     _transforms: MimeNodeTransform[];
+    /** @internal */
     _processFuncs: MimeNodeProcessFunc[];
 
     // these are only set later, by setContent, setRaw and the header build, so they are
@@ -293,6 +301,7 @@ class MimeNode {
     declare multipart?: string | false | undefined;
     /** Multipart boundary, false for a non-multipart node, set when the headers are built */
     declare boundary?: string | false | undefined;
+    /** @internal */
     declare _contentErrorHandler?: ((err: Error) => void) | undefined;
 
     constructor(contentType?: string | false, options?: MimeNodeOptions) {
@@ -1252,6 +1261,7 @@ class MimeNode {
      *
      * @param flag Either 'disableFileAccess' or 'disableUrlAccess'
      * @return true if this node or an ancestor closed that access
+     * @internal
      */
     _accessDisabled(flag: 'disableFileAccess' | 'disableUrlAccess'): boolean {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -1270,6 +1280,7 @@ class MimeNode {
      *
      * @param content Node content
      * @returns Stream object
+     * @internal
      */
     _getStream(content: any): Readable {
         let contentStream: PassThrough;
@@ -1343,6 +1354,7 @@ class MimeNode {
      *
      * @param addresses Addresses to be parsed
      * @return An array of address objects
+     * @internal
      */
     _parseAddresses(addresses: MimeNodeAddressInput | undefined): MimeNodeAddress[] {
         // Collected into one list as we go. concat.apply spreads the entries into arguments
@@ -1389,6 +1401,7 @@ class MimeNode {
      *
      * @param parsed An array of address objects, as returned by addressparser
      * @return The same array, with every address normalized
+     * @internal
      */
     _normalizeParsedAddresses(parsed: Address[]): Address[] {
         // addressparser builds these objects, so no caller holds a reference to rewrite around
@@ -1412,6 +1425,7 @@ class MimeNode {
      *
      * @param addresses Addresses to be parsed
      * @return An array of address objects
+     * @internal
      */
     _parseEnvelopeAddresses(addresses: MimeNodeAddressInput | undefined): MimeNodeAddress[] {
         return this._parseAddresses(addresses).map(entry => {
@@ -1427,6 +1441,7 @@ class MimeNode {
      *
      * @param key Key to be normalized
      * @return key in Camel-Case form
+     * @internal
      */
     _normalizeHeaderKey(key: string): string {
         key = (key || '')
@@ -1451,6 +1466,7 @@ class MimeNode {
      * Doesn't return anything, modifies object argument instead.
      *
      * @param structured Parsed header value for 'Content-Type' key
+     * @internal
      */
     _handleContentType(structured: mimeFuncs.StructuredHeaderValue): void {
         this.contentType = (structured.value as string).trim().toLowerCase();
@@ -1469,6 +1485,7 @@ class MimeNode {
      * Generates a multipart boundary value
      *
      * @return boundary value
+     * @internal
      */
     _generateBoundary(): string {
         return this.rootNode.boundaryPrefix + '-' + this.rootNode.baseBoundary + '-Part_' + this._nodeId;
@@ -1479,6 +1496,7 @@ class MimeNode {
      *
      * @param key Header key
      * @param value Header value
+     * @internal
      */
     _encodeHeaderValue(key: string, value: MimeNodeHeaderValue): string {
         key = this._normalizeHeaderKey(key);
@@ -1565,6 +1583,7 @@ class MimeNode {
      * @param addresses An array of address objects
      * @param [uniqueList] An array to be populated with addresses
      * @return address string
+     * @internal
      */
     _convertAddresses(
         addresses: MimeNodeAddress | MimeNodeAddress[] | undefined,
@@ -1620,6 +1639,7 @@ class MimeNode {
      *
      * @param address An array of address objects
      * @return address string
+     * @internal
      */
     _normalizeAddress(address?: string | false): string {
         address = (address || '')
@@ -1674,6 +1694,7 @@ class MimeNode {
      *
      * @param user Local part of an address
      * @return Local part as a dot-atom or as a quoted-string
+     * @internal
      */
     _normalizeLocalPart(user: string): string {
         if (DOT_ATOM.test(user) || QUOTED_STRING.test(user)) {
@@ -1688,6 +1709,7 @@ class MimeNode {
      *
      * @param name Name part of an address
      * @returns Mime word encoded string if needed
+     * @internal
      */
     _encodeAddressName(name: string): string {
         if (!/^[\w ]*$/.test(name)) {
@@ -1707,6 +1729,7 @@ class MimeNode {
      *
      * @param value Header value to encode
      * @returns Mime word encoded string if needed
+     * @internal
      */
     _encodeHeaderText(value: string): string {
         return /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value)
@@ -1720,6 +1743,7 @@ class MimeNode {
      *
      * @param name Name part of an address
      * @returns Mime word encoded string if needed
+     * @internal
      */
     _encodeWords(value: string): string {
         // set encodeAll parameter to true even though it is against the recommendation of RFC2047,
@@ -1733,6 +1757,7 @@ class MimeNode {
      *
      * @param value Value to check for
      * @return either 'Q' or 'B'
+     * @internal
      */
     _getTextEncoding(value?: string | Buffer): string {
         value = (value || '').toString();
@@ -1762,6 +1787,7 @@ class MimeNode {
      * Generates a message id
      *
      * @return Random Message-ID value
+     * @internal
      */
     _generateMessageId(): string {
         return (

@@ -164,7 +164,7 @@ const resolutions = [node16, { module: 'esnext', moduleResolution: 'bundler' }];
 // Type-checks a consumer against the built declarations in dist/ the way an installed copy
 // is resolved: the package is linked into a temporary project so that the specifiers go
 // through the package.json exports map
-const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unknown }): void => {
+const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unknown }, include: string[] = ['consumer.ts']): void => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodemailer-types-'));
     try {
         fs.mkdirSync(path.join(dir, 'node_modules'));
@@ -186,7 +186,7 @@ const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unk
                     esModuleInterop: true,
                     ...compilerOptions
                 },
-                include: ['consumer.ts']
+                include
             })
         );
 
@@ -206,5 +206,36 @@ describe('Built package types', { timeout: 120 * 1000 }, () => {
 
     it('accepts an explicit undefined for optional properties with exactOptionalPropertyTypes', () => {
         typeCheckConsumer(exactOptionalConsumer, { ...node16, exactOptionalPropertyTypes: true });
+    });
+
+    // The underscore-prefixed members are implementation details and are tagged @internal,
+    // which stripInternal drops from the declarations. The two below are the ones
+    // @types/nodemailer declared, so they stay
+    it('strips the @internal members from the declarations', () => {
+        const kept = ['mailer/index.d.ts _defaults', 'smtp-connection/index.d.ts _socket'];
+        const member = /^(?:\s*|export declare \w+ )(_\w+)/;
+        const leaked: string[] = [];
+        for (const format of ['esm', 'cjs']) {
+            const dir = path.join(root, 'dist', format);
+            for (const file of fs.readdirSync(dir, { encoding: 'utf8', recursive: true })) {
+                if (!file.endsWith('.d.ts')) {
+                    continue;
+                }
+                for (const line of fs.readFileSync(path.join(dir, file), 'utf8').split('\n')) {
+                    const match = member.exec(line);
+                    if (match && !kept.includes(file + ' ' + match[1])) {
+                        leaked.push(format + '/' + file + ' ' + match[1]);
+                    }
+                }
+            }
+        }
+        assert.deepStrictEqual(leaked, [], 'members without an @internal tag');
+    });
+
+    // stripInternal drops a tagged declaration without checking whether a kept one still
+    // refers to it, and the consumer checks above run with skipLibCheck, which hides the
+    // dangling reference. This type-checks every built declaration file itself instead
+    it('type-checks the built declarations themselves', () => {
+        typeCheckConsumer('', { ...node16, skipLibCheck: false }, [path.join(root, 'dist', '**', '*.d.ts')]);
     });
 });

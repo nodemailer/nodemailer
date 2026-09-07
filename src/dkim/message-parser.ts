@@ -114,6 +114,7 @@ export default class MessageParser extends Transform {
         return false;
     }
 
+    /** @internal */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding, callback: TransformCallback): void {
         if (!chunk || !chunk.length) {
             return callback();
@@ -139,6 +140,7 @@ export default class MessageParser extends Transform {
         setImmediate(callback);
     }
 
+    /** @internal */
     override _flush(callback: TransformCallback): void {
         if (this.headerChunks) {
             // no empty line was seen, so the message consists of headers only

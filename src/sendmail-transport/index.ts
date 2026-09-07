@@ -50,6 +50,7 @@ export interface SendmailSentMessageInfo extends SentMessageInfo {
  */
 class SendmailTransport {
     declare mailer: Mail<SendmailSentMessageInfo>;
+    /** @internal */
     _spawn: typeof spawn;
     options: SendmailTransportOptions;
     name: string;

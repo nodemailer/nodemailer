@@ -174,6 +174,7 @@ export class Encoder extends Transform {
     options: QPEncoderOptions;
     inputBytes: number;
     outputBytes: number;
+    /** @internal */
     _curLine: string;
 
     constructor(options?: QPEncoderOptions) {
@@ -191,6 +192,7 @@ export class Encoder extends Transform {
         this.outputBytes = 0;
     }
 
+    /** @internal */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding | 'buffer', done: TransformCallback): void {
         let qp: string;
 
@@ -225,6 +227,7 @@ export class Encoder extends Transform {
         done();
     }
 
+    /** @internal */
     override _flush(done: TransformCallback): void {
         if (this._curLine) {
             this.outputBytes += this._curLine.length;

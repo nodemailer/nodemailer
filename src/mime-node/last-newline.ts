@@ -8,6 +8,7 @@ export default class LastNewline extends Transform {
         this.lastByte = false;
     }
 
+    /** @internal */
     override _transform(chunk: Buffer, encoding: BufferEncoding, done: TransformCallback): void {
         if (chunk.length) {
             this.lastByte = chunk[chunk.length - 1];
@@ -17,6 +18,7 @@ export default class LastNewline extends Transform {
         done();
     }
 
+    /** @internal */
     override _flush(done: TransformCallback): void {
         if (this.lastByte === 0x0a) {
             return done();
