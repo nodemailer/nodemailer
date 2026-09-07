@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.1](https://github.com/nodemailer/nodemailer/compare/v10.0.0...v10.0.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* **types:** accept an explicit undefined for optional properties ([209719d](https://github.com/nodemailer/nodemailer/commit/209719dd6a192656a6b18de265a3b4ac387208ff)), closes [#1853](https://github.com/nodemailer/nodemailer/issues/1853)
+* **types:** drop the internal members from the published declarations ([81e64ea](https://github.com/nodemailer/nodemailer/commit/81e64eaee70aabf867afef88d3733556c9fcc1cc))
+
 ## [10.0.0](https://github.com/nodemailer/nodemailer/compare/v9.1.1...v10.0.0) (2026-09-03)
 
 
