@@ -257,7 +257,7 @@ export function oauthServerOptions(x2server: OAuthServer, attempts: string[]): {
 
 export interface SendOutcome {
     err: NodemailerError | null;
-    info?: SMTPSentMessageInfo;
+    info?: SMTPSentMessageInfo | undefined;
 }
 
 /**

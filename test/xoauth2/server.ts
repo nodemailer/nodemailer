@@ -11,10 +11,10 @@ export interface OAuthServerOptions {
 }
 
 export interface OAuthTokenResponse {
-    error?: string;
-    access_token?: string;
-    expires_in?: number;
-    token_type?: string;
+    error?: string | undefined;
+    access_token?: string | undefined;
+    expires_in?: number | undefined;
+    token_type?: string | undefined;
 }
 
 export class OAuthServer {

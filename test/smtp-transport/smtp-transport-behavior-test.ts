@@ -268,7 +268,7 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
                     done(null, { user: 123 });
                 }
             });
-            const seen: Array<{ method: string; authMethods: string[]; user?: string }> = [];
+            const seen: Array<{ method: string; authMethods: string[]; user?: string | undefined }> = [];
             const transport = new SMTPTransport({
                 host: '127.0.0.1',
                 port: ts.port,

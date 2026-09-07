@@ -5,6 +5,7 @@
         "useDefineForClassFields": false,
         "types": ["node"],
         "strict": true,
+        "exactOptionalPropertyTypes": true,
         "noImplicitOverride": true,
         "noFallthroughCasesInSwitch": true,
         "isolatedModules": true,
