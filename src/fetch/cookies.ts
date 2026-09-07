@@ -9,20 +9,20 @@ const SESSION_TIMEOUT = 1800; // 30 min
  */
 export interface CookiesOptions {
     /** Lifetime in seconds for cookies that do not set their own expiration (default 1800) */
-    sessionTimeout?: number | string;
+    sessionTimeout?: number | string | undefined;
 }
 
 /**
  * A cookie as parsed from a 'Set-Cookie:' header and kept in the jar
  */
 export interface Cookie {
-    name?: string;
-    value?: string;
-    domain?: string;
-    path?: string;
-    expires?: Date;
-    secure?: boolean;
-    httponly?: boolean;
+    name?: string | undefined;
+    value?: string | undefined;
+    domain?: string | undefined;
+    path?: string | undefined;
+    expires?: Date | undefined;
+    secure?: boolean | undefined;
+    httponly?: boolean | undefined;
 }
 
 /**

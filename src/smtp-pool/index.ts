@@ -20,17 +20,17 @@ import type { default as Mail, SendMailOptions, VerifyCallback } from '../mailer
  */
 export interface SMTPPoolOptions extends SMTPTransportOptions {
     /** Set to true to get this pooled transport from createTransport */
-    pool?: boolean;
+    pool?: boolean | undefined;
     /** Maximum number of open connections, defaults to 5 */
-    maxConnections?: number;
+    maxConnections?: number | undefined;
     /** Number of messages a connection sends before it is closed and replaced, defaults to 100 */
-    maxMessages?: number;
+    maxMessages?: number | undefined;
     /** Maximum number of messages to send in rateDelta milliseconds, unlimited when not set */
-    rateLimit?: number;
+    rateLimit?: number | undefined;
     /** Time window for rateLimit in milliseconds, defaults to 1000 */
-    rateDelta?: number;
+    rateDelta?: number | undefined;
     /** How many times a message is requeued when its connection closes while sending, unlimited when not set or negative */
-    maxRequeues?: number;
+    maxRequeues?: number | undefined;
 }
 
 /**
@@ -62,7 +62,7 @@ export interface SMTPPoolQueueEntry {
     /** Callback to run once the message is sent or failed */
     callback: SMTPPoolSendCallback;
     /** Message-ID value without the angle brackets, set when the entry is assigned to a connection */
-    messageId?: string;
+    messageId?: string | undefined;
 }
 
 /**
@@ -104,7 +104,7 @@ class SMTPPool extends EventEmitter {
     /**
      * The Mail instance using this transport, assigned by Mail
      */
-    declare mailer?: Mail<SMTPPoolSentMessageInfo>;
+    declare mailer?: Mail<SMTPPoolSentMessageInfo> | undefined;
 
     constructor(options?: SMTPPoolOptions | string) {
         super();

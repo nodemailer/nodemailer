@@ -44,7 +44,7 @@ export interface TestAccount {
     pop3: TestAccountService;
     web: string;
     /** true if the account can also receive external mail */
-    mxEnabled?: boolean;
+    mxEnabled?: boolean | undefined;
     [key: string]: unknown;
 }
 
@@ -238,7 +238,7 @@ export function createTestAccount(
  * @param info Result object of sendMail()
  * @returns URL of the message in the Ethereal web interface, or false if the response does not carry one
  */
-export function getTestMessageUrl(info?: { response?: string | Buffer | null } | false | null): string | false {
+export function getTestMessageUrl(info?: { response?: string | Buffer | null | undefined } | false | null): string | false {
     if (!info || !info.response) {
         return false;
     }

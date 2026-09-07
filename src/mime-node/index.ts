@@ -25,29 +25,29 @@ import LeUnix from './le-unix.js';
  */
 export interface MimeNodeOptions {
     /** root node for this tree */
-    rootNode?: MimeNode;
+    rootNode?: MimeNode | undefined;
     /** immediate parent for this node */
-    parentNode?: MimeNode;
+    parentNode?: MimeNode | undefined;
     /** filename for an attachment node */
-    filename?: string;
+    filename?: string | undefined;
     /** shared part of the unique multipart boundary */
-    baseBoundary?: string;
+    baseBoundary?: string | undefined;
     /** prefix for the generated multipart boundaries, defaults to '--_NmP' */
-    boundaryPrefix?: string;
+    boundaryPrefix?: string | undefined;
     /** If true, do not exclude Bcc from the generated headers */
-    keepBcc?: boolean;
+    keepBcc?: boolean | undefined;
     /** method to normalize header keys for custom caseing */
-    normalizeHeaderKey?: (key: string, value: string) => string;
+    normalizeHeaderKey?: ((key: string, value: string) => string) | undefined;
     /** either 'Q' (the default) or 'B' */
-    textEncoding?: string;
+    textEncoding?: string | undefined;
     /** Hostname for default message-id values */
-    hostname?: string;
+    hostname?: string | undefined;
     /** If set to 'win' then uses \r\n, if 'linux' then \n. If not set (or `raw` is used) then newlines are kept as is */
-    newline?: string;
+    newline?: string | undefined;
     /** Reject content that points to a file path, for this node and every node below it */
-    disableFileAccess?: boolean;
+    disableFileAccess?: boolean | undefined;
     /** Reject content that points to a URL, for this node and every node below it */
-    disableUrlAccess?: boolean;
+    disableUrlAccess?: boolean | undefined;
 }
 
 /**
@@ -55,9 +55,9 @@ export interface MimeNodeOptions {
  * mailbox with an address or a group holding a list of addresses
  */
 export interface MimeNodeAddress {
-    name?: string;
-    address?: string;
-    group?: MimeNodeAddress[];
+    name?: string | undefined;
+    address?: string | undefined;
+    group?: MimeNodeAddress[] | undefined;
 }
 
 /**
@@ -72,8 +72,8 @@ export type MimeNodeAddressInput = string | MimeNodeAddress | MimeNodeAddressInp
  */
 export interface MimeNodePreparedHeaderValue {
     value?: unknown;
-    prepared?: boolean;
-    foldLines?: boolean;
+    prepared?: boolean | undefined;
+    foldLines?: boolean | undefined;
 }
 
 /**
@@ -110,17 +110,17 @@ export type MimeNodeHeaders = MimeNodeHeader | MimeNodeHeader[] | MimeNodeHeader
  */
 export interface MimeNodeContentObject {
     /** File path to read the content from */
-    path?: string;
+    path?: string | undefined;
     /** URL to fetch the content from */
-    href?: string;
+    href?: string | undefined;
     /** Request headers for a URL fetch */
-    httpHeaders?: OutgoingHttpHeaders;
+    httpHeaders?: OutgoingHttpHeaders | undefined;
     /** TLS settings for a URL fetch, see nmfetch */
-    tls?: { [key: string]: any };
+    tls?: { [key: string]: any } | undefined;
     /** Read the content once and reuse the buffered value for every stream. MailComposer sets it on the icalEvent content, which is used twice */
-    _resolve?: boolean;
+    _resolve?: boolean | undefined;
     /** The buffered content once _resolve has run */
-    _resolvedValue?: Buffer;
+    _resolvedValue?: Buffer | undefined;
 }
 
 /**
@@ -144,10 +144,10 @@ export interface MimeNodeEnvelope {
  * other field is copied to the envelope as is
  */
 export interface MimeNodeEnvelopeInput {
-    from?: MimeNodeAddressInput;
-    to?: MimeNodeAddressInput;
-    cc?: MimeNodeAddressInput;
-    bcc?: MimeNodeAddressInput;
+    from?: MimeNodeAddressInput | undefined;
+    to?: MimeNodeAddressInput | undefined;
+    cc?: MimeNodeAddressInput | undefined;
+    bcc?: MimeNodeAddressInput | undefined;
     [key: string]: unknown;
 }
 
@@ -155,12 +155,12 @@ export interface MimeNodeEnvelopeInput {
  * Parsed address headers as returned by getAddresses, keyed by lowercase header name
  */
 export interface MimeNodeAddresses {
-    from?: MimeNodeAddress[];
-    sender?: MimeNodeAddress[];
-    'reply-to'?: MimeNodeAddress[];
-    to?: MimeNodeAddress[];
-    cc?: MimeNodeAddress[];
-    bcc?: MimeNodeAddress[];
+    from?: MimeNodeAddress[] | undefined;
+    sender?: MimeNodeAddress[] | undefined;
+    'reply-to'?: MimeNodeAddress[] | undefined;
+    to?: MimeNodeAddress[] | undefined;
+    cc?: MimeNodeAddress[] | undefined;
+    bcc?: MimeNodeAddress[] | undefined;
 }
 
 /**
@@ -169,7 +169,7 @@ export interface MimeNodeAddresses {
  */
 export interface MimeNodeStreamOptions extends TransformOptions {
     /** Maximum line length for base64 and quoted-printable bodies, false disables wrapping */
-    lineLength?: number | false;
+    lineLength?: number | false | undefined;
 }
 
 /**
@@ -284,16 +284,16 @@ class MimeNode {
     // these are only set later, by setContent, setRaw and the header build, so they are
     // declared without a runtime field to keep the node shape the constructor produces
     /** Filename for this node. Useful with attachments */
-    declare filename?: string;
+    declare filename?: string | undefined;
     /** Body content, or the error a content stream emitted before it was read */
-    declare content?: MimeNodeContent | Error;
+    declare content?: MimeNodeContent | Error | undefined;
     /** Lowercase content type, set when the headers are built */
-    declare contentType?: string;
+    declare contentType?: string | undefined;
     /** Multipart subtype, false for a non-multipart node, set when the headers are built */
-    declare multipart?: string | false;
+    declare multipart?: string | false | undefined;
     /** Multipart boundary, false for a non-multipart node, set when the headers are built */
-    declare boundary?: string | false;
-    declare _contentErrorHandler?: (err: Error) => void;
+    declare boundary?: string | false | undefined;
+    declare _contentErrorHandler?: ((err: Error) => void) | undefined;
 
     constructor(contentType?: string | false, options?: MimeNodeOptions) {
         this.nodeCounter = 0;

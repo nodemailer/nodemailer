@@ -34,7 +34,7 @@ export default class PoolResource extends EventEmitter {
     /**
      * Authentication data for the connection, set when the pool options include auth
      */
-    declare auth?: SMTPTransportAuth;
+    declare auth?: SMTPTransportAuth | undefined;
 
     _connection: boolean;
     _connected: boolean;
@@ -55,7 +55,7 @@ export default class PoolResource extends EventEmitter {
     /**
      * The queue entry being sent, assigned by the pool. False once it has been handled
      */
-    declare queueEntry?: SMTPPoolQueueEntry | false;
+    declare queueEntry?: SMTPPoolQueueEntry | false | undefined;
 
     constructor(pool: SMTPPool) {
         super();

@@ -75,46 +75,136 @@ export async function send(): Promise<void> {
 }
 `;
 
+// Every optional property is declared as `T | undefined` so that an explicit undefined is
+// still accepted under exactOptionalPropertyTypes, the way @types/nodemailer declared them.
+// Building an options object out of values that may be undefined is the shape that breaks
+// first, so every options interface of the package is filled in that way here
+const exactOptionalConsumer = `
+import { createTransport, getTestMessageUrl } from 'nodemailer';
+import type { Address, SentMessageInfo } from 'nodemailer';
+import type Mail from 'nodemailer/lib/mailer';
+import type MimeNode from 'nodemailer/lib/mime-node';
+import type { MimeNodeOptions } from 'nodemailer/lib/mime-node';
+import type { MailComposerOptions } from 'nodemailer/lib/mail-composer';
+import type { SMTPConnectionOptions } from 'nodemailer/lib/smtp-connection';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
+import type SMTPPool from 'nodemailer/lib/smtp-pool';
+import type SendmailTransport from 'nodemailer/lib/sendmail-transport';
+import type StreamTransport from 'nodemailer/lib/stream-transport';
+import type JSONTransport from 'nodemailer/lib/json-transport';
+import type SESTransport from 'nodemailer/lib/ses-transport';
+import type DKIM from 'nodemailer/lib/dkim';
+import type XOAuth2 from 'nodemailer/lib/xoauth2';
+import MailComposer from 'nodemailer/lib/mail-composer';
+import SMTPConnection from 'nodemailer/lib/smtp-connection';
+
+declare const maybeString: string | undefined;
+declare const maybeNumber: number | undefined;
+declare const maybeBoolean: boolean | undefined;
+declare const maybeAddress: Address | undefined;
+
+void new MailComposer({
+    from: maybeString,
+    to: maybeAddress,
+    cc: maybeString,
+    replyTo: maybeString,
+    subject: maybeString,
+    text: maybeString,
+    list: { help: { url: 'https://example.com/help', comment: maybeString } },
+    attachments: [{ filename: maybeString, content: maybeString, cid: maybeString }]
+});
+void new SMTPConnection({ host: maybeString, port: maybeNumber, secure: maybeBoolean, name: maybeString });
+
+void createTransport({ host: maybeString, port: maybeNumber, name: maybeString, auth: { user: maybeString, pass: maybeString } });
+void createTransport({ pool: true, host: maybeString, maxConnections: maybeNumber, rateDelta: maybeNumber });
+void createTransport({ sendmail: true, path: maybeString });
+void createTransport({ streamTransport: true, newline: maybeString });
+void createTransport({ jsonTransport: true, skipEncoding: maybeBoolean });
+
+// the message data and the transporter defaults of createTransport, and a send result
+// handed back to getTestMessageUrl, which reads an optional property of its own
+declare const info: SentMessageInfo;
+void createTransport({ host: 'localhost' }, { from: maybeString }).sendMail({
+    to: 'recipient@example.com',
+    subject: maybeString,
+    messageId: maybeString
+});
+void getTestMessageUrl(info);
+
+// The call shapes above only pin the properties they name. This sweeps every optional
+// property of the public types instead, so that one added without \`| undefined\` fails here
+// rather than in a consumer project. OptionalKeys picks the keys that may be left out, and
+// MissingUndefined keeps the ones that do not accept undefined. Extract<..., string> drops
+// the symbol keys the EventEmitter classes inherit from @types/node
+type OptionalKeys<T> = Extract<{ [K in keyof T]-?: object extends Pick<T, K> ? K : never }[keyof T], string>;
+type MissingUndefined<T> = { [K in OptionalKeys<T>]-?: { [P in K]: undefined } extends Pick<T, K> ? never : K }[OptionalKeys<T>];
+type NoneMissing<T extends never> = T;
+
+type _Options = NoneMissing<MissingUndefined<Mail.Options>>;
+type _MailComposer = NoneMissing<MissingUndefined<MailComposerOptions>>;
+type _MimeNode = NoneMissing<MissingUndefined<MimeNode>>;
+type _MimeNodeOptions = NoneMissing<MissingUndefined<MimeNodeOptions>>;
+type _SMTPConnection = NoneMissing<MissingUndefined<SMTPConnectionOptions>>;
+type _SMTPTransport = NoneMissing<MissingUndefined<SMTPTransport.Options>>;
+type _SMTPPool = NoneMissing<MissingUndefined<SMTPPool.Options>>;
+type _Sendmail = NoneMissing<MissingUndefined<SendmailTransport.Options>>;
+type _Stream = NoneMissing<MissingUndefined<StreamTransport.Options>>;
+type _JSON = NoneMissing<MissingUndefined<JSONTransport.Options>>;
+type _SES = NoneMissing<MissingUndefined<SESTransport.Options>>;
+type _DKIM = NoneMissing<MissingUndefined<DKIM.Options>>;
+type _XOAuth2 = NoneMissing<MissingUndefined<XOAuth2.Options>>;
+type _SentMessageInfo = NoneMissing<MissingUndefined<SentMessageInfo>>;
+`;
+
 // node16 is what an installed copy resolves through the exports map, bundler is what the
 // common front end tool chains use
-const resolutions = [
-    { module: 'node16', moduleResolution: 'node16' },
-    { module: 'esnext', moduleResolution: 'bundler' }
-];
+const node16 = { module: 'node16', moduleResolution: 'node16' };
+const resolutions = [node16, { module: 'esnext', moduleResolution: 'bundler' }];
+
+// Type-checks a consumer against the built declarations in dist/ the way an installed copy
+// is resolved: the package is linked into a temporary project so that the specifiers go
+// through the package.json exports map
+const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unknown }): void => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodemailer-types-'));
+    try {
+        fs.mkdirSync(path.join(dir, 'node_modules'));
+        // link the package itself and the node typings a real consumer has, so that
+        // the specifiers resolve the way they do in an installed project
+        fs.symlinkSync(root, path.join(dir, 'node_modules', 'nodemailer'), 'dir');
+        fs.symlinkSync(path.join(root, 'node_modules', '@types'), path.join(dir, 'node_modules', '@types'), 'dir');
+        fs.writeFileSync(path.join(dir, 'consumer.ts'), source);
+        fs.writeFileSync(
+            path.join(dir, 'tsconfig.json'),
+            JSON.stringify({
+                compilerOptions: {
+                    target: 'ES2022',
+                    lib: ['ES2023'],
+                    types: ['node'],
+                    strict: true,
+                    noEmit: true,
+                    skipLibCheck: true,
+                    esModuleInterop: true,
+                    ...compilerOptions
+                },
+                include: ['consumer.ts']
+            })
+        );
+
+        const result = spawnSync(process.execPath, [tsc, '-p', path.join(dir, 'tsconfig.json')], { encoding: 'utf8' });
+        assert.strictEqual(result.status, 0, 'tsc reported\n' + result.stdout + result.stderr);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+};
 
 describe('Built package types', { timeout: 120 * 1000 }, () => {
     for (const resolution of resolutions) {
         it('type-checks a consumer with moduleResolution ' + resolution.moduleResolution, () => {
-            const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodemailer-types-'));
-            try {
-                fs.mkdirSync(path.join(dir, 'node_modules'));
-                // link the package itself and the node typings a real consumer has, so that
-                // the specifiers resolve the way they do in an installed project
-                fs.symlinkSync(root, path.join(dir, 'node_modules', 'nodemailer'), 'dir');
-                fs.symlinkSync(path.join(root, 'node_modules', '@types'), path.join(dir, 'node_modules', '@types'), 'dir');
-                fs.writeFileSync(path.join(dir, 'consumer.ts'), consumer);
-                fs.writeFileSync(
-                    path.join(dir, 'tsconfig.json'),
-                    JSON.stringify({
-                        compilerOptions: {
-                            target: 'ES2022',
-                            lib: ['ES2023'],
-                            types: ['node'],
-                            strict: true,
-                            noEmit: true,
-                            skipLibCheck: true,
-                            esModuleInterop: true,
-                            ...resolution
-                        },
-                        include: ['consumer.ts']
-                    })
-                );
-
-                const result = spawnSync(process.execPath, [tsc, '-p', path.join(dir, 'tsconfig.json')], { encoding: 'utf8' });
-                assert.strictEqual(result.status, 0, 'tsc reported\n' + result.stdout + result.stderr);
-            } finally {
-                fs.rmSync(dir, { recursive: true, force: true });
-            }
+            typeCheckConsumer(consumer, resolution);
         });
     }
+
+    it('accepts an explicit undefined for optional properties with exactOptionalPropertyTypes', () => {
+        typeCheckConsumer(exactOptionalConsumer, { ...node16, exactOptionalPropertyTypes: true });
+    });
 });

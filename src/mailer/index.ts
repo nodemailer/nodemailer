@@ -58,13 +58,13 @@ export interface SentMessageInfo {
     /** Message-ID of the sent message */
     messageId: string;
     /** Recipient addresses the transport accepted */
-    accepted?: string[];
+    accepted?: string[] | undefined;
     /** Recipient addresses the transport rejected */
-    rejected?: string[];
+    rejected?: string[] | undefined;
     /** Recipient addresses left pending, LMTP reports these */
-    pending?: string[];
+    pending?: string[] | undefined;
     /** Last response from the server */
-    response?: string;
+    response?: string | undefined;
     /** The generated message, for the transports that hand it back instead of sending it */
     message?: unknown;
     /** Transport specific fields */
@@ -97,8 +97,8 @@ export type PluginFunction<T = SentMessageInfo> = (mail: MailMessage<T>, callbac
  * the socket, with the host and port to connect to
  */
 export interface GetSocketOptions {
-    host?: string;
-    port?: number | string;
+    host?: string | undefined;
+    port?: number | string | undefined;
     [key: string]: any;
 }
 
@@ -107,7 +107,7 @@ export interface GetSocketOptions {
  */
 export interface SocketOptions {
     /** An established socket, the proxied connection */
-    connection?: net.Socket;
+    connection?: net.Socket | undefined;
 }
 
 /**
@@ -163,9 +163,9 @@ export interface Transport<T = SentMessageInfo> {
     /** Registers an event listener, the transport may emit 'log', 'error', 'idle' and 'clear' */
     on?(event: string | symbol, listener: (...args: any[]) => void): this;
     /** The Mail object the transport belongs to, set by Mail */
-    mailer?: Mail<T>;
+    mailer?: Mail<T> | undefined;
     /** Socket handler for a proxied connection, set by Mail when a proxy is configured */
-    getSocket?: GetSocketHandler;
+    getSocket?: GetSocketHandler | undefined;
 }
 
 /**
@@ -174,25 +174,25 @@ export interface Transport<T = SentMessageInfo> {
  */
 export interface TransportOptions {
     /** Bunyan compatible logger, true for the default console logger, false or unset for no logging */
-    logger?: shared.ExternalLogger | boolean;
+    logger?: shared.ExternalLogger | boolean | undefined;
     /** Component name for the log lines, defaults to 'mail' */
-    component?: string;
+    component?: string | undefined;
     /** DKIM signing options, every message is signed with these unless it carries its own */
-    dkim?: DKIMOptions;
+    dkim?: DKIMOptions | undefined;
     /** Proxy url. http(s) proxies work as is, socks proxies need the socks module set with set('proxy_socks_module', socks) */
-    proxy?: string;
+    proxy?: string | undefined;
     /** TLS options, rejectUnauthorized applies to an https proxy as well */
-    tls?: ConnectionOptions;
+    tls?: ConnectionOptions | undefined;
     /** Reject content that points to a file path, forced onto every message */
-    disableFileAccess?: boolean;
+    disableFileAccess?: boolean | undefined;
     /** Reject content that points to a URL, forced onto every message */
-    disableUrlAccess?: boolean;
+    disableUrlAccess?: boolean | undefined;
     /** Method to normalize header keys for custom caseing, forced onto every message */
-    normalizeHeaderKey?: MimeNodeOptions['normalizeHeaderKey'];
+    normalizeHeaderKey?: MimeNodeOptions['normalizeHeaderKey'] | undefined;
     /** Recipients allowed on one message, forced onto every message, 0 disables the limit, defaults to 100000 */
-    maxRecipients?: number;
+    maxRecipients?: number | undefined;
     /** Convert data: images in the html into embedded attachments */
-    attachDataUrls?: boolean;
+    attachDataUrls?: boolean | undefined;
 }
 
 /**
@@ -234,7 +234,7 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
     };
 
     /** Socket handler for a proxied connection, set by setupProxy and handed to the transport on the next send */
-    declare getSocket?: GetSocketHandler | false;
+    declare getSocket?: GetSocketHandler | false | undefined;
 
     constructor(transporter: Transport<T>, options?: TransportOptions, defaults?: MailDefaults) {
         super();

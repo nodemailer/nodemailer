@@ -160,7 +160,7 @@ function checkRanges(nr: number, ranges: number[][]): boolean {
  */
 export interface QPEncoderOptions {
     /** Maximum length for lines, set to false to disable wrapping */
-    lineLength?: number | false;
+    lineLength?: number | false | undefined;
 }
 
 /**

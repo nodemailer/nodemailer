@@ -33,39 +33,39 @@ export type XOAuth2PrivateKey = crypto.KeyLike | crypto.SignKeyObjectInput | cry
  */
 export interface XOAuth2Options {
     /** User e-mail address */
-    user?: string;
+    user?: string | undefined;
     /** Client ID value */
-    clientId?: string;
+    clientId?: string | undefined;
     /** Client secret value */
-    clientSecret?: string;
+    clientSecret?: string | undefined;
     /** Refresh token for an user */
-    refreshToken?: string;
+    refreshToken?: string | undefined;
     /** Endpoint for token generation, defaults to 'https://accounts.google.com/o/oauth2/token' */
-    accessUrl?: string;
+    accessUrl?: string | undefined;
     /** An existing valid accessToken */
-    accessToken?: string;
+    accessToken?: string | undefined;
     /** Private key for JSW */
-    privateKey?: XOAuth2PrivateKey;
+    privateKey?: XOAuth2PrivateKey | undefined;
     /** Optional Access Token expire time in ms */
-    expires?: number;
+    expires?: number | undefined;
     /** Optional TTL for Access Token in seconds */
-    timeout?: number;
+    timeout?: number | undefined;
     /** Function to run when a new access token is required */
-    provisionCallback?: XOAuth2ProvisionCallback;
+    provisionCallback?: XOAuth2ProvisionCallback | undefined;
     /** Optional TLS options forwarded to the HTTPS token request. Defaults to strict cert validation; supply { rejectUnauthorized: false } only for self-hosted OAuth providers on private CAs. */
-    tls?: { [key: string]: any };
+    tls?: { [key: string]: any } | undefined;
     /** Service account client id (the JWT issuer), switches to the JWT bearer flow */
-    serviceClient?: string;
+    serviceClient?: string | undefined;
     /** Lifetime of the service account JWT in seconds, defaults to 5 minutes, capped at an hour */
-    serviceRequestTimeout?: number;
+    serviceRequestTimeout?: number | undefined;
     /** OAuth2 scope for the service account flow, defaults to 'https://mail.google.com/' */
-    scope?: string;
+    scope?: string | undefined;
     /** Logger component name, defaults to 'OAuth2' */
-    component?: string;
+    component?: string | undefined;
     /** Extra headers for the token request */
-    customHeaders?: OutgoingHttpHeaders;
+    customHeaders?: OutgoingHttpHeaders | undefined;
     /** Extra form fields for the token request */
-    customParams?: { [key: string]: any };
+    customParams?: { [key: string]: any } | undefined;
 }
 
 /**
@@ -73,7 +73,7 @@ export interface XOAuth2Options {
  */
 export interface XOAuth2Token {
     /** User e-mail address */
-    user?: string;
+    user?: string | undefined;
     /** The new access token */
     accessToken: string;
     /** Expire time as a timestamp in milliseconds, 0 when unknown */

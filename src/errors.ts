@@ -86,21 +86,21 @@ export const EFETCH = 'EFETCH' satisfies ErrorCode;
  */
 export interface NodemailerError extends Error {
     /** Nodemailer error code, see ERROR_CODES */
-    code?: string;
+    code?: string | undefined;
     /** SMTP command that was in flight when the server replied with an error */
-    command?: string;
+    command?: string | undefined;
     /** Raw SMTP server response */
-    response?: string;
+    response?: string | undefined;
     /** Numeric SMTP response code */
-    responseCode?: number;
+    responseCode?: number | undefined;
     /** URL of the resource that could not be fetched */
-    sourceUrl?: string;
+    sourceUrl?: string | undefined;
     /** Recipient address the error applies to */
-    recipient?: string;
+    recipient?: string | undefined;
     /** Recipient addresses rejected by the server */
-    rejected?: string[];
+    rejected?: string[] | undefined;
     /** Per-recipient errors for the rejected addresses */
-    rejectedErrors?: NodemailerError[];
+    rejectedErrors?: NodemailerError[] | undefined;
 }
 
 /**

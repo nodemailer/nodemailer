@@ -5,23 +5,23 @@ import { services } from './services.js';
  */
 export interface WellKnownServiceDefinition {
     /** Human readable description of the service */
-    description?: string;
+    description?: string | undefined;
     /** Domains of e-mail addresses hosted by the service */
-    domains?: string[];
+    domains?: string[] | undefined;
     /** Alternative names the service can be looked up by */
-    aliases?: string[];
+    aliases?: string[] | undefined;
     /** SMTP hostname */
-    host?: string;
+    host?: string | undefined;
     /** SMTP port (a numeric string in a few entries) */
-    port?: number | string;
+    port?: number | string | undefined;
     /** true for implicit TLS (usually port 465) */
-    secure?: boolean;
+    secure?: boolean | undefined;
     /** Preferred authentication method */
-    authMethod?: string;
+    authMethod?: string | undefined;
     /** Set to true to require STARTTLS on a plaintext connection */
-    requireTLS?: boolean;
+    requireTLS?: boolean | undefined;
     /** Set to true to skip STARTTLS */
-    ignoreTLS?: boolean;
+    ignoreTLS?: boolean | undefined;
 }
 
 /**

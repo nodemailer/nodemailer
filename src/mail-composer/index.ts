@@ -22,27 +22,27 @@ import type { OutgoingHttpHeaders } from 'node:http';
  */
 export interface MailComposerAlternative {
     /** The content itself: a string, a Buffer, a readable stream or a content descriptor */
-    content?: MimeNodeContent;
+    content?: MimeNodeContent | undefined;
     /** File path, data URI or http(s) URL to read the content from */
-    path?: string | false;
+    path?: string | false | undefined;
     /** URL or data URI to fetch the content from */
-    href?: string | false;
+    href?: string | false | undefined;
     /** Request headers for a URL fetch */
-    httpHeaders?: OutgoingHttpHeaders;
+    httpHeaders?: OutgoingHttpHeaders | undefined;
     /** TLS settings for a URL fetch, see nmfetch */
-    tls?: { [key: string]: any };
+    tls?: { [key: string]: any } | undefined;
     /** Encoding of a string `content`, decoded into a Buffer unless it is utf8 or ascii */
-    encoding?: string;
+    encoding?: string | undefined;
     /** Pregenerated MIME part, used as is instead of building the node */
-    raw?: MimeNodeContent;
+    raw?: MimeNodeContent | undefined;
     /** Content type, detected from the filename, path or URL when not set */
-    contentType?: string;
+    contentType?: string | undefined;
     /** Content-Transfer-Encoding for the node, false leaves the choice to the node */
-    contentTransferEncoding?: string | false;
+    contentTransferEncoding?: string | false | undefined;
     /** Filename for the node, false suppresses the generated one */
-    filename?: string | false;
+    filename?: string | false | undefined;
     /** Additional headers for the node */
-    headers?: MimeNodeHeaders;
+    headers?: MimeNodeHeaders | undefined;
 }
 
 /**
@@ -50,9 +50,9 @@ export interface MailComposerAlternative {
  */
 export interface MailComposerAttachment extends MailComposerAlternative {
     /** Content-Disposition for the node, 'attachment' by default and 'inline' for a message node or an image with a cid */
-    contentDisposition?: string;
+    contentDisposition?: string | undefined;
     /** Content-Id for an embedded image, moves the attachment into the multipart/related node beside the html */
-    cid?: string;
+    cid?: string | undefined;
 }
 
 /**
@@ -60,7 +60,7 @@ export interface MailComposerAttachment extends MailComposerAlternative {
  */
 export interface MailComposerIcalEvent extends MailComposerAlternative {
     /** iCalendar method, PUBLISH by default */
-    method?: string;
+    method?: string | undefined;
 }
 
 /**
@@ -76,7 +76,7 @@ export interface MailComposerAttachments {
 /**
  * A List-* header entry, a bare url or an url with a comment
  */
-export type MailComposerListHeaderEntry = string | { url: string; comment?: string };
+export type MailComposerListHeaderEntry = string | { url: string; comment?: string | undefined };
 
 /**
  * The list value: List-* headers keyed by the part after "List-" (help, unsubscribe,
@@ -94,64 +94,64 @@ export interface MailComposerListHeaders {
  * by MailComposer itself, these are marked as such
  */
 export interface MailComposerOptions {
-    from?: MimeNodeAddressInput;
-    sender?: MimeNodeAddressInput;
-    to?: MimeNodeAddressInput;
-    cc?: MimeNodeAddressInput;
-    bcc?: MimeNodeAddressInput;
-    replyTo?: MimeNodeAddressInput;
-    inReplyTo?: string;
-    references?: string | string[];
-    subject?: string;
+    from?: MimeNodeAddressInput | undefined;
+    sender?: MimeNodeAddressInput | undefined;
+    to?: MimeNodeAddressInput | undefined;
+    cc?: MimeNodeAddressInput | undefined;
+    bcc?: MimeNodeAddressInput | undefined;
+    replyTo?: MimeNodeAddressInput | undefined;
+    inReplyTo?: string | undefined;
+    references?: string | string[] | undefined;
+    subject?: string | undefined;
     /** Message-ID header value, generated when missing */
-    messageId?: string;
+    messageId?: string | undefined;
     /** Date header value, the current time when missing */
-    date?: Date | string;
+    date?: Date | string | undefined;
     /** Plaintext version of the message */
-    text?: string | Buffer | Readable | MailComposerAlternative;
+    text?: string | Buffer | Readable | MailComposerAlternative | undefined;
     /** HTML version of the message */
-    html?: string | Buffer | Readable | MailComposerAlternative;
+    html?: string | Buffer | Readable | MailComposerAlternative | undefined;
     /** Apple Watch specific HTML version of the message */
-    watchHtml?: string | Buffer | Readable | MailComposerAlternative;
+    watchHtml?: string | Buffer | Readable | MailComposerAlternative | undefined;
     /** AMP4EMAIL version of the message */
-    amp?: string | Buffer | Readable | MailComposerAlternative;
+    amp?: string | Buffer | Readable | MailComposerAlternative | undefined;
     /** iCalendar event, included both as a text/calendar alternative and as an application/ics attachment */
-    icalEvent?: string | Buffer | Readable | MailComposerIcalEvent;
-    attachments?: MailComposerAttachment[];
+    icalEvent?: string | Buffer | Readable | MailComposerIcalEvent | undefined;
+    attachments?: MailComposerAttachment[] | undefined;
     /** Further alternatives for the multipart/alternative node, after text, watchHtml, amp, html and the calendar event */
-    alternatives?: MailComposerAlternative[];
+    alternatives?: MailComposerAlternative[] | undefined;
     /** Custom headers for the root node, the standard headers above override them */
-    headers?: MimeNodeHeaders;
+    headers?: MimeNodeHeaders | undefined;
     /** List-* headers, read by the mailer */
-    list?: MailComposerListHeaders;
+    list?: MailComposerListHeaders | undefined;
     /** SMTP envelope to use instead of the one generated from the headers */
-    envelope?: MimeNodeEnvelopeInput;
+    envelope?: MimeNodeEnvelopeInput | undefined;
     /** Content-Transfer-Encoding to force for the text/* nodes that do not set their own */
-    encoding?: string;
+    encoding?: string | undefined;
     /** Header string encoding, 'Q' (the default) or 'B', 'quoted-printable' and 'base64' are accepted as well */
-    textEncoding?: string;
+    textEncoding?: string | undefined;
     /** Pregenerated rfc822 message, used as is instead of building one */
-    raw?: MimeNodeContent;
+    raw?: MimeNodeContent | undefined;
     /** Reject content that points to a URL */
-    disableUrlAccess?: boolean;
+    disableUrlAccess?: boolean | undefined;
     /** Reject content that points to a file path */
-    disableFileAccess?: boolean;
+    disableFileAccess?: boolean | undefined;
     /** Convert data: images in the html into embedded attachments, read by the mailer */
-    attachDataUrls?: boolean;
+    attachDataUrls?: boolean | undefined;
     /** Prefix for the generated multipart boundaries */
-    boundaryPrefix?: string;
+    boundaryPrefix?: string | undefined;
     /** Shared part of the unique multipart boundary */
-    baseBoundary?: string;
+    baseBoundary?: string | undefined;
     /** 'win' for CRLF and 'linux' for LF line breaks in the generated message, kept as is when not set */
-    newline?: string;
+    newline?: string | undefined;
     /** Keep the Bcc header in the generated message, listed for completeness, the transports set it on the message directly */
-    keepBcc?: boolean;
+    keepBcc?: boolean | undefined;
     /** Method to normalize header keys for custom caseing */
-    normalizeHeaderKey?: MimeNodeOptions['normalizeHeaderKey'];
+    normalizeHeaderKey?: MimeNodeOptions['normalizeHeaderKey'] | undefined;
     /** 'high', 'normal' or 'low', sets the priority headers, read by the mailer */
-    priority?: string;
+    priority?: string | undefined;
     /** X-Mailer header value, false leaves the header out, read by the mailer */
-    xMailer?: string | false;
+    xMailer?: string | false | undefined;
 }
 
 /**

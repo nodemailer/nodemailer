@@ -47,7 +47,7 @@ export function wrap(str: string, lineLength?: number | false): string {
  */
 export interface EncoderOptions {
     /** Maximum length for lines, set to false to disable wrapping */
-    lineLength?: number | false;
+    lineLength?: number | false | undefined;
 }
 
 /**

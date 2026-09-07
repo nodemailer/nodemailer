@@ -17,7 +17,7 @@ const MAX_RESPONSE_HEADER_BYTES = 64 * 1024;
  */
 export interface HttpProxyClientOptions {
     /** Set to false to accept a proxy certificate that fails validation (e.g. self-signed) */
-    rejectUnauthorized?: boolean;
+    rejectUnauthorized?: boolean | undefined;
 }
 
 /**

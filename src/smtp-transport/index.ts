@@ -22,17 +22,17 @@ import type { MimeNodeEnvelope } from '../mime-node/index.js';
  */
 export interface SMTPTransportAuthOptions extends XOAuth2Options {
     /** 'OAuth2' selects XOAUTH2, anything else is a password login, 'LOGIN' when not set */
-    type?: string;
+    type?: string | undefined;
     /** Username */
-    user?: string;
+    user?: string | undefined;
     /** Password */
-    pass?: string;
+    pass?: string | undefined;
     /** SASL method to use, e.g. 'PLAIN', 'LOGIN' or 'CRAM-MD5' */
-    method?: string;
+    method?: string | undefined;
     /** Extra options for the authentication method, handed to a custom SASL handler */
-    options?: { [key: string]: any };
+    options?: { [key: string]: any } | undefined;
     /** Service identifier, an OAuth2 login needs either this or a user */
-    service?: string;
+    service?: string | undefined;
 }
 
 /**
@@ -62,21 +62,21 @@ export type SMTPTransportGetSocket = (options: SMTPTransportOptions, callback: S
  */
 export interface SMTPTransportOptions extends SMTPConnectionOptions, TransportOptions {
     /** Well-known service name, e.g. 'Gmail', fills in host, port and secure */
-    service?: string;
+    service?: string | undefined;
     /** Connection url, e.g. 'smtps://user:pass@smtp.example.com', parsed into options */
-    url?: string;
+    url?: string | undefined;
     /** Authentication settings, no authentication when not set */
-    auth?: SMTPTransportAuthOptions;
+    auth?: SMTPTransportAuthOptions | undefined;
     /** Custom socket provider, e.g. for connecting through a proxy, replaces the getSocket method */
-    getSocket?: SMTPTransportGetSocket;
+    getSocket?: SMTPTransportGetSocket | undefined;
     /** Authenticate even when the server does not advertise AUTH, and fail verify() when it does but no credentials were given */
-    forceAuth?: boolean;
+    forceAuth?: boolean | undefined;
     /** Default SASL method for the password logins when the auth settings do not name one */
-    authMethod?: string;
+    authMethod?: string | undefined;
     /** Logger component name, defaults to 'smtp-transport' */
-    component?: string;
+    component?: string | undefined;
     /** Set to true to get a pooled transport from createTransport, this transport does not read it */
-    pool?: boolean;
+    pool?: boolean | undefined;
 }
 
 /**
@@ -114,12 +114,12 @@ class SMTPTransport extends EventEmitter {
     /**
      * Transport level authentication data, set when the options include auth
      */
-    declare auth?: SMTPTransportAuth | false;
+    declare auth?: SMTPTransportAuth | false | undefined;
 
     /**
      * The Mail instance using this transport, assigned by Mail
      */
-    declare mailer?: Mail<SMTPSentMessageInfo>;
+    declare mailer?: Mail<SMTPSentMessageInfo> | undefined;
 
     constructor(options?: SMTPTransportOptions | string) {
         super();

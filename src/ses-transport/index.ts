@@ -17,10 +17,7 @@ export interface SESTransportOptions extends TransportOptions {
     SES: {
         /** SESv2Client instance. Its config.region provider is resolved for the domain of the returned Message-ID */
         sesClient: {
-            config?: {
-                region?: () => Promise<string>;
-                [key: string]: any;
-            };
+            config?: { region?: (() => Promise<string>) | undefined; [key: string]: any } | undefined;
             send(command: unknown): Promise<any>;
         };
         /** SendEmailCommand class, constructed with the SendEmailCommandInput of every message */
@@ -46,7 +43,7 @@ export interface SESSentMessageInfo extends SentMessageInfo {
  * An error rejected by the AWS SDK, either version carries its own code property
  */
 interface SESError extends NodemailerError {
-    Code?: string;
+    Code?: string | undefined;
 }
 
 /**

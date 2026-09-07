@@ -13,11 +13,11 @@ import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOption
  */
 export interface StreamTransportOptions extends TransportOptions {
     /** Selects this transport in createTransport */
-    streamTransport?: boolean;
+    streamTransport?: boolean | undefined;
     /** If true, the message is returned as a Buffer object instead of a stream */
-    buffer?: boolean;
+    buffer?: boolean | undefined;
     /** Either 'windows' or 'unix', the line ending of the generated message */
-    newline?: string;
+    newline?: string | undefined;
 }
 
 /**

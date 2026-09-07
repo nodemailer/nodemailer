@@ -17,9 +17,9 @@ const EMPTY_LINES = Buffer.alloc(4096, CRLF);
  */
 export interface RelaxedBodyOptions {
     /** Hash algorithm for the body hash, defaults to sha256 */
-    hashAlgo?: string;
+    hashAlgo?: string | undefined;
     /** Collect the canonicalized body and emit it with the 'hash' event */
-    debug?: boolean;
+    debug?: boolean | undefined;
 }
 
 /**

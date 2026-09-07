@@ -38,13 +38,13 @@ export type { DKIMKey, DKIMPrivateKey, DKIMSignOptions };
  */
 export interface DKIMOptions extends DKIMSignOptions {
     /** One or more signing keys, used instead of the domainName, keySelector and privateKey options */
-    keys?: DKIMKey | DKIMKey[];
+    keys?: DKIMKey | DKIMKey[] | undefined;
     /** Directory for buffering large message bodies to disk, no buffering when not set */
-    cacheDir?: string | false;
+    cacheDir?: string | false | undefined;
     /** Body size in bytes from which the body is buffered to cacheDir, defaults to 10 MB */
-    cacheTreshold?: number;
+    cacheTreshold?: number | undefined;
     /** Hash algorithm for the body hash and the signature, defaults to sha256 */
-    hashAlgo?: string;
+    hashAlgo?: string | undefined;
 }
 
 /**

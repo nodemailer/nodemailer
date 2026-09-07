@@ -27,63 +27,63 @@ export type SMTPConnectionCustomAuthHandlers = { [method: string]: SMTPConnectio
  */
 export interface SMTPConnectionOptions {
     /** Port to connect to, defaults to 587, or to 465 when secure is set */
-    port?: number | string;
+    port?: number | string | undefined;
     /** Hostname or IP address to connect to, defaults to 'localhost' */
-    host?: string;
+    host?: string | undefined;
     /** Use TLS from the start */
-    secure?: boolean;
+    secure?: boolean | undefined;
     /** Marks the provided socket as already upgraded to TLS */
-    secured?: boolean;
+    secured?: boolean | undefined;
     /** Server name for SNI, defaults to host when that is not an IP address */
-    servername?: string;
+    servername?: string | undefined;
     /** Ignore STARTTLS even when the server advertises it */
-    ignoreTLS?: boolean;
+    ignoreTLS?: boolean | undefined;
     /** Force STARTTLS, fail when the server does not support it */
-    requireTLS?: boolean;
+    requireTLS?: boolean | undefined;
     /** Continue unencrypted when the STARTTLS upgrade fails */
-    opportunisticTLS?: boolean;
+    opportunisticTLS?: boolean | undefined;
     /** Name of the client server, sent with EHLO/HELO, CRLF is stripped */
-    name?: string;
+    name?: string | undefined;
     /** Outbound address to bind to */
-    localAddress?: string;
+    localAddress?: string | undefined;
     /** Time to wait in ms for the connection to establish, defaults to 2 minutes */
-    connectionTimeout?: number;
+    connectionTimeout?: number | undefined;
     /** Time to wait in ms until the greeting is received, defaults to 30 seconds */
-    greetingTimeout?: number;
+    greetingTimeout?: number | undefined;
     /** Time of inactivity in ms until the connection is closed, defaults to 10 minutes */
-    socketTimeout?: number;
+    socketTimeout?: number | undefined;
     /** Time to wait in ms for the DNS requests to be resolved, defaults to 30 seconds */
-    dnsTimeout?: number;
+    dnsTimeout?: number | undefined;
     /** Use LMTP instead of SMTP */
-    lmtp?: boolean;
+    lmtp?: boolean | undefined;
     /** Bunyan compatible logger interface, true for the default console logger */
-    logger?: shared.ExternalLogger | boolean;
+    logger?: shared.ExternalLogger | boolean | undefined;
     /** Pass SMTP traffic, including the message data, to the logger */
-    debug?: boolean;
+    debug?: boolean | undefined;
     /** Pass SMTP commands and responses to the logger */
-    transactionLog?: boolean;
+    transactionLog?: boolean | undefined;
     /** Options for tls.connect */
-    tls?: tls.ConnectionOptions;
+    tls?: tls.ConnectionOptions | undefined;
     /** Existing socket to use instead of creating a new one, not connected yet */
-    socket?: net.Socket;
+    socket?: net.Socket | undefined;
     /** Already opened connection to use instead of creating a new one */
-    connection?: net.Socket;
+    connection?: net.Socket | undefined;
     /** Count loopback interfaces when checking which address families are usable */
-    allowInternalNetworkInterfaces?: boolean;
+    allowInternalNetworkInterfaces?: boolean | undefined;
     /** Logger component name, defaults to 'smtp-connection' */
-    component?: string;
+    component?: string | undefined;
     /** Custom authentication handlers keyed by method name */
-    customAuth?: SMTPConnectionCustomAuthHandlers;
+    customAuth?: SMTPConnectionCustomAuthHandlers | undefined;
 }
 
 /**
  * User and password credentials resolved for a SASL mechanism
  */
 export interface SMTPConnectionCredentials {
-    user?: string;
-    pass?: string;
+    user?: string | undefined;
+    pass?: string | undefined;
     /** Extra options for the authentication method, copied from the auth object */
-    options?: { [key: string]: any };
+    options?: { [key: string]: any } | undefined;
 }
 
 /**
@@ -91,17 +91,17 @@ export interface SMTPConnectionCredentials {
  */
 export interface SMTPConnectionAuth {
     /** Authentication type, informational */
-    type?: string;
+    type?: string | undefined;
     /** SASL method to use, false or unset picks the first supported one (PLAIN if none is advertised) */
-    method?: string | false;
-    user?: string;
-    pass?: string;
+    method?: string | false | undefined;
+    user?: string | undefined;
+    pass?: string | undefined;
     /** Extra options for the authentication method */
-    options?: { [key: string]: any };
+    options?: { [key: string]: any } | undefined;
     /** XOAuth2 token generator, selects XOAUTH2 when no method is set */
-    oauth2?: XOAuth2;
+    oauth2?: XOAuth2 | undefined;
     /** Credentials for the SASL mechanism, filled in from user and pass when missing */
-    credentials?: SMTPConnectionCredentials;
+    credentials?: SMTPConnectionCredentials | undefined;
     /** Custom authentication handlers receive the auth object as is, so it may carry any other value */
     [key: string]: any;
 }
@@ -117,7 +117,7 @@ export interface SMTPConnectionCustomAuthResponse {
     /** Numeric status code, 0 if the response did not start with one */
     status: number;
     /** Enhanced status code, if any */
-    code?: string;
+    code?: string | undefined;
     /** Response text without the status codes */
     text: string;
 }
@@ -158,8 +158,8 @@ export type SMTPConnectionCustomAuthHandler = (ctx: SMTPConnectionCustomAuthCont
  * An envelope address, either a plain string or an object with an address property
  */
 export interface SMTPEnvelopeAddress {
-    address?: string;
-    name?: string;
+    address?: string | undefined;
+    name?: string | undefined;
 }
 
 /**
@@ -167,19 +167,19 @@ export interface SMTPEnvelopeAddress {
  */
 export interface SMTPEnvelopeDsn {
     /** Return either 'HDRS' (headers) or 'FULL' (body) with the notification */
-    ret?: string | null;
+    ret?: string | null | undefined;
     /** Alias of ret */
-    return?: string;
+    return?: string | undefined;
     /** Envelope identifier, sent as ENVID */
-    envid?: string | null;
+    envid?: string | null | undefined;
     /** Alias of envid */
-    id?: string;
+    id?: string | undefined;
     /** When to notify: 'NEVER', or any combination of 'SUCCESS', 'FAILURE' and 'DELAY' */
-    notify?: string | string[] | null;
+    notify?: string | string[] | null | undefined;
     /** Original recipient, sent as ORCPT */
-    recipient?: string;
+    recipient?: string | undefined;
     /** Alias of recipient, in the 'rfc822;address' form */
-    orcpt?: string | null;
+    orcpt?: string | null | undefined;
 }
 
 /**
@@ -187,17 +187,17 @@ export interface SMTPEnvelopeDsn {
  */
 export interface SMTPEnvelope {
     /** Sender address */
-    from?: string | SMTPEnvelopeAddress;
+    from?: string | SMTPEnvelopeAddress | undefined;
     /** Recipient address or addresses */
-    to?: string | SMTPEnvelopeAddress | Array<string | SMTPEnvelopeAddress>;
+    to?: string | SMTPEnvelopeAddress | Array<string | SMTPEnvelopeAddress> | undefined;
     /** Message size in bytes, sent as the SIZE parameter when the server supports it */
-    size?: number | string;
+    size?: number | string | undefined;
     /** DSN parameters, sent when the server supports the DSN extension */
-    dsn?: SMTPEnvelopeDsn;
+    dsn?: SMTPEnvelopeDsn | undefined;
     /** Declare BODY=8BITMIME when the server supports it */
-    use8BitMime?: boolean;
+    use8BitMime?: boolean | undefined;
     /** RFC 8689: send the REQUIRETLS parameter, requires a TLS connection and server support */
-    requireTLSExtensionEnabled?: boolean;
+    requireTLSExtensionEnabled?: boolean | undefined;
 }
 
 /**
@@ -205,8 +205,8 @@ export interface SMTPEnvelope {
  * values are normalized to strings and the recipient bookkeeping is added by _setEnvelope
  */
 export interface SMTPConnectionEnvelope extends SMTPEnvelope {
-    from?: string;
-    to?: string[];
+    from?: string | undefined;
+    to?: string[] | undefined;
     /** Recipients still waiting for RCPT TO */
     rcptQueue: string[];
     /** Recipients the server rejected */
@@ -226,17 +226,17 @@ export interface SMTPConnectionSendInfo {
     /** Recipients the server rejected */
     rejected: string[];
     /** EHLO response lines, without the greeting line */
-    ehlo?: string[];
+    ehlo?: string[] | undefined;
     /** Errors for the rejected recipients */
-    rejectedErrors?: NodemailerError[];
+    rejectedErrors?: NodemailerError[] | undefined;
     /** Time in ms spent on the envelope commands */
-    envelopeTime?: number;
+    envelopeTime?: number | undefined;
     /** Time in ms spent on streaming the message */
-    messageTime?: number;
+    messageTime?: number | undefined;
     /** Size of the encoded message in bytes */
-    messageSize?: number;
+    messageSize?: number | undefined;
     /** Final server response for the message */
-    response?: string;
+    response?: string | undefined;
 }
 
 /**
@@ -266,11 +266,11 @@ export interface SMTPConnectionConnectOptions extends tls.ConnectionOptions {
     port: number;
     host: string;
     /** Outbound address to bind to */
-    localAddress?: string;
+    localAddress?: string | undefined;
     /** Count loopback interfaces when resolving the hostname */
-    allowInternalNetworkInterfaces?: boolean;
+    allowInternalNetworkInterfaces?: boolean | undefined;
     /** DNS lookup timeout in ms */
-    timeout?: number;
+    timeout?: number | undefined;
 }
 
 /**
@@ -489,13 +489,13 @@ class SMTPConnection extends EventEmitter {
      * Alternative resolved addresses to try when the connection fails, set by connect()
      * @private
      */
-    _fallbackAddresses?: string[];
+    _fallbackAddresses?: string[] | undefined;
 
     /**
      * Options of the current connection attempt, set by connect()
      * @private
      */
-    _connectOpts?: SMTPConnectionConnectOptions;
+    _connectOpts?: SMTPConnectionConnectOptions | undefined;
 
     /**
      * Authentication data, set by login()
@@ -513,25 +513,25 @@ class SMTPConnection extends EventEmitter {
      * True while the STARTTLS upgrade is in progress
      * @private
      */
-    upgrading?: boolean;
+    upgrading?: boolean | undefined;
 
     /**
      * EHLO response lines, without the greeting line
      * @private
      */
-    _ehloLines?: string[];
+    _ehloLines?: string[] | undefined;
 
     /**
      * True if SMTPUTF8 was declared for the current envelope
      * @private
      */
-    _usingSmtpUtf8?: boolean;
+    _usingSmtpUtf8?: boolean | undefined;
 
     /**
      * True if BODY=8BITMIME was declared for the current envelope
      * @private
      */
-    _using8BitMime?: boolean;
+    _using8BitMime?: boolean | undefined;
 
     constructor(options?: SMTPConnectionOptions) {
         super(options as ConstructorParameters<typeof EventEmitter>[0]);

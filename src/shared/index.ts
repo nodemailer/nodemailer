@@ -22,17 +22,17 @@ export { isProtoKey, copyOwnKeys };
  */
 export interface ResolveHostnameOptions {
     /** Hostname or IP address to resolve */
-    host?: string;
+    host?: string | undefined;
     /** Server name for TLS, used as the host when no host is set */
-    servername?: string;
+    servername?: string | undefined;
     /** Count loopback interfaces when checking which address families are usable */
-    allowInternalNetworkInterfaces?: boolean;
+    allowInternalNetworkInterfaces?: boolean | undefined;
     /** How long a resolved value stays cached, in milliseconds (default 5 minutes) */
-    dnsTtl?: number;
+    dnsTtl?: number | undefined;
     /** Query timeout in milliseconds, passed to dns.Resolver */
-    timeout?: number;
+    timeout?: number | undefined;
     /** Number of query attempts, passed to dns.Resolver */
-    tries?: number;
+    tries?: number | undefined;
 }
 
 /**
@@ -40,15 +40,15 @@ export interface ResolveHostnameOptions {
  */
 export interface ResolvedHostname {
     /** Server name to use for TLS, false when an IP literal was given without one */
-    servername?: string | false;
+    servername?: string | false | undefined;
     /** Address to connect to, picked at random from the resolved addresses */
-    host?: string | null;
+    host?: string | null | undefined;
     /** All resolved addresses, for connection fallback support */
-    _addresses?: string[];
+    _addresses?: string[] | undefined;
     /** Whether the value came from the DNS cache */
-    cached?: boolean;
+    cached?: boolean | undefined;
     /** The resolver error when a cached value was used because of it */
-    error?: Error;
+    error?: Error | undefined;
 }
 
 /**
@@ -65,7 +65,7 @@ export interface DnsCacheValue {
 export interface DnsCacheEntry {
     value: DnsCacheValue;
     /** Expiration time as a timestamp, entries without one never expire */
-    expires?: number;
+    expires?: number | undefined;
 }
 
 /**
@@ -73,17 +73,14 @@ export interface DnsCacheEntry {
  * top level keys, `tls.*` parameters go into `tls`
  */
 export interface ConnectionUrlOptions {
-    secure?: boolean;
-    direct?: boolean;
-    port?: number;
-    host?: string;
+    secure?: boolean | undefined;
+    direct?: boolean | undefined;
+    port?: number | undefined;
+    host?: string | undefined;
     /** Well-known service name from the ?service= query parameter */
-    service?: string;
-    auth?: {
-        user: string;
-        pass: string;
-    };
-    tls?: { [key: string]: unknown };
+    service?: string | undefined;
+    auth?: { user: string; pass: string } | undefined;
+    tls?: { [key: string]: unknown } | undefined;
     [key: string]: unknown;
 }
 
@@ -93,12 +90,12 @@ export interface ConnectionUrlOptions {
  */
 export interface LogEntry {
     /** 'server' or 'client' for SMTP transaction lines */
-    tnx?: string;
+    tnx?: string | undefined;
     /** Session id */
-    sid?: string;
+    sid?: string | undefined;
     /** Connection id */
-    cid?: string | number;
-    level?: string;
+    cid?: string | number | undefined;
+    level?: string | undefined;
     [key: string]: any;
 }
 
@@ -124,7 +121,7 @@ export interface ExternalLogger {
  */
 export interface GetLoggerOptions {
     /** A bunyan compatible logger, true for the default console logger, false or unset for no logging */
-    logger?: ExternalLogger | boolean;
+    logger?: ExternalLogger | boolean | undefined;
 }
 
 /**
@@ -157,9 +154,9 @@ export interface ParsedDataURI {
  */
 export interface ResolveContentOptions {
     /** Reject content that points to a file path */
-    disableFileAccess?: boolean;
+    disableFileAccess?: boolean | undefined;
     /** Reject content that points to a URL */
-    disableUrlAccess?: boolean;
+    disableUrlAccess?: boolean | undefined;
 }
 
 /**
@@ -169,17 +166,17 @@ export interface ResolveContentOptions {
  */
 export interface ContentDescriptor {
     /** The content itself, a string, a Buffer or a readable stream */
-    content?: string | Buffer | Readable;
+    content?: string | Buffer | Readable | undefined;
     /** Encoding of a string `content`, it is decoded into a Buffer unless it is utf8 or ascii */
-    encoding?: string;
+    encoding?: string | undefined;
     /** File path, http(s) URL or data URI to read the content from */
-    path?: string;
+    path?: string | undefined;
     /** URL to fetch the content from */
-    href?: string;
+    href?: string | undefined;
     /** Request headers for a URL fetch */
-    httpHeaders?: OutgoingHttpHeaders;
+    httpHeaders?: OutgoingHttpHeaders | undefined;
     /** TLS settings for a URL fetch, see nmfetch */
-    tls?: { [key: string]: any };
+    tls?: { [key: string]: any } | undefined;
 }
 
 export type ResolveContentCallback = (err: Error | null, value?: any) => void;

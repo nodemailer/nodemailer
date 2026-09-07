@@ -27,19 +27,19 @@ import type { SentMessageInfo } from './index.js';
  */
 export interface SendMailOptions extends MailComposerOptions {
     /** DKIM signing options for this message, used instead of the ones of the transporter */
-    dkim?: DKIMOptions;
+    dkim?: DKIMOptions | undefined;
     /** Extra DKIM options for this message, merged over the options of the signer */
-    _dkim?: DKIMOptions;
+    _dkim?: DKIMOptions | undefined;
     /** Recipients allowed on this message, 0 disables the limit, defaults to 100000 */
-    maxRecipients?: number;
+    maxRecipients?: number | undefined;
     /** SMTP transports: DSN parameters for the envelope, sent when the server supports the DSN extension */
-    dsn?: SMTPEnvelopeDsn;
+    dsn?: SMTPEnvelopeDsn | undefined;
     /** SMTP transports: RFC 8689, send the REQUIRETLS parameter with MAIL FROM */
-    requireTLSExtensionEnabled?: boolean;
+    requireTLSExtensionEnabled?: boolean | undefined;
     /** SMTP transports: per-message authentication settings, used instead of the transport level auth */
-    auth?: SMTPTransportAuthOptions;
+    auth?: SMTPTransportAuthOptions | undefined;
     /** SES transport: extra SendEmailCommand parameters merged into the API call */
-    ses?: { [key: string]: unknown };
+    ses?: { [key: string]: unknown } | undefined;
 }
 
 /**
@@ -55,7 +55,7 @@ export type MailDefaults = SendMailOptions;
  */
 export interface MailMessageData extends SendMailOptions {
     /** Header values flattened to strings and keyed by lowercase header name, set by normalize */
-    normalizedHeaders?: { [key: string]: string };
+    normalizedHeaders?: { [key: string]: string } | undefined;
 }
 
 /**

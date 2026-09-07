@@ -15,13 +15,13 @@ import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOption
  */
 export interface SendmailTransportOptions extends TransportOptions {
     /** Selects this transport in createTransport, the binary itself is set with `path` */
-    sendmail?: boolean | string;
+    sendmail?: boolean | string | undefined;
     /** Path to the sendmail binary, defaults to 'sendmail' */
-    path?: string;
+    path?: string | undefined;
     /** Either 'windows' or 'unix', the line ending of the message piped to sendmail */
-    newline?: string;
+    newline?: string | undefined;
     /** Arguments for the sendmail binary, replaces the default '-f <sender>' */
-    args?: string[];
+    args?: string[] | undefined;
 }
 
 /**

@@ -22,7 +22,7 @@ export interface StructuredHeaderValue {
     /** The value ahead of the parameters, for example the content type */
     value: string | false;
     /** Parameter values keyed by parameter name */
-    params?: Record<string, string>;
+    params?: Record<string, string> | undefined;
 }
 
 /**

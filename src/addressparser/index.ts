@@ -3,9 +3,9 @@
  */
 export interface AddressParserOptions {
     /** Flatten groups into a single list of mailboxes */
-    flatten?: boolean;
+    flatten?: boolean | undefined;
     /** Internal recursion depth counter (do not set manually) */
-    _depth?: number;
+    _depth?: number | undefined;
 }
 
 /**
@@ -39,7 +39,7 @@ interface Token {
     type: 'operator' | 'text';
     value: string;
     /** The next character continues the same run without whitespace in between */
-    noBreak?: boolean;
+    noBreak?: boolean | undefined;
 }
 
 /**

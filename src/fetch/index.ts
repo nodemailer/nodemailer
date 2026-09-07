@@ -17,31 +17,31 @@ const MAX_REDIRECTS = 5;
  */
 export interface FetchOptions {
     /** HTTP method, defaults to GET, or to POST when a body is given */
-    method?: string;
+    method?: string | undefined;
     /** Request headers, keys are lowercased before use */
-    headers?: http.OutgoingHttpHeaders;
+    headers?: http.OutgoingHttpHeaders | undefined;
     /** Overrides the default User-Agent header */
-    userAgent?: string;
+    userAgent?: string | undefined;
     /** Cookie string(s) to seed the cookie jar with for this URL */
-    cookie?: string | string[] | false;
+    cookie?: string | string[] | false | undefined;
     /** Cookie jar shared across redirects, created when missing */
-    cookies?: Cookies;
+    cookies?: Cookies | undefined;
     /** Request body: a readable stream, a Buffer, a form object or a string */
-    body?: Readable | Buffer | { [key: string]: any } | string | false;
+    body?: Readable | Buffer | { [key: string]: any } | string | false | undefined;
     /** Content-Type header for the body, false leaves it out for a stream body */
-    contentType?: string | false;
+    contentType?: string | false | undefined;
     /** TLS settings, only the keys listed in TLS_OPTION_KEYS are used */
-    tls?: { [key: string]: any };
+    tls?: { [key: string]: any } | undefined;
     /** Request timeout in milliseconds */
-    timeout?: number;
+    timeout?: number | undefined;
     /** Maximum number of redirects to follow (default 5) */
-    maxRedirects?: number;
+    maxRedirects?: number | undefined;
     /** Resolve responses with a status code of 300 or above instead of emitting an error */
-    allowErrorResponse?: boolean;
+    allowErrorResponse?: boolean | undefined;
     /** Redirects followed so far, set by nmfetch itself */
-    redirects?: number;
+    redirects?: number | undefined;
     /** Response stream shared across redirects, set by nmfetch itself */
-    fetchRes?: FetchResponse;
+    fetchRes?: FetchResponse | undefined;
 }
 
 /**
@@ -49,8 +49,8 @@ export interface FetchOptions {
  * headers of the final response are attached once they arrive
  */
 export interface FetchResponse extends PassThrough {
-    statusCode?: number;
-    headers?: http.IncomingHttpHeaders;
+    statusCode?: number | undefined;
+    headers?: http.IncomingHttpHeaders | undefined;
 }
 
 // Only genuine TLS settings are taken from options.tls. That object reaches us straight

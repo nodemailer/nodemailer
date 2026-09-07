@@ -14,18 +14,18 @@ export type DKIMPrivateKey = crypto.KeyLike | crypto.SignKeyObjectInput | crypto
  */
 export interface DKIMKey {
     /** Domain name to be signed for */
-    domainName?: string;
+    domainName?: string | undefined;
     /** DKIM key selector to use */
-    keySelector?: string;
+    keySelector?: string | undefined;
     /** DKIM private key to use */
-    privateKey?: DKIMPrivateKey;
+    privateKey?: DKIMPrivateKey | undefined;
 }
 
 export interface DKIMSignOptions extends DKIMKey {
     /** Colon separated list of header field names to sign, defaults to the RFC4871 list */
-    headerFieldNames?: string;
+    headerFieldNames?: string | undefined;
     /** Colon separated list of header field names to leave out of the signature */
-    skipFields?: string;
+    skipFields?: string | undefined;
 }
 
 /**

@@ -10,9 +10,9 @@ import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOption
  */
 export interface JSONTransportOptions extends TransportOptions {
     /** Selects this transport in createTransport */
-    jsonTransport?: boolean;
+    jsonTransport?: boolean | undefined;
     /** If true, the message is returned as an object instead of a JSON string */
-    skipEncoding?: boolean;
+    skipEncoding?: boolean | undefined;
 }
 
 /**
