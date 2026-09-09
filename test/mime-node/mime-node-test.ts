@@ -1636,6 +1636,38 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.deepStrictEqual(input, { address: 'a,b@good.com' });
             assert.strictEqual(parsed[0].address, '"a,b"@good.com');
         });
+
+        it('should flatten arrays nested to any depth', () => {
+            let mb = new MimeNode();
+
+            // an array handed to addressparser was stringified, and the native conversion
+            // recurses once per nesting level, so deep enough it exhausted the call stack
+            let nested: any = 'address@example.com';
+            for (let i = 0; i < 100000; i++) {
+                nested = [nested];
+            }
+            assert.deepStrictEqual(mb._parseAddresses(nested), [{ address: 'address@example.com', name: '' }]);
+
+            assert.deepStrictEqual(
+                mb._parseAddresses([
+                    [{ address: 'first@example.com', name: 'First' }],
+                    [['second@example.com', 'Third <third@example.com>']]
+                ]),
+                [
+                    { address: 'first@example.com', name: 'First' },
+                    { address: 'second@example.com', name: '' },
+                    { address: 'third@example.com', name: 'Third' }
+                ]
+            );
+        });
+
+        it('should not loop on an array that contains itself', () => {
+            let mb = new MimeNode();
+            let input: any[] = ['address@example.com'];
+            input.push(input);
+
+            assert.deepStrictEqual(mb._parseAddresses(input), [{ address: 'address@example.com', name: '' }]);
+        });
     });
 
     describe('#_normalizeHeaderKey', () => {

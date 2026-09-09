@@ -405,14 +405,30 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
                 return done(err);
             }
 
-            mail.message = new MailComposer(mail.data).compile();
+            let recipientCount: number;
+            try {
+                mail.message = new MailComposer(mail.data).compile();
 
-            mail.setMailerHeader();
-            mail.setPriorityHeaders();
-            mail.setListHeaders();
+                mail.setMailerHeader();
+                mail.setPriorityHeaders();
+                mail.setListHeaders();
+
+                recipientCount = mail.message.getEnvelope().to.length;
+            } catch (err: any) {
+                // message data can throw while it is compiled, the error belongs to the callback
+                this.logger.error(
+                    {
+                        err,
+                        tnx: 'transport',
+                        action: 'send'
+                    },
+                    'Compile Error: %s',
+                    err.message
+                );
+                return done(err);
+            }
 
             const maxRecipients = mail.data.maxRecipients === undefined ? DEFAULT_MAX_RECIPIENTS : mail.data.maxRecipients;
-            const recipientCount = mail.message.getEnvelope().to.length;
 
             if (maxRecipients && recipientCount > maxRecipients) {
                 const err: NodemailerError = new Error(

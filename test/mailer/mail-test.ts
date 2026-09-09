@@ -393,6 +393,40 @@ describe('Mail', () => {
             });
         });
 
+        it('should deliver a recipient list nested deeper than the call stack allows', (t, done) => {
+            const transporter = nodemailer.createTransport({ jsonTransport: true });
+            let to: any = 'nested@example.com';
+            for (let i = 0; i < 100000; i++) {
+                to = [to];
+            }
+
+            transporter.sendMail({ ...message(), to }, (err, info) => {
+                assert.ok(!err);
+                assert.deepStrictEqual(info!.envelope.to, ['nested@example.com']);
+                done();
+            });
+        });
+
+        it('should hand an error thrown while compiling the message to the callback', (t, done) => {
+            const { lines, logger } = captureLogger();
+            const transporter = nodemailer.createTransport({ jsonTransport: true, logger });
+            const error = new Error('no address here');
+            // stringified on the way into the envelope, and the throw used to escape sendMail
+            const to = {
+                toString() {
+                    throw error;
+                }
+            };
+
+            transporter.sendMail({ ...message(), to: to as any }, err => {
+                assert.strictEqual(err, error);
+                const line = lines.find(line => line.level === 'error');
+                assert.ok(line);
+                assert.strictEqual(line.message, 'Compile Error: no address here');
+                done();
+            });
+        });
+
         it('should name the transport in the version string', () => {
             const mail = new Mail(new StubTransport());
             const version = mail.getVersionString();

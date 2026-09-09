@@ -1357,18 +1357,43 @@ class MimeNode {
      * @internal
      */
     _parseAddresses(addresses: MimeNodeAddressInput | undefined): MimeNodeAddress[] {
-        // Collected into one list as we go. concat.apply spreads the entries into arguments
-        // and throws a RangeError once a recipient array is long enough to pass the
-        // argument limit, which a large Bcc list reaches on its own.
         const flattened: MimeNodeAddress[] = [];
 
-        ([] as any[]).concat(addresses).forEach(address => {
+        // Nested arrays are flattened iteratively. concat.apply throws once a recipient list
+        // is long enough to pass the argument limit, and an array handed to addressparser is
+        // stringified, which recurses once per nesting level and exhausts the call stack on
+        // a deep enough value. Every array is walked once, which also ends a self-referential
+        // input
+        const seen = new WeakSet<any[]>();
+        const stack: { list: any[]; pos: number }[] = [];
+        const enter = (list: any[]) => {
+            if (!seen.has(list)) {
+                seen.add(list);
+                stack.push({ list, pos: 0 });
+            }
+        };
+
+        enter(Array.isArray(addresses) ? addresses : [addresses]);
+
+        while (stack.length) {
+            const frame = stack[stack.length - 1];
+            if (frame.pos >= frame.list.length) {
+                stack.pop();
+                continue;
+            }
+
+            const address = frame.list[frame.pos++];
+            if (Array.isArray(address)) {
+                enter(address);
+                continue;
+            }
+
             if (address && address.address) {
                 const normalized = this._normalizeAddress(address.address);
                 if (normalized === address.address && typeof address.name === 'string') {
                     // there is nothing to rewrite, so there is nothing to keep off the original
                     flattened.push(address);
-                    return;
+                    continue;
                 }
 
                 // rewriting would land on the object the caller passed in and might
@@ -1379,14 +1404,14 @@ class MimeNode {
                 copy.address = normalized;
                 copy.name = address.name || '';
                 flattened.push(copy);
-                return;
+                continue;
             }
 
             const parsed = this._normalizeParsedAddresses(addressparser(address));
             for (let i = 0; i < parsed.length; i++) {
                 flattened.push(parsed[i]);
             }
-        });
+        }
 
         return flattened;
     }
