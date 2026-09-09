@@ -1102,7 +1102,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
 
         const setExpiredCache = (address: string) => {
             shared.dnsCache.set(HOST, {
-                value: { addresses: [address], servername: HOST },
+                value: { addresses: [address] },
                 expires: Date.now() - 1000
             });
         };
@@ -1144,6 +1144,47 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             });
         });
 
+        it('should hand back the server name of the caller from a cached entry', (t, done) => {
+            stubResolver({ 4: ['192.0.2.1'], 6: [] });
+
+            shared.resolveHostname({ host: HOST, servername: 'first.example.test' }, (err, result) => {
+                assert.ok(!err);
+                assert.strictEqual(result!.cached, false);
+                assert.strictEqual(result!.servername, 'first.example.test');
+                // the cache holds addresses only, see resolveHostname
+                assert.deepStrictEqual(shared.dnsCache.get(HOST)!.value, { addresses: ['192.0.2.1'] });
+
+                shared.resolveHostname({ host: HOST, servername: 'second.example.test' }, (err, result) => {
+                    assert.ok(!err);
+                    assert.strictEqual(result!.cached, true);
+                    assert.strictEqual(result!.servername, 'second.example.test');
+
+                    shared.resolveHostname({ host: HOST }, (err, result) => {
+                        assert.ok(!err);
+                        assert.strictEqual(result!.cached, true);
+                        assert.strictEqual(result!.servername, HOST);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('should hand back the server name of the caller from a stale cache entry', (t, done) => {
+            stubResolver({ 4: dnsError('ETIMEOUT'), 6: dnsError('ETIMEOUT') });
+            stubLookup(() => {
+                done(new Error('lookup should not be called'));
+            });
+            setExpiredCache('192.0.2.4');
+
+            shared.resolveHostname({ host: HOST, servername: 'stale.example.test' }, (err, result) => {
+                assert.ok(!err);
+                assert.strictEqual(result!.cached, true);
+                assert.strictEqual(result!.host, '192.0.2.4');
+                assert.strictEqual(result!.servername, 'stale.example.test');
+                done();
+            });
+        });
+
         it('should fall back to lookup when the resolver fails with an unexpected error', (t, done) => {
             // a timeout is not one of the "no such record" answers, so it counts as a failure
             stubResolver({ 4: dnsError('ETIMEOUT'), 6: dnsError('ETIMEOUT') });
@@ -1162,7 +1203,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
                     cached: false
                 });
                 assert.deepStrictEqual(lookups, [HOST]);
-                assert.deepStrictEqual(shared.dnsCache.get(HOST)!.value, { addresses: ['192.0.2.2'], servername: HOST });
+                assert.deepStrictEqual(shared.dnsCache.get(HOST)!.value, { addresses: ['192.0.2.2'] });
                 done();
             });
         });
@@ -1365,15 +1406,15 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             // Add some test entries with expired TTLs
             const now = Date.now();
             shared.dnsCache.set('expired1.com', {
-                value: { addresses: ['1.1.1.1'], servername: 'expired1.com' },
+                value: { addresses: ['1.1.1.1'] },
                 expires: now - 10000 // Expired 10 seconds ago
             });
             shared.dnsCache.set('expired2.com', {
-                value: { addresses: ['2.2.2.2'], servername: 'expired2.com' },
+                value: { addresses: ['2.2.2.2'] },
                 expires: now - 5000 // Expired 5 seconds ago
             });
             shared.dnsCache.set('valid.com', {
-                value: { addresses: ['3.3.3.3'], servername: 'valid.com' },
+                value: { addresses: ['3.3.3.3'] },
                 expires: now + 60000 // Valid for another minute
             });
 
@@ -1413,7 +1454,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             const now = Date.now();
             for (let i = 0; i < 1100; i++) {
                 shared.dnsCache.set(`test${i}.com`, {
-                    value: { addresses: [`10.0.0.${i % 256}`], servername: `test${i}.com` },
+                    value: { addresses: [`10.0.0.${i % 256}`] },
                     expires: now + 60000
                 });
             }

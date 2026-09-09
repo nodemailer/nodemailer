@@ -56,7 +56,6 @@ export interface ResolvedHostname {
  */
 export interface DnsCacheValue {
     addresses: string[];
-    servername: string | false;
 }
 
 /**
@@ -256,7 +255,6 @@ const formatDNSValue = (value: DnsCacheValue | undefined, extra?: Partial<Resolv
 
     return Object.assign(
         {
-            servername: value.servername,
             host,
             // Include all addresses for connection fallback support
             _addresses: addresses
@@ -278,18 +276,23 @@ export const resolveHostname = (
     if (!options.host || net.isIP(options.host)) {
         // nothing to do here
         const value: DnsCacheValue = {
-            addresses: [options.host as string],
-            servername: options.servername || false
+            addresses: [options.host as string]
         };
         return callback(
             null,
             formatDNSValue(value, {
+                servername: options.servername || false,
                 cached: false
             })
         );
     }
 
     const host = options.host;
+    // The TLS server name belongs to the connection asking, not to the host it resolves. The
+    // cache is shared by every transport of the process and keyed by host alone, so a server
+    // name stored in it would be the one of whichever transport resolved the host first, and a
+    // later transport with its own tls.servername would present and verify that name instead
+    const servername = options.servername || host;
     let cached: DnsCacheEntry | undefined;
     if (dnsCache.has(options.host)) {
         cached = dnsCache.get(options.host) as DnsCacheEntry;
@@ -318,6 +321,7 @@ export const resolveHostname = (
             return callback(
                 null,
                 formatDNSValue(cached.value, {
+                    servername,
                     cached: true
                 })
             );
@@ -349,8 +353,7 @@ export const resolveHostname = (
 
             if (allAddresses.length) {
                 const value: DnsCacheValue = {
-                    addresses: allAddresses,
-                    servername: options.servername || host
+                    addresses: allAddresses
                 };
 
                 dnsCache.set(host, {
@@ -361,6 +364,7 @@ export const resolveHostname = (
                 return callback(
                     null,
                     formatDNSValue(value, {
+                        servername,
                         cached: false
                     })
                 );
@@ -378,6 +382,7 @@ export const resolveHostname = (
                     return callback(
                         null,
                         formatDNSValue(cached.value, {
+                            servername,
                             cached: true,
                             error: ipv4Error
                         })
@@ -397,6 +402,7 @@ export const resolveHostname = (
                             return callback(
                                 null,
                                 formatDNSValue(cached.value, {
+                                    servername,
                                     cached: true,
                                     error: err
                                 })
@@ -420,14 +426,14 @@ export const resolveHostname = (
                         return callback(
                             null,
                             formatDNSValue(cached.value, {
+                                servername,
                                 cached: true
                             })
                         );
                     }
 
                     const value: DnsCacheValue = {
-                        addresses: supportedAddresses.length ? supportedAddresses : [host],
-                        servername: options.servername || host
+                        addresses: supportedAddresses.length ? supportedAddresses : [host]
                     };
 
                     dnsCache.set(host, {
@@ -438,6 +444,7 @@ export const resolveHostname = (
                     return callback(
                         null,
                         formatDNSValue(value, {
+                            servername,
                             cached: false
                         })
                     );
@@ -452,6 +459,7 @@ export const resolveHostname = (
                     return callback(
                         null,
                         formatDNSValue(cached.value, {
+                            servername,
                             cached: true,
                             error: lookupErr
                         })
