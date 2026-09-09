@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.2](https://github.com/nodemailer/nodemailer/compare/v10.0.1...v10.0.2) (2026-09-09)
+
+
+### Bug Fixes
+
+* **mime-node:** flatten nested recipient arrays without recursion ([ebe0849](https://github.com/nodemailer/nodemailer/commit/ebe084940aef88278afc6016b78c6d1c3821bb66))
+* **shared:** keep the TLS server name out of the DNS cache ([a6512db](https://github.com/nodemailer/nodemailer/commit/a6512dbcb3c6e7f2f70d3acccc5752defe3c61fe))
+
 ## [10.0.1](https://github.com/nodemailer/nodemailer/compare/v10.0.0...v10.0.1) (2026-09-07)
 
 
