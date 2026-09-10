@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.0.3](https://github.com/nodemailer/nodemailer/compare/v10.0.2...v10.0.3) (2026-09-10)
+
+
+### Bug Fixes
+
+* **fetch:** honor the cookie Domain attribute without accepting public suffixes ([1608391](https://github.com/nodemailer/nodemailer/commit/1608391ff4ccd5422a88e4cf760b26068aad6d39)), closes [#1856](https://github.com/nodemailer/nodemailer/issues/1856)
+
 ## [10.0.2](https://github.com/nodemailer/nodemailer/compare/v10.0.1...v10.0.2) (2026-09-09)
 
 
