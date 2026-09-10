@@ -1,5 +1,7 @@
 // module to handle cookies
 
+import net from 'node:net';
+
 import * as urllib from '../shared/url.js';
 
 const SESSION_TIMEOUT = 1800; // 30 min
@@ -54,12 +56,19 @@ export default class Cookies {
         if (cookie.domain) {
             domain = cookie.domain.replace(/^\./, '');
 
-            // do not allow cross origin cookies
+            // do not allow cross origin cookies. There is no public suffix list here, so a
+            // multi-label suffix like 'co.uk' can not be told apart from a registrable domain
             if (
                 // can't be valid if the requested domain is shorter than current hostname
                 (urlparts.hostname as string).length < domain.length ||
+                // a top level domain is not a valid scope, 'Domain=com' would otherwise be
+                // sent to every .com host. A trailing dot does not make 'com.' any better
+                domain.indexOf('.') < 0 ||
+                domain.endsWith('.') ||
+                // an IP address has no subdomains, so cookies set on it stay host-only
+                net.isIP(urlparts.hostname as string) ||
                 // prefix domains with dot to be sure that partial matches are not used
-                ('.' + urlparts.hostname).substr(-domain.length + 1) !== '.' + domain
+                !('.' + urlparts.hostname).endsWith('.' + domain)
             ) {
                 cookie.domain = urlparts.hostname as string;
             }

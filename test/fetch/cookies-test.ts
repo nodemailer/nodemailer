@@ -459,7 +459,7 @@ describe('Cookie Tests', () => {
             // invalid date
             biskviit.set('invalid_3=date; Expires=zzzz', 'https://foo.com/');
             // invalid tld
-            biskviit.set('invalid_4=cors; domain=.co.uk', 'https://foo.co.uk/');
+            biskviit.set('invalid_4=cors; domain=com', 'https://foo.com/');
             // should not be added
             biskviit.set('expired_1=date; Expires=1999-01-01 01:01:01 GMT', 'https://foo.com/');
 
@@ -478,7 +478,7 @@ describe('Cookie Tests', () => {
                     {
                         name: 'ssid',
                         value: 'Ap4P….GTEq',
-                        domain: 'foo.com',
+                        domain: '.foo.com',
                         path: '/test',
                         secure: true,
                         httponly: true
@@ -486,7 +486,7 @@ describe('Cookie Tests', () => {
                     {
                         name: 'ssid',
                         value: 'Ap4P….GTEq',
-                        domain: 'www.foo.com',
+                        domain: '.foo.com',
                         path: '/',
                         secure: true,
                         httponly: true
@@ -512,11 +512,62 @@ describe('Cookie Tests', () => {
                     {
                         name: 'invalid_4',
                         value: 'cors',
-                        domain: 'foo.co.uk',
+                        domain: 'foo.com',
                         path: '/'
                     }
                 ]
             );
+        });
+
+        it('should send a domain cookie to the domain itself and to its subdomains', () => {
+            biskviit.set('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Secure', 'https://www.foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://www.foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://sub.foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://barfoo.com/'), '');
+            assert.strictEqual(biskviit.get('https://other.com/'), '');
+        });
+
+        it('should keep a cookie host-only when the Domain attribute is a top level domain', () => {
+            biskviit.set('a=1; Domain=com', 'https://evil.com/');
+            assert.strictEqual(biskviit.get('https://evil.com/'), 'a=1');
+            assert.strictEqual(biskviit.get('https://www.evil.com/'), '');
+            assert.strictEqual(biskviit.get('https://victim.com/'), '');
+
+            // a trailing dot is not an embedded dot
+            biskviit.set('b=1; Domain=com.', 'https://evil.com./');
+            assert.strictEqual(biskviit.get('https://evil.com./'), 'b=1');
+            assert.strictEqual(biskviit.get('https://victim.com./'), '');
+        });
+
+        it('should keep a cookie host-only when the host is an IP address', () => {
+            // '.1.2.3.4' does end with '.2.3.4', so only the IP address check keeps this host-only
+            biskviit.set('a=1; Domain=2.3.4', 'http://1.2.3.4/');
+            assert.strictEqual(biskviit.get('http://1.2.3.4/'), 'a=1');
+            assert.strictEqual(biskviit.cookies[0].domain, '1.2.3.4');
+
+            // an IPv6 host has no dot to match on, this pins the bracket handling between set() and get()
+            biskviit.set('b=1; Domain=::1', 'http://[::1]/');
+            assert.strictEqual(biskviit.get('http://[::1]/'), 'b=1');
+            assert.strictEqual(biskviit.cookies[1].domain, '::1');
+        });
+
+        it('should keep a cookie host-only when the Domain attribute is a different site', () => {
+            biskviit.set('a=1; Domain=oo.com', 'https://foo.com/');
+            biskviit.set('b=1; Domain=www.foo.com', 'https://foo.com/');
+            biskviit.set('c=1; Domain=example.com', 'https://foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'a=1; b=1; c=1');
+            assert.strictEqual(biskviit.get('https://bar.oo.com/'), '');
+            assert.strictEqual(biskviit.get('https://www.foo.com/'), '');
+            assert.strictEqual(biskviit.get('https://example.com/'), '');
+        });
+
+        it('cannot reject a multi-label public suffix without a public suffix list', () => {
+            // 'co.uk' is a suffix of 'foo.co.uk' in exactly the way 'foo.com' is a suffix of
+            // 'www.foo.com', so this is a known limitation. Flip the expectation if a public
+            // suffix list is ever added.
+            biskviit.set('a=1; Domain=co.uk', 'https://foo.co.uk/');
+            assert.strictEqual(biskviit.cookies[0].domain, '.co.uk');
         });
 
         it('should use the sessionTimeout option for a cookie without an expiry date', () => {
