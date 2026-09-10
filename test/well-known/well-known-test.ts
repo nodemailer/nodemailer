@@ -31,6 +31,23 @@ describe('Well-Known Services Tests', () => {
             });
         });
 
+        it('Should find iCloud by its primary domain', () => {
+            assert.deepStrictEqual(wellKnown('test@icloud.com'), {
+                description: 'iCloud Mail',
+                host: 'smtp.mail.me.com',
+                port: 587
+            });
+        });
+
+        it('Should find FastMail by its primary domain', () => {
+            assert.deepStrictEqual(wellKnown('test@fastmail.com'), {
+                description: 'FastMail',
+                host: 'smtp.fastmail.com',
+                port: 465,
+                secure: true
+            });
+        });
+
         it('Should find no match', () => {
             assert.strictEqual(wellKnown('zzzzzz'), false);
         });

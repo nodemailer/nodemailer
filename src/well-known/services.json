@@ -107,7 +107,7 @@
 
     "FastMail": {
         "description": "FastMail",
-        "domains": ["fastmail.fm"],
+        "domains": ["fastmail.com", "fastmail.fm"],
         "host": "smtp.fastmail.com",
         "port": 465,
         "secure": true
@@ -196,7 +196,7 @@
     "iCloud": {
         "description": "iCloud Mail",
         "aliases": ["Me", "Mac"],
-        "domains": ["me.com", "mac.com"],
+        "domains": ["icloud.com", "me.com", "mac.com"],
         "host": "smtp.mail.me.com",
         "port": 587
     },
