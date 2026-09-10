@@ -291,6 +291,22 @@ describe('Cookie Tests', () => {
             assert.strictEqual(biskviit.match(cookie, 'https://example.com/def/'), true);
             assert.strictEqual(biskviit.match(cookie, 'http://example.com/def/'), false);
         });
+
+        it('should match a cookie on the exact request path (RFC 6265 section 5.1.4)', () => {
+            let cookie = {
+                name: 'zzz',
+                value: 'abc',
+                path: '/def',
+                expires: new Date(Date.now() + 10000),
+                domain: 'example.com',
+                secure: false,
+                httponly: false
+            };
+            assert.strictEqual(biskviit.match(cookie, 'http://example.com/def'), true);
+            assert.strictEqual(biskviit.match(cookie, 'http://example.com/def/'), true);
+            assert.strictEqual(biskviit.match(cookie, 'http://example.com/def/ghi'), true);
+            assert.strictEqual(biskviit.match(cookie, 'http://example.com/defghi'), false);
+        });
     });
 
     describe('#parse', () => {

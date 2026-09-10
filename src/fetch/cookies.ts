@@ -213,9 +213,14 @@ export default class Cookies {
             return false;
         }
 
-        // check if path matches
-        const path = this.getPath(urlparts.pathname);
-        if (path.substr(0, (cookie.path as string).length) !== cookie.path) {
+        // check if the request path path-matches the cookie path (RFC 6265 section 5.1.4):
+        // identical paths match, otherwise the cookie path must be a directory prefix
+        const pathname = urlparts.pathname || '/';
+        const cookiePath = cookie.path as string;
+        if (
+            pathname !== cookiePath &&
+            !(pathname.startsWith(cookiePath) && (cookiePath.endsWith('/') || pathname.charAt(cookiePath.length) === '/'))
+        ) {
             return false;
         }
 
