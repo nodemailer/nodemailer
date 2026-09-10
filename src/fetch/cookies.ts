@@ -59,9 +59,14 @@ export default class Cookies {
                 // can't be valid if the requested domain is shorter than current hostname
                 (urlparts.hostname as string).length < domain.length ||
                 // prefix domains with dot to be sure that partial matches are not used
-                ('.' + urlparts.hostname).substr(-domain.length + 1) !== '.' + domain
+                ('.' + urlparts.hostname).substr(-(domain.length + 1)) !== '.' + domain
             ) {
                 cookie.domain = urlparts.hostname as string;
+            } else {
+                // the Domain attribute matches the request host, so this is a domain
+                // cookie: keep the leading dot so match() also sends it to subdomains
+                // (RFC 6265, section 5.3)
+                cookie.domain = '.' + domain;
             }
         } else {
             cookie.domain = urlparts.hostname as string;

@@ -478,7 +478,7 @@ describe('Cookie Tests', () => {
                     {
                         name: 'ssid',
                         value: 'Ap4P….GTEq',
-                        domain: 'foo.com',
+                        domain: '.foo.com', // domain cookie: Domain matched the request host (RFC 6265, section 5.3)
                         path: '/test',
                         secure: true,
                         httponly: true
@@ -486,7 +486,7 @@ describe('Cookie Tests', () => {
                     {
                         name: 'ssid',
                         value: 'Ap4P….GTEq',
-                        domain: 'www.foo.com',
+                        domain: '.foo.com', // domain cookie set from a subdomain keeps its Domain scope
                         path: '/',
                         secure: true,
                         httponly: true
@@ -512,11 +512,20 @@ describe('Cookie Tests', () => {
                     {
                         name: 'invalid_4',
                         value: 'cors',
-                        domain: 'foo.co.uk',
+                        // 'co.uk' domain-matches 'foo.co.uk' per RFC 6265 section 5.1.3;
+                        // without a public-suffix list the jar cannot tell it apart from 'foo.com'
+                        domain: '.co.uk',
                         path: '/'
                     }
                 ]
             );
+        });
+
+        it('should send a domain cookie to subdomains', () => {
+            biskviit.set('SSID=Ap4P….GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure', 'https://www.foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://sub.foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://other.com/'), '');
         });
 
         it('should use the sessionTimeout option for a cookie without an expiry date', () => {
