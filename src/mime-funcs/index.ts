@@ -113,7 +113,10 @@ export function encodeWord(data: string | Buffer, mimeWordEncoding?: string, max
             return '=' + (ord.length === 1 ? '0' + ord : ord);
         });
     } else if (mimeWordEncoding === 'B') {
-        encodedStr = typeof data === 'string' ? data : base64.encode(data);
+        // the chunking loop below splits raw text and base64 encodes each part, so a
+        // Buffer goes in as its UTF-8 string: handing it the base64 of the whole input
+        // would encode the encoding itself and decode back to base64 text
+        encodedStr = typeof data === 'string' ? data : data.toString('utf-8');
         maxLength = maxLength ? Math.max(3, ((maxLength - (maxLength % 4)) / 4) * 3) : 0;
     }
 
