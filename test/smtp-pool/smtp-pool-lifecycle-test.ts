@@ -189,11 +189,20 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 logger: false
             });
 
+            // the release and the teardown that follows it are driven by setImmediate, so the
+            // waits below yield rather than sleep, and are bounded so a regression fails on the
+            // assertion that follows instead of timing out the whole suite
+            const yieldUntil = (reached: () => boolean) =>
+                new Promise<void>(resolve => {
+                    let ticks = 0;
+                    const check = () => (reached() || ++ticks > 1000 ? resolve() : setImmediate(check));
+                    check();
+                });
+
             try {
                 const first = await settle(pool, mockMail(envelope));
                 assert.ifError(first.err);
-                // let the post-send release gate the connection on the rate limiter
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await yieldUntil(() => pool._rateLimit.waiting.length > 0);
                 assert.strictEqual(pool._rateLimit.waiting.length, 1);
 
                 const gated = pool._connections[0];
@@ -205,7 +214,7 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 assert.strictEqual(err.message, 'Connection pool was closed');
 
                 // the gated connection is released and torn down, not leaked
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await yieldUntil(() => !pool._connections.length);
                 assert.strictEqual(pool._rateLimit.waiting.length, 0);
                 assert.strictEqual(pool._rateLimit.timeout, null);
                 assert.strictEqual(gated.connection.destroyed, true);
