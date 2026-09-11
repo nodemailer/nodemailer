@@ -176,6 +176,45 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 await ts.close();
             }
         });
+
+        it('close() tears down connections gated by the rate limiter', async () => {
+            const ts = await startServer();
+            const pool = new SMTPPool({
+                host: '127.0.0.1',
+                port: ts.port,
+                maxConnections: 1,
+                rateLimit: 1,
+                rateDelta: 60000,
+                auth,
+                logger: false
+            });
+
+            try {
+                const first = await settle(pool, mockMail(envelope));
+                assert.ifError(first.err);
+                // let the post-send release gate the connection on the rate limiter
+                await new Promise(resolve => setTimeout(resolve, 50));
+                assert.strictEqual(pool._rateLimit.waiting.length, 1);
+
+                const gated = pool._connections[0];
+                const queued = settle(pool, mockMail(envelope));
+                pool.close();
+
+                const { err } = await queued;
+                assert.ok(err);
+                assert.strictEqual(err.message, 'Connection pool was closed');
+
+                // the gated connection is released and torn down, not leaked
+                await new Promise(resolve => setTimeout(resolve, 50));
+                assert.strictEqual(pool._rateLimit.waiting.length, 0);
+                assert.strictEqual(pool._rateLimit.timeout, null);
+                assert.strictEqual(gated.connection.destroyed, true);
+                assert.strictEqual(pool._connections.length, 0);
+            } finally {
+                pool.close();
+                await ts.close();
+            }
+        });
     });
 
     describe('connection failures', () => {
