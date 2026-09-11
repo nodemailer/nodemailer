@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.0.6](https://github.com/nodemailer/nodemailer/compare/v10.0.5...v10.0.6) (2026-09-11)
+
+
+### Bug Fixes
+
+* **addressparser:** scan free text for an address in linear time ([437d7fc](https://github.com/nodemailer/nodemailer/commit/437d7fc47403df176bc39271641541b7a9bce102))
+
 ## [10.0.5](https://github.com/nodemailer/nodemailer/compare/v10.0.4...v10.0.5) (2026-09-11)
 
 
