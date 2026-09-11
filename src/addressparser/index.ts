@@ -56,6 +56,11 @@ interface AddressParts {
 }
 
 /**
+ * The run of an address the token walk is collecting into at a given point
+ */
+type AddressPartsState = 'text' | 'address' | 'comment' | 'group';
+
+/**
  * Restores the quoting of a local part that was read out of a quoted string.
  *
  * RFC 5321 allows '@' inside a quoted local part, so handing '"user@evil.com"@good.com'
@@ -193,7 +198,7 @@ function _recoverAddrSpec(data: { address: string; text: string }): void {
  */
 function _handleAddress(tokens: Token[], depth: number): Address[] {
     let isGroup = false;
-    let state: 'text' | 'address' | 'comment' | 'group' = 'text';
+    let state: AddressPartsState = 'text';
     const addresses: Address[] = [];
     const data: AddressParts = {
         address: [],
@@ -203,6 +208,12 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         textWasQuoted: []
     };
     let insideQuotes = false;
+    // Last character of the run each state is currently accumulating. Reading it back off
+    // the accumulator with slice(-1) makes the engine flatten the whole growing string on
+    // every token, which is quadratic over an address built from many comment-joined atoms
+    // (GHSA-prgh-xp8r-p3m5). A run only ever grows by the token appended below, so the
+    // character is carried along instead of re-read.
+    const lastChars: Record<AddressPartsState, string> = { address: '', comment: '', group: '', text: '' };
 
     // Filter out <addresses>, (comments) and regular text
     for (let i = 0, len = tokens.length; i < len; i++) {
@@ -248,15 +259,19 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 prevToken &&
                 prevToken.noBreak &&
                 parts.length &&
-                (prevToken.value !== ')' || parts[parts.length - 1].slice(-1) === '@' || token.value.charAt(0) === '@');
+                (prevToken.value !== ')' || lastChars[state] === '@' || token.value.charAt(0) === '@');
 
             if (joins) {
                 data[state][data[state].length - 1] += token.value;
+                if (token.value) {
+                    lastChars[state] = token.value.charAt(token.value.length - 1);
+                }
                 if (state === 'text' && insideQuotes) {
                     data.textWasQuoted[data.textWasQuoted.length - 1] = true;
                 }
             } else {
                 data[state].push(token.value);
+                lastChars[state] = token.value.charAt(token.value.length - 1);
                 if (state === 'text') {
                     data.textWasQuoted.push(insideQuotes);
                 }

@@ -1179,6 +1179,30 @@ describe('#addressparser', () => {
             assert.ok(elapsed < 5000, `merging ${count} fragments took ${elapsed}ms`);
         });
 
+        // The join check read the accumulator's last character back with slice(-1), which
+        // flattens the growing run on every token. An address made of many comment-joined
+        // atoms is one run, so the parse went quadratic: 1.5MB took ~10s of blocked event
+        // loop, reachable unauthenticated through anything that parses inbound headers
+        // (GHSA-prgh-xp8r-p3m5). Both shapes are covered because the atom after the comment
+        // opening with '@' and the run ending with '@' are separate arms of that check.
+        for (const [label, build] of [
+            ['comment-joined atoms', (count: number) => 'a' + '@b(c)'.repeat(count)],
+            ['comment-separated atoms', (count: number) => 'a@' + '(c)b@'.repeat(count)]
+        ] as [string, (count: number) => string][]) {
+            it(`should parse an address built from ${label} in linear time`, () => {
+                // ~1.5MB, where the quadratic parse took ~10s and the linear one takes ~80ms
+                const count = 320000;
+                const input = build(count);
+
+                const started = Date.now();
+                const result = addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.strictEqual(result.length, 1);
+                assert.ok(elapsed < 5000, `parsing a ${input.length} byte address took ${elapsed}ms`);
+            });
+        }
+
         it('should keep fragment merging identical to the previous implementation', () => {
             assert.deepStrictEqual(addressparser('Joe Foo, PhD <joe@example.com>'), [{ address: 'joe@example.com', name: 'Joe Foo, PhD' }]);
             assert.deepStrictEqual(addressparser('a, b, c <x@y.com>'), [{ address: 'x@y.com', name: 'a, b, c' }]);
