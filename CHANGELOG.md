@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [10.0.4](https://github.com/nodemailer/nodemailer/compare/v10.0.3...v10.0.4) (2026-09-11)
+
+
+### Bug Fixes
+
+* **fetch:** scope a cookie without a Path to the RFC 6265 default path ([2f907cb](https://github.com/nodemailer/nodemailer/commit/2f907cb71396860d0b2534dc72c3d252ef16339d))
+* **fetch:** send cookies set with Path back to the exact path ([#1861](https://github.com/nodemailer/nodemailer/issues/1861)) ([d557113](https://github.com/nodemailer/nodemailer/commit/d5571139750de47abbac73a3b07ae90ff39a7bdd))
+* **mail-composer:** keep httpHeaders and tls for href alternatives and icalEvent ([#1862](https://github.com/nodemailer/nodemailer/issues/1862)) ([7f502be](https://github.com/nodemailer/nodemailer/commit/7f502bee4a6b0386099c66c0a35d92850ec462f7))
+* resolve well-known services by their primary domains ([#1859](https://github.com/nodemailer/nodemailer/issues/1859)) ([085f525](https://github.com/nodemailer/nodemailer/commit/085f525e6b292f0ca32ab1b20d4a4ee82fc40e2d))
+* **ses-transport:** throw a configuration error when the SES client is missing ([#1863](https://github.com/nodemailer/nodemailer/issues/1863)) ([4d9c4c9](https://github.com/nodemailer/nodemailer/commit/4d9c4c966aaca61ff6d7649a1ac0aa0ceac6ef1e))
+
 ## [10.0.3](https://github.com/nodemailer/nodemailer/compare/v10.0.2...v10.0.3) (2026-09-10)
 
 
