@@ -288,6 +288,35 @@ describe('MailComposer unit tests', () => {
             assert.ok(attachmentHeaders.indexOf('boundary=') < 0);
         });
 
+        it('should not let boundary material inject lines into the multipart structure', (t, done) => {
+            // baseBoundary and boundaryPrefix are read off the mail data, so an application that
+            // spreads untrusted input into sendMail() hands them to the composer. A line break in
+            // either used to survive into the delimiter lines while the declared boundary went out
+            // RFC2231 encoded, which put attacker text exactly where a part's headers are read
+            // from (GHSA pending, fixed in #1867)
+            let compiler = new MailComposer({
+                from: 'a@b.com',
+                to: 'c@d.com',
+                text: 'plain body',
+                html: '<b>html body</b>',
+                baseBoundary: 'X\r\nX-Evil: injected\r\nX',
+                boundaryPrefix: '--P\r\nX'
+            } as any);
+
+            compiler.compile().build((err, msg) => {
+                assert.ok(!err);
+                let raw = msg.toString();
+                let boundary = (compiler as any).message.boundary as string;
+
+                assert.ok(!/[\r\n]/.test(boundary), 'boundary must stay on one line');
+                assert.ok(!/^X-Evil:/m.test(raw), 'no injected line may appear anywhere in the message');
+                // whatever the boundary ended up being, the delimiters have to match it exactly
+                assert.ok(raw.includes('\r\n--' + boundary + '\r\n'), 'delimiter must match the declared boundary');
+                assert.ok(raw.includes('\r\n--' + boundary + '--\r\n'), 'closing delimiter must match the declared boundary');
+                done();
+            });
+        });
+
         it('should create the same output', (t, done) => {
             let data = {
                 text: 'abc',
