@@ -1405,6 +1405,25 @@ describe('MailComposer unit tests', () => {
             ]);
         });
 
+        it('should keep the request headers and tls settings of an href alternative', () => {
+            let compiler = new MailComposer({
+                text: 'abc',
+                html: {
+                    href: 'https://localhost:1/page.html',
+                    httpHeaders: { 'x-token': 'secret' },
+                    tls: { rejectUnauthorized: false }
+                }
+            });
+
+            let alternatives = compiler.getAlternatives();
+            assert.strictEqual(alternatives.length, 2);
+            assert.deepStrictEqual(alternatives[1].content, {
+                href: 'https://localhost:1/page.html',
+                httpHeaders: { 'x-token': 'secret' },
+                tls: { rejectUnauthorized: false }
+            });
+        });
+
         it('should map an http path of an alternative to an href', () => {
             let compiler = new MailComposer({
                 text: 'abc',
@@ -1425,14 +1444,18 @@ describe('MailComposer unit tests', () => {
                 contentType: 'text/html; charset=utf-8',
                 contentTransferEncoding: undefined,
                 content: {
-                    href: 'http://localhost:1/page.html'
+                    href: 'http://localhost:1/page.html',
+                    httpHeaders: undefined,
+                    tls: undefined
                 }
             });
             assert.deepStrictEqual(alternatives[2], {
                 contentType: 'text/x-custom',
                 contentTransferEncoding: undefined,
                 content: {
-                    href: 'https://localhost:1/dir/alt.html?x=1'
+                    href: 'https://localhost:1/dir/alt.html?x=1',
+                    httpHeaders: undefined,
+                    tls: undefined
                 }
             });
         });
@@ -1478,12 +1501,32 @@ describe('MailComposer unit tests', () => {
             assert.deepStrictEqual(event.content, {
                 href: 'http://localhost:1/invite.ics',
                 httpHeaders: { 'x-token': 'secret' },
+                tls: undefined,
                 _resolve: true
             });
             assert.strictEqual(event.path, undefined);
             assert.strictEqual(event.href, undefined);
             // the alternative and the attachment share the same normalized event
             assert.strictEqual(compiler._getIcalEvent(), event);
+        });
+
+        it('should keep the tls settings of an href icalEvent', () => {
+            let compiler = new MailComposer({
+                text: 'def',
+                icalEvent: {
+                    href: 'https://localhost:1/invite.ics',
+                    httpHeaders: { 'x-token': 'secret' },
+                    tls: { rejectUnauthorized: false }
+                }
+            });
+
+            let event = compiler._getIcalEvent();
+            assert.deepStrictEqual(event.content, {
+                href: 'https://localhost:1/invite.ics',
+                httpHeaders: { 'x-token': 'secret' },
+                tls: { rejectUnauthorized: false },
+                _resolve: true
+            });
         });
 
         it('should fetch attachments and alternatives given as an url', (t, done) => {
@@ -1499,7 +1542,8 @@ describe('MailComposer unit tests', () => {
                 let data = {
                     text: 'abc',
                     html: {
-                        path: base + '/page.html'
+                        path: base + '/page.html',
+                        httpHeaders: { 'x-test': 'html' }
                     },
                     attachments: [
                         {
@@ -1521,7 +1565,7 @@ describe('MailComposer unit tests', () => {
                             requests.sort((a, b) => a.url.localeCompare(b.url)),
                             [
                                 { url: '/file.txt', header: 'yes' },
-                                { url: '/page.html', header: undefined }
+                                { url: '/page.html', header: 'html' }
                             ]
                         );
                         done();
