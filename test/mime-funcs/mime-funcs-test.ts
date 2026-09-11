@@ -161,6 +161,15 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
 
             assert.strictEqual('�' + '\u{20000}'.repeat(4), libmime.decodeWords(encoded));
         });
+
+        it('should not double encode a Buffer when chunking base64', () => {
+            // a Buffer used to go into the chunking loop as the base64 of the whole
+            // input, so every part was encoded twice and decoded back to base64 text
+            const inputStr = 'Hello wörld, this is a longer filename with ünicode.txt',
+                encoded = mimeFuncs.encodeWord(Buffer.from(inputStr), 'B', 30);
+
+            assert.strictEqual(inputStr, libmime.decodeWords(encoded));
+        });
     });
 
     describe('#buildHeaderParam', () => {
