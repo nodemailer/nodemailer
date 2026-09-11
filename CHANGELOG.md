@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.8](https://github.com/nodemailer/nodemailer/compare/v10.0.7...v10.0.8) (2026-09-11)
+
+
+### Bug Fixes
+
+* **mime-node:** clean the boundary where it is written, not only where it is built ([e14278d](https://github.com/nodemailer/nodemailer/commit/e14278d2dae9427280c79450605a27b1c5d2c355))
+* **mime-node:** drop every control character from multipart boundary material ([a82a355](https://github.com/nodemailer/nodemailer/commit/a82a35554848a2e07485ff81f80aefe2736e5a04))
+
 ## [10.0.7](https://github.com/nodemailer/nodemailer/compare/v10.0.6...v10.0.7) (2026-09-11)
 
 
