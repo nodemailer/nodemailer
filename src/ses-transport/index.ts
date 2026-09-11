@@ -76,6 +76,14 @@ class SESTransport extends EventEmitter {
         super();
         options = options || ({} as SESTransportOptions);
 
+        if (!options.SES || !options.SES.sesClient) {
+            const error: NodemailerError = new Error(
+                'Missing SES configuration, expecting { sesClient, SendEmailCommand } from @aws-sdk/client-sesv2, see https://nodemailer.com/transports/ses/'
+            );
+            error.code = errors.ECONFIG;
+            throw error;
+        }
+
         this.options = options;
         this.ses = this.options.SES;
 

@@ -258,6 +258,20 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
         );
     });
 
+    it('should throw ECONFIG when the SES client is missing', () => {
+        // without a client, send() dies with an uncaught TypeError inside setImmediate
+        // and verify() throws a TypeError instead of failing the callback or promise.
+        // (SES: undefined stays an SMTP transport, like any other falsy transport flag.)
+        assert.throws(
+            () => nodemailer.createTransport({ SES: {} } as any),
+            (err: any) => err.code === 'ECONFIG' && /sesClient/.test(err.message)
+        );
+        assert.throws(
+            () => nodemailer.createTransport({ SES: { SendEmailCommand: class {} } } as any),
+            (err: any) => err.code === 'ECONFIG' && /sesClient/.test(err.message)
+        );
+    });
+
     it('should surface a synchronous SendEmailCommand failure as a single error callback', (t, done) => {
         let transport = nodemailer.createTransport({
             SES: {
