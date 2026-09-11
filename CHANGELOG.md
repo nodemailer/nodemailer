@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.0.5](https://github.com/nodemailer/nodemailer/compare/v10.0.4...v10.0.5) (2026-09-11)
+
+
+### Bug Fixes
+
+* **addressparser:** parse comment-joined addresses in linear time ([c07f175](https://github.com/nodemailer/nodemailer/commit/c07f17518d25aca8ab2ad66968dcbca538c24b89))
+
 ## [10.0.4](https://github.com/nodemailer/nodemailer/compare/v10.0.3...v10.0.4) (2026-09-11)
 
 
