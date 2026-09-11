@@ -217,10 +217,10 @@ export default class Cookies {
         // identical paths match, otherwise the cookie path must be a directory prefix
         const pathname = urlparts.pathname || '/';
         const cookiePath = cookie.path as string;
-        if (
-            pathname !== cookiePath &&
-            !(pathname.startsWith(cookiePath) && (cookiePath.endsWith('/') || pathname.charAt(cookiePath.length) === '/'))
-        ) {
+        const pathMatches =
+            pathname === cookiePath ||
+            (pathname.startsWith(cookiePath) && (cookiePath.endsWith('/') || pathname.charAt(cookiePath.length) === '/'));
+        if (!pathMatches) {
             return false;
         }
 
@@ -287,24 +287,22 @@ export default class Cookies {
     }
 
     /**
-     * Returns normalized cookie path for an URL path argument
+     * Returns the default path for an URL path argument, the default-path of
+     * RFC 6265 section 5.1.4. A cookie that carries no Path attribute is scoped
+     * to the directory of the URL it was set from
      *
      * @param pathname
-     * @returns Normalized path
+     * @returns Default path
      */
     getPath(pathname?: string | null): string {
         const pathParts = (pathname || '/').split('/');
         pathParts.pop(); // remove filename part
-        let path = pathParts.join('/').trim();
+        const path = pathParts.join('/').trim();
 
-        // ensure path prefix /
+        // a path that holds no more than one '/' is scoped to the root path, and so
+        // is one that does not start with '/' at all
         if (path.charAt(0) !== '/') {
-            path = '/' + path;
-        }
-
-        // ensure path suffix /
-        if (path.substr(-1) !== '/') {
-            path += '/';
+            return '/';
         }
 
         return path;

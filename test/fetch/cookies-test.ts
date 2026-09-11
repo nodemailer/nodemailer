@@ -19,7 +19,8 @@ describe('Cookie Tests', () => {
         });
 
         it('should return without file', () => {
-            assert.strictEqual(biskviit.getPath('/path/to/file'), '/path/to/');
+            assert.strictEqual(biskviit.getPath('/path/to/file'), '/path/to');
+            assert.strictEqual(biskviit.getPath('/path/to/'), '/path/to');
         });
     });
 
@@ -306,6 +307,21 @@ describe('Cookie Tests', () => {
             assert.strictEqual(biskviit.match(cookie, 'http://example.com/def/'), true);
             assert.strictEqual(biskviit.match(cookie, 'http://example.com/def/ghi'), true);
             assert.strictEqual(biskviit.match(cookie, 'http://example.com/defghi'), false);
+        });
+
+        it('should match a cookie against an url that has no path', () => {
+            let cookie = {
+                name: 'zzz',
+                value: 'abc',
+                path: '/',
+                expires: new Date(Date.now() + 10000),
+                domain: 'example.com',
+                secure: false,
+                httponly: false
+            };
+            // an url with no path component parses into a null pathname, which is
+            // the root path as far as the cookie path match goes
+            assert.strictEqual(biskviit.match(cookie, 'smtp://example.com'), true);
         });
     });
 
@@ -596,6 +612,16 @@ describe('Cookie Tests', () => {
             let expires = (jar.cookies[0].expires as Date).getTime();
             assert.ok(expires >= before + 10 * 1000);
             assert.ok(expires <= Date.now() + 10 * 1000);
+        });
+
+        it('should send a cookie without a Path back to the directory it was set from', () => {
+            biskviit.set('a=1', 'https://foo.com/dir/page.html');
+
+            assert.strictEqual(biskviit.get('https://foo.com/dir'), 'a=1');
+            assert.strictEqual(biskviit.get('https://foo.com/dir/'), 'a=1');
+            assert.strictEqual(biskviit.get('https://foo.com/dir/sub/page.html'), 'a=1');
+            assert.strictEqual(biskviit.get('https://foo.com/dirx/page.html'), '');
+            assert.strictEqual(biskviit.get('https://foo.com/'), '');
         });
 
         it('should drop a cookie that is set to an empty value', () => {
