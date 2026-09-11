@@ -243,6 +243,16 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
 }
 
 /**
+ * Removes the line breaks that would split a value across lines once it is written out.
+ *
+ * @param value Value to clean
+ * @return Value with every CR and LF removed
+ */
+function _stripLineBreaks(value: string): string {
+    return value.replace(/[\r\n]+/g, '');
+}
+
+/**
  * Creates a new mime tree node. Assumes 'multipart/*' as the content type
  * if it is a branch, anything else counts as leaf. If rootNode is missing from
  * the options, assumes this is the root.
@@ -314,8 +324,8 @@ class MimeNode {
          * the delimiter lines the tree is streamed with, so the declared boundary could
          * never match them again and the remainder would go out as body lines
          */
-        this.baseBoundary = (options.baseBoundary || crypto.randomBytes(8).toString('hex')).replace(/\r|\n/g, '');
-        this.boundaryPrefix = (options.boundaryPrefix || '--_NmP').replace(/\r|\n/g, '');
+        this.baseBoundary = _stripLineBreaks(options.baseBoundary || crypto.randomBytes(8).toString('hex'));
+        this.boundaryPrefix = _stripLineBreaks(options.boundaryPrefix || '--_NmP');
 
         this.disableFileAccess = !!options.disableFileAccess;
         this.disableUrlAccess = !!options.disableUrlAccess;
@@ -1503,13 +1513,17 @@ class MimeNode {
         if (this.multipart) {
             // A line break in the boundary would split the delimiter lines the tree is
             // streamed with, so the declared boundary could never match them again and
-            // the remainder would go out as body lines. Anything else is kept as is, it
-            // stays on one line and matches literally on both sides.
-            this.boundary = (structured.params as Record<string, string>).boundary = (
-                (structured.params as Record<string, string>).boundary ||
-                this.boundary ||
-                this._generateBoundary()
-            ).replace(/\r|\n/g, '');
+            // the remainder would go out as body lines. The declared value and the
+            // delimiters are assigned from the same expression here, so whatever the
+            // header emitter then does with it, the two sides cannot disagree.
+            //
+            // Stripping runs before the fallback rather than over the whole chain: a
+            // boundary that was nothing but line breaks would otherwise strip to '' and
+            // leave the node declaring no boundary and streaming bare '--' delimiters.
+            // The generated boundary is stripped too, since baseBoundary and
+            // boundaryPrefix are public and may have been written after construction.
+            const declared = _stripLineBreaks((structured.params as Record<string, string>).boundary || this.boundary || '');
+            this.boundary = (structured.params as Record<string, string>).boundary = declared || _stripLineBreaks(this._generateBoundary());
         } else {
             this.boundary = false;
         }

@@ -508,6 +508,26 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should fall back to a generated boundary when stripping leaves nothing', (t, done) => {
+            // boundary is a public field, so it can hold a value the constructor never saw.
+            // One made only of line breaks strips to '', and an empty boundary would be
+            // declared as a bare 'boundary=' and streamed as '--' delimiter lines
+            let mb: any = new MimeNode('multipart/mixed');
+            mb.boundary = '\r\n';
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err: Error | null, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(mb.boundary, 'boundary must not be empty');
+                assert.ok(!/[\r\n]/.test(mb.boundary as string));
+                assert.ok(!/;\s*boundary=\s*(?:\r\n|$)/m.test(msg), 'must not declare an empty boundary');
+                assert.ok(msg.includes('\r\n--' + mb.boundary + '\r\n'));
+                assert.ok(msg.includes('\r\n--' + mb.boundary + '--\r\n'));
+                done();
+            });
+        });
+
         it('should strip line breaks from an explicit boundary parameter', (t, done) => {
             let mb = new MimeNode('multipart/mixed');
             mb.setHeader('Content-Type', 'multipart/mixed; boundary="AA\r\nBB"');
