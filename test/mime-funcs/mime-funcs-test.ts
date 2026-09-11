@@ -170,6 +170,23 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
 
             assert.strictEqual(inputStr, libmime.decodeWords(encoded));
         });
+
+        it('should encode a UTF-8 Buffer exactly like the same string', () => {
+            // the encoding is declared as UTF-8 either way, so the two inputs describe the
+            // same text and must not diverge once the value is long enough to be chunked
+            const samples = ['Hello wörld, this is a longer filename with ünicode.txt', 'plain ascii only', '\u{1F46E}'.repeat(10), 'ä'];
+
+            samples.forEach(sample => {
+                [0, 12, 20, 30, 52, 200].forEach(maxLength => {
+                    assert.strictEqual(
+                        mimeFuncs.encodeWord(Buffer.from(sample, 'utf-8'), 'B', maxLength),
+                        mimeFuncs.encodeWord(sample, 'B', maxLength),
+                        `Buffer and string differ for ${JSON.stringify(sample.slice(0, 12))} at maxLength ${maxLength}`
+                    );
+                    assert.strictEqual(libmime.decodeWords(mimeFuncs.encodeWord(Buffer.from(sample, 'utf-8'), 'B', maxLength)), sample);
+                });
+            });
+        });
     });
 
     describe('#buildHeaderParam', () => {
