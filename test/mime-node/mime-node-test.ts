@@ -558,6 +558,24 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         }
 
+        it('should strip control characters from an explicit boundary parameter', (t, done) => {
+            // the reachable path for this one is a contentType carried on an attachment or an
+            // alternative, which mail-composer hands straight to createChild
+            let mb = new MimeNode('multipart/mixed');
+            mb.setHeader('Content-Type', 'multipart/mixed; boundary="AA\u0000B\u007fB"');
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(mb.boundary, 'AABB');
+                assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(msg), 'no control character may reach the wire');
+                assert.ok(msg.includes('\r\n--AABB\r\n'));
+                assert.ok(msg.includes('\r\n--AABB--\r\n'));
+                done();
+            });
+        });
+
         it('should strip line breaks from an explicit boundary parameter', (t, done) => {
             let mb = new MimeNode('multipart/mixed');
             mb.setHeader('Content-Type', 'multipart/mixed; boundary="AA\r\nBB"');

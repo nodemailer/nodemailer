@@ -1525,8 +1525,13 @@ class MimeNode {
             // Stripping runs before the fallback rather than over the whole chain: a
             // boundary made only of control characters would otherwise strip to '' and
             // leave the node declaring no boundary and streaming bare '--' delimiters.
+            // _generateBoundary cleans what it builds, but this is the one place the boundary
+            // is written, so it cleans the value it is about to write rather than trusting
+            // where it came from. MimeNode is exported and subclassable, so the generator is
+            // not necessarily the one below. Stripping twice costs nothing, it is idempotent.
             const declared = _stripBoundaryControls((structured.params as Record<string, string>).boundary || this.boundary || '');
-            this.boundary = (structured.params as Record<string, string>).boundary = declared || this._generateBoundary();
+            this.boundary = (structured.params as Record<string, string>).boundary =
+                declared || _stripBoundaryControls(this._generateBoundary());
         } else {
             this.boundary = false;
         }
