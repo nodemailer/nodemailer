@@ -117,6 +117,124 @@ const ADDR_SPEC = /^[^@\s]+@[^@\s]+$/;
 const LOOSE_ADDR_SPEC = /^[^@\s]+@\S+$/;
 
 /**
+ * An addr-spec sitting inside free text, together with the whitespace around it. Sticky
+ * on purpose: it is run at the one offset _looseAddressStart picks rather than being let
+ * loose to search, see there.
+ */
+const LOOSE_TEXT_ADDR = /\s*\b[^@\s]+@[^\s]+\b\s*/y;
+
+/**
+ * The characters JS `\s` matches, which the scan below has to agree with to land on the
+ * same match the pattern would.
+ */
+function _isSpaceCode(code: number): boolean {
+    return (
+        code === 0x20 ||
+        (code >= 0x09 && code <= 0x0d) ||
+        code === 0xa0 ||
+        code === 0x1680 ||
+        (code >= 0x2000 && code <= 0x200a) ||
+        code === 0x2028 ||
+        code === 0x2029 ||
+        code === 0x202f ||
+        code === 0x205f ||
+        code === 0x3000 ||
+        code === 0xfeff
+    );
+}
+
+/**
+ * The characters JS `\w` matches without the unicode flag, the set the `\b` in
+ * LOOSE_TEXT_ADDR is read against. charCodeAt off either end of the string gives NaN,
+ * which compares false throughout, so out of range reads as the non-word the pattern
+ * treats them as.
+ */
+function _isWordCode(code: number): boolean {
+    return (code >= 0x30 && code <= 0x39) || (code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a) || code === 0x5f;
+}
+
+/**
+ * Whether `\b` holds at an offset
+ */
+function _isBoundary(text: string, at: number): boolean {
+    return _isWordCode(text.charCodeAt(at - 1)) !== _isWordCode(text.charCodeAt(at));
+}
+
+/**
+ * Finds the offset LOOSE_TEXT_ADDR matches at, or -1 when it does not match at all.
+ *
+ * Letting the pattern search for itself is quadratic: '[^@\s]+' is retried from every
+ * offset and rescans the run to the next '@' each time, so 140KB of header holding no
+ * usable '@' blocks the event loop for about ten seconds (GHSA-v53p-9fqp-m79j). The search is also unnecessary.
+ * '[^@\s]+' crosses neither whitespace nor a '@', so a match can only begin at the head of
+ * a whitespace delimited run or just past a '@' inside one, and '[^\s]+\b' gives characters
+ * back until it lands on a boundary, so the only end it can take in that run is the last
+ * boundary in it. Both are found in one pass, and the pattern is then run at that single
+ * offset.
+ *
+ * @param text Free text to look in
+ * @return Offset to match at, or -1
+ */
+function _looseAddressStart(text: string): number {
+    const len = text.length;
+    let pos = 0;
+
+    while (pos < len) {
+        while (pos < len && _isSpaceCode(text.charCodeAt(pos))) {
+            pos++;
+        }
+        if (pos >= len) {
+            break;
+        }
+
+        const runStart = pos;
+        let runEnd = pos;
+        while (runEnd < len && !_isSpaceCode(text.charCodeAt(runEnd))) {
+            runEnd++;
+        }
+
+        let at = text.indexOf('@', runStart);
+        if (at >= 0 && at < runEnd) {
+            let lastBoundary = -1;
+            for (let k = runEnd; k > runStart; k--) {
+                if (_isBoundary(text, k)) {
+                    lastBoundary = k;
+                    break;
+                }
+            }
+
+            let atomStart = runStart;
+            while (lastBoundary >= 0 && at >= 0 && at < runEnd) {
+                // '[^@\s]+' has to cover a character before the '@' and '[^\s]+' one after it,
+                // and the boundary that ends the match has to sit past both
+                if (at > atomStart && runEnd > at + 1 && lastBoundary > at + 1) {
+                    for (let start = atomStart; start < at; start++) {
+                        if (_isBoundary(text, start)) {
+                            if (start > runStart) {
+                                return start;
+                            }
+                            // the leading '\s*' is greedy, so a match that begins at the run
+                            // takes the whitespace in front of it along
+                            let padded = runStart;
+                            while (padded > 0 && _isSpaceCode(text.charCodeAt(padded - 1))) {
+                                padded--;
+                            }
+                            return padded;
+                        }
+                    }
+                }
+                atomStart = at + 1;
+                at = text.indexOf('@', atomStart);
+            }
+        }
+
+        pos = runEnd;
+    }
+
+    return -1;
+}
+
+/**
  * Recovers the addr-spec from an angle-addr that came back holding unquoted whitespace.
  *
  * A malformed header can put more than a mailbox between the angle brackets, most often
@@ -326,16 +444,21 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 for (let i = data.text.length - 1; i >= 0; i--) {
                     // Security: Do not extract email addresses from quoted strings
                     if (!data.textWasQuoted[i]) {
-                        data.text[i] = data.text[i]
-                            .replace(/\s*\b[^@\s]+@[^\s]+\b\s*/, (match: string) => {
-                                if (!extracted) {
-                                    data.address = [match.trim()];
-                                    extracted = true;
-                                    return ' ';
-                                }
-                                return match;
-                            })
-                            .trim();
+                        const part: string = data.text[i];
+                        let remainder = part;
+
+                        const at = _looseAddressStart(part);
+                        if (at >= 0) {
+                            LOOSE_TEXT_ADDR.lastIndex = at;
+                            const match = LOOSE_TEXT_ADDR.exec(part);
+                            if (match) {
+                                data.address = [match[0].trim()];
+                                extracted = true;
+                                remainder = part.slice(0, at) + ' ' + part.slice(at + match[0].length);
+                            }
+                        }
+
+                        data.text[i] = remainder.trim();
                         if (extracted) {
                             break;
                         }

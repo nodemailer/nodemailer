@@ -1203,6 +1203,37 @@ describe('#addressparser', () => {
             });
         }
 
+        // Falling back to reading an address out of free text searched for
+        // /\s*\b[^@\s]+@[^\s]+\b\s*/, which retries '[^@\s]+' from every offset and rescans the
+        // run to the next '@' each time. A header run carrying no usable '@' made that
+        // quadratic (GHSA-v53p-9fqp-m79j), far more cheaply than a comment-joined address
+        // does: 273KB took
+        // ~43s of blocked event loop. The shapes below are the three ways the '@' can be
+        // unusable, plus a run that has none at all.
+        for (const [label, build] of [
+            ['no at sign at all', (count: number) => '[x]'.repeat(count)],
+            ['an at sign with nothing after it', (count: number) => '[x]'.repeat(count) + '@'],
+            ['an at sign with nothing before it', (count: number) => '@' + '[x]'.repeat(count)],
+            ['an address only past a long run', (count: number) => '[x]'.repeat(count) + ' a@b.com']
+        ] as [string, (count: number) => string][]) {
+            it(`should scan free text holding ${label} in linear time`, () => {
+                const count = 40000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `scanning a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+
+        it('should still read an address out of free text', () => {
+            assert.deepStrictEqual(addressparser('junk [x] a@b.com more'), [{ address: 'a@b.com', name: 'junk [x] more' }]);
+            assert.deepStrictEqual(addressparser('   a@b.com   '), [{ address: 'a@b.com', name: '' }]);
+            assert.deepStrictEqual(addressparser('!a@b!'), [{ address: '!a@b!', name: '' }]);
+        });
+
         it('should keep fragment merging identical to the previous implementation', () => {
             assert.deepStrictEqual(addressparser('Joe Foo, PhD <joe@example.com>'), [{ address: 'joe@example.com', name: 'Joe Foo, PhD' }]);
             assert.deepStrictEqual(addressparser('a, b, c <x@y.com>'), [{ address: 'x@y.com', name: 'a, b, c' }]);
