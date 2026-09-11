@@ -219,8 +219,10 @@ class SMTPPool extends EventEmitter {
         const len = this._connections.length;
         this._closed = true;
 
-        // clear rate limit timer if it exists
-        clearTimeout(this._rateLimit.timeout as NodeJS.Timeout);
+        // release connections gated by the rate limiter so they become
+        // available and are torn down below instead of leaking with a
+        // cleared timer that never fires
+        this._clearRateLimit();
 
         if (!len && !this._queue.length) {
             return;
