@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { NodemailerError } from '../../src/errors.js';
-import type { SESTransportOptions } from '../../src/ses-transport/index.js';
+import SESTransport, { type SESTransportOptions } from '../../src/ses-transport/index.js';
 import { captureLogger } from '../smtp-transport/smtp-fixtures.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -262,14 +262,13 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
         // without a client, send() dies with an uncaught TypeError inside setImmediate
         // and verify() throws a TypeError instead of failing the callback or promise.
         // (SES: undefined stays an SMTP transport, like any other falsy transport flag.)
-        assert.throws(
-            () => nodemailer.createTransport({ SES: {} } as any),
-            (err: any) => err.code === 'ECONFIG' && /sesClient/.test(err.message)
-        );
-        assert.throws(
-            () => nodemailer.createTransport({ SES: { SendEmailCommand: class {} } } as any),
-            (err: any) => err.code === 'ECONFIG' && /sesClient/.test(err.message)
-        );
+        const missingClient = { code: 'ECONFIG', message: /sesClient/ };
+
+        assert.throws(() => nodemailer.createTransport({ SES: {} } as any), missingClient);
+        assert.throws(() => nodemailer.createTransport({ SES: { SendEmailCommand: class {} } } as any), missingClient);
+        // the transport is also a documented deep import, so it has to refuse a bare
+        // construction the same way instead of building an object that can not send
+        assert.throws(() => new SESTransport(), missingClient);
     });
 
     it('should surface a synchronous SendEmailCommand failure as a single error callback', (t, done) => {
