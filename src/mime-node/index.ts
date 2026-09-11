@@ -243,13 +243,21 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
 }
 
 /**
- * Removes the line breaks that would split a value across lines once it is written out.
+ * Removes the characters that must never reach a multipart delimiter line.
+ *
+ * A line break splits the delimiter, so the boundary declared in the header can never
+ * match it again and the parts go out as body lines instead. The other C0 controls and
+ * DEL do not split anything but must not be written either: RFC 5321 does not allow a
+ * NUL in DATA at all, and an MTA or a scanner that stops at one reads a different
+ * message than a client that does not, which is the same parser disagreement a split
+ * delimiter creates. Both sides are cleaned together, since the declared value and the
+ * delimiters come from this one result.
  *
  * @param value Value to clean
- * @return Value with every CR and LF removed
+ * @return Value with every control character removed
  */
-function _stripLineBreaks(value: string): string {
-    return value.replace(/[\r\n]+/g, '');
+function _stripBoundaryControls(value: string): string {
+    return value.replace(/[\x00-\x1f\x7f]+/g, '');
 }
 
 /**
@@ -320,12 +328,11 @@ class MimeNode {
         options = options || {};
 
         /**
-         * shared part of the unique multipart boundary. A line break here would split
-         * the delimiter lines the tree is streamed with, so the declared boundary could
-         * never match them again and the remainder would go out as body lines
+         * shared part of the unique multipart boundary. Control characters are dropped
+         * here rather than at the delimiter, see _stripBoundaryControls
          */
-        this.baseBoundary = _stripLineBreaks(options.baseBoundary || crypto.randomBytes(8).toString('hex'));
-        this.boundaryPrefix = _stripLineBreaks(options.boundaryPrefix || '--_NmP');
+        this.baseBoundary = _stripBoundaryControls(options.baseBoundary || crypto.randomBytes(8).toString('hex'));
+        this.boundaryPrefix = _stripBoundaryControls(options.boundaryPrefix || '--_NmP');
 
         this.disableFileAccess = !!options.disableFileAccess;
         this.disableUrlAccess = !!options.disableUrlAccess;
@@ -1511,19 +1518,15 @@ class MimeNode {
         this.multipart = /^multipart\//i.test(this.contentType) ? this.contentType.substr(this.contentType.indexOf('/') + 1) : false;
 
         if (this.multipart) {
-            // A line break in the boundary would split the delimiter lines the tree is
-            // streamed with, so the declared boundary could never match them again and
-            // the remainder would go out as body lines. The declared value and the
-            // delimiters are assigned from the same expression here, so whatever the
-            // header emitter then does with it, the two sides cannot disagree.
+            // The declared value and the delimiters are assigned from the same expression
+            // here, so whatever the header emitter then does with it, the two sides cannot
+            // disagree about which characters the boundary is made of.
             //
             // Stripping runs before the fallback rather than over the whole chain: a
-            // boundary that was nothing but line breaks would otherwise strip to '' and
+            // boundary made only of control characters would otherwise strip to '' and
             // leave the node declaring no boundary and streaming bare '--' delimiters.
-            // The generated boundary is stripped too, since baseBoundary and
-            // boundaryPrefix are public and may have been written after construction.
-            const declared = _stripLineBreaks((structured.params as Record<string, string>).boundary || this.boundary || '');
-            this.boundary = (structured.params as Record<string, string>).boundary = declared || _stripLineBreaks(this._generateBoundary());
+            const declared = _stripBoundaryControls((structured.params as Record<string, string>).boundary || this.boundary || '');
+            this.boundary = (structured.params as Record<string, string>).boundary = declared || this._generateBoundary();
         } else {
             this.boundary = false;
         }
@@ -1536,7 +1539,9 @@ class MimeNode {
      * @internal
      */
     _generateBoundary(): string {
-        return this.rootNode.boundaryPrefix + '-' + this.rootNode.baseBoundary + '-Part_' + this._nodeId;
+        // baseBoundary and boundaryPrefix are public, so they may hold something the
+        // constructor never cleaned, and the -Part_ suffix keeps the result non empty
+        return _stripBoundaryControls(this.rootNode.boundaryPrefix + '-' + this.rootNode.baseBoundary) + '-Part_' + this._nodeId;
     }
 
     /**

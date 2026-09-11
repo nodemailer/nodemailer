@@ -508,25 +508,55 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
-        it('should fall back to a generated boundary when stripping leaves nothing', (t, done) => {
-            // boundary is a public field, so it can hold a value the constructor never saw.
-            // One made only of line breaks strips to '', and an empty boundary would be
-            // declared as a bare 'boundary=' and streamed as '--' delimiter lines
-            let mb: any = new MimeNode('multipart/mixed');
-            mb.boundary = '\r\n';
+        it('should drop control characters from boundary material', (t, done) => {
+            // a NUL must not be written into DATA at all per RFC 5321, and an MTA or a
+            // scanner that stops at one reads a different message than a client that does
+            // not, which is the same parser disagreement a split delimiter creates
+            let mb: any = new MimeNode('multipart/mixed', {
+                baseBoundary: 'A\u0000B\u000bC\u007fD',
+                boundaryPrefix: '--P\u0001X'
+            });
             mb.createChild('text/plain').setContent('Hello world!');
 
             mb.build((err: Error | null, msg: any) => {
                 assert.ok(!err);
                 msg = msg.toString();
-                assert.ok(mb.boundary, 'boundary must not be empty');
-                assert.ok(!/[\r\n]/.test(mb.boundary as string));
-                assert.ok(!/;\s*boundary=\s*(?:\r\n|$)/m.test(msg), 'must not declare an empty boundary');
-                assert.ok(msg.includes('\r\n--' + mb.boundary + '\r\n'));
-                assert.ok(msg.includes('\r\n--' + mb.boundary + '--\r\n'));
+                assert.strictEqual(mb.boundary, '--PX-ABCD-Part_1');
+                // CR, LF and TAB are the only control characters a message may carry
+                assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(msg), 'no control character may reach the wire');
+                assert.ok(msg.includes('boundary="--PX-ABCD-Part_1"'));
+                assert.ok(msg.includes('\r\n----PX-ABCD-Part_1\r\n'));
+                assert.ok(msg.includes('\r\n----PX-ABCD-Part_1--\r\n'));
                 done();
             });
         });
+
+        // boundary is a public field, so it can hold a value the constructor never saw. One
+        // that strips to '' would be declared as a bare 'boundary=' and streamed as '--'
+        // delimiter lines, so it has to fall through to a generated boundary instead. Both
+        // inputs are covered because line breaks and the other controls are stripped by the
+        // same pass and either alone would hide a regression in the other.
+        for (const [label, boundary] of [
+            ['line breaks', '\r\n'],
+            ['other control characters', '\u0000\u007f']
+        ] as [string, string][]) {
+            it(`should fall back to a generated boundary when a boundary of ${label} strips to nothing`, (t, done) => {
+                let mb: any = new MimeNode('multipart/mixed');
+                mb.boundary = boundary;
+                mb.createChild('text/plain').setContent('Hello world!');
+
+                mb.build((err: Error | null, msg: any) => {
+                    assert.ok(!err);
+                    msg = msg.toString();
+                    assert.ok(mb.boundary, 'boundary must not be empty');
+                    assert.ok(!/[\x00-\x1f\x7f]/.test(mb.boundary as string));
+                    assert.ok(!/;\s*boundary=\s*(?:\r\n|$)/m.test(msg), 'must not declare an empty boundary');
+                    assert.ok(msg.includes('\r\n--' + mb.boundary + '\r\n'));
+                    assert.ok(msg.includes('\r\n--' + mb.boundary + '--\r\n'));
+                    done();
+                });
+            });
+        }
 
         it('should strip line breaks from an explicit boundary parameter', (t, done) => {
             let mb = new MimeNode('multipart/mixed');

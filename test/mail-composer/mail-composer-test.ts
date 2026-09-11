@@ -299,7 +299,7 @@ describe('MailComposer unit tests', () => {
                 to: 'c@d.com',
                 text: 'plain body',
                 html: '<b>html body</b>',
-                baseBoundary: 'X\r\nX-Evil: injected\r\nX',
+                baseBoundary: 'X\r\nX-Evil: injected\r\nX\u0000',
                 boundaryPrefix: '--P\r\nX'
             } as any);
 
@@ -310,6 +310,7 @@ describe('MailComposer unit tests', () => {
 
                 assert.ok(!/[\r\n]/.test(boundary), 'boundary must stay on one line');
                 assert.ok(!/^X-Evil:/m.test(raw), 'no injected line may appear anywhere in the message');
+                assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(raw), 'no control character may reach the wire');
                 // whatever the boundary ended up being, the delimiters have to match it exactly
                 assert.ok(raw.includes('\r\n--' + boundary + '\r\n'), 'delimiter must match the declared boundary');
                 assert.ok(raw.includes('\r\n--' + boundary + '--\r\n'), 'closing delimiter must match the declared boundary');
