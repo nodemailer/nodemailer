@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [10.0.7](https://github.com/nodemailer/nodemailer/compare/v10.0.6...v10.0.7) (2026-09-11)
+
+
+### Bug Fixes
+
+* **mime-funcs:** do not double encode Buffer input when chunking base64 mime words ([#1865](https://github.com/nodemailer/nodemailer/issues/1865)) ([4327a59](https://github.com/nodemailer/nodemailer/commit/4327a59939748a7f9394b0a029495fd476f68f30))
+* **mime-node:** keep a boundary that is only line breaks from stripping to empty ([ec46800](https://github.com/nodemailer/nodemailer/commit/ec46800cdcab734d9aa79e1278e819962b3b8f09))
+* **mime-node:** strip line breaks from multipart boundary material ([#1867](https://github.com/nodemailer/nodemailer/issues/1867)) ([03c1a5c](https://github.com/nodemailer/nodemailer/commit/03c1a5c48b6828d9392983d8718fdb1fd583a06c))
+* **smtp-pool:** release rate-limited connections on close ([#1866](https://github.com/nodemailer/nodemailer/issues/1866)) ([7f5c7a4](https://github.com/nodemailer/nodemailer/commit/7f5c7a46b61da9f5c5feaffd921c55b9d5892ee5))
+
 ## [10.0.6](https://github.com/nodemailer/nodemailer/compare/v10.0.5...v10.0.6) (2026-09-11)
 
 
