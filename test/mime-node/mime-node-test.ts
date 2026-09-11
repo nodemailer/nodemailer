@@ -486,6 +486,44 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should strip line breaks from custom boundary material', (t, done) => {
+            // a line break in the boundary would split the delimiter lines, so the
+            // declared boundary could never match them again
+            let mb = new MimeNode('multipart/mixed', {
+                baseBoundary: 'te\r\nst',
+                boundaryPrefix: '--P\r\nX'
+            });
+
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.ok(!/[\r\n]/.test(mb.boundary as string), 'boundary must not hold a line break');
+                assert.strictEqual(mb.boundary, '--PX-test-Part_1');
+                assert.ok(msg.includes('boundary="--PX-test-Part_1"'));
+                assert.ok(msg.includes('\r\n----PX-test-Part_1\r\n'));
+                assert.ok(msg.includes('\r\n----PX-test-Part_1--\r\n'));
+                done();
+            });
+        });
+
+        it('should strip line breaks from an explicit boundary parameter', (t, done) => {
+            let mb = new MimeNode('multipart/mixed');
+            mb.setHeader('Content-Type', 'multipart/mixed; boundary="AA\r\nBB"');
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(mb.boundary, 'AABB');
+                assert.ok(/^Content-Type: multipart\/mixed; boundary=(?:"AABB"|AABB)$/m.test(msg));
+                assert.ok(msg.includes('\r\n--AABB\r\n'));
+                assert.ok(msg.includes('\r\n--AABB--\r\n'));
+                done();
+            });
+        });
+
         it('should not emit a blank line before the boundary when base64 body length is an exact multiple of lineLength (regression #1810)', (t, done) => {
             let mb = new MimeNode('multipart/mixed');
             // 114 bytes -> 152 base64 chars = 2 * 76. Before the fix, the

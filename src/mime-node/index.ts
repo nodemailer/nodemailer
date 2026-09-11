@@ -310,10 +310,12 @@ class MimeNode {
         options = options || {};
 
         /**
-         * shared part of the unique multipart boundary
+         * shared part of the unique multipart boundary. A line break here would split
+         * the delimiter lines the tree is streamed with, so the declared boundary could
+         * never match them again and the remainder would go out as body lines
          */
-        this.baseBoundary = options.baseBoundary || crypto.randomBytes(8).toString('hex');
-        this.boundaryPrefix = options.boundaryPrefix || '--_NmP';
+        this.baseBoundary = (options.baseBoundary || crypto.randomBytes(8).toString('hex')).replace(/\r|\n/g, '');
+        this.boundaryPrefix = (options.boundaryPrefix || '--_NmP').replace(/\r|\n/g, '');
 
         this.disableFileAccess = !!options.disableFileAccess;
         this.disableUrlAccess = !!options.disableUrlAccess;
@@ -1499,8 +1501,15 @@ class MimeNode {
         this.multipart = /^multipart\//i.test(this.contentType) ? this.contentType.substr(this.contentType.indexOf('/') + 1) : false;
 
         if (this.multipart) {
-            this.boundary = (structured.params as Record<string, string>).boundary =
-                (structured.params as Record<string, string>).boundary || this.boundary || this._generateBoundary();
+            // A line break in the boundary would split the delimiter lines the tree is
+            // streamed with, so the declared boundary could never match them again and
+            // the remainder would go out as body lines. Anything else is kept as is, it
+            // stays on one line and matches literally on both sides.
+            this.boundary = (structured.params as Record<string, string>).boundary = (
+                (structured.params as Record<string, string>).boundary ||
+                this.boundary ||
+                this._generateBoundary()
+            ).replace(/\r|\n/g, '');
         } else {
             this.boundary = false;
         }
