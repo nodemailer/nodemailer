@@ -409,7 +409,8 @@ class MailComposer {
                 } else if (icalEvent.href) {
                     icalEvent.content = {
                         href: icalEvent.href,
-                        httpHeaders: icalEvent.httpHeaders
+                        httpHeaders: icalEvent.httpHeaders,
+                        tls: icalEvent.tls
                     };
                     icalEvent.href = undefined;
                 }
@@ -532,7 +533,9 @@ class MailComposer {
                     };
                 } else if (alternative.href) {
                     data.content = {
-                        href: alternative.href
+                        href: alternative.href,
+                        httpHeaders: alternative.httpHeaders,
+                        tls: alternative.tls
                     };
                 } else {
                     data.content = alternative.content || '';
