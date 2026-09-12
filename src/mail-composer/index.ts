@@ -298,8 +298,10 @@ class MailComposer {
             if (attachment.filename) {
                 data.filename = attachment.filename;
             } else if (!isMessageNode && attachment.filename !== false) {
+                // a backslash separates as well, so a Windows path does not put the sender's directories in the headers
                 data.filename =
-                    ((attachment.path || attachment.href || '').split('/').pop() as string).split('?').shift() || 'attachment-' + (i + 1);
+                    ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() ||
+                    'attachment-' + (i + 1);
                 if (data.filename.indexOf('.') < 0) {
                     data.filename += '.' + mimeFuncs.detectExtension(data.contentType);
                 }

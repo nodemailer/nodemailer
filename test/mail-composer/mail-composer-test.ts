@@ -1405,6 +1405,31 @@ describe('MailComposer unit tests', () => {
             assert.strictEqual(compiler.mail.attachments![0].path, undefined);
         });
 
+        it('should derive the attachment filename from a Windows path', () => {
+            let compiler = new MailComposer({
+                attachments: [
+                    { path: 'C:\\Users\\alice\\docs\\report.pdf' },
+                    { path: 'C:\\Users\\alice/docs\\mixed.txt' },
+                    { path: '..\\..\\Users\\alice\\report.pdf' },
+                    { path: '\\\\server\\share\\docs\\report.pdf' },
+                    { path: 'C:\\Users\\alice\\' }
+                ]
+            });
+
+            let attachments = compiler.getAttachments(false);
+            assert.strictEqual(attachments.attached.length, 5);
+            // only the basename travels in the headers, never the sender-local path
+            assert.strictEqual(attachments.attached[0].filename, 'report.pdf');
+            assert.strictEqual(attachments.attached[0].contentType, 'application/pdf');
+            assert.strictEqual(attachments.attached[1].filename, 'mixed.txt');
+            // a relative or UNC path must not travel into the headers either
+            assert.strictEqual(attachments.attached[2].filename, 'report.pdf');
+            assert.strictEqual(attachments.attached[3].filename, 'report.pdf');
+            // a path that ends with a separator has no basename to use, so the generated name is used instead
+            // ('*' is what the extension detection gives for the octet-stream default)
+            assert.strictEqual(attachments.attached[4].filename, 'attachment-5.*');
+        });
+
         it('should keep the request headers and tls settings of an href attachment', () => {
             let compiler = new MailComposer({
                 attachments: [

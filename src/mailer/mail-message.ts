@@ -189,8 +189,9 @@ export default class MailMessage<T = SentMessageInfo> {
         if (this.data.attachments && this.data.attachments.length) {
             this.data.attachments.forEach((attachment, i) => {
                 if (!attachment.filename) {
+                    // a backslash separates as well, so a Windows path does not put the sender's directories in the headers
                     attachment.filename =
-                        ((attachment.path || attachment.href || '').split('/').pop() as string).split('?').shift() ||
+                        ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() ||
                         'attachment-' + (i + 1);
                     if (attachment.filename.indexOf('.') < 0) {
                         attachment.filename += '.' + mimeFuncs.detectExtension(attachment.contentType);

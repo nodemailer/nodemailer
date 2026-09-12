@@ -359,6 +359,29 @@ describe('MailMessage content handling', () => {
             });
         });
 
+        it('should derive the basename of a Windows path for the attachment filename', (t, done) => {
+            const message = new MailMessage(mailer, {
+                attachments: [
+                    // the content is used as it is, the path only names the file
+                    { path: 'C:\\Users\\alice\\docs\\report.pdf', content: 'inline' },
+                    { path: '..\\..\\Users\\alice\\report.pdf', content: 'inline' },
+                    { path: '\\\\server\\share\\docs\\report.pdf', content: 'inline' }
+                ]
+            });
+
+            message.resolveAll((err, data) => {
+                assert.ok(!err);
+                const attachments = data.attachments!;
+                assert.strictEqual(attachments[0].filename, 'report.pdf');
+                assert.strictEqual(attachments[0].contentType, 'application/pdf');
+                assert.strictEqual(attachments[0].content, 'inline');
+                // no directory part of the sender's file system reaches the message
+                assert.strictEqual(attachments[1].filename, 'report.pdf');
+                assert.strictEqual(attachments[2].filename, 'report.pdf');
+                done();
+            });
+        });
+
         it('should pass a content error on', (t, done) => {
             const message = new MailMessage(mailer, { html: { path: path.join(fixtures, 'does-not-exist.html') } });
 
