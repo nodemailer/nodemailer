@@ -161,6 +161,31 @@ function _isBoundary(text: string, at: number): boolean {
 }
 
 /**
+ * Offset of the first '@' in `text` between `from` and `to`, or -1 when the range holds none.
+ *
+ * indexOf would scan on to the end of the value, and the value here is a whole header. The
+ * walk below steps one whitespace delimited run at a time and only ever uses a '@' that sits
+ * inside the run it is on, so an unbounded probe rescans everything behind that run once per
+ * run and grows with the square of the header: 400KB of free text carrying no '@' took a
+ * quarter of a second. GHSA-v53p-9fqp-m79j took the pattern search out of this walk and left
+ * the probe unbounded behind it.
+ *
+ * @param text Text to look in
+ * @param from Offset to start at
+ * @param to Offset to stop before
+ * @return Offset of the '@', or -1
+ */
+function _indexOfAt(text: string, from: number, to: number): number {
+    for (let i = from; i < to; i++) {
+        if (text.charCodeAt(i) === 0x40) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/**
  * Finds the offset LOOSE_TEXT_ADDR matches at, or -1 when it does not match at all.
  *
  * Letting the pattern search for itself is quadratic: '[^@\s]+' is retried from every
@@ -193,8 +218,8 @@ function _looseAddressStart(text: string): number {
             runEnd++;
         }
 
-        let at = text.indexOf('@', runStart);
-        if (at >= 0 && at < runEnd) {
+        let at = _indexOfAt(text, runStart, runEnd);
+        if (at >= 0) {
             let lastBoundary = -1;
             for (let k = runEnd; k > runStart; k--) {
                 if (_isBoundary(text, k)) {
@@ -204,7 +229,7 @@ function _looseAddressStart(text: string): number {
             }
 
             let atomStart = runStart;
-            while (lastBoundary >= 0 && at >= 0 && at < runEnd) {
+            while (lastBoundary >= 0 && at >= 0) {
                 // '[^@\s]+' has to cover a character before the '@' and '[^\s]+' one after it,
                 // and the boundary that ends the match has to sit past both
                 if (at > atomStart && runEnd > at + 1 && lastBoundary > at + 1) {
@@ -224,7 +249,7 @@ function _looseAddressStart(text: string): number {
                     }
                 }
                 atomStart = at + 1;
-                at = text.indexOf('@', atomStart);
+                at = _indexOfAt(text, atomStart, runEnd);
             }
         }
 

@@ -1228,6 +1228,30 @@ describe('#addressparser', () => {
             });
         }
 
+        // Removing that search left the walk probing for the next '@' with indexOf, which
+        // scans on to the end of the header. The walk steps one whitespace delimited run at a
+        // time and only uses a '@' inside the run it is on, so every run rescanned everything
+        // behind it and free text made of many runs stayed quadratic: 2.5MB took ~12s of
+        // blocked event loop where the bounded probe takes ~90ms. The shapes above are single
+        // runs and never reached it.
+        for (const [label, build] of [
+            ['many runs and no at sign', (count: number) => ' [x]'.repeat(count)],
+            ['many runs before an address', (count: number) => ' [x]'.repeat(count) + ' a@b.com'],
+            ['many runs after an address', (count: number) => 'a@b.com' + ' [x]'.repeat(count)]
+        ] as [string, (count: number) => string][]) {
+            it(`should scan free text holding ${label} in linear time`, () => {
+                // ~2.5MB, where the unbounded probe took ~12s and the bounded one takes ~90ms
+                const count = 640000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `scanning a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+
         it('should still read an address out of free text', () => {
             assert.deepStrictEqual(addressparser('junk [x] a@b.com more'), [{ address: 'a@b.com', name: 'junk [x] more' }]);
             assert.deepStrictEqual(addressparser('   a@b.com   '), [{ address: 'a@b.com', name: '' }]);
