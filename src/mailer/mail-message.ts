@@ -190,7 +190,7 @@ export default class MailMessage<T = SentMessageInfo> {
             this.data.attachments.forEach((attachment, i) => {
                 if (!attachment.filename) {
                     attachment.filename =
-                        ((attachment.path || attachment.href || '').split('/').pop() as string).split('?').shift() ||
+                        ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() ||
                         'attachment-' + (i + 1);
                     if (attachment.filename.indexOf('.') < 0) {
                         attachment.filename += '.' + mimeFuncs.detectExtension(attachment.contentType);

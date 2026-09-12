@@ -1375,6 +1375,26 @@ describe('MailComposer unit tests', () => {
             assert.strictEqual(compiler.mail.attachments![0].path, undefined);
         });
 
+        it('should use the basename of a Windows path for the attachment filename', () => {
+            let compiler = new MailComposer({
+                attachments: [
+                    {
+                        path: 'C:\\Users\\alice\\docs\\report.pdf'
+                    },
+                    {
+                        path: 'C:\\Users\\alice/docs\\mixed.txt'
+                    }
+                ]
+            });
+
+            let attachments = compiler.getAttachments(false);
+            assert.strictEqual(attachments.attached.length, 2);
+            // only the basename travels in the headers, never the sender-local path
+            assert.strictEqual(attachments.attached[0].filename, 'report.pdf');
+            assert.strictEqual(attachments.attached[0].contentType, 'application/pdf');
+            assert.strictEqual(attachments.attached[1].filename, 'mixed.txt');
+        });
+
         it('should keep the request headers and tls settings of an href attachment', () => {
             let compiler = new MailComposer({
                 attachments: [
