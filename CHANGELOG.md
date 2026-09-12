@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.0.10](https://github.com/nodemailer/nodemailer/compare/v10.0.9...v10.0.10) (2026-09-12)
+
+
+### Bug Fixes
+
+* derive the attachment filename from the basename of a Windows path ([c7cc7ce](https://github.com/nodemailer/nodemailer/commit/c7cc7ce41a3602441747476a2a2c4a8ff466a83e))
+
 ## [10.0.9](https://github.com/nodemailer/nodemailer/compare/v10.0.8...v10.0.9) (2026-09-12)
 
 
