@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.9](https://github.com/nodemailer/nodemailer/compare/v10.0.8...v10.0.9) (2026-09-12)
+
+
+### Bug Fixes
+
+* **addressparser:** bound the '@' probe to the run being scanned ([1465c3f](https://github.com/nodemailer/nodemailer/commit/1465c3f5ff74a7c4fbbe9853bd01448bb92bf5b7))
+* **addressparser:** keep the text after a comment out of a quoted local part address ([2f36eb1](https://github.com/nodemailer/nodemailer/commit/2f36eb1aa1dd33e312411dc9b888548e14db54ee))
+
 ## [10.0.8](https://github.com/nodemailer/nodemailer/compare/v10.0.7...v10.0.8) (2026-09-11)
 
 
