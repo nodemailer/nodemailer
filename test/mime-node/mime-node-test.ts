@@ -2869,6 +2869,20 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
             assert.deepStrictEqual(mb.getEnvelope().to, ['user@good-corp.com']);
         });
+
+        it('should not let a quoted local part carry the text after a comment into the envelope', () => {
+            for (const [recipient, expected] of [
+                ['"user"@good-corp.com(x)evil.com', 'user@good-corp.com'],
+                ['"user name"@good-corp.com(x)evil.com', '"user name"@good-corp.com'],
+                ['"user@evil.com"@good-corp.com junk', '"user@evil.com"@good-corp.com'],
+                ['""@good-corp.com(x)evil.com', '""@good-corp.com']
+            ]) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, [expected], recipient);
+            }
+        });
     });
     describe('UTS-46 domain encoding', () => {
         // The bundled Punycode codec maps nothing, so an ignored or mapped code point

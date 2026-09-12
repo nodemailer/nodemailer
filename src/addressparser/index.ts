@@ -387,6 +387,21 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                     break;
             }
         } else if (token.value) {
+            // An empty quoted string is dropped by the tokenizer, leaving no text token of its
+            // own for textWasQuoted to be recorded on, so the pair of quote operators right in
+            // front of this token is all that is left of it and the run it opens carries the
+            // quoting instead. Without this '""@example.com' reads as the bare '@example.com',
+            // the quotes never go back on, and the value is no longer an addr-spec a trailing
+            // comment can be peeled off of. It only ever opens a run: a run that already holds
+            // material collected outside the quotes is not a quoted string, whatever follows it
+            const prevPrevToken = i > 1 ? tokens[i - 2] : null;
+            const opensAfterEmptyQuotedString =
+                prevToken?.type === 'operator' &&
+                prevToken.value === '"' &&
+                !!prevToken.noBreak &&
+                prevPrevToken?.type === 'operator' &&
+                prevPrevToken.value === '"';
+
             if (state === 'address') {
                 // Handle unquoted name that includes a "<".
                 // Apple Mail truncates everything between an unexpected < and an address.
@@ -416,7 +431,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 data[state].push(token.value);
                 lastChars[state] = token.value.charAt(token.value.length - 1);
                 if (state === 'text') {
-                    data.textWasQuoted.push(insideQuotes);
+                    data.textWasQuoted.push(insideQuotes || opensAfterEmptyQuotedString);
                 }
             }
         }
@@ -511,6 +526,19 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         data.text = data.text.join(' ');
         data.address = data.address.join(' ');
 
+        if (addressFromQuotedText && data.text) {
+            // The mailbox is still sitting in the text, so it moves over here and is quoted
+            // before the recovery below rather than after it. Anything else the text holds
+            // came along with it: a comment ends the domain but leaves the atoms behind it in
+            // the same text, and '"user"@example.com(x)evil.com' was handed on as the address
+            // 'user@example.com evil.com', a second domain riding into the envelope recipient
+            // on a value that is no addr-spec at all (GHSA-g57g-f23g-4646). Putting the quotes
+            // back first is what lets the recovery tell the whitespace an addr-spec may carry
+            // from the wreckage trailing one, as only a quoted local part may hold whitespace
+            data.address = _quoteLocalPart(data.text);
+            data.text = '';
+        }
+
         _recoverAddrSpec(data);
 
         const address: MailboxAddress = {
@@ -524,10 +552,6 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
             } else {
                 address.address = '';
             }
-        }
-
-        if (addressFromQuotedText && address.address) {
-            address.address = _quoteLocalPart(address.address);
         }
 
         addresses.push(address);

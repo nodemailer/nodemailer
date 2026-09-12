@@ -1328,4 +1328,120 @@ describe('#addressparser', () => {
             assert.deepStrictEqual(addressparser('(Bar) <foo@example.com>'), [{ address: 'foo@example.com', name: 'Bar' }]);
         });
     });
+
+    describe('Comments after a quoted local part', () => {
+        // A quoted local part reaches the address through the text rather than through the
+        // extraction above, as an address is never carved out of a quoted string. The whole
+        // text was handed on as the address, so the atoms a comment leaves behind it rode
+        // along: '"user"@good-corp.com(x)evil.com' delivered to the envelope recipient
+        // 'user@good-corp.com evil.com', a second attacker chosen domain inside a value that
+        // is no addr-spec at all (GHSA-g57g-f23g-4646).
+        it('should not carry the text after a comment into a quoted local part address', () => {
+            assert.deepStrictEqual(addressparser('"user"@good-corp.com(x)evil.com'), [{ address: 'user@good-corp.com', name: 'evil.com' }]);
+        });
+
+        it('should terminate the domain at the first comment however many follow', () => {
+            assert.deepStrictEqual(addressparser('"a"@b.com(c)d.com(e)f.com'), [{ address: 'a@b.com', name: 'd.com f.com' }]);
+        });
+
+        // The two readings of one malformed value must not diverge, or the quoted spelling
+        // becomes a way around whatever the unquoted one is checked against
+        it('should agree with the same value written without the quotes', () => {
+            for (const tail of [
+                '(x)evil.com',
+                '()evil.com',
+                '(x)(y)evil.com',
+                '(x)a(y)b',
+                '(x)evil.com(y)',
+                '(x)evil@evil.com',
+                ' junk here'
+            ]) {
+                assert.strictEqual(
+                    addressparser(`"user"@good-corp.com${tail}`)[0].address,
+                    addressparser(`user@good-corp.com${tail}`)[0].address,
+                    tail
+                );
+            }
+        });
+
+        it('should peel wreckage off a quoted local part that holds an @', () => {
+            assert.deepStrictEqual(addressparser('"user@evil.com"@good-corp.com junk'), [
+                { address: '"user@evil.com"@good-corp.com', name: 'junk' }
+            ]);
+        });
+
+        it('should peel wreckage off a quoted local part that holds whitespace', () => {
+            assert.deepStrictEqual(addressparser('"user name"@good-corp.com(x)evil.com'), [
+                { address: '"user name"@good-corp.com', name: 'evil.com' }
+            ]);
+        });
+
+        // An empty quoted string leaves no text token behind, so the run that continues it
+        // lost the record of the quoting and '""@good-corp.com(x)evil.com' came back as the
+        // bare '@good-corp.com evil.com'
+        it('should quote an empty local part back before peeling the comment off', () => {
+            assert.deepStrictEqual(addressparser('""@good-corp.com(x)evil.com'), [{ address: '""@good-corp.com', name: 'evil.com' }]);
+            assert.deepStrictEqual(addressparser('""@good-corp.com'), [{ address: '""@good-corp.com', name: '' }]);
+            assert.deepStrictEqual(addressparser('""""@good-corp.com'), [{ address: '""@good-corp.com', name: '' }]);
+        });
+
+        // The quoting an empty quoted string leaves behind belongs to the run it opens and to
+        // nothing else. Marking a run that had already collected text from outside the quotes
+        // would stop an address being read out of that text, and the domain would then be
+        // taken from the last '@' in the whole run rather than from the mailbox sitting in it
+        it('should not treat text collected before an empty quoted string as quoted', () => {
+            assert.deepStrictEqual(addressparser('a@b.com ""@good-corp.com evil@evil.com'), [
+                { address: 'a@b.com@good-corp.com', name: 'evil@evil.com' }
+            ]);
+            assert.strictEqual(addressparser('a""@example.com')[0].address, 'a@example.com');
+            assert.deepStrictEqual(addressparser('""x@[1.2.3.4] junk'), [{ address: 'x@[1.2.3.4]', name: 'junk' }]);
+        });
+
+        it('should leave a well formed quoted local part alone', () => {
+            for (const [input, expected] of [
+                // a local part that reads the same either way loses the quotes it does not need
+                ['"user"@example.com', 'user@example.com'],
+                ['"user name"@example.com', '"user name"@example.com'],
+                ['"user@evil.com"@good.com', '"user@evil.com"@good.com'],
+                ['"a@b@c"@example.com', '"a@b@c"@example.com'],
+                ['"evil@attacker.com more stuff"@legitimate.com', '"evil@attacker.com more stuff"@legitimate.com'],
+                ['"test\\"quote"@example.com', '"test\\"quote"@example.com']
+            ]) {
+                assert.deepStrictEqual(addressparser(input), [{ address: expected, name: '' }], input);
+            }
+        });
+
+        it('should not turn a quoted display name beside an address into wreckage', () => {
+            assert.deepStrictEqual(addressparser('"John Doe" user@example.com'), [{ address: 'user@example.com', name: 'John Doe' }]);
+            assert.deepStrictEqual(addressparser('"John Doe"'), [{ address: '', name: 'John Doe' }]);
+            assert.deepStrictEqual(addressparser('"John Doe" nothing'), [{ address: '', name: 'John Doe nothing' }]);
+        });
+
+        // Whitespace only reads as part of an addr-spec while it is inside a quoted local
+        // part. Anything else is two values in a row, and passing it on as one address puts
+        // a domain nobody named into the envelope. The sweep is over the quoted spellings,
+        // which is the class this branch covers: a value that never held a quoted string
+        // takes the extraction path above instead
+        it('should hand back no address holding unquoted whitespace for any quoted spelling', () => {
+            const wellFormed = /^"(?:[^"\\]|\\[\s\S])*"@\S*$/;
+            const leads = ['', '(c)', 'Name ', '"Name" '];
+            const locals = ['user', '"user"', '"user name"', '"a@b.com"', '"a@b.com c"', '"a\\"b"', '""'];
+            const tails = ['', '(x)evil.com', '(x)(y)evil.com', '(x)a(y)b', ' junk here', '(x)evil@evil.com', '(x)"evil"@evil.com', '(x)'];
+
+            for (const lead of leads) {
+                for (const local of locals) {
+                    for (const tail of tails) {
+                        const input = `${lead}${local}@good-corp.com${tail}`;
+                        for (const parsed of addressparser(input)) {
+                            const address = parsed.address || '';
+                            if (!address || !/\s/.test(address)) {
+                                continue;
+                            }
+                            assert.ok(wellFormed.test(address), `${input} gave ${address}`);
+                        }
+                    }
+                }
+            }
+        });
+    });
 });
