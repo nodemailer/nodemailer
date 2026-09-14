@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [10.0.10](https://github.com/nodemailer/nodemailer/compare/v10.0.9...v10.0.10) (2026-09-14)
+
+
+### Bug Fixes
+
+* derive the attachment filename from the basename of a Windows path ([c7cc7ce](https://github.com/nodemailer/nodemailer/commit/c7cc7ce41a3602441747476a2a2c4a8ff466a83e))
+* **dkim:** unfold folded header lines in linear time ([28a5909](https://github.com/nodemailer/nodemailer/commit/28a5909cec27646cb001dc7e97a8f5d26c973078))
+* **smtp-connection:** reassemble multiline replies in linear time ([f2d82fa](https://github.com/nodemailer/nodemailer/commit/f2d82fa84d47015a7bbb4253da61eeb778c658b1))
+
 ## [10.0.9](https://github.com/nodemailer/nodemailer/compare/v10.0.8...v10.0.9) (2026-09-12)
 
 
