@@ -1799,7 +1799,7 @@ class MimeNode {
     /**
      * If needed, mime encodes the name part
      *
-     * @param name Name part of an address
+     * @param value Name part of an address
      * @returns Mime word encoded string if needed
      * @internal
      */

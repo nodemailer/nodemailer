@@ -1129,7 +1129,7 @@ class SMTPConnection extends EventEmitter {
      *
      * @param envelope Envelope object, {from: addr, to: [addr]}
      * @param message String, Buffer or a Stream
-     * @param callback Callback to return once sending is completed
+     * @param done Callback to return once sending is completed
      */
     send(envelope: SMTPEnvelope, message: string | Buffer | Readable, done: SMTPConnectionSendCallback): void {
         if (!message) {

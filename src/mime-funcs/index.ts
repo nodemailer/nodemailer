@@ -73,6 +73,7 @@ export function quoteString(value?: string): string {
  * no need to encode the values in any way. If the value is plaintext but has
  * longer lines then allowed, then use format=flowed
  *
+ * @param str Multi line string to check
  * @param lineLength Max line length to check for
  * @returns Returns true if there is at least one line longer than lineLength chars
  */
@@ -258,9 +259,9 @@ export function buildHeaderValue(structured: StructuredHeaderValue): string {
  *     title*0*=utf-8''unicode
  *     title*1*=%20string
  *
+ * @param key Parameter name the generated keys are built from, for example title
  * @param data String to be encoded
  * @param [maxLength=50] Max length for generated chunks
- * @param [fromCharset='UTF-8'] Source sharacter set
  * @return A list of encoded keys and headers
  */
 export function buildHeaderParam(key: string, data: string | Buffer, maxLength?: number): EncodedHeaderParam[] {
