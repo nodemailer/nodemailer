@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import PoolResource from './pool-resource.js';
+import SMTPTransport from '../smtp-transport/index.js';
 import SMTPConnection, { type SMTPConnectionAuth } from '../smtp-connection/index.js';
 import wellKnown, { type WellKnownService } from '../well-known/index.js';
 import * as shared from '../shared/index.js';
@@ -105,6 +106,11 @@ class SMTPPool extends EventEmitter {
     /** @internal */
     _connectionCounter: number;
     idling: boolean;
+    /**
+     * One-shot sender for messages that carry their own auth, built on first use
+     * @internal
+     */
+    _directSender: SMTPTransport | undefined;
 
     /**
      * The Mail instance using this transport, assigned by Mail
@@ -195,6 +201,14 @@ class SMTPPool extends EventEmitter {
             return false;
         }
 
+        if (mail.data?.auth && Object.keys(mail.data.auth).length) {
+            // a pooled connection logs in once as the pool user and is shared by every
+            // message on it, so a message with its own auth can not ride one: hand it to
+            // a dedicated one-shot sender that honors the message auth like SMTPTransport
+            this._sendWithMessageAuth(mail, callback);
+            return true;
+        }
+
         this._queue.push({
             mail,
             requeueAttempts: 0,
@@ -208,6 +222,29 @@ class SMTPPool extends EventEmitter {
         setImmediate(() => this._processMessages());
 
         return true;
+    }
+
+    /**
+     * Sends a message that carries its own auth on a dedicated connection. The sender
+     * is built from the pool options, so the message auth merges over the pool auth
+     * the same way it does for the single-shot SMTP transport
+     * @internal
+     */
+    _sendWithMessageAuth(mail: MailMessage, callback: SMTPPoolSendCallback): void {
+        if (!this._directSender) {
+            this._directSender = new SMTPTransport(this.options);
+            this._directSender.on('error', err => this.emit('error', err));
+        }
+        const sender = this._directSender;
+
+        // forward the live proxy/mailer bindings the same way Mail hands them to the pool
+        const getSocket = this.getSocket;
+        if (typeof getSocket === 'function') {
+            sender.getSocket = (options, socketCallback) => getSocket(options, socketCallback);
+        }
+        sender.mailer = this.mailer as unknown as Mail<SMTPSentMessageInfo> | undefined;
+
+        sender.send(mail, callback);
     }
 
     /**

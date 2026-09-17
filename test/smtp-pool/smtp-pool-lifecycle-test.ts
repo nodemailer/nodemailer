@@ -560,6 +560,63 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             }
         });
 
+        it('sends a message with its own auth as that user instead of the pool user', async () => {
+            const authed = new Map<string, string>();
+            const delivered: Array<{ user: string | undefined; body: string }> = [];
+            const ts = await startServer({
+                onAuth(auth: any, session: any, done: any) {
+                    if (
+                        (auth.username === 'pooluser' && auth.password === 'poolpass') ||
+                        (auth.username === 'msguser' && auth.password === 'msgpass')
+                    ) {
+                        authed.set(session.id, auth.username);
+                        return done(null, { user: 123 });
+                    }
+                    return done(new Error('Invalid username or password'));
+                },
+                onData(stream: any, session: any, done: any) {
+                    let body = '';
+                    stream.on('data', (chunk: Buffer) => {
+                        body += chunk.toString();
+                    });
+                    stream.on('end', () => {
+                        delivered.push({ user: authed.get(session.id), body });
+                        done();
+                    });
+                }
+            });
+            const pool = new SMTPPool({
+                host: '127.0.0.1',
+                port: ts.port,
+                maxConnections: 2,
+                auth: { user: 'pooluser', pass: 'poolpass' },
+                logger: false
+            });
+
+            try {
+                const outcomes = await Promise.all([
+                    settle(pool, mockMail(envelope, { auth: { user: 'msguser', pass: 'msgpass' } }, 'per-message body')),
+                    settle(pool, mockMail(envelope, {}, 'pool-auth body'))
+                ]);
+                outcomes.forEach(outcome => assert.ifError(outcome.err));
+
+                // each message went out under its own identity
+                const byBody = new Map(delivered.map(entry => [entry.body.trim(), entry.user]));
+                assert.strictEqual(byBody.get('per-message body'), 'msguser');
+                assert.strictEqual(byBody.get('pool-auth body'), 'pooluser');
+
+                // a bad message auth fails that message without poisoning the pool
+                const bad = await settle(pool, mockMail(envelope, { auth: { user: 'msguser', pass: 'wrong' } }, 'bad-auth body'));
+                assert.ok(bad.err);
+                assert.strictEqual(bad.err.code, 'EAUTH');
+                const after = await settle(pool, mockMail(envelope, {}, 'pool-auth body'));
+                assert.ifError(after.err);
+            } finally {
+                pool.close();
+                await ts.close();
+            }
+        });
+
         it('sends REQUIRETLS when the message asks for it', async () => {
             let requireTLS: unknown;
             const ts = await startServer({
