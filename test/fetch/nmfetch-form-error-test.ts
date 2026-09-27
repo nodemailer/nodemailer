@@ -9,7 +9,8 @@ describe('nmfetch form body errors', () => {
         assert.ok(res, 'the stream is handed back');
         res.on('error', err => {
             assert.strictEqual((err as NodeJS.ErrnoException).code, 'EFETCH');
-            assert.ok(/URI/.test(err.message));
+            // the message of the URIError differs between runtimes, the name does not
+            assert.strictEqual(err.name, 'URIError');
             done();
         });
     });
