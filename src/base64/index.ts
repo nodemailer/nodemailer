@@ -23,7 +23,8 @@ export function encode(buffer: Buffer | string): string {
  */
 export function wrap(str: string, lineLength?: number | false): string {
     str = (str || '').toString();
-    lineLength = lineLength || 76;
+    // a negative length would step backwards through the input and never finish
+    lineLength = Math.max(Number(lineLength) || 76, 1);
 
     if (str.length <= lineLength) {
         return str;

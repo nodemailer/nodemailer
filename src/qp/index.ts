@@ -6,6 +6,9 @@ import { Transform, type TransformCallback } from 'node:stream';
  * @param buffer Buffer to convert
  * @returns Quoted-Printable encoded string
  */
+// the shortest line wrap() can make progress with: a complete =XX sequence and the soft break
+const MIN_LINE_LENGTH = 4;
+
 // usable characters that do not need encoding
 // https://tools.ietf.org/html/rfc2045#section-6.7
 const QP_RANGES = [
@@ -49,7 +52,9 @@ export function encode(buffer: Buffer | string): string {
  */
 export function wrap(str: string, lineLength?: number): string {
     str = (str || '').toString();
-    lineLength = lineLength || 76;
+    // a line has to hold a complete =XX sequence plus the soft break, shorter lengths
+    // (or a negative one) would loop without consuming input
+    lineLength = Math.max(Number(lineLength) || 76, MIN_LINE_LENGTH);
 
     if (str.length <= lineLength) {
         return str;
@@ -112,6 +117,12 @@ export function wrap(str: string, lineLength?: number): string {
                     break;
                 }
             }
+        }
+
+        if (!line.length) {
+            // the trimming above emptied the line, which only happens for an incomplete
+            // escape at the very end of the input. Take it as is rather than loop on it
+            line = str.substr(pos, lineLength);
         }
 
         if (pos + line.length < len && line.substr(-1) !== '\n') {
