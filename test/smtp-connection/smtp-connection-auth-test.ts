@@ -13,6 +13,7 @@ import SMTPConnection, {
 } from '../../src/smtp-connection/index.js';
 import type { NodemailerError } from '../../src/errors.js';
 import { SMTPServer } from 'smtp-server';
+import nodemailer from '../../src/nodemailer.js';
 import { startRawServer, finishRawServer, createClient } from './raw-smtp-server.js';
 
 interface SeenAuth {
@@ -603,6 +604,98 @@ describe('SMTP-Connection authentication', () => {
                 client.on('end', () => {
                     finishRawServer(server, done, () => {
                         assert.deepStrictEqual(results, [null]);
+                        assert.strictEqual(client.authenticated, true);
+                    });
+                });
+            });
+        });
+    });
+});
+
+const XOAUTH2_ONLY = '250-test\r\n250-AUTH XOAUTH2\r\n250 8BITMIME\r\n';
+
+describe('SASL method selection', () => {
+    it('reports EAUTH instead of throwing when the server offers only XOAUTH2 and no token generator is set', (t, done) => {
+        startRawServer({ EHLO: XOAUTH2_ONLY, AUTH: '535 5.7.8 Authentication failed\r\n' }, server => {
+            const client = createClient(server);
+            client.on('error', () => false);
+            client.connect(() => {
+                client.login({ user: 'user', pass: 'pass' }, err => {
+                    client.close();
+                    finishRawServer(server, done, () => {
+                        assert.ok(err);
+                        assert.strictEqual(err!.code, 'EAUTH');
+                        // the password login was attempted, the server just refused it
+                        assert.ok(server.commands.some(command => /^AUTH PLAIN/i.test(command)));
+                    });
+                });
+            });
+        });
+    });
+
+    it('hands the transport callback an EAUTH error for a password login against an XOAUTH2 only server', (t, done) => {
+        startRawServer({ EHLO: XOAUTH2_ONLY, AUTH: '535 5.7.8 Authentication failed\r\n' }, server => {
+            const transporter = nodemailer.createTransport({
+                host: '127.0.0.1',
+                port: server.port,
+                ignoreTLS: true,
+                logger: false,
+                auth: { user: 'user', pass: 'pass' }
+            });
+            transporter.sendMail({ from: 'sender@example.com', to: 'recipient@example.com', text: 'hello' }, err => {
+                transporter.close();
+                finishRawServer(server, done, () => {
+                    assert.ok(err);
+                    assert.strictEqual(err!.code, 'EAUTH');
+                });
+            });
+        });
+    });
+
+    it('still selects XOAUTH2 for a custom XOAUTH2 handler and fills in the credentials', (t, done) => {
+        startRawServer({ EHLO: XOAUTH2_ONLY }, server => {
+            let seen: { method: string; credentials: unknown } | undefined;
+            const client = createClient(server, {
+                customAuth: {
+                    XOAUTH2: ctx => {
+                        seen = { method: ctx.method, credentials: ctx.auth.credentials };
+                        ctx.resolve();
+                    }
+                }
+            });
+            client.connect(() => {
+                client.login({ user: 'user', pass: 'pass' }, err => {
+                    client.close();
+                    finishRawServer(server, done, () => {
+                        assert.ifError(err);
+                        assert.deepStrictEqual(seen, {
+                            method: 'XOAUTH2',
+                            credentials: { user: 'user', pass: 'pass', options: undefined }
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('resolves the sendCommand promise of a custom handler with the parsed reply', (t, done) => {
+        startRawServer({ EHLO: '250-test\r\n250 AUTH X-TOKEN\r\n', AUTH: '334 dG9rZW4=\r\n', DEFAULT: '235 2.7.0 OK\r\n' }, server => {
+            const client = createClient(server, {
+                customAuth: {
+                    'X-TOKEN': async ctx => {
+                        const challenge = await ctx.sendCommand('AUTH X-TOKEN');
+                        assert.strictEqual(challenge.status, 334);
+                        assert.strictEqual(challenge.text, 'dG9rZW4=');
+                        const result = await ctx.sendCommand(Buffer.from(ctx.auth.credentials.pass).toString('base64'));
+                        assert.strictEqual(result.status, 235);
+                    }
+                }
+            });
+            client.connect(() => {
+                client.login({ user: 'user', pass: 'secret', method: 'X-TOKEN' }, err => {
+                    client.close();
+                    finishRawServer(server, done, () => {
+                        assert.ifError(err);
                         assert.strictEqual(client.authenticated, true);
                     });
                 });

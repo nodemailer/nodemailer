@@ -1003,14 +1003,24 @@ class SMTPConnection extends EventEmitter {
         // Select SASL authentication method
         this._authMethod = (this._auth.method || '').toString().trim().toUpperCase() || false;
 
+        // XOAUTH2 needs a token generator or a custom handler, without either the method
+        // can not be run even when it is the only one the server advertised
+        const canUseXOAuth2 = !!this._auth.oauth2 || this.customAuth.has('XOAUTH2');
+
         if (!this._authMethod && this._auth.oauth2 && !this._auth.credentials) {
             this._authMethod = 'XOAUTH2';
         } else if (!this._authMethod || (this._authMethod === 'XOAUTH2' && !this._auth.oauth2)) {
-            // use first supported
-            this._authMethod = (this._supportedAuth[0] || 'PLAIN').toUpperCase().trim();
+            // use the first supported method that can be run
+            const supported = this._supportedAuth.find(method => method !== 'XOAUTH2' || canUseXOAuth2);
+            this._authMethod = (supported || 'PLAIN').toUpperCase().trim();
         }
 
-        if (this._authMethod !== 'XOAUTH2' && (!this._auth.credentials || !this._auth.credentials.user || !this._auth.credentials.pass)) {
+        // a token login needs no credentials, every other method and every custom handler
+        // gets them filled in from the user and pass values
+        if (
+            (this._authMethod !== 'XOAUTH2' || this.customAuth.has('XOAUTH2')) &&
+            (!this._auth.credentials || !this._auth.credentials.user || !this._auth.credentials.pass)
+        ) {
             if ((this._auth.user && this._auth.pass) || this.customAuth.has(this._authMethod)) {
                 this._auth.credentials = {
                     user: this._auth.user,
