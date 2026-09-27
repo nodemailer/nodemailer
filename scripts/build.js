@@ -79,20 +79,27 @@ function listFiles(dir, ext) {
         .map(name => path.join(dir, name));
 }
 
-// Modules that deliberately combine a default export with named runtime exports.
-// Every other module with a default export must have no other runtime export so
-// that `require()` can return the default export itself, see applyCjsInterop.
-const MIXED_EXPORT_MODULES = new Set(['nodemailer.js']);
+// The entry point is the one module that combines a default export with named
+// runtime exports. It keeps its named exports, and its default export is made to
+// be the exports object itself. Before the TypeScript build `require('nodemailer')`
+// had no default export, so `import nodemailer from 'nodemailer'` in a CommonJS
+// compiled consumer resolved to the exports object, and a test double installed
+// through either import style was seen by the other. Pointing `default` at the
+// exports object keeps that. The alias is non-enumerable so that the enumerable
+// keys of the module are the three functions, as before.
+const ENTRY_POINT_MODULE = 'nodemailer.js';
+const ENTRY_POINT_SHIM =
+    "Object.defineProperty(exports, 'default', { value: exports, enumerable: false, writable: true, configurable: true });\n";
 
 // tsc emits `exports.default = X` for `export default X`. For modules whose only
 // runtime export is the default one, make `require()` return X directly. The
 // default export stays reachable as a non-enumerable `.default` property, which
 // is what TypeScript and Babel generated `import X from '...'` code reads.
 //
-// A module that has a default export and named runtime exports can not get this
-// treatment, so the build fails for one unless it is listed in
-// MIXED_EXPORT_MODULES: silently switching `require()` from the class to the
-// exports object would break `require('nodemailer/lib/...')` callers.
+// Any other module that has a default export and named runtime exports can not
+// get this treatment, so the build fails for one: silently switching `require()`
+// from the class to the exports object would break `require('nodemailer/lib/...')`
+// callers.
 function applyCjsInterop(dir) {
     const namedExport = /\bexports\.(?!default\b)[A-Za-z_$][\w$]*\s*=/;
     const definedExport = /Object\.defineProperty\(exports,\s*"(?!__esModule")/;
@@ -105,24 +112,29 @@ function applyCjsInterop(dir) {
             continue;
         }
         const name = path.relative(dir, file);
+        if (name === ENTRY_POINT_MODULE) {
+            writePatched(file, source, ENTRY_POINT_SHIM);
+            continue;
+        }
         if (namedExport.test(source) || definedExport.test(source) || starExport.test(source)) {
-            if (MIXED_EXPORT_MODULES.has(name)) {
-                continue;
-            }
             throw new Error(
                 name +
                     ' has a default export and named runtime exports. Keep default-export modules default-only ' +
-                    '(attach extra values as properties of the exported function or class), or list the file in ' +
-                    'MIXED_EXPORT_MODULES in scripts/build.js'
+                    '(attach extra values as properties of the exported function or class)'
             );
         }
         const shim =
             'module.exports = exports.default;\n' +
             "Object.defineProperty(module.exports, 'default', { value: exports.default, enumerable: false, writable: true, configurable: true });\n";
-        const mapComment = source.lastIndexOf('//# sourceMappingURL=');
-        const patched = mapComment === -1 ? source + shim : source.slice(0, mapComment) + shim + source.slice(mapComment);
-        fs.writeFileSync(file, patched);
+        writePatched(file, source, shim);
     }
+}
+
+// Appends a shim to a compiled module, ahead of the source map comment if there is one
+function writePatched(file, source, shim) {
+    const mapComment = source.lastIndexOf('//# sourceMappingURL=');
+    const patched = mapComment === -1 ? source + shim : source.slice(0, mapComment) + shim + source.slice(mapComment);
+    fs.writeFileSync(file, patched);
 }
 
 function build() {

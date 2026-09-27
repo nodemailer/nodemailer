@@ -9,6 +9,9 @@
             "lib/well-known/services.json": [
                 "dist/well-known/services.json"
             ],
+            "lib/well-known/services": [
+                "dist/well-known/services.json"
+            ],
             "lib/*": [
                 "dist/cjs/*/index.d.ts",
                 "dist/cjs/*.d.ts"
@@ -97,6 +100,7 @@
             "require": "./dist/cjs/well-known/index.js"
         },
         "./lib/well-known/services.json": "./dist/well-known/services.json",
+        "./lib/well-known/services": "./dist/well-known/services.json",
         "./lib/xoauth2": {
             "import": "./dist/esm/xoauth2/index.js",
             "require": "./dist/cjs/xoauth2/index.js"

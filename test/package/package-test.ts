@@ -133,6 +133,30 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
         it('serves the well-known services JSON through its historical path', () => {
             const services = require(subpath('well-known/services.json'));
             assert.deepStrictEqual(services, JSON.parse(fs.readFileSync(path.join(root, 'src', 'well-known', 'services.json'), 'utf8')));
+            // the extension was optional before the exports map
+            assert.deepStrictEqual(require(subpath('well-known/services')), services);
+        });
+
+        it('keeps the entry point shape of the pre-TypeScript build', () => {
+            const nodemailer = require(packageName);
+            // the three functions are the enumerable keys, the default alias is the module itself
+            assert.deepStrictEqual(Object.keys(nodemailer).sort(), ['createTestAccount', 'createTransport', 'getTestMessageUrl']);
+            assert.strictEqual(nodemailer.default, nodemailer);
+        });
+
+        it('lets a test double installed through the default export reach a named import', () => {
+            // what a TypeScript or Babel compiled `import nodemailer from 'nodemailer'` reads
+            const importDefault = (mod: any) => (mod && mod.__esModule ? mod : { default: mod });
+            const nodemailer = require(packageName);
+            const viaDefault = importDefault(nodemailer).default;
+            const original = nodemailer.createTransport;
+            viaDefault.createTransport = () => 'stubbed';
+            try {
+                assert.strictEqual(nodemailer.createTransport(), 'stubbed');
+            } finally {
+                viaDefault.createTransport = original;
+            }
+            assert.strictEqual(nodemailer.createTransport, original);
         });
 
         it('keeps deep imports of utility modules returning their functions', () => {
