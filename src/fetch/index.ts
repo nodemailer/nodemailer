@@ -214,14 +214,14 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                             .join('&')
                     );
                 } catch (E: any) {
-                    if (finished) {
-                        return undefined as never;
-                    }
+                    // the caller attaches its error listener once nmfetch has returned, so
+                    // the error is emitted on the next tick and the stream is handed back
+                    // the way every other failure is reported
                     finished = true;
                     E.code = errors.EFETCH;
                     E.sourceUrl = url;
-                    fetchRes.emit('error', E);
-                    return undefined as never;
+                    setImmediate(() => fetchRes.emit('error', E));
+                    return fetchRes;
                 }
             } else {
                 body = Buffer.from(options.body.toString().trim());
