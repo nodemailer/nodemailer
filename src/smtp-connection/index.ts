@@ -7,8 +7,9 @@ import crypto from 'node:crypto';
 import DataStream from './data-stream.js';
 import { PassThrough, type Readable } from 'node:stream';
 import * as shared from '../shared/index.js';
-import type { NodemailerError } from '../errors.js';
+import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
 import type XOAuth2 from '../xoauth2/index.js';
+import type { XOAuth2Options } from '../xoauth2/index.js';
 
 // default timeout values in ms
 const CONNECTION_TIMEOUT = 2 * 60 * 1000; // how much to wait for the connection to be established
@@ -134,11 +135,20 @@ export interface SMTPConnectionCustomAuthResponse {
 export type SMTPConnectionCustomAuthCommandCallback = (err: Error | null, data: SMTPConnectionCustomAuthResponse) => void;
 
 /**
+ * The auth object as a custom authentication handler sees it: the object handed to login()
+ * with the credentials filled in from its user and pass values
+ */
+export interface SMTPConnectionCustomAuthData extends SMTPConnectionAuth {
+    /** The user and pass values of the auth object, the way @types/nodemailer declared them */
+    credentials: SMTPConnectionCredentials & { user: string; pass: string };
+}
+
+/**
  * The object a custom authentication handler is run with
  */
 export interface SMTPConnectionCustomAuthContext {
-    /** The auth object handed to login() */
-    auth: SMTPConnectionAuth;
+    /** The auth object handed to login(), with the credentials filled in */
+    auth: SMTPConnectionCustomAuthData;
     /** Selected authentication method name */
     method: string;
     /** SMTP extensions the server advertised */
@@ -147,8 +157,10 @@ export interface SMTPConnectionCustomAuthContext {
     authMethods: string[];
     /** Maximum message size the server accepts, false when not advertised */
     maxAllowedSize: number | false;
-    /** Sends a command to the server. Returns a promise when no callback is given */
-    sendCommand(cmd: string, done?: SMTPConnectionCustomAuthCommandCallback): Promise<SMTPConnectionCustomAuthResponse> | undefined;
+    /** Sends a command to the server and resolves with the parsed reply */
+    sendCommand(cmd: string): Promise<SMTPConnectionCustomAuthResponse>;
+    /** Sends a command to the server and hands the parsed reply to the callback */
+    sendCommand(cmd: string, done: SMTPConnectionCustomAuthCommandCallback): void;
     /** Marks the user as authenticated */
     resolve(): void;
     /** Fails the authentication with an error */
@@ -156,9 +168,10 @@ export interface SMTPConnectionCustomAuthContext {
 }
 
 /**
- * A custom authentication handler. Calls resolve() or reject() on the context, or returns a promise
+ * A custom authentication handler. Calls resolve() or reject() on the context, or returns a
+ * promise that settles the authentication. Any other return value is ignored
  */
-export type SMTPConnectionCustomAuthHandler = (ctx: SMTPConnectionCustomAuthContext) => void | Promise<unknown>;
+export type SMTPConnectionCustomAuthHandler = (ctx: SMTPConnectionCustomAuthContext) => unknown;
 
 /**
  * An envelope address, either a plain string or an object with an address property
@@ -189,11 +202,16 @@ export interface SMTPEnvelopeDsn {
 }
 
 /**
+ * A single DSN notify value
+ */
+export type SMTPEnvelopeDsnNotify = 'NEVER' | 'SUCCESS' | 'FAILURE' | 'DELAY';
+
+/**
  * Envelope object accepted by send()
  */
 export interface SMTPEnvelope {
-    /** Sender address */
-    from?: string | SMTPEnvelopeAddress | undefined;
+    /** Sender address, false for the null sender of a bounce message (MAIL FROM:<>) */
+    from?: string | SMTPEnvelopeAddress | false | undefined;
     /** Recipient address or addresses */
     to?: string | SMTPEnvelopeAddress | Array<string | SMTPEnvelopeAddress> | undefined;
     /** Message size in bytes, sent as the SIZE parameter when the server supports it */
@@ -224,9 +242,9 @@ export interface SMTPConnectionEnvelope extends SMTPEnvelope {
 }
 
 /**
- * Result of a sent message
+ * The recipient bookkeeping of a sent message, known once the envelope is accepted
  */
-export interface SMTPConnectionSendInfo {
+export interface SMTPConnectionEnvelopeInfo {
     /** Recipients the server accepted */
     accepted: string[];
     /** Recipients the server rejected */
@@ -235,20 +253,33 @@ export interface SMTPConnectionSendInfo {
     ehlo?: string[] | undefined;
     /** Errors for the rejected recipients */
     rejectedErrors?: NodemailerError[] | undefined;
-    /** Time in ms spent on the envelope commands */
-    envelopeTime?: number | undefined;
-    /** Time in ms spent on streaming the message */
-    messageTime?: number | undefined;
-    /** Size of the encoded message in bytes */
-    messageSize?: number | undefined;
-    /** Final server response for the message */
-    response?: string | undefined;
 }
 
 /**
- * Callback for send()
+ * Result of a sent message
  */
-export type SMTPConnectionSendCallback = (err: NodemailerError | null, info?: SMTPConnectionSendInfo) => void;
+export interface SMTPConnectionSendInfo extends SMTPConnectionEnvelopeInfo {
+    /** Time in ms spent on the envelope commands */
+    envelopeTime: number;
+    /** Time in ms spent on streaming the message */
+    messageTime: number;
+    /** Size of the encoded message in bytes */
+    messageSize: number;
+    /** Final server response for the message */
+    response: string;
+}
+
+/**
+ * Callback for send(), receives the result once the server accepted the message. The error
+ * path hands over the error alone
+ */
+export type SMTPConnectionSendCallback = Callback<SMTPConnectionSendInfo>;
+
+/**
+ * Callback for the envelope commands, receives the recipient bookkeeping once the server
+ * accepted the DATA command @internal
+ */
+export type SMTPConnectionEnvelopeCallback = ResultCallback<SMTPConnectionEnvelopeInfo>;
 
 /**
  * Callback for login() and reset(), the result is true on success
@@ -359,7 +390,7 @@ function isPartialLine(line: string): boolean {
  */
 class SMTPConnection extends EventEmitter {
     id: string;
-    stage: string;
+    stage: 'init' | 'connected';
     options: SMTPConnectionOptions;
     secureConnection: boolean;
     alreadySecured: boolean;
@@ -1023,51 +1054,58 @@ class SMTPConnection extends EventEmitter {
                 callback(this._formatError(err, 'EAUTH', lastResponse, 'AUTH ' + this._authMethod));
             };
 
+            // one implementation serves both sendCommand overloads, the promise is returned
+            // exactly when no callback was given
+            const sendCommand = (
+                cmd: string,
+                done?: SMTPConnectionCustomAuthCommandCallback
+            ): Promise<SMTPConnectionCustomAuthResponse> | undefined => {
+                let promise: Promise<SMTPConnectionCustomAuthResponse> | undefined;
+
+                if (!done) {
+                    promise = new Promise((resolve, reject) => {
+                        done = shared.callbackPromise(resolve, reject);
+                    });
+                }
+
+                this._responseActions.push(str => {
+                    lastResponse = str;
+
+                    let codes = str.match(/^(\d+)(?:\s(\d+\.\d+\.\d+))?\s/);
+                    let data = {
+                        command: cmd,
+                        response: str
+                    } as SMTPConnectionCustomAuthResponse;
+                    if (codes) {
+                        data.status = Number(codes[1]) || 0;
+                        if (codes[2]) {
+                            data.code = codes[2];
+                        }
+                        data.text = str.substr(codes[0].length);
+                    } else {
+                        data.text = str;
+                        data.status = 0; // just in case we need to perform numeric comparisons
+                    }
+                    (done as SMTPConnectionCustomAuthCommandCallback)(null, data);
+                });
+                setImmediate(() => this._sendCommand(cmd));
+
+                return promise;
+            };
+
             const handlerResponse = handler({
-                auth: this._auth,
+                auth: this._auth as SMTPConnectionCustomAuthData,
                 method: this._authMethod,
 
                 extensions: ([] as string[]).concat(this._supportedExtensions),
                 authMethods: ([] as string[]).concat(this._supportedAuth),
                 maxAllowedSize: this._maxAllowedSize || false,
 
-                sendCommand: (cmd, done) => {
-                    let promise: Promise<SMTPConnectionCustomAuthResponse> | undefined;
-
-                    if (!done) {
-                        promise = new Promise((resolve, reject) => {
-                            done = shared.callbackPromise(resolve, reject);
-                        });
-                    }
-
-                    this._responseActions.push(str => {
-                        lastResponse = str;
-
-                        let codes = str.match(/^(\d+)(?:\s(\d+\.\d+\.\d+))?\s/);
-                        let data = {
-                            command: cmd,
-                            response: str
-                        } as SMTPConnectionCustomAuthResponse;
-                        if (codes) {
-                            data.status = Number(codes[1]) || 0;
-                            if (codes[2]) {
-                                data.code = codes[2];
-                            }
-                            data.text = str.substr(codes[0].length);
-                        } else {
-                            data.text = str;
-                            data.status = 0; // just in case we need to perform numeric comparisons
-                        }
-                        (done as SMTPConnectionCustomAuthCommandCallback)(null, data);
-                    });
-                    setImmediate(() => this._sendCommand(cmd));
-
-                    return promise;
-                },
+                sendCommand: sendCommand as SMTPConnectionCustomAuthContext['sendCommand'],
 
                 resolve,
                 reject
-            });
+            }) as Promise<unknown> | undefined;
 
             if (handlerResponse && typeof handlerResponse.catch === 'function') {
                 // a promise was returned
@@ -1132,33 +1170,34 @@ class SMTPConnection extends EventEmitter {
      * @param callback Callback to return once sending is completed
      */
     send(envelope: SMTPEnvelope, message: string | Buffer | Readable, done: SMTPConnectionSendCallback): void {
-        if (!message) {
-            return done(this._formatError('Empty message', 'EMESSAGE', false, 'API'));
-        }
-
-        const isDestroyedMessage = this._isDestroyedMessage('send message');
-        if (isDestroyedMessage) {
-            return done(this._formatError(isDestroyedMessage, 'ECONNECTION', false, 'API'));
-        }
-
-        // reject larger messages than allowed
-        if (this._maxAllowedSize && (envelope.size as number) > this._maxAllowedSize) {
-            setImmediate(() => {
-                done(this._formatError('Message size larger than allowed ' + this._maxAllowedSize, 'EMESSAGE', false, 'MAIL FROM'));
-            });
-            return;
-        }
-
-        // ensure that callback is only called once
+        // ensure that the callback is only called once. The public callback type has a
+        // required result, the error paths hand over the error alone
         let returned = false;
-        const callback = function (...args: Parameters<SMTPConnectionSendCallback>) {
+        const callback: ResultCallback<SMTPConnectionSendInfo> = (err, info) => {
             if (returned) {
                 return;
             }
             returned = true;
 
-            done(...args);
+            (done as ResultCallback<SMTPConnectionSendInfo>)(err, info);
         };
+
+        if (!message) {
+            return callback(this._formatError('Empty message', 'EMESSAGE', false, 'API'));
+        }
+
+        const isDestroyedMessage = this._isDestroyedMessage('send message');
+        if (isDestroyedMessage) {
+            return callback(this._formatError(isDestroyedMessage, 'ECONNECTION', false, 'API'));
+        }
+
+        // reject larger messages than allowed
+        if (this._maxAllowedSize && (envelope.size as number) > this._maxAllowedSize) {
+            setImmediate(() => {
+                callback(this._formatError('Message size larger than allowed ' + this._maxAllowedSize, 'EMESSAGE', false, 'MAIL FROM'));
+            });
+            return;
+        }
 
         if (typeof (message as Readable).on === 'function') {
             (message as Readable).on('error', err => callback(this._formatError(err, 'ESTREAM', false, 'API')));
@@ -1184,12 +1223,14 @@ class SMTPConnection extends EventEmitter {
                     return callback(err);
                 }
 
-                (info as SMTPConnectionSendInfo).envelopeTime = envelopeTime - startTime;
-                (info as SMTPConnectionSendInfo).messageTime = Date.now() - envelopeTime;
-                (info as SMTPConnectionSendInfo).messageSize = stream.outByteCount;
-                (info as SMTPConnectionSendInfo).response = str;
+                // the envelope info becomes the send result once the timings are on it
+                const result = info as SMTPConnectionSendInfo;
+                result.envelopeTime = envelopeTime - startTime;
+                result.messageTime = Date.now() - envelopeTime;
+                result.messageSize = stream.outByteCount;
+                result.response = str as string;
 
-                return callback(null, info);
+                return callback(null, result);
             });
             if (typeof (message as Readable).pipe === 'function') {
                 (message as Readable).pipe(stream);
@@ -1672,7 +1713,7 @@ class SMTPConnection extends EventEmitter {
      *        {from:{address:'...',name:'...'}, to:[address:'...',name:'...']}
      * @internal
      */
-    _setEnvelope(envelope: SMTPEnvelope | undefined, callback: SMTPConnectionSendCallback): void {
+    _setEnvelope(envelope: SMTPEnvelope | undefined, callback: SMTPConnectionEnvelopeCallback): void {
         const args: string[] = [];
         let useSmtpUtf8 = false;
 
@@ -2305,7 +2346,7 @@ class SMTPConnection extends EventEmitter {
      * @param str Message from the server
      * @internal
      */
-    _actionMAIL(str: string, callback: SMTPConnectionSendCallback): void {
+    _actionMAIL(str: string, callback: SMTPConnectionEnvelopeCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
         if (Number(str.charAt(0)) !== 2) {
             const message =
@@ -2338,7 +2379,7 @@ class SMTPConnection extends EventEmitter {
      * @param str Message from the server
      * @internal
      */
-    _actionRCPT(str: string, callback: SMTPConnectionSendCallback): void {
+    _actionRCPT(str: string, callback: SMTPConnectionEnvelopeCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
         let err: NodemailerError;
         const curRecipient = this._recipientQueue.shift() as string;
@@ -2385,7 +2426,7 @@ class SMTPConnection extends EventEmitter {
      * @param str Message from the server
      * @internal
      */
-    _actionDATA(str: string, callback: SMTPConnectionSendCallback): void {
+    _actionDATA(str: string, callback: SMTPConnectionEnvelopeCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
         // response should be 354 but according to this issue https://github.com/eleith/emailjs/issues/24
         // some servers might use 250 instead, so lets check for 2 or 3 as the first digit
@@ -2393,7 +2434,7 @@ class SMTPConnection extends EventEmitter {
             return callback(this._formatError('Data command failed', 'EENVELOPE', str, 'DATA'));
         }
 
-        const response: SMTPConnectionSendInfo = {
+        const response: SMTPConnectionEnvelopeInfo = {
             accepted: envelope.accepted as string[],
             rejected: envelope.rejected as string[]
         };
@@ -2532,13 +2573,42 @@ class SMTPConnection extends EventEmitter {
 declare namespace SMTPConnection {
     export type Options = SMTPConnectionOptions;
     export type AuthenticationType = SMTPConnectionAuth;
+    export type AuthenticationTypeLogin = SMTPConnectionAuth;
+    export type AuthenticationTypeOAuth2 = SMTPConnectionAuth;
+    export type AuthenticationTypeCustom = SMTPConnectionAuth;
+    export type AuthenticationCredentials = SMTPConnectionAuth;
+    export type AuthenticationOAuth2 = SMTPConnectionAuth;
     export type Credentials = SMTPConnectionCredentials;
+    export type OAuth2 = XOAuth2Options;
     export type Envelope = SMTPEnvelope;
     export type DSNOptions = SMTPEnvelopeDsn;
+    export type DSNOption = SMTPEnvelopeDsnNotify;
     export type SentMessageInfo = SMTPConnectionSendInfo;
+    export type SMTPError = NodemailerError;
     export type CustomAuthenticationContext = SMTPConnectionCustomAuthContext;
     export type CustomAuthenticationResponse = SMTPConnectionCustomAuthResponse;
     export type CustomAuthenticationHandlers = SMTPConnectionCustomAuthHandlers;
 }
+
+/** The same aliases as module level exports, for `import * as SMTPConnection` and `import SMTPConnection = require()` */
+export type {
+    SMTPConnectionOptions as Options,
+    SMTPConnectionAuth as AuthenticationType,
+    SMTPConnectionAuth as AuthenticationTypeLogin,
+    SMTPConnectionAuth as AuthenticationTypeOAuth2,
+    SMTPConnectionAuth as AuthenticationTypeCustom,
+    SMTPConnectionAuth as AuthenticationCredentials,
+    SMTPConnectionAuth as AuthenticationOAuth2,
+    SMTPConnectionCredentials as Credentials,
+    XOAuth2Options as OAuth2,
+    SMTPEnvelope as Envelope,
+    SMTPEnvelopeDsn as DSNOptions,
+    SMTPEnvelopeDsnNotify as DSNOption,
+    SMTPConnectionSendInfo as SentMessageInfo,
+    NodemailerError as SMTPError,
+    SMTPConnectionCustomAuthContext as CustomAuthenticationContext,
+    SMTPConnectionCustomAuthResponse as CustomAuthenticationResponse,
+    SMTPConnectionCustomAuthHandlers as CustomAuthenticationHandlers
+};
 
 export default SMTPConnection;

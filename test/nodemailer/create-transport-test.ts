@@ -173,7 +173,7 @@ describe('createTransport', () => {
             name: 'Plugin',
             version: '2.0.0',
             send(mail, callback) {
-                callback(null, { envelope: mail.message!.getEnvelope(), messageId: mail.message!.messageId(), plugin: true });
+                callback(null, { envelope: mail.message.getEnvelope(), messageId: mail.message.messageId(), plugin: true });
             }
         };
         const transporter = createTransport(plugin);

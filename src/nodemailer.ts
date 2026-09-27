@@ -10,7 +10,7 @@ import type { SendmailTransportOptions, SendmailSentMessageInfo } from './sendma
 import StreamTransport from './stream-transport/index.js';
 import type { StreamTransportOptions, StreamSentMessageInfo } from './stream-transport/index.js';
 import JSONTransport from './json-transport/index.js';
-import type { JSONTransportOptions, JSONSentMessageInfo } from './json-transport/index.js';
+import type { JSONTransportOptions, JSONSentMessageInfo, JSONSentMessageObjectInfo } from './json-transport/index.js';
 import SESTransport from './ses-transport/index.js';
 import type { SESTransportOptions, SESSentMessageInfo } from './ses-transport/index.js';
 import * as errors from './errors.js';
@@ -68,24 +68,41 @@ let testAccount: TestAccount | false = false;
  * @param defaults Default message fields that are merged into every message
  * @returns Mail instance wrapping the transport
  */
-export function createTransport(transporter: SMTPPoolOptions & { pool: true }, defaults?: MailDefaults): Mail<SMTPPoolSentMessageInfo>;
 export function createTransport(
-    transporter: SendmailTransportOptions & { sendmail: true | string },
+    transporter: SMTPPool | (SMTPPoolOptions & { pool: true }),
     defaults?: MailDefaults
-): Mail<SendmailSentMessageInfo>;
+): Mail<SMTPPoolSentMessageInfo, SMTPPoolOptions>;
 export function createTransport(
-    transporter: StreamTransportOptions & { streamTransport: true },
+    transporter: SendmailTransport | (SendmailTransportOptions & { sendmail: true | string }),
     defaults?: MailDefaults
-): Mail<StreamSentMessageInfo>;
+): Mail<SendmailSentMessageInfo, SendmailTransportOptions>;
 export function createTransport(
-    transporter: JSONTransportOptions & { jsonTransport: true },
+    transporter: StreamTransport | (StreamTransportOptions & { streamTransport: true }),
     defaults?: MailDefaults
-): Mail<JSONSentMessageInfo>;
-export function createTransport(transporter: SESTransportOptions & { SES: object }, defaults?: MailDefaults): Mail<SESSentMessageInfo>;
-export function createTransport<T = SentMessageInfo>(transporter: Transport<T>, defaults?: MailDefaults): Mail<T>;
-export function createTransport(transporter?: SMTPTransportOptions | string, defaults?: MailDefaults): Mail<SMTPSentMessageInfo>;
-export function createTransport(transporter?: TransportConfig | Transport<any> | string, defaults?: MailDefaults): Mail<any>;
-export function createTransport(transporter?: TransportConfig | Transport<any> | string, defaults?: MailDefaults): Mail<any> {
+): Mail<StreamSentMessageInfo, StreamTransportOptions>;
+export function createTransport(
+    transporter: JSONTransportOptions & { jsonTransport: true; skipEncoding: true },
+    defaults?: MailDefaults
+): Mail<JSONSentMessageObjectInfo, JSONTransportOptions>;
+export function createTransport(
+    transporter: JSONTransport | (JSONTransportOptions & { jsonTransport: true }),
+    defaults?: MailDefaults
+): Mail<JSONSentMessageInfo, JSONTransportOptions>;
+export function createTransport(
+    transporter: SESTransport | (SESTransportOptions & { SES: object }),
+    defaults?: MailDefaults
+): Mail<SESSentMessageInfo, SESTransportOptions>;
+export function createTransport(transporter: SMTPTransport, defaults?: MailDefaults): Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
+export function createTransport<T = SentMessageInfo, D extends TransportOptions = TransportOptions>(
+    transporter: Transport<T, D>,
+    defaults?: MailDefaults
+): Mail<T, D>;
+export function createTransport(
+    transporter?: SMTPTransportOptions | string,
+    defaults?: MailDefaults
+): Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
+export function createTransport(transporter?: TransportConfig | Transport<any, any> | string, defaults?: MailDefaults): Mail<any, any>;
+export function createTransport(transporter?: TransportConfig | Transport<any, any> | string, defaults?: MailDefaults): Mail<any, any> {
     let options: (TransportConfig & TransportOptions) | undefined;
 
     if (
@@ -294,5 +311,5 @@ export type { SMTPTransportOptions, SMTPSentMessageInfo };
 export type { SMTPPoolOptions, SMTPPoolSentMessageInfo };
 export type { SendmailTransportOptions, SendmailSentMessageInfo };
 export type { StreamTransportOptions, StreamSentMessageInfo };
-export type { JSONTransportOptions, JSONSentMessageInfo };
+export type { JSONTransportOptions, JSONSentMessageInfo, JSONSentMessageObjectInfo };
 export type { SESTransportOptions, SESSentMessageInfo };

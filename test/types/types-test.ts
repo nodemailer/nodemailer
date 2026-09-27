@@ -70,7 +70,7 @@ describe('Type surface', () => {
             name: 'custom',
             version: '1.0.0',
             send(mail: MailMessage<CustomInfo>, callback) {
-                callback(null, { envelope: mail.message!.getEnvelope(), messageId: mail.message!.messageId(), custom: true });
+                callback(null, { envelope: mail.message.getEnvelope(), messageId: mail.message.messageId(), custom: true });
             }
         };
         const transporter: Mail<CustomInfo> = nodemailer.createTransport(transport);

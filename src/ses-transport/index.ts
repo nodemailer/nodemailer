@@ -3,7 +3,7 @@ import * as packageData from '../package-info.js';
 import * as shared from '../shared/index.js';
 import type { Logger } from '../shared/index.js';
 import * as errors from '../errors.js';
-import type { NodemailerError } from '../errors.js';
+import type { NodemailerError, ResultCallback } from '../errors.js';
 import LeWindows from '../mime-node/le-windows.js';
 import MimeNode, { type MimeNodeAddressInput, type MimeNodeEnvelope, type MimeNodeHeader } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
@@ -23,6 +23,34 @@ export interface SESTransportOptions extends TransportOptions {
         /** SendEmailCommand class, constructed with the SendEmailCommandInput of every message */
         SendEmailCommand: new (input: any) => unknown;
     };
+}
+
+/** The SESv2Client shape the transport needs */
+export type SESTransportClient = SESTransportOptions['SES']['sesClient'];
+
+/** The SendEmailCommand constructor shape the transport needs */
+export type SESTransportSendEmailCommand = SESTransportOptions['SES']['SendEmailCommand'];
+
+/**
+ * SendEmailCommand parameters, the shape of the `ses` message option that is merged into
+ * the API call. Any further SendEmailCommandInput field is accepted as well
+ */
+export interface SESSendEmailRequest {
+    FromEmailAddress?: string | undefined;
+    Destination?:
+        | {
+              ToAddresses?: string[] | undefined;
+              CcAddresses?: string[] | undefined;
+              BccAddresses?: string[] | undefined;
+          }
+        | undefined;
+    ReplyToAddresses?: string[] | undefined;
+    Content?: unknown;
+    EmailTags?: Array<{ Name?: string | undefined; Value?: string | undefined }> | undefined;
+    ConfigurationSetName?: string | undefined;
+    ListManagementOptions?: unknown;
+    FeedbackForwardingEmailAddress?: string | undefined;
+    [key: string]: unknown;
 }
 
 /**
@@ -72,7 +100,7 @@ class SESTransport extends EventEmitter {
     version: string;
     logger: Logger;
 
-    constructor(options?: SESTransportOptions) {
+    constructor(options: SESTransportOptions) {
         super();
 
         if (!options || !options.SES || !options.SES.sesClient) {
@@ -115,14 +143,14 @@ class SESTransport extends EventEmitter {
      */
     send(mail: MailMessage<SESSentMessageInfo>, callback: (err: Error | null, info?: SESSentMessageInfo) => void): void {
         // send() runs after the message was compiled, so mail.message is set
-        let fromHeader: MimeNodeHeader | string | undefined = mail.message!._headers.find(header => /^from$/i.test(header.key));
+        let fromHeader: MimeNodeHeader | string | undefined = mail.message._headers.find(header => /^from$/i.test(header.key));
         if (fromHeader) {
             const mimeNode = new MimeNode('text/plain');
             fromHeader = mimeNode._convertAddresses(mimeNode._parseAddresses(fromHeader.value as MimeNodeAddressInput));
         }
 
-        const envelope = mail.message!.getEnvelope();
-        const messageId = mail.message!.messageId();
+        const envelope = mail.message.getEnvelope();
+        const messageId = mail.message.messageId();
 
         const recipients = ([] as string[]).concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -149,7 +177,7 @@ class SESTransport extends EventEmitter {
                 mail.data._dkim.skipFields = 'date:message-id';
             }
 
-            const sourceStream = mail.message!.createReadStream();
+            const sourceStream = mail.message.createReadStream();
             const stream = sourceStream.pipe(new LeWindows());
             const chunks: Buffer[] = [];
             let chunklen = 0;
@@ -281,7 +309,7 @@ class SESTransport extends EventEmitter {
                 callback = shared.callbackPromise(resolve, reject);
             });
         }
-        const done = callback as VerifyCallback;
+        const done = callback as ResultCallback<true>;
 
         const cb = (err?: SESError | null): void => {
             if (err && !['InvalidParameterValue', 'MessageRejected'].includes(err.code || err.Code || err.name)) {
@@ -328,6 +356,21 @@ declare namespace SESTransport {
     export type Options = SESTransportOptions;
     export type MailOptions = SendMailOptions;
     export type SentMessageInfo = SESSentMessageInfo;
+    export type SESv2ClientLike = SESTransportClient;
+    export type SendEmailCommandConstructorLike = SESTransportSendEmailCommand;
+    export type SendEmailRequestLike = SESSendEmailRequest;
+    export type MailSesOptions = SESSendEmailRequest;
 }
+
+/** The same aliases as module level exports, for `import * as SESTransport` and `import SESTransport = require()` */
+export type {
+    SESTransportOptions as Options,
+    SendMailOptions as MailOptions,
+    SESSentMessageInfo as SentMessageInfo,
+    SESTransportClient as SESv2ClientLike,
+    SESTransportSendEmailCommand as SendEmailCommandConstructorLike,
+    SESSendEmailRequest as SendEmailRequestLike,
+    SESSendEmailRequest as MailSesOptions
+};
 
 export default SESTransport;

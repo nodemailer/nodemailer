@@ -18,11 +18,11 @@ import type {
     MailComposerAttachment,
     MailComposerIcalEvent,
     MailComposerListHeaderEntry,
-    MailComposerListHeaders
+    MailComposerListHeaders,
+    MailComposerTextEncoding
 } from '../mail-composer/index.js';
-import type { NodemailerError, ResultCallback } from '../errors.js';
+import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
 import type { ParsedUrl } from '../shared/url.js';
-import type MimeNode from '../mime-node/index.js';
 import type { MimeNodeAddress, MimeNodeEnvelope, MimeNodeEnvelopeInput, MimeNodeHeaders, MimeNodeOptions } from '../mime-node/index.js';
 import type { XOAuth2ProvisionCallback } from '../xoauth2/index.js';
 
@@ -48,9 +48,10 @@ const DEFAULT_MAX_RECIPIENTS = 100000;
  * The base shape of the object a transport hands back for a sent message. Every bundled
  * transport sets the envelope and the Message-ID, the rest depends on the transport.
  *
- * The index signature keeps a transport specific field readable through this type, and it
- * is also what a result type has to inherit to stay assignable to it, so the result type
- * of a transport outside this package has to extend this interface rather than restate it
+ * The index signature keeps a transport specific field readable through this type, the way
+ * the `any` typed result of @types/nodemailer was, and it is also what a result type has
+ * to inherit to stay assignable to it, so the result type of a transport outside this
+ * package has to extend this interface rather than restate it
  */
 export interface SentMessageInfo {
     /** The envelope the message was sent with */
@@ -66,9 +67,9 @@ export interface SentMessageInfo {
     /** Last response from the server */
     response?: string | undefined;
     /** The generated message, for the transports that hand it back instead of sending it */
-    message?: unknown;
+    message?: any;
     /** Transport specific fields */
-    [key: string]: unknown;
+    [key: string]: any;
 }
 
 /**
@@ -78,9 +79,11 @@ export interface SentMessageInfo {
 export type SendMailCallback<T = SentMessageInfo> = (err: NodemailerError | null, info: T) => void;
 
 /**
- * Callback for verify(), success is true once the transport accepted the configuration
+ * Callback for verify(), success is true once the transport accepted the configuration.
+ * Declared with a required success value, the way @types/nodemailer declared it, the
+ * error path hands over the error alone
  */
-export type VerifyCallback = (err: NodemailerError | null, success?: true) => void;
+export type VerifyCallback = Callback<true>;
 
 /**
  * Callback a plugin calls once it is done, an error aborts the send
@@ -98,23 +101,25 @@ export type PluginFunction<T = SentMessageInfo> = (mail: MailMessage<T>, callbac
  */
 export interface GetSocketOptions {
     host?: string | undefined;
-    port?: number | string | undefined;
+    port?: number | undefined;
     [key: string]: any;
 }
 
 /**
- * The result of a getSocket handler, the socket to use for the connection
+ * The result of a getSocket handler, the socket to use for the connection. The object is
+ * merged into the connection options, so it may carry any of those as well
  */
 export interface SocketOptions {
     /** An established socket, the proxied connection */
     connection?: net.Socket | undefined;
+    [key: string]: any;
 }
 
 /**
- * Receives the socket options from a getSocket handler, or the error that prevented the
- * connection
+ * Receives the socket options from a getSocket handler, false when a new socket should be
+ * opened, or the error that prevented the connection
  */
-export type GetSocketCallback = (err: NodemailerError | null, socketOptions?: SocketOptions) => void;
+export type GetSocketCallback = (err: Error | null, socketOptions?: SocketOptions | false) => void;
 
 /**
  * A socket handler. Mail sets one on the transport as getSocket when a proxy is configured,
@@ -145,9 +150,12 @@ export interface MailMeta {
 /**
  * A transport as consumed by Mail: any object with a name, a version and a send method
  * works, the rest is optional. Mail forwards its close, isIdle and verify calls to the
- * methods of the same name as they are, so their arguments are up to the transport
+ * methods of the same name as they are, so their arguments are up to the transport.
+ *
+ * D is the options type of the transport, the second type parameter @types/nodemailer
+ * declared on Transport, Transporter and Mail
  */
-export interface Transport<T = SentMessageInfo> {
+export interface Transport<T = SentMessageInfo, D extends TransportOptions = TransportOptions> {
     /** Transport name, used for logging */
     name: string;
     /** Transport version, used for logging */
@@ -163,7 +171,7 @@ export interface Transport<T = SentMessageInfo> {
     /** Registers an event listener, the transport may emit 'log', 'error', 'idle' and 'clear' */
     on?(event: string | symbol, listener: (...args: any[]) => void): this;
     /** The Mail object the transport belongs to, set by Mail */
-    mailer?: Mail<T> | undefined;
+    mailer?: Mail<T, D> | undefined;
     /** Socket handler for a proxied connection, set by Mail when a proxy is configured */
     getSocket?: GetSocketHandler | undefined;
 }
@@ -196,9 +204,10 @@ export interface TransportOptions {
 }
 
 /**
- * The transporter object createTransport returns, a Mail instance wrapping a transport
+ * The transporter object createTransport returns, a Mail instance wrapping a transport. D
+ * is the options type of the transport, it types the options field of the transporter
  */
-export type Transporter<T = SentMessageInfo> = Mail<T>;
+export type Transporter<T = SentMessageInfo, D extends TransportOptions = TransportOptions> = Mail<T, D>;
 
 /**
  * Creates an object for exposing the Mail API
@@ -206,8 +215,8 @@ export type Transporter<T = SentMessageInfo> = Mail<T>;
  * @constructor
  * @param transporter Transport object instance to pass the mails to
  */
-class Mail<out T = SentMessageInfo> extends EventEmitter {
-    options: TransportOptions;
+class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOptions> extends EventEmitter {
+    options: D;
     /** Message defaults given to createTransport, kept public because the DefinitelyTyped typings declared it */
     _defaults: MailDefaults;
     // Not PluginFunction<T>: T in a plugin parameter would make Mail<T> invariant, and a
@@ -220,7 +229,7 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
     _userPlugins: { [step: string]: PluginFunction<any>[] };
     meta: Map<string, any>;
     dkim: DKIM | false;
-    transporter: Transport<T>;
+    transporter: Transport<T, D>;
     logger: shared.Logger;
 
     // set in the constructor by name, see the loop over the forwarded methods there. Each
@@ -239,10 +248,10 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
     /** Socket handler for a proxied connection, set by setupProxy and handed to the transport on the next send */
     declare getSocket?: GetSocketHandler | false | undefined;
 
-    constructor(transporter: Transport<T>, options?: TransportOptions, defaults?: MailDefaults) {
+    constructor(transporter: Transport<T, D>, options?: D, defaults?: MailDefaults) {
         super();
 
-        this.options = options || {};
+        this.options = options || ({} as D);
         this._defaults = defaults || {};
 
         this._defaultPlugins = {
@@ -462,12 +471,12 @@ class Mail<out T = SentMessageInfo> extends EventEmitter {
                 }
 
                 if (mail.data.dkim || this.dkim) {
-                    (mail.message as MimeNode).processFunc(input => {
+                    mail.message.processFunc(input => {
                         const dkim = mail.data.dkim ? new DKIM(mail.data.dkim) : (this.dkim as DKIM);
                         this.logger.debug(
                             {
                                 tnx: 'DKIM',
-                                messageId: (mail.message as MimeNode).messageId(),
+                                messageId: mail.message.messageId(),
                                 dkimDomains: dkim.keys.map(key => key.keySelector + '.' + key.domainName).join(', ')
                             },
                             'Signing outgoing message with %s keys',
@@ -732,8 +741,25 @@ declare namespace Mail {
     export type ListHeader = MailComposerListHeaderEntry;
     export type ListHeaders = MailComposerListHeaders;
     export type Envelope = MimeNodeEnvelopeInput;
-    export type TextEncoding = NonNullable<SendMailOptions['textEncoding']>;
+    export type Connection = SocketOptions;
+    export type TextEncoding = MailComposerTextEncoding;
     export type PluginFunction<T = SentMessageInfo> = MailPluginFunction<T>;
 }
+
+/** The same aliases as module level exports, for `import * as Mail` and `import Mail = require()` */
+export type {
+    SendMailOptions as Options,
+    MimeNodeAddress as Address,
+    MailComposerAttachment as Attachment,
+    MailComposerAlternative as AttachmentLike,
+    MailComposerAlternative as AmpAttachment,
+    MailComposerIcalEvent as IcalAttachment,
+    MimeNodeHeaders as Headers,
+    MailComposerListHeaderEntry as ListHeader,
+    MailComposerListHeaders as ListHeaders,
+    MimeNodeEnvelopeInput as Envelope,
+    SocketOptions as Connection,
+    MailComposerTextEncoding as TextEncoding
+};
 
 export default Mail;

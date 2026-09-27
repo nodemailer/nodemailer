@@ -156,15 +156,104 @@ type _XOAuth2 = NoneMissing<MissingUndefined<XOAuth2.Options>>;
 type _SentMessageInfo = NoneMissing<MissingUndefined<SentMessageInfo>>;
 `;
 
+// The idioms of @types/nodemailer that the first 10.x releases stopped compiling: the two
+// parameter forms of Transporter, Transport and Mail, the namespace-style type references
+// through a namespace import, transport instances handed to createTransport or held as a
+// Transport, the result fields the SMTP transports always set, the null sender, the custom
+// authentication handler of the documentation, stream plugins and the aliases of the old
+// typings
+const legacyConsumer = `
+import * as nodemailer from 'nodemailer';
+import * as SMTPTransportNs from 'nodemailer/lib/smtp-transport';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import SMTPPool from 'nodemailer/lib/smtp-pool';
+import SMTPConnection from 'nodemailer/lib/smtp-connection';
+import Mail from 'nodemailer/lib/mailer';
+import DKIM from 'nodemailer/lib/dkim';
+import XOAuth2 from 'nodemailer/lib/xoauth2';
+import addressparser from 'nodemailer/lib/addressparser';
+import { Options as MailOptions } from 'nodemailer/lib/mailer';
+import type { Transport, Transporter, SentMessageInfo } from 'nodemailer';
+
+let t: nodemailer.Transporter<SMTPTransport.SentMessageInfo, SMTPTransport.Options> = nodemailer.createTransport({ host: 'localhost' });
+const ns: nodemailer.Transporter<SMTPTransportNs.SentMessageInfo> = t;
+const opts: SMTPTransportNs.Options = { host: 'localhost' };
+const mail: MailOptions = { from: 'sender@example.com', to: 'recipient@example.com' };
+const host: string | undefined = t.options.host;
+
+const smtp = new SMTPTransport({ host: 'localhost' });
+const asTransport: Transport = smtp;
+const pooled: Transporter<SMTPPool.SentMessageInfo, SMTPPool.Options> = nodemailer.createTransport(new SMTPPool({ host: 'localhost' }));
+const typedSmtp: Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(smtp);
+
+t.sendMail(mail).then(info => { info.response.length; info.envelopeTime.toFixed(); info.messageId; });
+t.sendMail(mail, (err, info) => { if (err) { err.code; err.errno; return; } info.accepted.length; });
+t.verify((err, success) => { if (!err) { const ok: true = success; } });
+
+const bounce: Mail.Options = { envelope: { from: false, to: 'recipient@example.com' }, raw: 'x' };
+const conn = new SMTPConnection({ host: 'localhost', port: 25 });
+conn.send({ from: false, to: ['recipient@example.com'] }, 'raw', (err, info) => { if (!err) { info.response.length; info.envelopeTime.toFixed(); } });
+conn.login({ user: 'u', pass: 'p' }, (err, ok) => { err; ok; });
+const smtpErr: SMTPConnection.SMTPError = new Error('x');
+const oauthAuth: SMTPConnection.AuthenticationTypeOAuth2 = { user: 'u', refreshToken: 'r', accessToken: 'a', expires: 1 };
+const stage: 'init' | 'connected' = conn.stage;
+
+nodemailer.createTransport({
+    host: 'localhost',
+    auth: { type: 'custom', user: 'u', pass: 'p', method: 'x-login' },
+    customAuth: {
+        'x-login': async ctx => {
+            const cmd = await ctx.sendCommand('AUTH LOGIN');
+            if (cmd.status !== 334) { throw new Error('unexpected'); }
+            await ctx.sendCommand(Buffer.from(ctx.auth.credentials.user, 'utf-8').toString('base64'));
+            await ctx.sendCommand(Buffer.from(ctx.auth.credentials.pass, 'utf-8').toString('base64'));
+            ctx.resolve();
+        },
+        'x-sync': ctx => { ctx.sendCommand('AUTH X', (err, data) => { if (!err) { data.status; } ctx.resolve(); }); return true; }
+    }
+});
+
+t.use('stream', (mail, cb) => { mail.message.setHeader('X-Test', 'x'); cb(); });
+
+const json = nodemailer.createTransport({ jsonTransport: true });
+json.sendMail(mail).then(info => JSON.parse(info.message));
+const jsonObject = nodemailer.createTransport({ jsonTransport: true, skipEncoding: true });
+jsonObject.sendMail(mail).then(info => info.message.subject);
+const jsonPlain: Transporter<nodemailer.JSONSentMessageInfo> = jsonObject;
+
+const dkim: DKIM.MultipleKeysOptions = { keys: [{ domainName: 'd', keySelector: 's', privateKey: 'k' }] };
+const xoauth: XOAuth2.RequestParams = { customHeaders: { 'X-Test': 'x' } };
+const mailbox: addressparser.Address = addressparser('recipient@example.com', { flatten: true })[0];
+const parsed: addressparser.AddressOrGroup[] = addressparser('recipient@example.com');
+const enc: Mail.TextEncoding = 'base64';
+const custom: Transport<SentMessageInfo & { queueId: string }> = {
+    name: 'x',
+    version: '1',
+    send(m, cb) { cb(null, { envelope: m.message.getEnvelope(), messageId: m.message.messageId(), queueId: 'q' }); }
+};
+const anyInfo: SentMessageInfo = { envelope: { from: 'sender@example.com', to: [] }, messageId: 'm' };
+anyInfo.custom.field;
+export { ns, opts, host, asTransport, pooled, typedSmtp, bounce, smtpErr, oauthAuth, stage, dkim, xoauth, mailbox, parsed, enc, custom, jsonPlain };
+`;
+
 // node16 is what an installed copy resolves through the exports map, bundler is what the
-// common front end tool chains use
+// common front end tool chains use, and node10 is the default of a plain CommonJS project on
+// TypeScript 5, which resolves through main and typesVersions instead of the exports map
 const node16 = { module: 'node16', moduleResolution: 'node16' };
-const resolutions = [node16, { module: 'esnext', moduleResolution: 'bundler' }];
+const node10 = { module: 'commonjs', moduleResolution: 'node10', ignoreDeprecations: '6.0' };
+const resolutions = [node16, { module: 'esnext', moduleResolution: 'bundler' }, node10];
 
 // Type-checks a consumer against the built declarations in dist/ the way an installed copy
 // is resolved: the package is linked into a temporary project so that the specifiers go
 // through the package.json exports map
-const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unknown }, include: string[] = ['consumer.ts']): void => {
+// One consumer, or several keyed by file name, type-checked as a single program
+const typeCheckConsumer = (
+    source: string | { [file: string]: string },
+    compilerOptions: { [key: string]: unknown },
+    include?: string[]
+): void => {
+    const sources = typeof source === 'string' ? { 'consumer.ts': source } : source;
+    include = include || Object.keys(sources);
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodemailer-types-'));
     try {
         fs.mkdirSync(path.join(dir, 'node_modules'));
@@ -172,7 +261,9 @@ const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unk
         // the specifiers resolve the way they do in an installed project
         fs.symlinkSync(root, path.join(dir, 'node_modules', 'nodemailer'), 'dir');
         fs.symlinkSync(path.join(root, 'node_modules', '@types'), path.join(dir, 'node_modules', '@types'), 'dir');
-        fs.writeFileSync(path.join(dir, 'consumer.ts'), source);
+        for (const [file, text] of Object.entries(sources)) {
+            fs.writeFileSync(path.join(dir, file), text);
+        }
         fs.writeFileSync(
             path.join(dir, 'tsconfig.json'),
             JSON.stringify({
@@ -198,9 +289,11 @@ const typeCheckConsumer = (source: string, compilerOptions: { [key: string]: unk
 };
 
 describe('Built package types', { timeout: 120 * 1000 }, () => {
+    // the current idioms and the ones of @types/nodemailer are checked as one program per
+    // resolution, a failure names the file it is in
     for (const resolution of resolutions) {
-        it('type-checks a consumer with moduleResolution ' + resolution.moduleResolution, () => {
-            typeCheckConsumer(consumer, resolution);
+        it('type-checks a consumer and the idioms of @types/nodemailer with moduleResolution ' + resolution.moduleResolution, () => {
+            typeCheckConsumer({ 'consumer.ts': consumer, 'legacy.ts': legacyConsumer }, resolution);
         });
     }
 
@@ -209,10 +302,45 @@ describe('Built package types', { timeout: 120 * 1000 }, () => {
     });
 
     // The underscore-prefixed members are implementation details and are tagged @internal,
-    // which stripInternal drops from the declarations. The two below are the ones
-    // @types/nodemailer declared, so they stay
+    // which stripInternal drops from the declarations. The ones below stay: two of them
+    // @types/nodemailer declared, and _dkim is read from the message data at runtime
+    // Every class module carries its @types/nodemailer aliases twice: in a namespace merged
+    // into the default export, for `import X from`, and as module level exports, for
+    // `import * as X` and `import X = require()`. TypeScript has no single form that serves
+    // both, so this keeps the two lists equal
+    it('exports the namespace aliases of every module at module level as well', () => {
+        const dir = path.join(root, 'dist', 'cjs');
+        // the members of an ambient namespace are emitted without their export keyword
+        const namespaceMember = /^\s+(?:export )?type (\w+)(?:<[^>]*>)? = /gm;
+        const moduleAlias = /\b\w+ as (\w+)\b/g;
+        const checked: string[] = [];
+        for (const file of fs.readdirSync(dir, { encoding: 'utf8', recursive: true })) {
+            if (!file.endsWith('.d.ts')) {
+                continue;
+            }
+            const source = fs.readFileSync(path.join(dir, file), 'utf8');
+            const namespace = /^declare namespace \w+ \{\n([\s\S]*?)^\}/m.exec(source);
+            if (!namespace) {
+                continue;
+            }
+            const members = [...namespace[1].matchAll(namespaceMember)].map(match => match[1]);
+            if (!members.length) {
+                continue;
+            }
+            const aliases = [...source.matchAll(/^export type \{([^}]*)\};/gm)].flatMap(match =>
+                [...match[1].matchAll(moduleAlias)].map(alias => alias[1])
+            );
+            // the module level export of the same name is the alias, without a rename
+            const named = [...source.matchAll(/^export (?:type|interface|declare function|declare class) (\w+)/gm)].map(match => match[1]);
+            const missing = members.filter(member => !aliases.includes(member) && !named.includes(member));
+            assert.deepStrictEqual(missing, [], file + ' lacks module level aliases');
+            checked.push(file);
+        }
+        assert.ok(checked.length >= 16, 'expected the class modules to carry a namespace, saw ' + checked.join(', '));
+    });
+
     it('strips the @internal members from the declarations', () => {
-        const kept = ['mailer/index.d.ts _defaults', 'smtp-connection/index.d.ts _socket'];
+        const kept = ['mailer/index.d.ts _defaults', 'mailer/mail-message.d.ts _dkim', 'smtp-connection/index.d.ts _socket'];
         const member = /^(?:\s*|export declare \w+ )(_\w+)/;
         const leaked: string[] = [];
         for (const format of ['esm', 'cjs']) {

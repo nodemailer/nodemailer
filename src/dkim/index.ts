@@ -296,12 +296,31 @@ class DKIM {
     }
 }
 
+/** The signer options without any key material */
+export type DKIMOptionalOptions = Omit<DKIMOptions, 'keys' | 'domainName' | 'keySelector' | 'privateKey'>;
+
+/** The signer options for a single key given as domainName, keySelector and privateKey */
+export type DKIMSingleKeyOptions = Omit<DKIMOptions, 'keys'>;
+
+/** The signer options for one or more keys given through `keys` */
+export type DKIMMultipleKeysOptions = DKIMOptionalOptions & { keys: DKIMKey | DKIMKey[] };
+
 /**
  * Type aliases in the layout of @types/nodemailer, so `DKIM.Options` style references keep working
  */
 declare namespace DKIM {
     export type Options = DKIMOptions;
-    export type SingleKeyOptions = Omit<DKIMOptions, 'keys'>;
+    export type OptionalOptions = DKIMOptionalOptions;
+    export type SingleKeyOptions = DKIMSingleKeyOptions;
+    export type MultipleKeysOptions = DKIMMultipleKeysOptions;
 }
+
+/** The same aliases as module level exports, for `import * as DKIM` and `import DKIM = require()` */
+export type {
+    DKIMOptions as Options,
+    DKIMOptionalOptions as OptionalOptions,
+    DKIMSingleKeyOptions as SingleKeyOptions,
+    DKIMMultipleKeysOptions as MultipleKeysOptions
+};
 
 export default DKIM;

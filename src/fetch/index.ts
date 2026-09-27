@@ -446,4 +446,19 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
 
 nmfetch.Cookies = Cookies;
 
+// the namespace member can not refer to the class of the same name directly
+type CookiesJar = Cookies;
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `fetch.Options` style references keep working
+ */
+declare namespace nmfetch {
+    export type Options = FetchOptions;
+    export type WritableResponse = FetchResponse;
+    export type Cookies = CookiesJar;
+}
+
+/** The same aliases as module level exports, for `import * as fetch` and `import fetch = require()` */
+export type { FetchOptions as Options, FetchResponse as WritableResponse, Cookies };
+
 export default nmfetch;

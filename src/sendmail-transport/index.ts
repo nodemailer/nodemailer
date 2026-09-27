@@ -103,10 +103,10 @@ class SendmailTransport {
     send(mail: MailMessage<SendmailSentMessageInfo>, done: (err: Error | null, info?: SendmailSentMessageInfo) => void): void {
         // Sendmail strips this header line by itself. send() runs after the message was
         // compiled, so mail.message is set
-        mail.message!.keepBcc = true;
+        mail.message.keepBcc = true;
 
-        const envelope = mail.message!.getEnvelope();
-        const messageId = mail.message!.messageId();
+        const envelope = mail.message.getEnvelope();
+        const messageId = mail.message.messageId();
         let returned: boolean | undefined;
 
         const hasInvalidAddresses = ([] as string[])
@@ -229,7 +229,7 @@ class SendmailTransport {
                 recipients.join(', ')
             );
 
-            const sourceStream = mail.message!.createReadStream();
+            const sourceStream = mail.message.createReadStream();
             let stream = sourceStream;
             if (this.options.newline) {
                 // apply the transport-level line ending transform; the message-level
@@ -270,5 +270,8 @@ declare namespace SendmailTransport {
     export type MailOptions = SendMailOptions;
     export type SentMessageInfo = SendmailSentMessageInfo;
 }
+
+/** The same aliases as module level exports, for `import * as SendmailTransport` and `import SendmailTransport = require()` */
+export type { SendmailTransportOptions as Options, SendMailOptions as MailOptions, SendmailSentMessageInfo as SentMessageInfo };
 
 export default SendmailTransport;

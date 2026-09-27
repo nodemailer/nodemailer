@@ -163,6 +163,9 @@ export interface QPEncoderOptions {
     lineLength?: number | false | undefined;
 }
 
+/** The name @types/nodemailer used for QPEncoderOptions */
+export type EncoderOptions = QPEncoderOptions;
+
 /**
  * Creates a transform stream for encoding data to Quoted-Printable encoding
  *

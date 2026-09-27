@@ -88,6 +88,12 @@ export interface MailComposerListHeaders {
 }
 
 /**
+ * Encoding for the non-ascii header values: quoted-printable ('Q', the default) or base64
+ * ('B'). Only the first letter is read, so the short forms work as well
+ */
+export type MailComposerTextEncoding = 'quoted-printable' | 'base64' | 'Q' | 'B';
+
+/**
  * Mail options, the message data MailComposer builds the MIME tree from. The address
  * fields, subject, messageId, date, inReplyTo and references become headers of the root
  * node. Some fields are read by the mailer that hands the data to MailComposer rather than
@@ -129,7 +135,7 @@ export interface MailComposerOptions {
     /** Content-Transfer-Encoding to force for the text/* nodes that do not set their own */
     encoding?: string | undefined;
     /** Header string encoding, 'Q' (the default) or 'B', 'quoted-printable' and 'base64' are accepted as well */
-    textEncoding?: string | undefined;
+    textEncoding?: MailComposerTextEncoding | undefined;
     /** Pregenerated rfc822 message, used as is instead of building one */
     raw?: MimeNodeContent | undefined;
     /** Reject content that points to a URL */
@@ -144,8 +150,6 @@ export interface MailComposerOptions {
     baseBoundary?: string | undefined;
     /** 'win' for CRLF and 'linux' for LF line breaks in the generated message, kept as is when not set */
     newline?: string | undefined;
-    /** Keep the Bcc header in the generated message, listed for completeness, the transports set it on the message directly */
-    keepBcc?: boolean | undefined;
     /** Method to normalize header keys for custom caseing */
     normalizeHeaderKey?: MimeNodeOptions['normalizeHeaderKey'] | undefined;
     /** 'high', 'normal' or 'low', sets the priority headers, read by the mailer */
@@ -819,5 +823,8 @@ class MailComposer {
 declare namespace MailComposer {
     export type Options = MailComposerOptions;
 }
+
+/** The same alias as a module level export, for `import * as MailComposer` and `import MailComposer = require()` */
+export type { MailComposerOptions as Options };
 
 export default MailComposer;

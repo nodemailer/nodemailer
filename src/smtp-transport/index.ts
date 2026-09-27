@@ -9,11 +9,17 @@ import wellKnown, { type WellKnownService } from '../well-known/index.js';
 import * as shared from '../shared/index.js';
 import XOAuth2, { type XOAuth2Options, type XOAuth2Token } from '../xoauth2/index.js';
 import * as errors from '../errors.js';
-import type { Socket } from 'node:net';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
+import type {
+    default as Mail,
+    GetSocketCallback,
+    SentMessageInfo,
+    SendMailOptions,
+    TransportOptions,
+    VerifyCallback
+} from '../mailer/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 
 /**
@@ -48,9 +54,10 @@ export interface SMTPTransportAuth extends SMTPConnectionAuth {
 /**
  * Receives the socket details from getSocket, false when a new socket should be opened. The
  * object is merged into the connection options, a proxy handler provides the connected socket
- * as `connection`
+ * as `connection`. The same callback type Mail hands to a transport, so that the SMTP
+ * transports stay assignable to the Transport interface
  */
-export type SMTPTransportGetSocketCallback = (err: Error | null, socketOptions?: SMTPConnectionOptions | false) => void;
+export type SMTPTransportGetSocketCallback = GetSocketCallback;
 
 /**
  * Custom socket provider, replaces the getSocket method of the transport
@@ -92,6 +99,8 @@ export interface SMTPSentMessageInfo extends SMTPConnectionSendInfo, SentMessage
     accepted: string[];
     /** Recipients the server rejected */
     rejected: string[];
+    /** Final server response for the message */
+    response: string;
 }
 
 /**
@@ -119,7 +128,7 @@ class SMTPTransport extends EventEmitter {
     /**
      * The Mail instance using this transport, assigned by Mail
      */
-    declare mailer?: Mail<SMTPSentMessageInfo> | undefined;
+    declare mailer?: Mail<SMTPSentMessageInfo, SMTPTransportOptions> | undefined;
 
     constructor(options?: SMTPTransportOptions | string) {
         super();
@@ -232,7 +241,7 @@ class SMTPTransport extends EventEmitter {
      * @param mail Mail object
      * @param callback Callback function
      */
-    send(mail: MailMessage, callback: SMTPTransportSendCallback): void {
+    send(mail: MailMessage<SMTPSentMessageInfo>, callback: SMTPTransportSendCallback): void {
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
                 return callback(err);
@@ -294,7 +303,7 @@ class SMTPTransport extends EventEmitter {
                     cleanupPerCallAuth();
                     // still have not returned, this means we have an unexpected connection close
                     const err: NodemailerError = new Error('Unexpected socket close');
-                    if (connection && connection._socket && (connection._socket as Socket & { upgrading?: boolean }).upgrading) {
+                    if (connection && connection.upgrading) {
                         // starttls connection errors
                         err.code = errors.ETLS;
                     }
@@ -309,8 +318,8 @@ class SMTPTransport extends EventEmitter {
             });
 
             const sendMessage = () => {
-                const envelope = mail.message!.getEnvelope();
-                const messageId = mail.message!.messageId();
+                const envelope = mail.message.getEnvelope();
+                const messageId = mail.message.messageId();
 
                 const recipients = ([] as string[]).concat(envelope.to || []);
                 if (recipients.length > 3) {
@@ -336,7 +345,7 @@ class SMTPTransport extends EventEmitter {
                     recipients.join(', ')
                 );
 
-                connection.send(envelope as SMTPEnvelope, mail.message!.createReadStream(), (err, info) => {
+                connection.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
                     returned = true;
                     cleanupPerCallAuth();
                     connection.close();
@@ -417,10 +426,12 @@ class SMTPTransport extends EventEmitter {
                 callback = shared.callbackPromise(resolve, reject);
             });
         }
+        // the error paths hand over the error alone
+        const done = callback as ResultCallback<true>;
 
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
-                return callback!(err);
+                return done(err);
             }
 
             let options = this.options;
@@ -461,7 +472,7 @@ class SMTPTransport extends EventEmitter {
                 returned = true;
                 cleanupPerCallAuth();
                 connection.close();
-                return callback!(err);
+                return done(err);
             });
 
             connection.once('end', () => {
@@ -470,7 +481,7 @@ class SMTPTransport extends EventEmitter {
                 }
                 returned = true;
                 cleanupPerCallAuth();
-                return callback!(new Error('Connection closed'));
+                return done(new Error('Connection closed'));
             });
 
             const finalize = () => {
@@ -480,7 +491,7 @@ class SMTPTransport extends EventEmitter {
                 returned = true;
                 cleanupPerCallAuth();
                 connection.quit();
-                return callback!(null, true);
+                return done(null, true);
             };
 
             connection.connect(() => {
@@ -500,7 +511,7 @@ class SMTPTransport extends EventEmitter {
                         if (err) {
                             returned = true;
                             connection.close();
-                            return callback!(err);
+                            return done(err);
                         }
 
                         finalize();
@@ -512,7 +523,7 @@ class SMTPTransport extends EventEmitter {
                     returned = true;
                     cleanupPerCallAuth();
                     connection.close();
-                    return callback!(err);
+                    return done(err);
                 } else {
                     finalize();
                 }
@@ -541,6 +552,20 @@ declare namespace SMTPTransport {
     export type MailOptions = SendMailOptions;
     export type SentMessageInfo = SMTPSentMessageInfo;
     export type AuthenticationType = SMTPTransportAuth;
+    export type AuthenticationTypeLogin = SMTPTransportAuth;
+    export type AuthenticationTypeOAuth2 = SMTPTransportAuth;
+    export type AuthenticationTypeCustom = SMTPTransportAuth;
 }
+
+/** The same aliases as module level exports, for `import * as SMTPTransport` and `import SMTPTransport = require()` */
+export type {
+    SMTPTransportOptions as Options,
+    SendMailOptions as MailOptions,
+    SMTPSentMessageInfo as SentMessageInfo,
+    SMTPTransportAuth as AuthenticationType,
+    SMTPTransportAuth as AuthenticationTypeLogin,
+    SMTPTransportAuth as AuthenticationTypeOAuth2,
+    SMTPTransportAuth as AuthenticationTypeCustom
+};
 
 export default SMTPTransport;

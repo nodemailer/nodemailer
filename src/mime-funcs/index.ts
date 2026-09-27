@@ -9,8 +9,8 @@ import { isProtoKey } from '../shared/objects.js';
  * A header value split into the value token and its parameters, the result of parseHeaderValue
  */
 export interface ParsedHeaderValue {
-    /** The value ahead of the parameters, for example the content type */
-    value: string | false;
+    /** The value ahead of the parameters, for example the content type, an empty string when there is none */
+    value: string;
     /** Parameter values keyed by lowercase parameter name */
     params: Record<string, string>;
 }
@@ -34,6 +34,10 @@ export interface EncodedHeaderParam {
     /** Parameter value of this part */
     value: string;
 }
+
+/** The names @types/nodemailer used for the two types above */
+export type HeaderValue = StructuredHeaderValue;
+export type ParsedHeaderParam = EncodedHeaderParam;
 
 /**
  * Checks if a value is plaintext string (uses only printable 7bit chars)
@@ -408,8 +412,8 @@ export function buildHeaderParam(key: string, data: string | Buffer, maxLength?:
  * @return Header value as a parsed structure
  */
 export function parseHeaderValue(str: string): ParsedHeaderValue {
-    const response: { value: string | false; params: Record<string, any> } = {
-        value: false,
+    const response: { value: string; params: Record<string, any> } = {
+        value: '',
         params: {}
     };
 

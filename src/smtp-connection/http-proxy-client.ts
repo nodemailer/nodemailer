@@ -6,7 +6,7 @@ import net from 'node:net';
 import tls from 'node:tls';
 import * as urllib from '../shared/url.js';
 import * as errors from '../errors.js';
-import type { NodemailerError } from '../errors.js';
+import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
 
 // Cap the CONNECT response we buffer before the header terminator, so a proxy that
 // never sends \r\n\r\n cannot grow memory unboundedly before the socket times out.
@@ -23,7 +23,7 @@ export interface HttpProxyClientOptions {
 /**
  * Receives the proxied socket once the CONNECT handshake has succeeded, or the error that prevented it
  */
-export type HttpProxyClientCallback = (err: NodemailerError | null, socket?: net.Socket) => void;
+export type HttpProxyClientCallback = Callback<net.Socket>;
 
 /**
  * Establishes proxied connection to destinationPort
@@ -63,6 +63,8 @@ function httpProxyClient(
         tlsOptions = {};
     }
     tlsOptions = tlsOptions || {};
+    // the error paths hand over the error alone
+    const done = callback as ResultCallback<net.Socket>;
 
     // Reject CRLF in the destination before it reaches the CONNECT request line
     // and Host header. A tainted host/port could otherwise inject additional
@@ -71,7 +73,7 @@ function httpProxyClient(
     if (!destinationPort || /[\r\n]/.test(destinationHost)) {
         const err: NodemailerError = new Error('Invalid proxy destination');
         err.code = errors.EPROXY;
-        setImmediate(() => callback!(err));
+        setImmediate(() => done(err));
         return;
     }
 
@@ -108,7 +110,7 @@ function httpProxyClient(
         } catch (_E) {
             // ignore
         }
-        callback!(err);
+        done(err);
     };
 
     const timeoutErr = () => {
@@ -177,14 +179,14 @@ function httpProxyClient(
                     }
                     const err: NodemailerError = new Error('Invalid response from proxy' + ((match && ': ' + match[1]) || ''));
                     err.code = errors.EPROXY;
-                    return callback!(err);
+                    return done(err);
                 }
 
                 socket.removeListener('error', tempSocketErr);
                 socket.removeListener('timeout', timeoutErr);
                 socket.setTimeout(0);
 
-                return callback!(null, socket);
+                return done(null, socket);
             }
 
             if (headers.length > MAX_RESPONSE_HEADER_BYTES) {

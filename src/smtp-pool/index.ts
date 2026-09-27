@@ -4,7 +4,7 @@ import SMTPConnection, { type SMTPConnectionAuth } from '../smtp-connection/inde
 import wellKnown, { type WellKnownService } from '../well-known/index.js';
 import * as shared from '../shared/index.js';
 import * as errors from '../errors.js';
-import type { NodemailerError } from '../errors.js';
+import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
 import type {
     SMTPTransportOptions,
@@ -109,7 +109,7 @@ class SMTPPool extends EventEmitter {
     /**
      * The Mail instance using this transport, assigned by Mail
      */
-    declare mailer?: Mail<SMTPPoolSentMessageInfo> | undefined;
+    declare mailer?: Mail<SMTPPoolSentMessageInfo, SMTPPoolOptions> | undefined;
 
     constructor(options?: SMTPPoolOptions | string) {
         super();
@@ -190,7 +190,7 @@ class SMTPPool extends EventEmitter {
      * @param mail Mail object
      * @param callback Callback function
      */
-    send(mail: MailMessage, callback: SMTPPoolSendCallback): boolean {
+    send(mail: MailMessage<SMTPPoolSentMessageInfo>, callback: SMTPPoolSendCallback): boolean {
         if (this._closed) {
             return false;
         }
@@ -331,7 +331,7 @@ class SMTPPool extends EventEmitter {
         }
 
         const entry = (connection.queueEntry = this._queue.shift() as SMTPPoolQueueEntry);
-        entry.messageId = ((connection.queueEntry.mail.message!.getHeader('message-id') || '') as string).replace(/[<>\s]/g, '');
+        entry.messageId = ((connection.queueEntry.mail.message.getHeader('message-id') || '') as string).replace(/[<>\s]/g, '');
 
         connection.available = false;
 
@@ -655,12 +655,14 @@ class SMTPPool extends EventEmitter {
                 callback = shared.callbackPromise(resolve, reject);
             });
         }
+        // the error paths hand over the error alone
+        const done = callback as ResultCallback<true>;
 
         const auth = new PoolResource(this).auth;
 
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
-                return callback!(err);
+                return done(err);
             }
 
             let options: SMTPPoolOptions = this.options;
@@ -692,7 +694,7 @@ class SMTPPool extends EventEmitter {
                 }
                 returned = true;
                 connection.close();
-                return callback!(err);
+                return done(err);
             });
 
             connection.once('end', () => {
@@ -700,7 +702,7 @@ class SMTPPool extends EventEmitter {
                     return;
                 }
                 returned = true;
-                return callback!(new Error('Connection closed'));
+                return done(new Error('Connection closed'));
             });
 
             const finalize = () => {
@@ -709,7 +711,7 @@ class SMTPPool extends EventEmitter {
                 }
                 returned = true;
                 connection.quit();
-                return callback!(null, true);
+                return done(null, true);
             };
 
             connection.connect(() => {
@@ -726,7 +728,7 @@ class SMTPPool extends EventEmitter {
                         if (err) {
                             returned = true;
                             connection.close();
-                            return callback!(err);
+                            return done(err);
                         }
 
                         finalize();
@@ -737,7 +739,7 @@ class SMTPPool extends EventEmitter {
 
                     returned = true;
                     connection.close();
-                    return callback!(err);
+                    return done(err);
                 } else {
                     finalize();
                 }
@@ -756,5 +758,8 @@ declare namespace SMTPPool {
     export type MailOptions = SendMailOptions;
     export type SentMessageInfo = SMTPPoolSentMessageInfo;
 }
+
+/** The same aliases as module level exports, for `import * as SMTPPool` and `import SMTPPool = require()` */
+export type { SMTPPoolOptions as Options, SendMailOptions as MailOptions, SMTPPoolSentMessageInfo as SentMessageInfo };
 
 export default SMTPPool;

@@ -3,7 +3,7 @@ import nmfetch, { type FetchOptions } from '../fetch/index.js';
 import crypto from 'node:crypto';
 import * as shared from '../shared/index.js';
 import * as errors from '../errors.js';
-import type { NodemailerError } from '../errors.js';
+import type { NodemailerError, ResultCallback } from '../errors.js';
 import type { OutgoingHttpHeaders } from 'node:http';
 
 /**
@@ -19,9 +19,11 @@ export type XOAuth2ProvisionResultCallback = (err: Error | null, accessToken?: s
 export type XOAuth2ProvisionCallback = (user: string, renew: boolean, callback: XOAuth2ProvisionResultCallback) => void;
 
 /**
- * Receives an access token, or the error that prevented generating one
+ * Receives an access token, or the error that prevented generating one. Declared with a
+ * required token, the way @types/nodemailer declared it, the error path hands over the
+ * error alone
  */
-export type XOAuth2TokenCallback = (err: Error | null, accessToken?: string) => void;
+export type XOAuth2TokenCallback = (err: Error | null, accessToken: string) => void;
 
 /**
  * A private key accepted by crypto.createSign().sign()
@@ -85,7 +87,7 @@ export interface XOAuth2Token {
  */
 export interface XOAuth2QueuedRequest {
     renew: boolean;
-    callback: XOAuth2TokenCallback;
+    callback: ResultCallback<string>;
 }
 
 /**
@@ -178,6 +180,8 @@ class XOAuth2 extends Stream {
      * @param callback Callback function with error object and token string
      */
     getToken(renew: boolean, callback: XOAuth2TokenCallback): void {
+        // the error paths hand over the error alone
+        const done = callback as ResultCallback<string>;
         if (!renew && this.accessToken && (!this.expires || this.expires > Date.now())) {
             this.logger.debug(
                 {
@@ -216,12 +220,12 @@ class XOAuth2 extends Stream {
             );
             const err: NodemailerError = new Error("Can't create new access token for user");
             err.code = errors.EOAUTH2;
-            return callback(err);
+            return done(err);
         }
 
         // If renewal already in progress, queue this request instead of starting another
         if (this.renewing) {
-            this.renewalQueue.push({ renew, callback });
+            this.renewalQueue.push({ renew, callback: done });
             return;
         }
 
@@ -256,7 +260,7 @@ class XOAuth2 extends Stream {
                 );
             }
             // Complete original request
-            callback(err, accessToken);
+            done(err, accessToken);
         };
 
         if (this.provisionCallback) {
@@ -298,6 +302,8 @@ class XOAuth2 extends Stream {
      * @param callback Callback function with error object and token string
      */
     generateToken(callback: XOAuth2TokenCallback): void {
+        // the error paths hand over the error alone
+        const done = callback as ResultCallback<string>;
         let urlOptions: { [key: string]: any };
         let loggedUrlOptions: { [key: string]: any };
         if (this.options.serviceClient) {
@@ -317,7 +323,7 @@ class XOAuth2 extends Stream {
             } catch (_err) {
                 const err: NodemailerError = new Error("Can't generate token. Check your auth options");
                 err.code = errors.EOAUTH2;
-                return callback(err);
+                return done(err);
             }
 
             urlOptions = {
@@ -333,7 +339,7 @@ class XOAuth2 extends Stream {
             if (!this.options.refreshToken) {
                 const err: NodemailerError = new Error("Can't create new access token for user");
                 err.code = errors.EOAUTH2;
-                return callback(err);
+                return done(err);
             }
 
             // web app - https://developers.google.com/identity/protocols/OAuth2WebServer
@@ -369,13 +375,13 @@ class XOAuth2 extends Stream {
             let data: any;
 
             if (error) {
-                return callback(error);
+                return done(error);
             }
 
             try {
                 data = JSON.parse((body as Buffer).toString());
             } catch (E: any) {
-                return callback(E);
+                return done(E);
             }
 
             if (!data || typeof data !== 'object') {
@@ -390,7 +396,7 @@ class XOAuth2 extends Stream {
                 );
                 const err: NodemailerError = new Error('Invalid authentication response');
                 err.code = errors.EOAUTH2;
-                return callback(err);
+                return done(err);
             }
 
             const logData = Object.assign({}, data);
@@ -419,7 +425,7 @@ class XOAuth2 extends Stream {
                 }
                 const err: NodemailerError = new Error(errorMessage);
                 err.code = errors.EOAUTH2;
-                return callback(err);
+                return done(err);
             }
 
             if (data.access_token) {
@@ -429,7 +435,7 @@ class XOAuth2 extends Stream {
 
             const err: NodemailerError = new Error('No access token');
             err.code = errors.EOAUTH2;
-            return callback(err);
+            return done(err);
         });
     }
 
@@ -545,12 +551,19 @@ class XOAuth2 extends Stream {
     }
 }
 
+/** The extra request settings of the token request, the customHeaders and customParams options */
+export type XOAuth2RequestParams = Pick<XOAuth2Options, 'customHeaders' | 'customParams'>;
+
 /**
  * Type aliases in the layout of @types/nodemailer, so `XOAuth2.Options` style references keep working
  */
 declare namespace XOAuth2 {
     export type Options = XOAuth2Options;
     export type Token = XOAuth2Token;
+    export type RequestParams = XOAuth2RequestParams;
 }
+
+/** The same aliases as module level exports, for `import * as XOAuth2` and `import XOAuth2 = require()` */
+export type { XOAuth2Options as Options, XOAuth2Token as Token, XOAuth2RequestParams as RequestParams };
 
 export default XOAuth2;

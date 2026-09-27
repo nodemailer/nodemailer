@@ -728,7 +728,9 @@ const MAX_NESTED_GROUP_DEPTH = 50;
  * @param options._depth Internal recursion depth counter (do not set manually)
  * @return An array of address objects
  */
-export default function addressparser(str?: string | null, options?: AddressParserOptions): Address[] {
+function addressparser(str: string | null | undefined, options: AddressParserOptions & { flatten: true }): MailboxAddress[];
+function addressparser(str?: string | null, options?: AddressParserOptions): Address[];
+function addressparser(str?: string | null, options?: AddressParserOptions): Address[] {
     options = options || {};
     const depth = options._depth || 0;
 
@@ -803,3 +805,20 @@ export default function addressparser(str?: string | null, options?: AddressPars
 
     return parsedAddresses;
 }
+
+/**
+ * Type aliases in the layout of @types/nodemailer, so `addressparser.Address` style references keep working
+ */
+// the namespace member can not refer to the module level type of the same name directly
+type AddressEntry = Address;
+
+declare namespace addressparser {
+    export type Address = MailboxAddress;
+    export type Group = GroupAddress;
+    export type AddressOrGroup = AddressEntry;
+}
+
+/** The names @types/nodemailer used for the group entry and for the union of both entry types */
+export type { GroupAddress as Group, Address as AddressOrGroup };
+
+export default addressparser;

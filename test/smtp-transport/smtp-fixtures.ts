@@ -49,11 +49,11 @@ export class MockBuilder {
     }
 }
 
-export function mockMail(envelope: MockEnvelope, data: { [key: string]: any } = {}, body = 'teretere, vana kere'): MailMessage {
+export function mockMail(envelope: MockEnvelope, data: { [key: string]: any } = {}, body = 'teretere, vana kere'): MailMessage<any> {
     // every message gets its own envelope object, the way MimeNode builds one per message:
     // the connection normalizes the envelope in place and keeps its recipient queue on it
     const ownEnvelope = { from: envelope.from, to: ([] as string[]).concat(envelope.to) };
-    return { data, message: new MockBuilder(ownEnvelope, body) } as unknown as MailMessage;
+    return { data, message: new MockBuilder(ownEnvelope, body) } as unknown as MailMessage<any>;
 }
 
 export interface LogRecord {

@@ -51,6 +51,9 @@ export interface ResolvedHostname {
     error?: Error | undefined;
 }
 
+/** The name @types/nodemailer used for ResolvedHostname */
+export type ResolveHostnameValue = ResolvedHostname;
+
 /**
  * Resolved addresses as stored in the DNS cache
  */
@@ -100,6 +103,9 @@ export interface LogEntry {
 
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
+/** The name @types/nodemailer used for LogLevel */
+export type LoggerLevel = LogLevel;
+
 /**
  * A logger supplied by the caller, bunyan style. Any object works, a level it does not
  * implement is routed to one it does, see _logFunc
@@ -124,15 +130,24 @@ export interface GetLoggerOptions {
 }
 
 /**
+ * A bunyan style log method: a data object followed by a printf style message, or the
+ * message alone
+ */
+export interface LogMethod {
+    (data: LogEntry | undefined, message?: string, ...args: any[]): void;
+    (message?: string, ...args: any[]): void;
+}
+
+/**
  * The bunyan compatible logger interface returned by getLogger
  */
 export interface Logger {
-    trace(data?: LogEntry, message?: string, ...args: any[]): void;
-    debug(data?: LogEntry, message?: string, ...args: any[]): void;
-    info(data?: LogEntry, message?: string, ...args: any[]): void;
-    warn(data?: LogEntry, message?: string, ...args: any[]): void;
-    error(data?: LogEntry, message?: string, ...args: any[]): void;
-    fatal(data?: LogEntry, message?: string, ...args: any[]): void;
+    trace: LogMethod;
+    debug: LogMethod;
+    info: LogMethod;
+    warn: LogMethod;
+    error: LogMethod;
+    fatal: LogMethod;
 }
 
 /**
@@ -596,8 +611,10 @@ export const getLogger = (options?: GetLoggerOptions, defaults?: LogEntry): Logg
     const logger = options.logger === true ? createDefaultLogger(levels) : options.logger;
 
     levels.forEach(level => {
-        response[level] = (data, message, ...args) => {
-            _logFunc(logger, level, defaults, data, message, ...args);
+        response[level] = (...args: any[]) => {
+            // the bunyan forms: a data object first, or the message alone
+            const data: LogEntry | undefined = typeof args[0] === 'string' ? undefined : args.shift();
+            _logFunc(logger, level, defaults, data, ...args);
         };
     });
 

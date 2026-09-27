@@ -4,7 +4,6 @@ import XOAuth2, { type XOAuth2Token } from '../xoauth2/index.js';
 import * as errors from '../errors.js';
 import type { NodemailerError } from '../errors.js';
 import { EventEmitter } from 'node:events';
-import type { Socket } from 'node:net';
 import type { SMTPTransportAuth, SMTPTransportSendCallback } from '../smtp-transport/index.js';
 import type MailMessage from '../mailer/mail-message.js';
 import type SMTPPool from './index.js';
@@ -167,11 +166,7 @@ export default class PoolResource extends EventEmitter {
                     }
                     // still have not returned, this means we have an unexpected connection close
                     const err: NodemailerError = new Error('Unexpected socket close');
-                    if (
-                        this.connection &&
-                        this.connection._socket &&
-                        (this.connection._socket as Socket & { upgrading?: boolean }).upgrading
-                    ) {
+                    if (this.connection && this.connection.upgrading) {
                         // starttls connection errors
                         err.code = errors.ETLS;
                     }
@@ -231,8 +226,8 @@ export default class PoolResource extends EventEmitter {
             });
         }
 
-        const envelope = mail.message!.getEnvelope();
-        const messageId = mail.message!.messageId();
+        const envelope = mail.message.getEnvelope();
+        const messageId = mail.message.messageId();
 
         const recipients = ([] as string[]).concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -259,7 +254,7 @@ export default class PoolResource extends EventEmitter {
             envelope.requireTLSExtensionEnabled = mail.data.requireTLSExtensionEnabled;
         }
 
-        this.connection.send(envelope as SMTPEnvelope, mail.message!.createReadStream(), (err, info) => {
+        this.connection.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
             this.messages++;
 
             if (err) {

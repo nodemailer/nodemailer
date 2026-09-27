@@ -141,10 +141,11 @@ export interface MimeNodeEnvelope {
 
 /**
  * Envelope as accepted by setEnvelope. Recipients are collected from to, cc and bcc, any
- * other field is copied to the envelope as is
+ * other field is copied to the envelope as is. A `from` of false is the null sender of a
+ * bounce message, it is sent as MAIL FROM:<>
  */
 export interface MimeNodeEnvelopeInput {
-    from?: MimeNodeAddressInput | undefined;
+    from?: MimeNodeAddressInput | false | undefined;
     to?: MimeNodeAddressInput | undefined;
     cc?: MimeNodeAddressInput | undefined;
     bcc?: MimeNodeAddressInput | undefined;
@@ -1871,5 +1872,8 @@ declare namespace MimeNode {
     export type Addresses = MimeNodeAddresses;
     export type Envelope = MimeNodeEnvelope;
 }
+
+/** The same aliases as module level exports, for `import * as MimeNode` and `import MimeNode = require()` */
+export type { MimeNodeOptions as Options, MimeNodeAddresses as Addresses, MimeNodeEnvelope as Envelope };
 
 export default MimeNode;

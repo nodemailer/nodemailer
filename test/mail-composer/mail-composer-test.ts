@@ -532,7 +532,7 @@ describe('MailComposer unit tests', () => {
                 text: 'def ÄÄÄÄ foo AAAÄ',
                 messageId: 'zzzzzz',
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',
-                textEncoding: 'quoted-printable'
+                textEncoding: 'quoted-printable' as const
             };
 
             let expected =
@@ -565,7 +565,7 @@ describe('MailComposer unit tests', () => {
                 text: 'def ÄÄÄÄ foo AAAÄ',
                 messageId: 'zzzzzz',
                 date: 'Sat, 21 Jun 2014 10:52:44 +0000',
-                textEncoding: 'base64'
+                textEncoding: 'base64' as const
             };
 
             let expected =

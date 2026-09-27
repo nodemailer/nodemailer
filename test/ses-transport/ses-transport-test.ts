@@ -268,7 +268,7 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
         assert.throws(() => nodemailer.createTransport({ SES: { SendEmailCommand: class {} } } as any), missingClient);
         // the transport is also a documented deep import, so it has to refuse a bare
         // construction the same way instead of building an object that can not send
-        assert.throws(() => new SESTransport(), missingClient);
+        assert.throws(() => new (SESTransport as any)(), missingClient);
     });
 
     it('should surface a synchronous SendEmailCommand failure as a single error callback', (t, done) => {

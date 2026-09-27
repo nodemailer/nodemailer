@@ -16,6 +16,7 @@ import type {
 import type { DKIMOptions } from '../dkim/index.js';
 import type { SMTPEnvelopeDsn } from '../smtp-connection/index.js';
 import type { SMTPTransportAuthOptions } from '../smtp-transport/index.js';
+import type { SESSendEmailRequest } from '../ses-transport/index.js';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import type { ResolveContentOptions } from '../shared/index.js';
 import type Mail from './index.js';
@@ -28,7 +29,7 @@ import type { SentMessageInfo } from './index.js';
 export interface SendMailOptions extends MailComposerOptions {
     /** DKIM signing options for this message, used instead of the ones of the transporter */
     dkim?: DKIMOptions | undefined;
-    /** Extra DKIM options for this message, merged over the options of the signer @internal */
+    /** Extra DKIM options for this message, merged over the options of the signer. The SES transport sets skipFields here, the option is not meant for callers */
     _dkim?: DKIMOptions | undefined;
     /** Recipients allowed on this message, 0 disables the limit, defaults to 100000 */
     maxRecipients?: number | undefined;
@@ -39,7 +40,7 @@ export interface SendMailOptions extends MailComposerOptions {
     /** SMTP transports: per-message authentication settings, used instead of the transport level auth */
     auth?: SMTPTransportAuthOptions | undefined;
     /** SES transport: extra SendEmailCommand parameters merged into the API call */
-    ses?: { [key: string]: unknown } | undefined;
+    ses?: SESSendEmailRequest | undefined;
 }
 
 /**
@@ -98,12 +99,18 @@ const hasOwn = (obj: object, key: string): boolean => Object.prototype.hasOwnPro
 export default class MailMessage<T = SentMessageInfo> {
     mailer: Mail<T>;
     data: MailMessageData;
-    message: MimeNode | null;
+    /**
+     * The compiled MIME tree. Set once the compile step is done, so it is null while the
+     * 'compile' plugins run and set by the time the 'stream' plugins and the transport see
+     * the message. Declared as always set, the way @types/nodemailer declared it, since the
+     * plugins that read it are the ones that run after it is set
+     */
+    message: MimeNode;
 
     constructor(mailer: Mail<T>, data?: SendMailOptions) {
         this.mailer = mailer;
         this.data = {};
-        this.message = null;
+        this.message = null as unknown as MimeNode;
 
         data = data || {};
         const options = mailer.options || {};
@@ -274,8 +281,8 @@ export default class MailMessage<T = SentMessageInfo> {
     }
 
     normalize(callback: MailMessageDataCallback): void {
-        const envelope = (this.message as MimeNode).getEnvelope();
-        const messageId = (this.message as MimeNode).messageId();
+        const envelope = this.message.getEnvelope();
+        const messageId = this.message.messageId();
 
         this.resolveAll((err, data: MailDataBag) => {
             if (err) {
@@ -327,7 +334,7 @@ export default class MailMessage<T = SentMessageInfo> {
                 value = (value && value.value) || value;
                 if (value) {
                     if (['references', 'in-reply-to', 'message-id', 'content-id'].includes(key)) {
-                        value = (this.message as MimeNode)._encodeHeaderValue(key, value);
+                        value = this.message._encodeHeaderValue(key, value);
                     }
                     data.normalizedHeaders[key] = value;
                 }
@@ -341,11 +348,11 @@ export default class MailMessage<T = SentMessageInfo> {
             }
 
             if (data.references) {
-                data.normalizedHeaders.references = (this.message as MimeNode)._encodeHeaderValue('references', data.references);
+                data.normalizedHeaders.references = this.message._encodeHeaderValue('references', data.references);
             }
 
             if (data.inReplyTo) {
-                data.normalizedHeaders['in-reply-to'] = (this.message as MimeNode)._encodeHeaderValue('in-reply-to', data.inReplyTo);
+                data.normalizedHeaders['in-reply-to'] = this.message._encodeHeaderValue('in-reply-to', data.inReplyTo);
             }
 
             return callback(null, data);
@@ -386,7 +393,7 @@ export default class MailMessage<T = SentMessageInfo> {
         // add optional List-* headers
         this._getListHeaders(this.data.list).forEach(listHeader => {
             listHeader.value.forEach(value => {
-                (this.message as MimeNode).addHeader(listHeader.key, value);
+                this.message.addHeader(listHeader.key, value);
             });
         });
     }

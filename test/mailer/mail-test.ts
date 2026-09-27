@@ -46,7 +46,7 @@ class StubTransport extends EventEmitter {
             setImmediate(() => callback(err));
             return;
         }
-        setImmediate(() => callback(null, { envelope: mail.message!.getEnvelope(), messageId: mail.message!.messageId() }));
+        setImmediate(() => callback(null, { envelope: mail.message.getEnvelope(), messageId: mail.message.messageId() }));
     }
 }
 
@@ -132,7 +132,7 @@ describe('Mail', () => {
                 name: 'Plain',
                 version: '1',
                 send(mail: MailMessage, callback: (err: Error | null, info?: any) => void) {
-                    callback(null, { envelope: mail.message!.getEnvelope(), messageId: mail.message!.messageId() });
+                    callback(null, { envelope: mail.message.getEnvelope(), messageId: mail.message.messageId() });
                 }
             };
             const mail = new Mail(transport);
@@ -254,7 +254,7 @@ describe('Mail', () => {
             });
             transporter.use('stream', (mail, next) => {
                 seen.streamMessage = mail.message;
-                mail.message!.setHeader('X-Stream-Plugin', 'yes');
+                mail.message.setHeader('X-Stream-Plugin', 'yes');
                 next();
             });
 

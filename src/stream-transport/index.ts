@@ -75,10 +75,10 @@ class StreamTransport {
     send(mail: MailMessage<StreamSentMessageInfo>, done: (err: Error | null, info?: StreamSentMessageInfo) => void): void {
         // We probably need this in the output. send() runs after the message was compiled,
         // so mail.message is set
-        mail.message!.keepBcc = true;
+        mail.message.keepBcc = true;
 
-        const envelope = mail.message!.getEnvelope();
-        const messageId = mail.message!.messageId();
+        const envelope = mail.message.getEnvelope();
+        const messageId = mail.message.messageId();
 
         const recipients = ([] as string[]).concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -99,7 +99,7 @@ class StreamTransport {
             let stream: Readable;
 
             try {
-                stream = mail.message!.createReadStream();
+                stream = mail.message.createReadStream();
                 if (this.options.newline) {
                     // apply the transport-level line ending transform; the message-level
                     // `newline` option is handled by MimeNode in createReadStream()
@@ -184,5 +184,8 @@ declare namespace StreamTransport {
     export type MailOptions = SendMailOptions;
     export type SentMessageInfo = StreamSentMessageInfo;
 }
+
+/** The same aliases as module level exports, for `import * as StreamTransport` and `import StreamTransport = require()` */
+export type { StreamTransportOptions as Options, SendMailOptions as MailOptions, StreamSentMessageInfo as SentMessageInfo };
 
 export default StreamTransport;
