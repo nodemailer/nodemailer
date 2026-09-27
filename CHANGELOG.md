@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [10.0.11](https://github.com/nodemailer/nodemailer/compare/v10.0.10...v10.0.11) (2026-09-27)
+
+
+### Bug Fixes
+
+* **fetch:** report a form body that can not be encoded through the returned stream ([74d40bf](https://github.com/nodemailer/nodemailer/commit/74d40bf1e4553bc0568b471250a9251bcb569b00))
+* keep the CommonJS entry point and the services subpath compatible with the pre-TypeScript build ([52901ef](https://github.com/nodemailer/nodemailer/commit/52901ef3725ad179aa56276495a60f53b2c83516))
+* **qp:** keep wrap() terminating for short line lengths and a trailing incomplete escape ([8fa140b](https://github.com/nodemailer/nodemailer/commit/8fa140b11c62cb1202eac84d35bb3ba28bc3b1a1))
+* **smtp-connection:** fail a password login cleanly when the server offers only XOAUTH2 ([90abf7d](https://github.com/nodemailer/nodemailer/commit/90abf7d11db5ebfeb4292b62c1fff969741c7d33))
+* **types:** restore the layout of @types/nodemailer in the bundled declarations ([ac2e40f](https://github.com/nodemailer/nodemailer/commit/ac2e40ffc69427e0eb33ce3945fae76c4c828c8d))
+
 ## [10.0.10](https://github.com/nodemailer/nodemailer/compare/v10.0.9...v10.0.10) (2026-09-14)
 
 
