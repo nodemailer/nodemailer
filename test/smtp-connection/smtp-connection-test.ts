@@ -940,26 +940,6 @@ describe('SMTP-Connection Tests', () => {
             client.on('end', done);
         });
 
-        it('should connect to a server and try to upgrade STARTTLS', (t, done) => {
-            let client = new SMTPConnection({
-                port: PORT_NUMBER + 3,
-                logger: false,
-                requireTLS: true,
-                opportunisticTLS: true
-            });
-
-            client.connect(() => {
-                assert.strictEqual(client.secure, false);
-                client.close();
-            });
-
-            client.on('error', err => {
-                assert.ok(!err);
-            });
-
-            client.on('end', done);
-        });
-
         it('should try upgrade with STARTTLS where not advertised', (t, done) => {
             let client = new SMTPConnection({
                 port: PORT_NUMBER + 3,

@@ -42,6 +42,8 @@ function expectConnectError(
 
     client.connect(() => {
         connected = true;
+        // end the session so the assertion reports it instead of the test hanging
+        client.close();
     });
 }
 
@@ -271,6 +273,50 @@ describe('SMTP-Connection failure handling', () => {
             );
         });
 
+        for (const [fragment, responseCode] of [
+            ['55', undefined],
+            ['250 2.1.0 Sender OK', undefined],
+            ['421 4.7.0 Shutting down', 421]
+        ] as [string, number | undefined][]) {
+            it(
+                'reports an unterminated "' + fragment + '" at close ' + (responseCode ? 'with' : 'without') + ' a responseCode',
+                (t, done) => {
+                    startRawServer(
+                        {
+                            MAIL: (line, socket) => {
+                                socket.end(fragment);
+                            }
+                        },
+                        server => {
+                            const client = createClient(server);
+                            let eventErr: NodemailerError | null = null;
+                            const sendErrs: NodemailerError[] = [];
+                            // the connection error is emitted and completes the pending send with the same error
+                            client.on('error', err => {
+                                eventErr = err;
+                            });
+                            client.connect(() => {
+                                client.send({ from: 'a@example.com', to: 'b@example.com' }, 'test', err => {
+                                    sendErrs.push(err as NodemailerError);
+                                });
+                            });
+                            client.once('end', () => {
+                                finishRawServer(server, done, () => {
+                                    assert.strictEqual(sendErrs.length, 1);
+                                    assert.strictEqual(sendErrs[0], eventErr);
+                                    const err = eventErr as NodemailerError | null;
+                                    assert.ok(err);
+                                    assert.strictEqual(err.code, 'ECONNECTION');
+                                    assert.strictEqual(err.responseCode, responseCode);
+                                    assert.strictEqual(err.response, responseCode ? fragment : undefined);
+                                });
+                            });
+                        }
+                    );
+                }
+            );
+        }
+
         it('clears its timers when the server drops the connection before the greeting', (t, done) => {
             startRawServer(
                 {
@@ -282,16 +328,25 @@ describe('SMTP-Connection failure handling', () => {
                 server => {
                     // the default greeting timeout is 30 seconds, it must not outlive the connection
                     const client = createClient(server);
-                    client.on('error', () => false);
+                    let connectErr: NodemailerError | undefined;
+                    let errorEvent: NodemailerError | null = null;
+                    client.on('error', err => {
+                        errorEvent = err;
+                    });
                     client.once('end', () => {
                         finishRawServer(server, done, () => {
+                            // the close is reported through the connect callback, not as 'error'
+                            assert.strictEqual(errorEvent, null);
+                            assert.ok(connectErr);
+                            assert.strictEqual(connectErr.code, 'ECONNECTION');
+                            assert.strictEqual(connectErr.command, 'CONN');
                             assert.strictEqual(client._greetingTimeout, false);
                             assert.strictEqual(client._connectionTimeout, false);
                             assert.strictEqual(client.destroyed, true);
                         });
                     });
-                    client.connect(() => {
-                        assert.fail('the connect callback must not run');
+                    client.connect(err => {
+                        connectErr = err;
                     });
                 }
             );
@@ -408,6 +463,45 @@ describe('SMTP-Connection failure handling', () => {
     });
 
     describe('TLS upgrade failures', () => {
+        it('continues unencrypted after a rejected STARTTLS with opportunisticTLS alone', (t, done) => {
+            startRawServer({ EHLO: '250-test\r\n250 STARTTLS\r\n', STARTTLS: '454 4.7.0 TLS not available\r\n' }, server => {
+                const client = createClient(server, { opportunisticTLS: true, ignoreTLS: false });
+                let error: NodemailerError | null = null;
+                let connected = false;
+                client.on('error', err => {
+                    error = err;
+                });
+                client.connect(() => {
+                    connected = true;
+                    client.close();
+                });
+                client.on('end', () => {
+                    finishRawServer(server, done, () => {
+                        assert.strictEqual(error, null);
+                        assert.strictEqual(connected, true);
+                        assert.strictEqual(client.secure, false);
+                        assert.ok(server.commands.includes('STARTTLS'));
+                    });
+                });
+            });
+        });
+
+        for (const [flag, extra] of [
+            ['opportunisticTLS', { opportunisticTLS: true, ignoreTLS: false }],
+            ['ignoreTLS', { ignoreTLS: true }]
+        ] as const) {
+            it('requireTLS takes precedence over ' + flag, (t, done) => {
+                startRawServer({ EHLO: '250-test\r\n250 STARTTLS\r\n', STARTTLS: '454 4.7.0 TLS not available\r\n' }, server => {
+                    expectConnectError(createClient(server, Object.assign({ requireTLS: true }, extra)), server, done, err => {
+                        assert.strictEqual(err.code, 'ETLS');
+                        assert.strictEqual(err.command, 'STARTTLS');
+                        assert.ok(server.commands.includes('STARTTLS'), server.commands.join('\n'));
+                        assert.ok(!server.commands.some(line => /^MAIL/.test(line)));
+                    });
+                });
+            });
+        }
+
         // tls.connect() rejects an unknown secureProtocol synchronously, which is the
         // one failure the upgrade code has to catch instead of receiving on the socket
         const brokenTls = { secureProtocol: 'bogus_method' };
@@ -796,6 +890,44 @@ describe('SMTP-Connection failure handling', () => {
     });
 
     describe('Transaction failures', () => {
+        it('reports a temporary code when every recipient is rejected and one was only deferred', (t, done) => {
+            startRawServer(
+                {
+                    RCPT: line => (/first@/.test(line) ? '452 4.2.2 Mailbox full\r\n' : '550 5.1.1 No such user\r\n')
+                },
+                server => {
+                    const client = createClient(server);
+                    let sendErr: NodemailerError | null = null;
+
+                    client.on('error', err => {
+                        finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                    });
+
+                    client.connect(() => {
+                        client.send({ from: 'a@example.com', to: ['first@example.com', 'second@example.com'] }, 'test', err => {
+                            sendErr = err;
+                            client.quit();
+                        });
+                    });
+
+                    client.on('end', () => {
+                        finishRawServer(server, done, () => {
+                            const err = sendErr as NodemailerError | null;
+                            assert.ok(err);
+                            assert.strictEqual(err.code, 'EENVELOPE');
+                            assert.strictEqual(err.responseCode, 452);
+                            assert.strictEqual(err.response, '452 4.2.2 Mailbox full');
+                            assert.deepStrictEqual(err.rejected, ['first@example.com', 'second@example.com']);
+                            assert.deepStrictEqual(
+                                err.rejectedErrors!.map(rejectedErr => rejectedErr.responseCode),
+                                [452, 550]
+                            );
+                        });
+                    });
+                }
+            );
+        });
+
         it('reports an internationalized sender rejected by the server', (t, done) => {
             startRawServer(
                 {

@@ -1,8 +1,15 @@
 import { Transform, type TransformCallback, type TransformOptions } from 'node:stream';
 
+// bytes inserted into the output, shared as they are only ever copied by Buffer.concat
+const INSERT_LF = Buffer.from('\n');
+const INSERT_LF_DOT = Buffer.from('\n.');
+const INSERT_CR = Buffer.from('\r');
+const INSERT_DOT = Buffer.from('.');
+
 /**
  * Escapes dots in the beginning of lines. Ends the stream with <CR><LF>.<CR><LF>
- * Also makes sure that only <CR><LF> sequences are used for linebreaks
+ * Also makes sure that only <CR><LF> sequences are used for linebreaks, bare CR and bare LF
+ * are both turned into <CR><LF>
  *
  * @param options Stream options
  */
@@ -44,32 +51,36 @@ export default class DataStream extends Transform {
         this.inByteCount += chunk.length;
 
         for (i = 0, len = chunk.length; i < len; i++) {
-            if (chunk[i] === 0x2e) {
-                // .
-                if ((i && chunk[i - 1] === 0x0a) || (!i && (!this.lastByte || this.lastByte === 0x0a))) {
-                    buf = chunk.slice(lastPos, i + 1);
+            const byte = chunk[i];
+            const prev = i ? chunk[i - 1] : this.lastByte;
+            let insert: Buffer | false = false;
+
+            if (prev === 0x0d && byte !== 0x0a) {
+                // a bare CR becomes CRLF. A receiver that treats a lone CR as a line end would
+                // otherwise see "\r.\r" as the end of the data (SMTP smuggling), so a dot
+                // following it is stuffed like at the start of any other line
+                insert = byte === 0x2e ? INSERT_LF_DOT : INSERT_LF;
+            } else if (byte === 0x0a && prev !== 0x0d) {
+                // a bare LF becomes CRLF
+                insert = INSERT_CR;
+            } else if (byte === 0x2e && (prev === 0x0a || prev === false)) {
+                // a dot at the start of a line
+                insert = INSERT_DOT;
+            }
+
+            if (insert) {
+                if (i > lastPos) {
+                    buf = chunk.slice(lastPos, i);
                     chunks.push(buf);
-                    chunks.push(Buffer.from('.'));
-                    chunklen += buf.length + 1;
-                    lastPos = i + 1;
+                    chunklen += buf.length;
                 }
-            } else if (chunk[i] === 0x0a) {
-                // \n
-                if ((i && chunk[i - 1] !== 0x0d) || (!i && this.lastByte !== 0x0d)) {
-                    if (i > lastPos) {
-                        buf = chunk.slice(lastPos, i);
-                        chunks.push(buf);
-                        chunklen += buf.length + 2;
-                    } else {
-                        chunklen += 2;
-                    }
-                    chunks.push(Buffer.from('\r\n'));
-                    lastPos = i + 1;
-                }
+                chunks.push(insert);
+                chunklen += insert.length;
+                lastPos = i;
             }
         }
 
-        if (chunklen) {
+        if (chunks.length) {
             // add last piece
             if (lastPos < chunk.length) {
                 buf = chunk.slice(lastPos);

@@ -1,7 +1,18 @@
 import * as punycode from '../punycode/index.js';
 import * as mimeFuncs from '../mime-funcs/index.js';
 import crypto from 'node:crypto';
+import * as errors from '../errors.js';
+import type { NodemailerError } from '../errors.js';
 import type { MessageParserHeaderLine } from './message-parser.js';
+
+/**
+ * Error for a hashAlgo value the crypto module does not know
+ */
+function unsupportedHashAlgoError(hashAlgo: string): NodemailerError {
+    const err: NodemailerError = new Error('Unsupported DKIM hash algorithm "' + hashAlgo + '"');
+    err.code = errors.ECONFIG;
+    return err;
+}
 
 /**
  * Private key accepted by crypto.Sign#sign: a PEM string, a Buffer, a KeyObject or an
@@ -69,7 +80,12 @@ function sign(headers: MessageParserHeaderLine[], hashAlgo: string, bodyHash: st
 
     canonicalizedHeaderData.headers += 'dkim-signature:' + relaxedHeaderLine(dkimHeader);
 
-    const signer = crypto.createSign(('rsa-' + hashAlgo).toUpperCase());
+    let signer: crypto.Sign;
+    try {
+        signer = crypto.createSign(('rsa-' + hashAlgo).toUpperCase());
+    } catch (_E) {
+        throw unsupportedHashAlgoError(hashAlgo);
+    }
     // the header lines are 'binary' strings, so this reproduces the original header bytes
     signer.update(canonicalizedHeaderData.headers, 'latin1');
     let signature: string;
@@ -83,6 +99,7 @@ function sign(headers: MessageParserHeaderLine[], hashAlgo: string, bodyHash: st
 }
 
 sign.relaxedHeaders = relaxedHeaders;
+sign.unsupportedHashAlgoError = unsupportedHashAlgoError;
 
 export default sign;
 

@@ -27,12 +27,21 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             const pool = new SMTPPool({ host: '127.0.0.1', port: 1, logger: false });
             pool.close();
 
-            const queued = pool.send(mockMail(envelope), () => {
-                assert.fail('a message sent after close() must not be processed');
-            });
+            // the callback is failed asynchronously, see the sendMail() test below
+            const queued = pool.send(mockMail(envelope), () => false);
 
             assert.strictEqual(queued, false);
             assert.strictEqual(pool._queue.length, 0);
+        });
+
+        it('sendMail() rejects instead of hanging when the pooled transport is closed', async () => {
+            const transporter = nodemailer.createTransport({ pool: true, host: '127.0.0.1', port: 1, logger: false });
+            transporter.close();
+
+            await assert.rejects(
+                transporter.sendMail({ from: envelope.from, to: envelope.to, subject: 'x', text: 'x' }),
+                (err: any) => err.code === 'ECONNECTION' && /Connection pool was closed/.test(err.message)
+            );
         });
 
         it('emits idle once a saturated queue has drained', async () => {
@@ -361,6 +370,68 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                     await raw.close();
                 }
             });
+        }
+
+        it('bounds the requeues by default when every connection closes before the greeting', async () => {
+            const raw = await startRawSmtpServer(Infinity);
+            const transporter = nodemailer.createTransport({
+                pool: true,
+                host: '127.0.0.1',
+                port: raw.port,
+                maxConnections: 1,
+                logger: false
+            });
+
+            try {
+                const started = Date.now();
+                await assert.rejects(
+                    transporter.sendMail({ from: envelope.from, to: envelope.to, subject: 'x', text: 'x' }),
+                    (err: any) =>
+                        err.code === 'ECONNECTION' && err.message === 'Reached maximum number of retries after connection was closed'
+                );
+                // the requeues back off (50 + 100 + 200 + 400 + 800 ms) instead of reconnecting in a tight loop
+                const elapsed = Date.now() - started;
+                assert.ok(elapsed >= 1500 && elapsed < 5000, 'elapsed ' + elapsed);
+                // the first attempt plus the five default requeues
+                assert.strictEqual(raw.connections, 6);
+                // past the 100 ms processing delay, nothing reconnects once the message has failed
+                await new Promise(resolve => setTimeout(resolve, 150));
+                assert.strictEqual(raw.connections, 6);
+            } finally {
+                transporter.close();
+                await raw.close();
+            }
+        });
+
+        for (const pool of [true, false]) {
+            it(
+                'verify() ' +
+                    (pool ? 'on a pool' : 'on a single connection transport') +
+                    ' reports a service account without a private key through the callback',
+                async () => {
+                    const ts = await startServer({ authMethods: ['XOAUTH2'] });
+                    const transporter = nodemailer.createTransport({
+                        pool,
+                        host: '127.0.0.1',
+                        port: ts.port,
+                        logger: false,
+                        auth: { type: 'OAuth2', user: 'testuser', serviceClient: 'client-id' }
+                    } as any);
+                    // the error must not be emitted on the transporter, where nothing may be listening
+                    const events: Error[] = [];
+                    transporter.on('error', err => events.push(err));
+
+                    try {
+                        await assert.rejects(transporter.verify(), (err: any) => /privateKey/.test(err.message));
+                        // it used to be emitted on the next tick
+                        await new Promise(resolve => setImmediate(resolve));
+                        assert.deepStrictEqual(events, []);
+                    } finally {
+                        transporter.close();
+                        await ts.close();
+                    }
+                }
+            );
         }
 
         it('keeps delivering when a send callback throws and logs the callback error', async () => {
@@ -793,12 +864,12 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             }
         });
 
-        it('fails with Connection closed when the server drops the connection before the greeting', async () => {
+        it('fails with ECONNECTION when the server drops the connection before the greeting', async () => {
             const raw = await startRawSmtpServer(Infinity);
             const pool = new SMTPPool({ host: '127.0.0.1', port: raw.port, logger: false });
 
             try {
-                await assert.rejects(pool.verify(), { message: 'Connection closed' });
+                await assert.rejects(pool.verify(), { message: 'Connection closed unexpectedly', code: 'ECONNECTION' });
                 assert.strictEqual(raw.connections, 1);
             } finally {
                 pool.close();

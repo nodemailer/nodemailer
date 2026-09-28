@@ -66,6 +66,8 @@ export interface XOAuth2Options {
     component?: string | undefined;
     /** Extra headers for the token request */
     customHeaders?: OutgoingHttpHeaders | undefined;
+    /** Timeout for the token request in milliseconds, defaults to 60000, 0 disables it */
+    requestTimeout?: number | undefined;
     /** Extra form fields for the token request */
     customParams?: { [key: string]: any } | undefined;
 }
@@ -127,18 +129,22 @@ class XOAuth2 extends Stream {
     expires!: number;
     renewing!: boolean;
     renewalQueue!: XOAuth2QueuedRequest[];
+    /** @internal Set when the options can never produce a token, getToken() reports it */
+    configError!: NodemailerError | false;
 
     constructor(options?: XOAuth2Options, logger?: shared.ExternalLogger | boolean) {
         super();
 
         this.options = options || {};
+        this.configError = false;
 
         if (options && options.serviceClient) {
             if (!options.privateKey || !options.user) {
+                // reported through getToken() rather than an 'error' event: the transports forward
+                // that event up to the Mail object, where nothing may be listening
                 const err: NodemailerError = new Error('Options "privateKey" and "user" are required for service account!');
                 err.code = errors.EOAUTH2;
-                setImmediate(() => this.emit('error', err));
-                return;
+                this.configError = err;
             }
 
             const serviceRequestTimeout = Math.min(Math.max(Number(this.options.serviceRequestTimeout) || 0, 0), 3600);
@@ -182,6 +188,9 @@ class XOAuth2 extends Stream {
     getToken(renew: boolean, callback: XOAuth2TokenCallback): void {
         // the error paths hand over the error alone
         const done = callback as ResultCallback<string>;
+        if (this.configError) {
+            return done(this.configError);
+        }
         if (!renew && this.accessToken && (!this.expires || this.expires > Date.now())) {
             this.logger.debug(
                 {
@@ -478,7 +487,10 @@ class XOAuth2 extends Stream {
             method: 'post',
             headers: params.customHeaders,
             body: payload,
-            allowErrorResponse: true
+            allowErrorResponse: true,
+            // unset falls back to the fetch default, a stalled token endpoint would otherwise keep
+            // `renewing` set and queue every later request
+            timeout: params.requestTimeout
         };
 
         // OAuth2 token endpoints are credential-bearing. src/fetch already

@@ -7,7 +7,7 @@ import http from 'node:http';
 import https from 'node:https';
 import zlib from 'node:zlib';
 import { PassThrough } from 'node:stream';
-import type { AddressInfo } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
 
 const HTTP_PORT = 19998;
 const HTTPS_PORT = 19993;
@@ -725,8 +725,10 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
 describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => {
     let server: http.Server;
     let base: string;
+    let redirectSockets: Socket[] = [];
 
     beforeEach((t, done) => {
+        redirectSockets = [];
         server = http.createServer((req, res) => {
             switch (req.url) {
                 case '/setcookie':
@@ -775,6 +777,30 @@ describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => 
                         Location: '/echo'
                     });
                     res.end();
+                    break;
+
+                case '/redirect-open':
+                    // a redirect whose body never ends, the client has to let go of it
+                    redirectSockets.push(req.socket);
+                    res.writeHead(302, {
+                        Location: '/echo'
+                    });
+                    res.write(' ');
+                    break;
+
+                case '/big':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.end(Buffer.alloc(4096, 'a'));
+                    break;
+
+                case '/big-gzip':
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain',
+                        'Content-Encoding': 'gzip'
+                    });
+                    res.end(zlib.gzipSync(Buffer.alloc(4096, 'a')));
                     break;
 
                 default: {
@@ -950,4 +976,51 @@ describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => 
             done();
         });
     });
+
+    it('should release a redirect response before following it', (t, done) => {
+        let req = nmfetch(base + '/redirect-open', { timeout: 300 });
+        let errors: Error[] = [];
+        req.on('data', () => false);
+        req.on('error', err => errors.push(err));
+        req.on('end', () => {
+            assert.deepStrictEqual(errors, []);
+            assert.strictEqual(redirectSockets.length, 1);
+            // a released request has its socket, and with it the pending timeout, destroyed
+            const socket = redirectSockets[0];
+            if (socket.destroyed) {
+                return done();
+            }
+            socket.once('close', () => done());
+        });
+    });
+
+    it('should apply a default timeout when none is given', () => {
+        // a stalled server can not be waited out in a test, the default is pinned instead. The
+        // other tests cover that a configured timeout is applied
+        assert.strictEqual(nmfetch.DEFAULT_TIMEOUT, 60 * 1000);
+    });
+
+    for (const path of ['/big', '/big-gzip']) {
+        it('should refuse a response body larger than maxBytes on ' + path, (t, done) => {
+            let req = nmfetch(base + path, { maxBytes: 1000 });
+            req.on('data', () => false);
+            req.on('error', (err: any) => {
+                assert.strictEqual(err.code, 'EFETCH');
+                assert.match(err.message, /exceeds the allowed 1000 bytes/);
+                done();
+            });
+            req.on('end', () => done(new Error('the body must not be accepted')));
+        });
+
+        it('should accept a response body within maxBytes on ' + path, (t, done) => {
+            let req = nmfetch(base + path, { maxBytes: 4096 });
+            let size = 0;
+            req.on('data', chunk => (size += chunk.length));
+            req.on('error', done);
+            req.on('end', () => {
+                assert.strictEqual(size, 4096);
+                done();
+            });
+        });
+    }
 });

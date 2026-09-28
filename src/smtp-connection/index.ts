@@ -41,11 +41,11 @@ export interface SMTPConnectionOptions {
     secured?: boolean | undefined;
     /** Server name for SNI, defaults to host when that is not an IP address */
     servername?: string | undefined;
-    /** Ignore STARTTLS even when the server advertises it */
+    /** Ignore STARTTLS even when the server advertises it, has no effect when requireTLS is set */
     ignoreTLS?: boolean | undefined;
-    /** Force STARTTLS, fail when the server does not support it */
+    /** Force STARTTLS, fail when the server does not support it. Takes precedence over ignoreTLS and opportunisticTLS */
     requireTLS?: boolean | undefined;
-    /** Continue unencrypted when the STARTTLS upgrade fails */
+    /** Continue unencrypted when the STARTTLS upgrade fails, has no effect when requireTLS is set */
     opportunisticTLS?: boolean | undefined;
     /** Name of the client server, sent with EHLO/HELO, CRLF is stripped */
     name?: string | undefined;
@@ -297,6 +297,16 @@ export type SMTPConnectionResponseCallback = (err: NodemailerError | null, respo
 export type SMTPConnectionConnectCallback = (err?: NodemailerError) => void;
 
 /**
+ * State of the send() in flight
+ * @internal
+ */
+interface SMTPConnectionPendingSend {
+    callback: ResultCallback<SMTPConnectionSendInfo>;
+    stream: Readable | false;
+    onStreamError: (err: Error) => void;
+}
+
+/**
  * Options handed to net.connect or tls.connect, resolved hostname values are merged in
  */
 export interface SMTPConnectionConnectOptions extends tls.ConnectionOptions {
@@ -368,8 +378,8 @@ function isPartialLine(line: string): boolean {
  *  * **port** - is the port to connect to (defaults to 587 or 465)
  *  * **host** - is the hostname or IP address to connect to (defaults to 'localhost')
  *  * **secure** - use SSL
- *  * **ignoreTLS** - ignore server support for STARTTLS
- *  * **requireTLS** - forces the client to use STARTTLS
+ *  * **ignoreTLS** - ignore server support for STARTTLS (has no effect when requireTLS is set)
+ *  * **requireTLS** - forces the client to use STARTTLS, takes precedence over ignoreTLS and opportunisticTLS
  *  * **name** - the name of the client server
  *  * **localAddress** - outbound address to bind to (see: http://nodejs.org/api/net.html#net_net_connect_options_connectionlistener)
  *  * **greetingTimeout** - Time to wait in ms until greeting message is received from the server (defaults to 30 seconds)
@@ -520,6 +530,18 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _currentDataStream: DataStream | false;
+    /**
+     * The send() in flight: its callback, settled by _onError(), and the message stream with its
+     * 'error' listener, detached by close()
+     * @internal
+     */
+    _pendingSend: SMTPConnectionPendingSend | false;
+
+    /**
+     * Callback handed to connect(), cleared once the handshake finishes
+     * @internal
+     */
+    _connectCallback: SMTPConnectionConnectCallback | false;
 
     /**
      * Callbacks for socket's listeners
@@ -603,6 +625,12 @@ class SMTPConnection extends EventEmitter {
 
         this.options = options || {};
 
+        if (this.options.requireTLS && (this.options.ignoreTLS || this.options.opportunisticTLS)) {
+            // requireTLS wins, a contradictory configuration must not quietly fall back to plaintext.
+            // Copied so the caller's (possibly shared) options object is left as it was
+            this.options = Object.assign({}, this.options, { ignoreTLS: false, opportunisticTLS: false });
+        }
+
         this.secureConnection = !!this.options.secure;
         this.alreadySecured = !!this.options.secured;
 
@@ -673,6 +701,8 @@ class SMTPConnection extends EventEmitter {
         this._closing = false;
 
         this._currentDataStream = false;
+        this._pendingSend = false;
+        this._connectCallback = false;
 
         this._onSocketData = chunk => this._onData(chunk);
         this._onSocketError = error => this._onError(error, 'ESOCKET', false, 'CONN');
@@ -691,7 +721,9 @@ class SMTPConnection extends EventEmitter {
      */
     connect(connectCallback?: SMTPConnectionConnectCallback): void {
         if (typeof connectCallback === 'function') {
+            this._connectCallback = connectCallback;
             this.once('connect', () => {
+                this._connectCallback = false;
                 this.logger.debug(
                     {
                         tnx: 'smtp'
@@ -967,6 +999,17 @@ class SMTPConnection extends EventEmitter {
             this._currentDataStream = false;
         }
 
+        // Detach from the message stream as well. The listener is swapped for a no-op rather than
+        // removed, a stream destroyed with an error later on would otherwise throw it as unhandled
+        if (this._pendingSend) {
+            const { stream, onStreamError } = this._pendingSend;
+            if (stream) {
+                stream.removeListener('error', onStreamError);
+                stream.on('error', TEARDOWN_NOOP);
+            }
+            this._pendingSend = false;
+        }
+
         if (socket && !socket.destroyed) {
             try {
                 // Clear socket timeout to prevent timer leaks
@@ -1188,6 +1231,9 @@ class SMTPConnection extends EventEmitter {
                 return;
             }
             returned = true;
+            if (this._pendingSend && this._pendingSend.callback === callback) {
+                this._pendingSend = false;
+            }
 
             (done as ResultCallback<SMTPConnectionSendInfo>)(err, info);
         };
@@ -1209,9 +1255,16 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
+        const pendingSend: SMTPConnectionPendingSend = {
+            callback,
+            stream: false,
+            onStreamError: err => callback(this._formatError(err, 'ESTREAM', false, 'API'))
+        };
         if (typeof (message as Readable).on === 'function') {
-            (message as Readable).on('error', err => callback(this._formatError(err, 'ESTREAM', false, 'API')));
+            pendingSend.stream = message as Readable;
+            pendingSend.stream.on('error', pendingSend.onStreamError);
         }
+        this._pendingSend = pendingSend;
 
         const startTime = Date.now();
         this._setEnvelope(envelope, (err, info) => {
@@ -1439,8 +1492,14 @@ class SMTPConnection extends EventEmitter {
             this.logger.error(data as any, err.message);
         }
 
+        // close() forgets the send in flight, it is completed with this same error afterwards so
+        // a late message stream error has nothing left to report
+        const pendingSend = this._pendingSend;
         this.emit('error', err);
         this.close();
+        if (pendingSend) {
+            pendingSend.callback(err);
+        }
     }
 
     /** @internal */
@@ -1502,12 +1561,28 @@ class SMTPConnection extends EventEmitter {
             'Connection closed'
         );
 
+        // the unterminated remainder is only reported as a reply (and so gives the error a responseCode)
+        // when it starts like a complete failure reply, not for a fragment such as "55" or a 250
+        const failureResponse = typeof serverResponse === 'string' && /^[45]\d{2}[ -]/.test(serverResponse) ? serverResponse : false;
+
         if (this.upgrading && !this._destroyed) {
-            return this._onError(new Error('Connection closed unexpectedly'), 'ETLS', serverResponse, 'CONN');
-        } else if (![this._actionGreeting, this.close].includes(this._responseActions[0]) && !this._destroyed) {
-            return this._onError(new Error('Connection closed unexpectedly'), 'ECONNECTION', serverResponse, 'CONN');
-        } else if (/^[45]\d{2}\b/.test(serverResponse as string)) {
-            return this._onError(new Error('Connection closed unexpectedly'), 'ECONNECTION', serverResponse, 'CONN');
+            return this._onError(new Error('Connection closed unexpectedly'), 'ETLS', failureResponse, 'CONN');
+        }
+
+        if (!failureResponse && this._responseActions[0] === this._actionGreeting && this._connectCallback && !this._destroyed) {
+            // A silent close before the greeting is handed to the connect() callback rather than
+            // emitted as 'error', callers that never saw an error for it must not start throwing one
+            const connectCallback = this._connectCallback;
+            this._connectCallback = false;
+            const err = this._formatError(new Error('Connection closed unexpectedly'), 'ECONNECTION', false, 'CONN');
+            this.logger.warn({ tnx: 'network' }, err.message);
+            connectCallback(err);
+            this.close();
+            return;
+        }
+
+        if (failureResponse || (this._responseActions[0] !== this.close && !this._destroyed)) {
+            return this._onError(new Error('Connection closed unexpectedly'), 'ECONNECTION', failureResponse, 'CONN');
         }
 
         this._destroy();
@@ -2415,7 +2490,11 @@ class SMTPConnection extends EventEmitter {
                 });
                 this._sendCommand('DATA');
             } else {
-                err = this._formatError("Can't send mail - all recipients were rejected", 'EENVELOPE', str, 'RCPT TO');
+                // report a temporary rejection when there is one, taking the last reply would mark the
+                // whole message as permanently failed although some recipients were only deferred
+                const deferred = envelope.rejectedErrors.find(rejectedErr => rejectedErr.responseCode && rejectedErr.responseCode < 500);
+                const reply = deferred?.response ?? str;
+                err = this._formatError("Can't send mail - all recipients were rejected", 'EENVELOPE', reply, 'RCPT TO');
                 err.rejected = envelope.rejected;
                 err.rejectedErrors = envelope.rejectedErrors;
                 return callback(err);

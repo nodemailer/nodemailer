@@ -11,6 +11,10 @@ import type { NodemailerError } from '../errors.js';
 import { isProtoKey } from '../shared/objects.js';
 
 const MAX_REDIRECTS = 5;
+// a stalled server would otherwise hold the request, and whatever waits on it, open forever
+const DEFAULT_TIMEOUT = 60 * 1000;
+// the body is usually buffered in memory by the caller, so an unbounded download is refused
+const DEFAULT_MAX_BYTES = 64 * 1024 * 1024;
 
 /**
  * Options for nmfetch
@@ -32,8 +36,10 @@ export interface FetchOptions {
     contentType?: string | false | undefined;
     /** TLS settings, only the keys listed in TLS_OPTION_KEYS are used */
     tls?: { [key: string]: any } | undefined;
-    /** Request timeout in milliseconds */
+    /** Socket inactivity timeout in milliseconds, defaults to 60000, 0 disables it */
     timeout?: number | undefined;
+    /** Maximum size of the (decoded) response body in bytes, defaults to 64 MB, Infinity disables the limit */
+    maxBytes?: number | undefined;
     /** Maximum number of redirects to follow (default 5) */
     maxRedirects?: number | undefined;
     /** Resolve responses with a status code of 300 or above instead of emitting an error */
@@ -279,29 +285,24 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         return fetchRes;
     }
 
-    if (options.timeout) {
-        req.setTimeout(options.timeout, () => {
-            if (finished) {
-                return;
-            }
-            finished = true;
-            req.abort();
-            const err: NodemailerError = new Error('Request Timeout');
-            err.code = errors.EFETCH;
-            err.sourceUrl = url;
-            fetchRes.emit('error', err);
-        });
-    }
-
-    req.on('error', (err: NodemailerError) => {
+    // reports the first failure of this request on fetchRes and releases the request
+    const fail = (err: NodemailerError, sourceUrl: string = url): void => {
         if (finished) {
             return;
         }
         finished = true;
         err.code = errors.EFETCH;
-        err.sourceUrl = url;
+        err.sourceUrl = sourceUrl;
         fetchRes.emit('error', err);
-    });
+        req.abort();
+    };
+
+    const timeout = typeof options.timeout === 'number' && options.timeout >= 0 ? options.timeout : DEFAULT_TIMEOUT;
+    if (timeout) {
+        req.setTimeout(timeout, () => fail(new Error('Request Timeout')));
+    }
+
+    req.on('error', (err: NodemailerError) => fail(err));
 
     req.on('response', res => {
         let inflate: zlib.Unzip | undefined;
@@ -327,13 +328,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
             // redirect
             (options.redirects as number)++;
             if ((options.redirects as number) > (options.maxRedirects as number)) {
-                finished = true;
-                const err: NodemailerError = new Error('Maximum redirect count exceeded');
-                err.code = errors.EFETCH;
-                err.sourceUrl = url;
-                fetchRes.emit('error', err);
-                req.abort();
-                return;
+                return fail(new Error('Maximum redirect count exceeded'));
             }
             // redirect does not include POST body
             options.method = 'GET';
@@ -354,13 +349,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                 // call: that call gets its own `finished` flag and no handle on this
                 // request, so this one would stay open and could emit a second error on
                 // the shared fetchRes once it times out. Callers listen with req.once().
-                finished = true;
-                const err: NodemailerError = new Error('Unsupported protocol for URL ' + redirectUrl);
-                err.code = errors.EFETCH;
-                err.sourceUrl = redirectUrl;
-                fetchRes.emit('error', err);
-                req.abort();
-                return;
+                return fail(new Error('Unsupported protocol for URL ' + redirectUrl), redirectUrl);
             }
 
             // Do not forward credentials when the redirect leaves the original
@@ -379,6 +368,12 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                 });
             }
 
+            // this request is done with, release it so its socket and timeout do not
+            // outlive it and report a late error on the shared fetchRes
+            finished = true;
+            res.resume();
+            req.abort();
+
             return nmfetch(redirectUrl, options);
         }
 
@@ -386,38 +381,26 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         fetchRes.headers = res.headers;
 
         if ((res.statusCode as number) >= 300 && !options.allowErrorResponse) {
-            finished = true;
-            const err: NodemailerError = new Error('Invalid status code ' + res.statusCode);
-            err.code = errors.EFETCH;
-            err.sourceUrl = url;
-            fetchRes.emit('error', err);
-            req.abort();
-            return;
+            return fail(new Error('Invalid status code ' + res.statusCode));
         }
 
-        res.on('error', (err: NodemailerError) => {
-            if (finished) {
+        res.on('error', (err: NodemailerError) => fail(err));
+
+        const maxBytes = typeof options.maxBytes === 'number' && options.maxBytes > 0 ? options.maxBytes : DEFAULT_MAX_BYTES;
+        const source: Readable = inflate || res;
+        let received = 0;
+        source.on('data', (chunk: Buffer) => {
+            received += chunk.length;
+            if (received <= maxBytes || finished) {
                 return;
             }
-            finished = true;
-            err.code = errors.EFETCH;
-            err.sourceUrl = url;
-            fetchRes.emit('error', err);
-            req.abort();
+            source.unpipe(fetchRes);
+            fail(new Error('Response size exceeds the allowed ' + maxBytes + ' bytes'));
         });
 
         if (inflate) {
             res.pipe(inflate).pipe(fetchRes);
-            inflate.on('error', (err: NodemailerError) => {
-                if (finished) {
-                    return;
-                }
-                finished = true;
-                err.code = errors.EFETCH;
-                err.sourceUrl = url;
-                fetchRes.emit('error', err);
-                req.abort();
-            });
+            inflate.on('error', (err: NodemailerError) => fail(err));
         } else {
             res.pipe(fetchRes);
         }
@@ -431,11 +414,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                 }
                 req.write(body);
             } catch (err: any) {
-                finished = true;
-                err.code = errors.EFETCH;
-                err.sourceUrl = url;
-                fetchRes.emit('error', err);
-                return;
+                return fail(err);
             }
         }
         req.end();
@@ -445,6 +424,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
 }
 
 nmfetch.Cookies = Cookies;
+nmfetch.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
 
 // the namespace member can not refer to the class of the same name directly
 type CookiesJar = Cookies;

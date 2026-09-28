@@ -29,9 +29,14 @@ export interface SMTPPoolOptions extends SMTPTransportOptions {
     rateLimit?: number | undefined;
     /** Time window for rateLimit in milliseconds, defaults to 1000 */
     rateDelta?: number | undefined;
-    /** How many times a message is requeued when its connection closes while sending, unlimited when not set or negative */
+    /** How many times a message is requeued when its connection closes while sending, defaults to 5, a negative value means unlimited */
     maxRequeues?: number | undefined;
 }
+
+/** First delay before a requeued message is retried, doubled on every further requeue */
+const REQUEUE_BASE_DELAY = 50;
+/** Upper bound for the requeue delay */
+const REQUEUE_MAX_DELAY = 2000;
 
 /**
  * The pool options once the constructor has applied the defaults
@@ -39,6 +44,7 @@ export interface SMTPPoolOptions extends SMTPTransportOptions {
 export type SMTPPoolResolvedOptions = SMTPPoolOptions & {
     maxConnections: number;
     maxMessages: number;
+    maxRequeues: number;
 };
 
 /**
@@ -142,6 +148,8 @@ class SMTPPool extends EventEmitter {
 
         this.options.maxConnections = this.options.maxConnections || 5;
         this.options.maxMessages = this.options.maxMessages || 100;
+        // a default bound, a server that closes every connection before the greeting would otherwise be retried forever
+        this.options.maxRequeues = typeof this.options.maxRequeues === 'number' ? this.options.maxRequeues : 5;
 
         this.logger = shared.getLogger(this.options, {
             component: this.options.component || 'smtp-pool'
@@ -192,6 +200,10 @@ class SMTPPool extends EventEmitter {
      */
     send(mail: MailMessage<SMTPPoolSentMessageInfo>, callback: SMTPPoolSendCallback): boolean {
         if (this._closed) {
+            // Mail.sendMail ignores the return value, so without a callback its promise would never settle
+            const err: NodemailerError = new Error('Connection pool was closed');
+            err.code = errors.ECONNECTION;
+            setImmediate(() => callback(err));
             return false;
         }
 
@@ -485,14 +497,20 @@ class SMTPPool extends EventEmitter {
                 // Note that we must wait a bit.. because the callback of the 'error' handler might be called
                 // in the next event loop
                 setTimeout(() => {
+                    let delay = 0;
                     if (connection.queueEntry) {
                         if (this._shouldRequeuOnConnectionClose(connection.queueEntry)) {
-                            this._requeueEntryOnConnectionClose(connection);
+                            delay = this._requeueEntryOnConnectionClose(connection);
                         } else {
                             this._failDeliveryOnConnectionClose(connection);
                         }
                     }
-                    this._continueProcessing();
+                    if (delay) {
+                        // back off, a server that keeps dropping connections is not hammered
+                        setTimeout(() => this._continueProcessing(), delay);
+                    } else {
+                        this._continueProcessing();
+                    }
                 }, 50);
             } else {
                 if (!this._closed && this.idling && !this._connections.length) {
@@ -510,7 +528,7 @@ class SMTPPool extends EventEmitter {
 
     /** @internal */
     _shouldRequeuOnConnectionClose(queueEntry: SMTPPoolQueueEntry): boolean {
-        if (this.options.maxRequeues === undefined || this.options.maxRequeues < 0) {
+        if (this.options.maxRequeues < 0) {
             return true;
         }
 
@@ -521,7 +539,9 @@ class SMTPPool extends EventEmitter {
     _failDeliveryOnConnectionClose(connection: PoolResource): void {
         if (connection.queueEntry && connection.queueEntry.callback) {
             try {
-                connection.queueEntry.callback(new Error('Reached maximum number of retries after connection was closed'));
+                const err: NodemailerError = new Error('Reached maximum number of retries after connection was closed');
+                err.code = errors.ECONNECTION;
+                connection.queueEntry.callback(err);
             } catch (E: any) {
                 this.logger.error(
                     {
@@ -540,7 +560,8 @@ class SMTPPool extends EventEmitter {
     }
 
     /** @internal */
-    _requeueEntryOnConnectionClose(connection: PoolResource): void {
+    _requeueEntryOnConnectionClose(connection: PoolResource): number {
+        const delay = Math.min(REQUEUE_BASE_DELAY * 2 ** (connection.queueEntry as SMTPPoolQueueEntry).requeueAttempts, REQUEUE_MAX_DELAY);
         (connection.queueEntry as SMTPPoolQueueEntry).requeueAttempts += 1;
         this.logger.debug(
             {
@@ -556,6 +577,7 @@ class SMTPPool extends EventEmitter {
         );
         this._queue.unshift(connection.queueEntry as SMTPPoolQueueEntry);
         connection.queueEntry = false;
+        return delay;
     }
 
     /**
@@ -714,9 +736,15 @@ class SMTPPool extends EventEmitter {
                 return done(null, true);
             };
 
-            connection.connect(() => {
+            connection.connect(err => {
                 if (returned) {
                     return;
+                }
+
+                if (err) {
+                    returned = true;
+                    connection.close();
+                    return done(err);
                 }
 
                 if (auth && (connection.allowsAuth || options.forceAuth)) {

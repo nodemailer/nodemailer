@@ -37,6 +37,33 @@ RpgHY4V0qSCdUt4rD32nwfjlGbh8p5ua5wIDAQAB
 */
 
 describe('DKIM Tests', { timeout: 100 * 1000 }, () => {
+    for (const [where, construct] of [
+        [
+            'signer options',
+            () => new DKIM({ domainName: 'node.ee', keySelector: 'dkim', privateKey, hashAlgo: 'sha999' }).sign('Subject: x\r\n\r\nbody')
+        ],
+        [
+            'per message options',
+            () => new DKIM({ domainName: 'node.ee', keySelector: 'dkim', privateKey }).sign('Subject: x\r\n\r\nbody', { hashAlgo: 'nope' })
+        ],
+        [
+            // a digest that hashes the body but has no RSA signature, so it fails in sign()
+            'signature step',
+            () =>
+                new DKIM({ domainName: 'node.ee', keySelector: 'dkim', privateKey, hashAlgo: 'blake2b512' }).sign('Subject: x\r\n\r\nbody')
+        ]
+    ] as const) {
+        it('reports an unsupported hash algorithm in the ' + where + ' as a stream error', (t, done) => {
+            const output = construct();
+            output.on('data', () => false);
+            output.once('error', (err: any) => {
+                assert.strictEqual(err.code, 'ECONFIG');
+                assert.match(err.message, /Unsupported DKIM hash algorithm/);
+                done();
+            });
+        });
+    }
+
     it('should sign message', (t, done) => {
         const message = `From: saatja aadress
 To: Saaja aadress

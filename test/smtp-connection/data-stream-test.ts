@@ -77,9 +77,19 @@ describe('DataStream', () => {
             assert.strictEqual(output.toString(), 'line 1\r\nline 2\r\n.\r\n');
         });
 
-        it('leaves a lone CR inside a line alone', async () => {
+        it('converts a bare CR inside a line to CRLF', async () => {
             const { output } = await encode(['a\rb\r\n']);
-            assert.strictEqual(output.toString(), 'a\rb\r\n.\r\n');
+            assert.strictEqual(output.toString(), 'a\r\nb\r\n.\r\n');
+        });
+
+        it('converts consecutive bare CRs to CRLF pairs', async () => {
+            const { output } = await encode(['a\r\r\nb']);
+            assert.strictEqual(output.toString(), 'a\r\n\r\nb\r\n.\r\n');
+        });
+
+        it('completes a bare CR at the end of a chunk when the next chunk does not start with LF', async () => {
+            const { output } = await encode(['a\r', 'b\r', '\nc']);
+            assert.strictEqual(output.toString(), 'a\r\nb\r\nc\r\n.\r\n');
         });
     });
 
@@ -114,10 +124,21 @@ describe('DataStream', () => {
             assert.strictEqual(output.toString(), 'a.b.c\r\n.\r\n');
         });
 
-        it('does not escape a dot that follows a lone CR', async () => {
-            // only LF ends a line, so "\r." is still the same line
+        it('stuffs a dot that follows a bare CR, which is turned into a line break', async () => {
             const { output } = await encode(['first\r.second']);
-            assert.strictEqual(output.toString(), 'first\r.second\r\n.\r\n');
+            assert.strictEqual(output.toString(), 'first\r\n..second\r\n.\r\n');
+        });
+
+        it('does not let a bare CR sequence smuggle an end of data marker', async () => {
+            const { output } = await encode(['a\r.\rMAIL FROM:<x>\r\n']);
+            assert.strictEqual(output.toString(), 'a\r\n..\r\nMAIL FROM:<x>\r\n.\r\n');
+            // no CR in the output is left without its LF
+            assert.ok(!/\r(?!\n)/.test(output.toString()));
+        });
+
+        it('stuffs a dot after a bare CR that ends the previous chunk', async () => {
+            const { output } = await encode(['a\r', '.\r', 'MAIL FROM:<x>\r\n']);
+            assert.strictEqual(output.toString(), 'a\r\n..\r\nMAIL FROM:<x>\r\n.\r\n');
         });
     });
 

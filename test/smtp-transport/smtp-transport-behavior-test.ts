@@ -28,16 +28,18 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
             assert.strictEqual(err, proxyError);
         });
 
-        it('reports Unexpected socket close when the server drops the connection before the greeting', async () => {
+        it('reports ECONNECTION when the server drops the connection before the greeting', async () => {
             const raw = await startRawSmtpServer(Infinity);
             const transport = new SMTPTransport({ host: '127.0.0.1', port: raw.port, logger: false });
 
             try {
-                // nothing else reports the close, the transport waits a second before giving up
+                // the connect callback reports the close, no timer is involved
+                const started = Date.now();
                 const { err } = await settle(transport, mockMail(envelope));
                 assert.ok(err);
-                assert.strictEqual(err.message, 'Unexpected socket close');
-                assert.strictEqual(err.code, undefined);
+                assert.strictEqual(err.message, 'Connection closed unexpectedly');
+                assert.strictEqual(err.code, 'ECONNECTION');
+                assert.ok(Date.now() - started < 900);
                 assert.strictEqual(raw.connections, 1);
             } finally {
                 await raw.close();
@@ -589,12 +591,12 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
             }
         });
 
-        it('fails with Connection closed when the server drops the connection before the greeting', async () => {
+        it('fails with ECONNECTION when the server drops the connection before the greeting', async () => {
             const raw = await startRawSmtpServer(Infinity);
             const transport = new SMTPTransport({ host: '127.0.0.1', port: raw.port, logger: false });
 
             try {
-                await assert.rejects(transport.verify(), { message: 'Connection closed' });
+                await assert.rejects(transport.verify(), { message: 'Connection closed unexpectedly', code: 'ECONNECTION' });
                 assert.strictEqual(raw.connections, 1);
             } finally {
                 await raw.close();

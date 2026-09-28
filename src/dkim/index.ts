@@ -160,13 +160,21 @@ class DKIMSigner {
                 return;
             }
             const key = this.keys[keyPos++];
-            const dkimField = sign(this.headers as MessageParserHeaderLine[], this.hashAlgo, this.bodyHash as string, {
-                domainName: key.domainName,
-                keySelector: key.keySelector,
-                privateKey: key.privateKey,
-                headerFieldNames: this.options.headerFieldNames,
-                skipFields: this.options.skipFields
-            });
+            let dkimField: string | false;
+            try {
+                dkimField = sign(this.headers as MessageParserHeaderLine[], this.hashAlgo, this.bodyHash as string, {
+                    domainName: key.domainName,
+                    keySelector: key.keySelector,
+                    privateKey: key.privateKey,
+                    headerFieldNames: this.options.headerFieldNames,
+                    skipFields: this.options.skipFields
+                });
+            } catch (err: any) {
+                this.hasErrored = true;
+                this.cleanup();
+                this.output.emit('error', err);
+                return;
+            }
             if (dkimField) {
                 this.output.write(Buffer.from(dkimField + '\r\n'));
             }
@@ -284,7 +292,14 @@ class DKIM {
 
         const signer = new DKIMSigner(options, this.keys, inputStream as Readable, output);
         setImmediate(() => {
-            signer.signStream();
+            try {
+                signer.signStream();
+            } catch (_E) {
+                // the body hash is created here, an unknown hashAlgo throws inside this timer
+                // where nothing else could catch it
+                output.emit('error', sign.unsupportedHashAlgoError(signer.hashAlgo));
+                return;
+            }
             if (writeValue) {
                 setImmediate(() => {
                     (inputStream as PassThrough).end(writeValue);

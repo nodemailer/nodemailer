@@ -290,33 +290,6 @@ class SMTPTransport extends EventEmitter {
                 return callback(err);
             });
 
-            connection.once('end', () => {
-                if (returned) {
-                    return;
-                }
-
-                const timer = setTimeout(() => {
-                    if (returned) {
-                        return;
-                    }
-                    returned = true;
-                    cleanupPerCallAuth();
-                    // still have not returned, this means we have an unexpected connection close
-                    const err: NodemailerError = new Error('Unexpected socket close');
-                    if (connection && connection.upgrading) {
-                        // starttls connection errors
-                        err.code = errors.ETLS;
-                    }
-                    callback(err);
-                }, 1000);
-
-                try {
-                    timer.unref();
-                } catch (_E) {
-                    // Ignore. Happens on envs with non-node timer implementation
-                }
-            });
-
             const sendMessage = () => {
                 const envelope = mail.message.getEnvelope();
                 const messageId = mail.message.messageId();
@@ -346,6 +319,10 @@ class SMTPTransport extends EventEmitter {
                 );
 
                 connection.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
+                    if (returned) {
+                        // the connection error handler has already reported this send
+                        return;
+                    }
                     returned = true;
                     cleanupPerCallAuth();
                     connection.close();
@@ -382,9 +359,16 @@ class SMTPTransport extends EventEmitter {
                 });
             };
 
-            connection.connect(() => {
+            connection.connect(err => {
                 if (returned) {
                     return;
+                }
+
+                if (err) {
+                    // the server closed the connection before the greeting
+                    returned = true;
+                    connection.close();
+                    return callback(err);
                 }
 
                 perCallAuth = this.getAuth(mail.data.auth);
@@ -494,9 +478,15 @@ class SMTPTransport extends EventEmitter {
                 return done(null, true);
             };
 
-            connection.connect(() => {
+            connection.connect(err => {
                 if (returned) {
                     return;
+                }
+
+                if (err) {
+                    returned = true;
+                    connection.close();
+                    return done(err);
                 }
 
                 perCallAuth = this.getAuth({});

@@ -1,7 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Socket } from 'node:net';
+import { PassThrough } from 'node:stream';
 import SMTPTransport from '../../src/smtp-transport/index.js';
+import SMTPPool from '../../src/smtp-pool/index.js';
 import { startRawServer, finishRawServer, type RawServer, type RawServerScript } from '../smtp-connection/raw-smtp-server.js';
 import { mockMail, settle } from './smtp-fixtures.js';
 
@@ -15,7 +17,53 @@ function closeRawServer(server: RawServer): Promise<void> {
     return new Promise((resolve, reject) => finishRawServer(server, err => (err ? reject(err) : resolve())));
 }
 
+/**
+ * A message whose stream sends part of the body, then stalls until the test destroys it
+ */
+function stallingMail(): { mail: ReturnType<typeof mockMail>; stream: PassThrough } {
+    const mail = mockMail(envelope);
+    const stream = new PassThrough();
+    (mail.message as any).createReadStream = () => {
+        stream.write('Subject: stalled\r\n\r\npartial body\r\n');
+        return stream;
+    };
+    return { mail, stream };
+}
+
 describe('SMTP transport socket drops', () => {
+    for (const [name, create] of [
+        ['transport', (port: number) => new SMTPTransport({ host: '127.0.0.1', port, ignoreTLS: true, socketTimeout: 200, logger: false })],
+        ['pool', (port: number) => new SMTPPool({ host: '127.0.0.1', port, ignoreTLS: true, socketTimeout: 200, logger: false })]
+    ] as const) {
+        it(`${name}: reports a send once when the message stream fails after a socket timeout`, async () => {
+            // the server accepts DATA and then stays silent until the client gives up
+            const server = await withRawServer({});
+            const transport = create(server.port);
+            const { mail, stream } = stallingMail();
+            const results: any[] = [];
+
+            try {
+                const first = await new Promise<any>(resolve => {
+                    transport.send(mail, (err: any) => {
+                        results.push(err);
+                        resolve(err);
+                    });
+                });
+                assert.ok(first);
+                assert.strictEqual(first.code, 'ETIMEDOUT');
+
+                stream.destroy(new Error('late stream failure'));
+                // destroy() emits its error on the next tick
+                await new Promise(resolve => setImmediate(resolve));
+
+                assert.strictEqual(results.length, 1, results.map(err => err && err.message).join(', '));
+            } finally {
+                transport.close();
+                await closeRawServer(server);
+            }
+        });
+    }
+
     for (const [how, drop] of [
         ['destroyed', (socket: Socket) => socket.destroy()],
         ['ended', (socket: Socket) => socket.end()]

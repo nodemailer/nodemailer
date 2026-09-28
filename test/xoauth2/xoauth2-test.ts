@@ -566,28 +566,57 @@ describe('XOAuth2 token endpoint handling', { timeout: 10000 }, () => {
         server.close(done);
     });
 
-    it('should emit an error when a service client has no private key', (t, done) => {
+    it('should fail getToken when a service client has no private key', (t, done) => {
         let xoauth2 = new XOAuth2({
             user: 'test@example.com',
             serviceClient: '{Client ID}'
         });
 
-        xoauth2.once('error', (err: any) => {
+        // the misconfiguration must not surface as an 'error' event, it used to be emitted on the next tick
+        xoauth2.on('error', (err: any) => done(new Error('unexpected error event: ' + err.message)));
+        xoauth2.getToken(false, (err: any) => {
             assert.strictEqual(err.code, 'EOAUTH2');
             assert.strictEqual(err.message, 'Options "privateKey" and "user" are required for service account!');
-            done();
+            setImmediate(() => done());
         });
     });
 
-    it('should emit an error when a service client has no user', (t, done) => {
+    it('should fail getToken when a service client has no user', (t, done) => {
         let xoauth2 = new XOAuth2({
             serviceClient: '{Client ID}',
             privateKey
         });
 
-        xoauth2.once('error', (err: any) => {
+        xoauth2.on('error', (err: any) => done(new Error('unexpected error event: ' + err.message)));
+        xoauth2.getToken(false, (err: any) => {
             assert.strictEqual(err.code, 'EOAUTH2');
-            done();
+            setImmediate(() => done());
+        });
+    });
+
+    it('should time out a stalled token request and allow a later renewal', (t, done) => {
+        const sockets: any[] = [];
+        const stalled = http.createServer(() => {
+            // never answers
+        });
+        stalled.on('connection', socket => sockets.push(socket));
+        stalled.listen(0, '127.0.0.1', () => {
+            const xoauth2 = new XOAuth2({
+                user: 'test@example.com',
+                clientId: '{Client ID}',
+                clientSecret: '{Client Secret}',
+                refreshToken: 'refresh',
+                accessUrl: 'http://127.0.0.1:' + (stalled.address() as AddressInfo).port + '/',
+                requestTimeout: 200
+            });
+
+            xoauth2.getToken(false, (err: any) => {
+                assert.ok(err);
+                assert.match(err.message, /Request Timeout/);
+                assert.strictEqual(xoauth2.renewing, false);
+                sockets.forEach(socket => socket.destroy());
+                stalled.close(() => done());
+            });
         });
     });
 
