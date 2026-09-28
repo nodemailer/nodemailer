@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.0.12](https://github.com/nodemailer/nodemailer/compare/v10.0.11...v10.0.12) (2026-09-28)
+
+
+### Bug Fixes
+
+* settle every send on a connection error, back off pool requeues, turn a bare CR into CRLF, bound fetch, honour requireTLS ([63ccd66](https://github.com/nodemailer/nodemailer/commit/63ccd66c894bbaac18c82084ee385bf6488226cf))
+
 ## [10.0.11](https://github.com/nodemailer/nodemailer/compare/v10.0.10...v10.0.11) (2026-09-27)
 
 
