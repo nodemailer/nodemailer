@@ -673,6 +673,8 @@ class Tokenizer {
     node: Token | null;
     escaped: boolean;
     inDomainLiteral: boolean;
+    /** The last addr-spec character seen was an "@", with only whitespace or comments since */
+    afterAt: boolean;
     list: Token[];
     operators: { [operator: string]: string };
 
@@ -683,6 +685,7 @@ class Tokenizer {
         this.node = null;
         this.escaped = false;
         this.inDomainLiteral = false;
+        this.afterAt = false;
 
         this.list = [];
         /**
@@ -734,15 +737,20 @@ class Tokenizer {
      * @param chr Character from the address field
      */
     checkChar(chr: string, nextChr: string | null): void {
-        // Track RFC 5322 domain-literals ("[" *dtext "]"). Operator characters such
-        // as the ":" of an IPv6 address-literal (user@[IPv6:2001:db8::1]) are dtext
-        // and must not be treated as the group delimiter while inside the brackets.
-        // Quoted strings and comments are handled separately via operatorExpecting,
-        // so only enter this state when no operator is open. The list separators ","
-        // and ";" are the exception: they always end the literal (and split the
-        // address list) so that an unclosed "[" cannot swallow later recipients.
+        // Track RFC 5322 domain-literals ("[" *dtext "]"). The ":" of an IPv6
+        // address-literal (user@[IPv6:2001:db8::1]) is dtext and must not be treated as
+        // the group delimiter while inside the brackets. That is the only operator the
+        // literal hides: letting it hide the others as well meant a "[" could turn the
+        // comment, quoted string or angle-addr after it into text and pick a different
+        // mailbox, '[ ( ] <a@victim.com> ) <b@evil.com>' yielded a@victim.com where
+        // RFC 5322 reads b@evil.com. A "[" also only opens a literal right after the "@"
+        // of an addr-spec, so the group delimiter of a display name holding one stays
+        // intact. Quoted strings and comments are handled separately via
+        // operatorExpecting, so only enter this state when no operator is open. The list
+        // separators "," and ";" always end the literal (and split the address list) so
+        // that an unclosed "[" cannot swallow later recipients.
         if (!this.escaped && !this.operatorExpecting) {
-            if (!this.inDomainLiteral && chr === '[') {
+            if (!this.inDomainLiteral && chr === '[' && this.afterAt) {
                 this.inDomainLiteral = true;
             } else if (this.inDomainLiteral && (chr === ']' || chr === ',' || chr === ';')) {
                 this.inDomainLiteral = false;
@@ -763,17 +771,24 @@ class Tokenizer {
 
             this.list.push(this.node);
             this.node = null;
+            if (chr !== ')') {
+                // a comment is folding whitespace, it does not part the "@" from the "["
+                this.afterAt = false;
+            }
             this.operatorExpecting = '';
             this.escaped = false;
 
             return;
-        } else if (!this.operatorExpecting && !this.inDomainLiteral && chr in this.operators) {
+        } else if (!this.operatorExpecting && !(this.inDomainLiteral && chr === ':') && chr in this.operators) {
             this.node = {
                 type: 'operator',
                 value: chr
             };
             this.list.push(this.node);
             this.node = null;
+            if (chr !== '(') {
+                this.afterAt = false;
+            }
             this.operatorExpecting = this.operators[chr];
             this.escaped = false;
             return;
@@ -799,6 +814,11 @@ class Tokenizer {
         if (chr.charCodeAt(0) >= 0x21 || [' ', '\t'].includes(chr)) {
             // skip command bytes
             this.node.value += chr;
+            // text inside a quoted string or a comment is not part of an addr-spec. Tracked
+            // as it goes rather than read back off the value (see lastChars in _handleAddress)
+            if (!this.operatorExpecting && chr !== ' ' && chr !== '\t') {
+                this.afterAt = chr === '@';
+            }
         }
 
         this.escaped = false;

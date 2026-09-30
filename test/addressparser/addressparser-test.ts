@@ -105,6 +105,53 @@ describe('#addressparser', () => {
         assert.deepStrictEqual(addressparser(input), expected);
     });
 
+    it('should keep a colon inside an address literal that follows a comment', () => {
+        // a comment is folding whitespace, so it does not part the "@" from the "["
+        assert.deepStrictEqual(addressparser('user@(c)[IPv6:2001:db8::1]'), [{ name: 'c', address: 'user@[IPv6:2001:db8::1]' }]);
+        assert.deepStrictEqual(addressparser('user(c)@[IPv6:2001:db8::1]'), [{ name: 'c', address: 'user@[IPv6:2001:db8::1]' }]);
+    });
+
+    it('should not let a "[" hide the comment, quoted string or angle-addr after it', () => {
+        // A domain-literal only hides the ":" of an IPv6 address-literal. Hiding the other
+        // operators as well picked a different mailbox than the one RFC 5322 reads
+        for (const input of [
+            '[ ( ] <victim@good.com> ) <evil@evil.com>',
+            'x [(<victim@good.com>)] evil@evil.com',
+            '["] <victim@good.com> ["] <evil@evil.com>',
+            'Name[x<evil@evil.com>]<victim@good.com>',
+            // an "@" in front of the "[" opens a literal, which still must not hide them
+            'Name @[ ( ] <victim@good.com> ) <evil@evil.com>',
+            '@[ ( ] <victim@good.com> ) <evil@evil.com>',
+            'Name a@[ ( ] <victim@good.com> ) <evil@evil.com>',
+            'x@(c)[ ( ] <victim@good.com> ) <evil@evil.com>',
+            'x@\n[ ( ] <victim@good.com> ) <evil@evil.com>',
+            '"x"@[ ( ] <victim@good.com> ) <evil@evil.com>',
+            'Name @[ " ] <victim@good.com> " <evil@evil.com>'
+        ]) {
+            const result = addressparser(input);
+            assert.strictEqual(result.length, 1, input);
+            assert.strictEqual(result[0].address, 'evil@evil.com', input);
+        }
+    });
+
+    it('should not open an address literal after an "@" inside a quoted string or a comment', () => {
+        for (const input of ['"x@"[IPv6:::1] <a@b.com>', '(x@)[IPv6:::1] <a@b.com>']) {
+            const result = addressparser(input, { flatten: true });
+            assert.deepStrictEqual(
+                result.map(entry => entry.address),
+                ['a@b.com'],
+                input
+            );
+        }
+    });
+
+    it('should not open an address literal for a group delimiter in a display name', () => {
+        assert.deepStrictEqual(addressparser('x[:<victim@good.com>;] <evil@evil.com>'), [
+            { name: 'x[', group: [{ name: '', address: 'victim@good.com' }] },
+            { name: ']', address: 'evil@evil.com' }
+        ]);
+    });
+
     it('should handle emtpy group correctly', () => {
         let input = 'Undisclosed:;';
         let expected = [
@@ -1249,6 +1296,22 @@ describe('#addressparser', () => {
                 const elapsed = Date.now() - started;
 
                 assert.ok(elapsed < 5000, `scanning a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+
+        for (const [label, build] of [
+            ['many address literals', (count: number) => 'a@[]'.repeat(count)],
+            ['many brackets', (count: number) => '['.repeat(count)]
+        ] as [string, (count: number) => string][]) {
+            it(`should tokenize ${label} in linear time`, () => {
+                const count = 400000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `tokenizing a ${input.length} byte value took ${elapsed}ms`);
             });
         }
 
