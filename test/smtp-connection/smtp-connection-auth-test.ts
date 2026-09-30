@@ -69,6 +69,70 @@ describe('SMTP-Connection authentication', () => {
             });
         });
 
+        it('reads every advertised SASL method in either AUTH spelling and in order of preference', (t, done) => {
+            startRawServer(
+                { EHLO: '250-test\r\n250-AUTH=login xoauth2\r\n250-AUTH\tCRAM-MD5  PLAIN\r\n250 AUTH X-PLAIN LOGINX\r\n' },
+                server => {
+                    const client = createClient(server);
+
+                    client.on('error', err => {
+                        finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                    });
+
+                    client.connect(() => {
+                        assert.strictEqual(client.allowsAuth, true);
+                        assert.deepStrictEqual(client._supportedAuth, ['PLAIN', 'LOGIN', 'CRAM-MD5', 'XOAUTH2']);
+                        client.quit();
+                    });
+
+                    client.on('end', () => finishRawServer(server, done));
+                }
+            );
+        });
+
+        it('does not take a method name that is only the start of another one', (t, done) => {
+            startRawServer({ EHLO: '250-test\r\n250 AUTH PLAINX X-LOGIN CRAM-MD5-PLUS\r\n' }, server => {
+                const client = createClient(server);
+
+                client.on('error', err => {
+                    finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                });
+
+                client.connect(() => {
+                    assert.strictEqual(client.allowsAuth, true);
+                    assert.deepStrictEqual(client._supportedAuth, []);
+                    client.quit();
+                });
+
+                client.on('end', () => finishRawServer(server, done));
+            });
+        });
+
+        // Each method used to be found with a pattern whose two whitespace runs overlapped, so
+        // an AUTH line padded with spaces and naming no known method backtracked quadratically
+        // and a hostile server stalled the event loop for tens of seconds from its EHLO reply
+        // (GHSA-4ffr-jq9g-5ffx). The budget is far above the linear cost and far below that one
+        it('reads an AUTH line padded with whitespace in linear time', (t, done) => {
+            const padding = ' '.repeat(200 * 1024);
+            startRawServer({ EHLO: '250-test\r\n250-AUTH' + padding + 'NOMATCH\r\n250 AUTH=' + padding + 'LOGIN\r\n' }, server => {
+                const client = createClient(server);
+
+                client.on('error', err => {
+                    finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                });
+
+                const started = Date.now();
+                client.connect(() => {
+                    const elapsed = Date.now() - started;
+                    assert.deepStrictEqual(client._supportedAuth, ['LOGIN']);
+                    assert.ok(elapsed < 2000, `reading the EHLO reply took ${elapsed}ms`);
+                    client.quit();
+                });
+
+                client.on('end', () => finishRawServer(server, done));
+            });
+        });
+
         it('sends AUTH PLAIN without an authorization identity when nothing is advertised', (t, done) => {
             let authCommand: string | undefined;
             startRawServer(

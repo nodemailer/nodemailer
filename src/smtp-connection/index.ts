@@ -2158,24 +2158,25 @@ class SMTPConnection extends EventEmitter {
             this.allowsAuth = true;
         }
 
-        // Detect if the server supports PLAIN auth
-        if (/[ -]AUTH(?:(\s+|=)[^\n]*\s+|\s+|=)PLAIN/i.test(str)) {
-            this._supportedAuth.push('PLAIN');
+        // Detect the advertised SASL mechanisms. The list is split into whole tokens rather
+        // than searched for each name with a pattern: the patterns this replaced let two
+        // whitespace runs overlap and backtracked quadratically over an AUTH line padded with
+        // spaces, so a hostile server could stall the event loop from its EHLO reply
+        // (GHSA-4ffr-jq9g-5ffx).
+        const authMechanisms = new Set<string>();
+        for (const line of this._ehloLines) {
+            const authMatch = /^AUTH[\s=](.*)/i.exec(line);
+            if (authMatch) {
+                for (const mechanism of authMatch[1].split(/[\s=]+/)) {
+                    authMechanisms.add(mechanism.toUpperCase());
+                }
+            }
         }
-
-        // Detect if the server supports LOGIN auth
-        if (/[ -]AUTH(?:(\s+|=)[^\n]*\s+|\s+|=)LOGIN/i.test(str)) {
-            this._supportedAuth.push('LOGIN');
-        }
-
-        // Detect if the server supports CRAM-MD5 auth
-        if (/[ -]AUTH(?:(\s+|=)[^\n]*\s+|\s+|=)CRAM-MD5/i.test(str)) {
-            this._supportedAuth.push('CRAM-MD5');
-        }
-
-        // Detect if the server supports XOAUTH2 auth
-        if (/[ -]AUTH(?:(\s+|=)[^\n]*\s+|\s+|=)XOAUTH2/i.test(str)) {
-            this._supportedAuth.push('XOAUTH2');
+        // listed in order of preference, the first one the credentials allow is used
+        for (const mechanism of ['PLAIN', 'LOGIN', 'CRAM-MD5', 'XOAUTH2']) {
+            if (authMechanisms.has(mechanism)) {
+                this._supportedAuth.push(mechanism);
+            }
         }
 
         // Detect if the server supports SIZE extensions (and the max allowed size)
