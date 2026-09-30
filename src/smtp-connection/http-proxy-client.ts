@@ -147,21 +147,32 @@ function httpProxyClient(
                 '\r\n\r\n'
         );
 
-        let headers = '';
+        // The response is collected as chunks and only the bytes that just arrived, together
+        // with the three before them, are searched for the end of the headers. Appending to a
+        // string and searching all of it again re-read the whole response on every chunk.
+        const chunks: Buffer[] = [];
+        let received = 0;
+        let tail = '';
         const onSocketData = (chunk: Buffer) => {
             let match: RegExpMatchArray | null;
-            let remainder: string;
 
             if (finished) {
                 return;
             }
 
-            headers += chunk.toString('binary');
-            if ((match = headers.match(/\r\n\r\n/))) {
+            const window = tail + chunk.toString('binary');
+            const windowEnd = window.indexOf('\r\n\r\n');
+            chunks.push(chunk);
+            received += chunk.length;
+            tail = window.slice(-3);
+
+            if (windowEnd >= 0) {
                 socket.removeListener('data', onSocketData);
 
-                remainder = headers.substr(match.index! + match[0].length);
-                headers = headers.substr(0, match.index);
+                const headerEnd = received - window.length + windowEnd;
+                const response = Buffer.concat(chunks, received).toString('binary');
+                const headers = response.substr(0, headerEnd);
+                const remainder = response.substr(headerEnd + 4);
                 if (remainder) {
                     socket.unshift(Buffer.from(remainder, 'binary'));
                 }
@@ -189,7 +200,7 @@ function httpProxyClient(
                 return done(null, socket);
             }
 
-            if (headers.length > MAX_RESPONSE_HEADER_BYTES) {
+            if (received > MAX_RESPONSE_HEADER_BYTES) {
                 socket.removeListener('data', onSocketData);
                 const err: NodemailerError = new Error('Proxy response headers too large');
                 err.code = errors.EPROXY;

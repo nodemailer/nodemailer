@@ -278,6 +278,42 @@ describe('HTTP Proxy Client CONNECT responses', { timeout: 10 * 1000 }, () => {
         );
     });
 
+    // Only the new bytes and the three before them are searched for the end of the headers,
+    // so a terminator split across chunks has to be found all the same
+    it('finds the end of the headers when it is split across chunks', (t, done) => {
+        const pieces = ['HTTP/1.1 200 Connection established\r\nProxy-Agent: test\r', '\n', '\r', '\n220 smtp', '.example.com ESMTP\r\n'];
+        startRawProxy(
+            socket => {
+                socket.setNoDelay(true);
+                const next = () => {
+                    const piece = pieces.shift();
+                    if (piece !== undefined && !socket.destroyed) {
+                        socket.write(piece);
+                        setTimeout(next, 20);
+                    }
+                };
+                next();
+            },
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    assert.ok(!err, err?.message);
+                    assert.ok(socket);
+                    let greeting = '';
+                    socket.on('data', chunk => {
+                        greeting += chunk.toString();
+                        if (greeting.endsWith('\r\n')) {
+                            socket.destroy();
+                            server.close(() => {
+                                assert.strictEqual(greeting, '220 smtp.example.com ESMTP\r\n');
+                                done();
+                            });
+                        }
+                    });
+                });
+            }
+        );
+    });
+
     it('rejects a CONNECT response without an HTTP status line', (t, done) => {
         startRawProxy(
             socket => socket.write('garbage\r\n\r\n'),
