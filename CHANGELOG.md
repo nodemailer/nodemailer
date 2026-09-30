@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.13](https://github.com/nodemailer/nodemailer/compare/v10.0.12...v10.0.13) (2026-09-30)
+
+
+### Bug Fixes
+
+* read the advertised SASL methods without backtracking regexes ([b5a896f](https://github.com/nodemailer/nodemailer/commit/b5a896fcb02df1628329d7cd665ca08490b14b56))
+* strip comments inside an angle-addr before it becomes the address ([a502247](https://github.com/nodemailer/nodemailer/commit/a502247555fd81773eac337486781f3b6008e16a))
+
 ## [10.0.12](https://github.com/nodemailer/nodemailer/compare/v10.0.11...v10.0.12) (2026-09-28)
 
 
