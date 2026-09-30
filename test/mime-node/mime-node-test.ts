@@ -1388,6 +1388,24 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#getEnvelope', () => {
+        // GHSA-g73g-hqqh-jr95: a comment inside the angle brackets reached RCPT TO verbatim
+        it('should not carry a comment inside an angle-addr into the envelope', () => {
+            assert.deepStrictEqual(
+                new MimeNode()
+                    .addHeader({
+                        from: 'App <app@good-corp.com(x)evil.com>',
+                        to: 'Legit User <user@good-corp.com(x)evil.com>',
+                        cc: '<cc(c)@good-corp.com>',
+                        bcc: 'Bcc <bcc@good-corp.com (note)>'
+                    })
+                    .getEnvelope(),
+                {
+                    from: 'app@good-corp.com',
+                    to: ['user@good-corp.com', 'cc@good-corp.com', 'bcc@good-corp.com']
+                }
+            );
+        });
+
         it('should get envelope', () => {
             assert.deepStrictEqual(
                 new MimeNode()

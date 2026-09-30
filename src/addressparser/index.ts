@@ -333,6 +333,82 @@ function _recoverAddrSpec(data: { address: string; text: string }): void {
 }
 
 /**
+ * Takes the RFC 5322 comments out of the contents of an angle-addr.
+ *
+ * The tokenizer tracks a single open operator, so once '<' is open a '(' is plain text and
+ * a comment inside the brackets reached the address verbatim: 'Name <user@example.com(x)evil.com>'
+ * put 'user@example.com(x)evil.com' into the envelope, a value that is no mailbox and that a
+ * receiver stripping the comment reads as 'user@example.comevil.com' (GHSA-g73g-hqqh-jr95).
+ * A comment is folding whitespace, so it is read as a space that splits two atoms and as
+ * nothing next to an '@', the same rule the token walk applies outside the brackets. Quoted
+ * strings and domain literals are copied through untouched, a '(' in there is not a comment.
+ *
+ * @param address Contents of the angle brackets
+ * @return The address with the comments removed, and the text of the comments
+ */
+function _stripAddressComments(address: string): { address: string; comments: string[] } {
+    const comments: string[] = [];
+    let result = '';
+    let comment = '';
+    let depth = 0;
+    let closer = '';
+    // carried along rather than read back off the growing result, which would flatten it on
+    // every comment (see lastChars in _handleAddress)
+    let lastChar = '';
+
+    for (let i = 0, len = address.length; i < len; i++) {
+        const chr = address.charAt(i);
+
+        if (depth) {
+            if (chr === '\\' && i < len - 1) {
+                comment += address.charAt(++i);
+            } else if (chr === '(') {
+                depth++;
+                comment += chr;
+            } else if (chr === ')' && !--depth) {
+                comments.push(comment.trim());
+                comment = '';
+                if (lastChar !== '@' && address.charAt(i + 1) !== '@') {
+                    result += ' ';
+                    lastChar = ' ';
+                }
+            } else {
+                comment += chr;
+            }
+            continue;
+        }
+
+        if (closer) {
+            if (chr === '\\' && closer === '"' && i < len - 1) {
+                result += chr + address.charAt(++i);
+                lastChar = address.charAt(i);
+                continue;
+            }
+            if (chr === closer) {
+                closer = '';
+            }
+        } else if (chr === '"') {
+            closer = '"';
+        } else if (chr === '[') {
+            closer = ']';
+        } else if (chr === '(') {
+            depth = 1;
+            continue;
+        }
+
+        result += chr;
+        lastChar = chr;
+    }
+
+    if (depth) {
+        // an unterminated comment runs to the end of the address
+        comments.push(comment.trim());
+    }
+
+    return { address: result.trim(), comments: comments.filter(text => text) };
+}
+
+/**
  * Converts tokens for a single address into an address object
  *
  * @param tokens Tokens object
@@ -465,6 +541,25 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
             group: groupMembers
         });
     } else {
+        // Comments come out of the angle-addr before anything asks whether one was found, so
+        // that brackets holding nothing but a comment read the same as empty ones
+        const addressComments: string[] = [];
+        const addressParts: string[] = [];
+        for (const part of data.address as string[]) {
+            if (part.indexOf('(') < 0) {
+                addressParts.push(part);
+                continue;
+            }
+            const stripped = _stripAddressComments(part);
+            for (const comment of stripped.comments) {
+                addressComments.push(comment);
+            }
+            if (stripped.address) {
+                addressParts.push(stripped.address);
+            }
+        }
+        data.address = addressParts;
+
         // If no address was found, try to detect one from regular text
         if (!data.address.length && data.text.length) {
             for (let i = data.text.length - 1; i >= 0; i--) {
@@ -540,6 +635,11 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         }
 
         _recoverAddrSpec(data);
+
+        // a comment names the mailbox only when nothing else does, as one outside the brackets
+        if (!data.text && addressComments.length) {
+            data.text = addressComments.join(' ');
+        }
 
         const address: MailboxAddress = {
             address: data.address || data.text || '',
