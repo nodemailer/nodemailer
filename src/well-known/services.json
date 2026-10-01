@@ -279,6 +279,13 @@
         "port": 25
     },
 
+    "MailSenpai": {
+        "description": "MailSenpai (SMTP Senpai, EU)",
+        "host": "relay.mailsenpai.com",
+        "port": 2525,
+        "secure": false
+    },
+
     "Mailtrap": {
         "description": "Mailtrap",
         "host": "live.smtp.mailtrap.io",
