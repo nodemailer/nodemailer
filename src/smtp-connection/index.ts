@@ -1470,6 +1470,8 @@ class SMTPConnection extends EventEmitter {
      * @event
      * @param err Error object
      * @param type Error name
+     * @param data Server response that triggered the error, false if there is none
+     * @param command SMTP command that was in flight
      * @internal
      */
     _onError(err: NodemailerError | string, type: string | false, data: string | false, command: string | false): void {
@@ -1796,6 +1798,7 @@ class SMTPConnection extends EventEmitter {
      *        {from:'...', to:['...']}
      *        or
      *        {from:{address:'...',name:'...'}, to:[address:'...',name:'...']}
+     * @param callback Callback to run once the envelope is processed
      * @internal
      */
     _setEnvelope(envelope: SMTPEnvelope | undefined, callback: SMTPConnectionEnvelopeCallback): void {
@@ -2267,6 +2270,7 @@ class SMTPConnection extends EventEmitter {
      * hosts invalidly use a longer message than VXNlcm5hbWU6
      *
      * @param str Message from the server
+     * @param callback Callback to run once the authentication sequence completes
      * @internal
      */
     _actionAUTH_LOGIN_USER(str: string, callback: SMTPConnectionCallback): void {
@@ -2291,6 +2295,7 @@ class SMTPConnection extends EventEmitter {
      * base64 encoded again.
      *
      * @param str Message from the server
+     * @param callback Callback to run once the authentication sequence completes
      * @internal
      */
     _actionAUTH_CRAM_MD5(str: string, callback: SMTPConnectionCallback): void {
@@ -2326,6 +2331,7 @@ class SMTPConnection extends EventEmitter {
      * the user can be considered logged in. Start waiting for a message to send
      *
      * @param str Message from the server
+     * @param callback Callback to run once the authentication sequence completes
      * @internal
      */
     _actionAUTH_CRAM_MD5_PASS(str: string, callback: SMTPConnectionCallback): void {
@@ -2353,6 +2359,7 @@ class SMTPConnection extends EventEmitter {
      * response needs to be base64 encoded password.
      *
      * @param str Message from the server
+     * @param callback Callback to run once the authentication sequence completes
      * @internal
      */
     _actionAUTH_LOGIN_PASS(str: string, callback: SMTPConnectionCallback): void {
@@ -2377,6 +2384,8 @@ class SMTPConnection extends EventEmitter {
      * the user can be considered logged in. Start waiting for a message to send
      *
      * @param str Message from the server
+     * @param isRetry True if this is a retry after a failed login, or the callback itself
+     * @param [callback] Callback to run once the authentication sequence completes
      * @internal
      */
     _actionAUTHComplete(str: string, isRetry: boolean | SMTPConnectionCallback, callback?: SMTPConnectionCallback): void {
@@ -2430,6 +2439,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a MAIL FROM: command
      *
      * @param str Message from the server
+     * @param callback Callback to run once the envelope is processed
      * @internal
      */
     _actionMAIL(str: string, callback: SMTPConnectionEnvelopeCallback): void {
@@ -2463,6 +2473,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a RCPT TO: command
      *
      * @param str Message from the server
+     * @param callback Callback to run once the envelope is processed
      * @internal
      */
     _actionRCPT(str: string, callback: SMTPConnectionEnvelopeCallback): void {
@@ -2514,6 +2525,7 @@ class SMTPConnection extends EventEmitter {
      * Handle response for a DATA command
      *
      * @param str Message from the server
+     * @param callback Callback to run once the envelope is processed
      * @internal
      */
     _actionDATA(str: string, callback: SMTPConnectionEnvelopeCallback): void {
@@ -2545,6 +2557,7 @@ class SMTPConnection extends EventEmitter {
      * We expect a single response that defines if the sending succeeded or failed
      *
      * @param str Message from the server
+     * @param callback Callback to run with the final send result
      * @internal
      */
     _actionSMTPStream(str: string, callback: SMTPConnectionResponseCallback): void {
@@ -2562,6 +2575,7 @@ class SMTPConnection extends EventEmitter {
      * @param recipient The recipient this response applies to
      * @param final Is this the final recipient?
      * @param str Message from the server
+     * @param callback Callback to run with the final send result
      * @internal
      */
     _actionLMTPStream(recipient: string, final: boolean, str: string, callback: SMTPConnectionResponseCallback): void {
