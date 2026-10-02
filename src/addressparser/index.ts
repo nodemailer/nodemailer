@@ -735,6 +735,7 @@ class Tokenizer {
      * Checks if a character is an operator or text and acts accordingly
      *
      * @param chr Character from the address field
+     * @param nextChr Character following chr, null at the end of the field
      */
     checkChar(chr: string, nextChr: string | null): void {
         // Track RFC 5322 domain-literals ("[" *dtext "]"). The ":" of an IPv6

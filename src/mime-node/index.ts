@@ -1641,6 +1641,7 @@ class MimeNode {
      *
      * @param addresses An array of address objects
      * @param [uniqueList] An array to be populated with addresses
+     * @param [seenAddresses] Addresses already added to uniqueList, shared with recursive calls to keep deduplication linear
      * @return address string
      * @internal
      */

@@ -592,6 +592,7 @@ export const _logFunc = (
  * creates a default console logger
  *
  * @param [options] Options object that might include 'logger' value
+ * @param [defaults] Fields merged into every log entry, overridden by the fields of the entry itself
  * @return bunyan compatible logger
  */
 export const getLogger = (options?: GetLoggerOptions, defaults?: LogEntry): Logger => {
