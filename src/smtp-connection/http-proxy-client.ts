@@ -32,11 +32,10 @@ export type HttpProxyClientCallback = Callback<net.Socket>;
  *     socket.write("GET / HTTP/1.0\r\n\r\n");
  * });
  *
- * @param proxyUrl proxy configuration, etg "http://proxy.host:3128/"
+ * @param proxyUrl proxy configuration, e.g. "http://proxy.host:3128/"
  * @param destinationPort Port to open in destination host
  * @param destinationHost Destination hostname
- * @param [tlsOptions] Optional TLS options for an HTTPS proxy (e.g. { rejectUnauthorized: false })
- * @param callback Callback to run with the rocket object once connection is established
+ * @param callback Callback to run with the socket object once connection is established
  */
 function httpProxyClient(
     proxyUrl: string,
@@ -44,6 +43,15 @@ function httpProxyClient(
     destinationHost: string,
     callback: HttpProxyClientCallback
 ): void;
+/**
+ * Establishes proxied connection to destinationPort through an HTTPS proxy
+ *
+ * @param proxyUrl proxy configuration, e.g. "https://proxy.host:3128/"
+ * @param destinationPort Port to open in destination host
+ * @param destinationHost Destination hostname
+ * @param tlsOptions TLS options for the proxy connection (e.g. { rejectUnauthorized: false })
+ * @param callback Callback to run with the socket object once connection is established
+ */
 function httpProxyClient(
     proxyUrl: string,
     destinationPort: number | string,
