@@ -53,6 +53,7 @@ export interface DKIMRelaxedHeaders {
  * Returns DKIM signature header line
  *
  * @param headers Parsed headers object from MessageParser
+ * @param hashAlgo Hash algorithm the body hash was calculated with, for example "sha256"
  * @param bodyHash Base64 encoded hash of the message
  * @param options DKIM options
  * @param options.domainName Domain name to be signed for
