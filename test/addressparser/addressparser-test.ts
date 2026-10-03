@@ -1165,6 +1165,21 @@ describe('#addressparser', () => {
             assert.ok(Array.isArray(result));
         });
 
+        it('should keep the depth counter out of the options object', () => {
+            // the counter used to be read off the options object as `_depth`, so a caller
+            // supplied one could seed it and buy as many levels of nesting as it asked for:
+            // `{ _depth: -1e9 }` turned the guard above into the stack overflow it is there
+            // to prevent. The depth is threaded through the internal calls instead
+            const input = buildDeepGroup(3000);
+
+            assert.doesNotThrow(() => {
+                addressparser(input, { _depth: -1e9 } as any);
+            });
+
+            // the seeded value changes nothing, the guard answers the same way either way
+            assert.deepStrictEqual(addressparser(input, { _depth: -1e9 } as any), addressparser(input));
+        });
+
         it('should handle multiple deeply nested groups in same input', () => {
             let input = buildDeepGroup(100) + ', ' + buildDeepGroup(100);
             let result: any;

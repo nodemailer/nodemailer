@@ -4,8 +4,6 @@
 export interface AddressParserOptions {
     /** Flatten groups into a single list of mailboxes */
     flatten?: boolean | undefined;
-    /** Internal recursion depth counter (do not set manually) @internal */
-    _depth?: number | undefined;
 }
 
 /**
@@ -526,7 +524,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         // Parse group members, but flatten any nested groups (RFC 5322 doesn't allow nesting)
         let groupMembers: Address[] = [];
         if (data.group.length) {
-            const parsedGroup = addressparser(data.group.join(','), { _depth: depth + 1 });
+            const parsedGroup = _parseAddressList(data.group.join(','), depth + 1);
             parsedGroup.forEach(member => {
                 if (member.group) {
                     groupMembers = groupMembers.concat(member.group);
@@ -840,27 +838,18 @@ class Tokenizer {
 const MAX_NESTED_GROUP_DEPTH = 50;
 
 /**
- * Parses structured e-mail addresses from an address field
+ * Parses an address list, recursing into the groups it holds.
  *
- * Example:
- *
- *    'Name <address@domain>'
- *
- * will be converted to
- *
- *     [{name: 'Name', address: 'address@domain'}]
+ * The depth is threaded through the calls rather than carried in an options object, so a
+ * caller supplied one can not seed it and lift the recursion limit: `{ _depth: -1e9 }`
+ * bought a billion levels of nesting and turned the guard below into the stack overflow it
+ * is there to prevent.
  *
  * @param str Address field
- * @param options Optional options object
- * @param options._depth Internal recursion depth counter (do not set manually)
+ * @param depth Current recursion depth for nested group protection
  * @return An array of address objects
  */
-function addressparser(str: string | null | undefined, options: AddressParserOptions & { flatten: true }): MailboxAddress[];
-function addressparser(str?: string | null, options?: AddressParserOptions): Address[];
-function addressparser(str?: string | null, options?: AddressParserOptions): Address[] {
-    options = options || {};
-    const depth = options._depth || 0;
-
+function _parseAddressList(str: string | null | undefined, depth: number): Address[] {
     // Prevent stack overflow from deeply nested groups (DoS protection)
     if (depth > MAX_NESTED_GROUP_DEPTH) {
         return [];
@@ -871,7 +860,7 @@ function addressparser(str?: string | null, options?: AddressParserOptions): Add
 
     const addresses: Token[][] = [];
     let address: Token[] = [];
-    let parsedAddresses: Address[] = [];
+    const parsedAddresses: Address[] = [];
 
     tokens.forEach(token => {
         if (token.type === 'operator' && (token.value === ',' || token.value === ';')) {
@@ -914,9 +903,31 @@ function addressparser(str?: string | null, options?: AddressParserOptions): Add
         }
     }
     mergedAddresses.reverse();
-    parsedAddresses = mergedAddresses;
 
-    if (options.flatten) {
+    return mergedAddresses;
+}
+
+/**
+ * Parses structured e-mail addresses from an address field
+ *
+ * Example:
+ *
+ *    'Name <address@domain>'
+ *
+ * will be converted to
+ *
+ *     [{name: 'Name', address: 'address@domain'}]
+ *
+ * @param str Address field
+ * @param options Optional options object
+ * @return An array of address objects
+ */
+function addressparser(str: string | null | undefined, options: AddressParserOptions & { flatten: true }): MailboxAddress[];
+function addressparser(str?: string | null, options?: AddressParserOptions): Address[];
+function addressparser(str?: string | null, options?: AddressParserOptions): Address[] {
+    const parsedAddresses = _parseAddressList(str, 0);
+
+    if (options?.flatten) {
         const flatAddresses: MailboxAddress[] = [];
         const walkAddressList = (list: Address[]) => {
             list.forEach(entry => {
