@@ -621,7 +621,13 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         data.text = data.text.join(' ');
         data.address = data.address.join(' ');
 
-        if (addressFromQuotedText && data.text) {
+        if (addressFromQuotedText && data.text.indexOf('@') >= 0) {
+            // A quoted run with no '@' in it is a display name and nothing else, so it stays
+            // where it is. Moving it over anyway made a comment the mailbox was read from:
+            // '"Display Name" <(a comment)>' handed on 'Display Name' as the address with the
+            // comment as the name, and a quoted name holding a ',' or a ';' became an address
+            // that reads as two recipients once a consumer writes it back into a header.
+            //
             // The mailbox is still sitting in the text, so it moves over here and is quoted
             // before the recovery below rather than after it. Anything else the text holds
             // came along with it: a comment ends the domain but leaves the atoms behind it in

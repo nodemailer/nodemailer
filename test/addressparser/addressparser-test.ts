@@ -411,6 +411,31 @@ describe('#addressparser', () => {
         assert.strictEqual(result[0].address, '"a@b@c"@example.com');
     });
 
+    it('should not make an address of a quoted display name that holds no "@" (security)', () => {
+        // A quoted run with no '@' in it is a display name and nothing else. It used to be
+        // moved into the address whenever something else was left to name the mailbox, which
+        // a comment inside the angle brackets is, so a name carrying a ',' or a ';' became an
+        // address that reads as two recipients once a consumer writes it back into a header
+        for (const [input, name] of [
+            ['"a,b" <(x)>', 'a,b'],
+            ['"a;b" <(x)>', 'a;b'],
+            ['"a<b>c" <(x)>', 'a<b>c'],
+            ['"Display Name" <(no address here)>', 'Display Name']
+        ]) {
+            const result = addressparser(input);
+            assert.strictEqual(result.length, 1, input);
+            assert.strictEqual(result[0].address, '', input);
+            assert.strictEqual(result[0].name, name, input);
+        }
+
+        // a quoted run that does hold an '@' is still read as the mailbox, with its quotes
+        // put back on so the '@' that splits the domain off stays unambiguous
+        const quoted: any = addressparser('"victim@good.com, attacker@evil.com" <(x)>');
+        assert.strictEqual(quoted.length, 1);
+        assert.strictEqual(quoted[0].address, '"victim@good.com, attacker"@evil.com');
+        assert.strictEqual(quoted[0].name, 'x');
+    });
+
     it('should handle quoted local-part with angle brackets', () => {
         let input = 'Name <"user@domain.com"@example.com>';
         let result = addressparser(input);
