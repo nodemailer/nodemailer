@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [10.0.14](https://github.com/nodemailer/nodemailer/compare/v10.0.13...v10.0.14) (2026-10-03)
+
+
+### Bug Fixes
+
+* **addressparser:** keep a quoted display name that holds no "@" out of the address ([3570d26](https://github.com/nodemailer/nodemailer/commit/3570d26c7b55f6e5df50d4076046600ad3fd040b))
+* **addressparser:** keep the group recursion depth out of the options object ([a680254](https://github.com/nodemailer/nodemailer/commit/a68025405a1378c82e78f64ffad27b92c1035cbe))
+* **addressparser:** stop a "[" from hiding the operators after it ([5619784](https://github.com/nodemailer/nodemailer/commit/561978491d5cc33d2052a6c89a499b838b960262))
+* **dkim:** trim a header field name in linear time ([c6f7a55](https://github.com/nodemailer/nodemailer/commit/c6f7a55a2978bf031b8519ebf59baddf94c032c8))
+* **mime-funcs:** read and write header parameters per rfc2045 and rfc2231 ([b8ccad7](https://github.com/nodemailer/nodemailer/commit/b8ccad723a7e49a674a4d70f32eb9fe77312008d))
+* search only the new bytes for the end of the proxy CONNECT response ([81efd7b](https://github.com/nodemailer/nodemailer/commit/81efd7bfc559305f900d6a22b5c56aa94556002b))
+
 ## [10.0.13](https://github.com/nodemailer/nodemailer/compare/v10.0.12...v10.0.13) (2026-09-30)
 
 
