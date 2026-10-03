@@ -665,9 +665,14 @@ class SMTPPool extends EventEmitter {
     /**
      * Verifies SMTP configuration
      *
-     * @param callback Callback function
+     * @returns Promise that resolves to true if the configuration is usable
      */
     verify(): Promise<true>;
+    /**
+     * Verifies SMTP configuration
+     *
+     * @param callback Callback function
+     */
     verify(callback: VerifyCallback): void;
     verify(callback?: VerifyCallback): Promise<true> | void {
         let promise: Promise<true> | undefined;

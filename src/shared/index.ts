@@ -721,17 +721,40 @@ export const parseDataURI = (uri: unknown): ParsedDataURI | null => {
  *
  * @param data An object or an Array you want to resolve an element for, see ContentDescriptor for the values it understands
  * @param key Property name or an Array index
- * @param [options] Optional access policy: { disableFileAccess, disableUrlAccess }
  * @param callback Callback function with (err, value)
  */
 export function resolveContent(data: { [key: string]: any }, key: string | number, callback: ResolveContentCallback): void;
+/**
+ * Resolves a String or a Buffer value for content value
+ *
+ * @param data An object or an Array you want to resolve an element for, see ContentDescriptor for the values it understands
+ * @param key Property name or an Array index
+ * @param options Access policy: { disableFileAccess, disableUrlAccess }
+ * @param callback Callback function with (err, value)
+ */
 export function resolveContent(
     data: { [key: string]: any },
     key: string | number,
     options: ResolveContentOptions | false | undefined,
     callback: ResolveContentCallback
 ): void;
+/**
+ * Resolves a String or a Buffer value for content value
+ *
+ * @param data An object or an Array you want to resolve an element for, see ContentDescriptor for the values it understands
+ * @param key Property name or an Array index
+ * @param [options] Optional access policy: { disableFileAccess, disableUrlAccess }
+ * @returns Promise that resolves with the value
+ */
 export function resolveContent(data: { [key: string]: any }, key: string | number, options?: ResolveContentOptions | false): Promise<any>;
+/**
+ * Resolves a String or a Buffer value for content value
+ *
+ * @param data An object or an Array you want to resolve an element for, see ContentDescriptor for the values it understands
+ * @param key Property name or an Array index
+ * @param options Access policy: { disableFileAccess, disableUrlAccess }
+ * @param callback Callback function with (err, value), a Promise is returned if not set
+ */
 export function resolveContent(
     data: { [key: string]: any },
     key: string | number,

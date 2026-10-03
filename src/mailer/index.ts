@@ -367,9 +367,15 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
      * Sends an email using the preselected transport object
      *
      * @param data E-data description
-     * @param callback Callback to run once the sending succeeded or failed
+     * @returns Promise that resolves with the result of the send
      */
     sendMail(data: SendMailOptions): Promise<T>;
+    /**
+     * Sends an email using the preselected transport object
+     *
+     * @param data E-data description
+     * @param callback Callback to run once the sending succeeded or failed
+     */
     sendMail(data: SendMailOptions, callback: SendMailCallback<T>): void;
     sendMail(data: SendMailOptions, callback: SendMailCallback<T> | null = null): Promise<T> | void {
         let promise: Promise<T> | undefined;

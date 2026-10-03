@@ -159,11 +159,22 @@ export function createTransport(transporter?: TransportConfig | Transport<any, a
 /**
  * Creates a test account from the Ethereal service (https://ethereal.email)
  *
- * @param apiUrl Optional API endpoint, defaults to https://api.nodemailer.com
- * @param callback Callback function to run with the account object. If not set, a Promise is returned
+ * @param callback Callback function to run with the account object
  */
 export function createTestAccount(callback: TestAccountCallback): void;
+/**
+ * Creates a test account from the Ethereal service (https://ethereal.email)
+ *
+ * @param apiUrl API endpoint, defaults to https://api.nodemailer.com
+ * @param callback Callback function to run with the account object
+ */
 export function createTestAccount(apiUrl: string | false | null | undefined, callback: TestAccountCallback): void;
+/**
+ * Creates a test account from the Ethereal service (https://ethereal.email)
+ *
+ * @param [apiUrl] API endpoint, defaults to https://api.nodemailer.com
+ * @returns Promise that resolves with the account object
+ */
 export function createTestAccount(apiUrl?: string | false | null): Promise<TestAccount>;
 export function createTestAccount(
     apiUrl?: string | false | null | TestAccountCallback,

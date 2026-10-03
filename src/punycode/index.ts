@@ -186,6 +186,7 @@ const basicToDigit = function (codePoint: number): number {
  * @see `basicToDigit()`
  * @private
  * @param digit The numeric value of a basic code point.
+ * @param flag Non-zero to use the uppercase form of the code point.
  * @returns The basic code point whose value (when used for
  * representing integers) is `digit`, which needs to be in the range
  * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
