@@ -576,6 +576,27 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should declare a single boundary when a parameter ahead of it has no value', (t, done) => {
+            // the parameter name used to grow across the ';' that ended it, so 'flag' took
+            // 'boundary' along and the asked for boundary never registered. The node then
+            // generated one of its own and declared it beside the one already in the header,
+            // leaving two boundary parameters where a receiver reading the first of them
+            // found no delimiter it matched and could not read the body at all
+            let mb = new MimeNode('multipart/mixed');
+            mb.setHeader('Content-Type', 'multipart/mixed; flag; boundary="AAA"');
+            mb.createChild('text/plain').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(mb.boundary, 'AAA');
+                assert.strictEqual(msg.match(/boundary=/g).length, 1, 'exactly one boundary parameter may be declared');
+                assert.ok(msg.includes('\r\n--AAA\r\n'));
+                assert.ok(msg.includes('\r\n--AAA--\r\n'));
+                done();
+            });
+        });
+
         it('should strip line breaks from an explicit boundary parameter', (t, done) => {
             let mb = new MimeNode('multipart/mixed');
             mb.setHeader('Content-Type', 'multipart/mixed; boundary="AA\r\nBB"');

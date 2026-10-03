@@ -470,9 +470,223 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
                 }
             });
         });
+
+        it('should drop a parameter that has no name', () => {
+            // a parameter name is a token and a token is never empty, so carrying the
+            // nameless one along would declare it in the rebuilt header as a bare '=v'
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('text/plain; =v; charset=utf-8'), {
+                value: 'text/plain',
+                params: {
+                    charset: 'utf-8'
+                }
+            });
+        });
+
+        it('should keep a parameter that has no value from swallowing the next one', () => {
+            // the parameter name used to keep growing across the ';' that ended it, so the
+            // name took the next parameter along and the value the header asked for was gone:
+            // a multipart content type lost its boundary to a parameter named 'flag; boundary'
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; flag; boundary="AAA"'), {
+                value: 'multipart/mixed',
+                params: {
+                    flag: '',
+                    boundary: 'AAA'
+                }
+            });
+
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('text/plain; a; b; charset=utf-8'), {
+                value: 'text/plain',
+                params: {
+                    a: '',
+                    b: '',
+                    charset: 'utf-8'
+                }
+            });
+        });
+
+        it('should treat a backslash outside a quoted string as an ordinary character', () => {
+            // only a quoted-string has quoted-pairs in it, so eating the backslash anywhere
+            // else turned the value 'C:\\Users\\me\\report.txt' into 'C:Usersmereport.txt'
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment; filename=C:\\Users\\me\\report.txt'), {
+                value: 'attachment',
+                params: {
+                    filename: 'C:\\Users\\me\\report.txt'
+                }
+            });
+
+            // inside the quotes it still escapes, including the backslash itself
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment; filename="a\\"b\\\\c"'), {
+                value: 'attachment',
+                params: {
+                    filename: 'a"b\\c'
+                }
+            });
+        });
+
+        it('should drop the junk behind a closed quoted string', () => {
+            // rfc2045 says a parameter value is a token or a quoted-string and not both, and
+            // appending the junk made a declared boundary that no delimiter in the message met
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; boundary="AAA" (unterminated comment'), {
+                value: 'multipart/mixed',
+                params: {
+                    boundary: 'AAA'
+                }
+            });
+
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment; filename="a.txt" junk; x=1'), {
+                value: 'attachment',
+                params: {
+                    filename: 'a.txt',
+                    x: '1'
+                }
+            });
+        });
+
+        it('should not let the junk behind a closed quoted string reopen the quoting', () => {
+            // the junk was dropped by a test at the foot of the branches, so each branch above
+            // it was a way around it. A second '"' reopened quoting, which both carried the
+            // whitespace in front of it into the value and took the ';' that ends the
+            // parameter along, so the rest of the header was swallowed
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; boundary="AAA" "; boundary=BBB"'), {
+                value: 'multipart/mixed',
+                params: {
+                    boundary: 'AAA'
+                }
+            });
+
+            // no whitespace may leak in either, the value ended with the quote that closed it
+            for (const str of ['multipart/mixed; boundary="AAA" "junk"', 'multipart/mixed; boundary="AAA" "BBB"']) {
+                assert.strictEqual(mimeFuncs.parseHeaderValue(str).params.boundary, 'AAA', str);
+            }
+
+            // and the escape branch is no way in either
+            assert.strictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; x="1" "\\j\\u\\n\\k"').params.x, '1');
+        });
+
+        it('should keep a continuation from overriding the plain parameter of the same name', () => {
+            // the join writes the key it builds, which is the one write in the function that
+            // could take a name another parameter already holds. Both orders resolve to the
+            // plain parameter, so the reading does not come down to which spelling came first
+            for (const str of ['attachment; filename="plain"; filename*0="cont"', 'attachment; filename*0="cont"; filename="plain"']) {
+                assert.deepStrictEqual(
+                    mimeFuncs.parseHeaderValue(str),
+                    {
+                        value: 'attachment',
+                        params: {
+                            filename: 'plain'
+                        }
+                    },
+                    str
+                );
+            }
+        });
+
+        it('should keep the whitespace a quoted parameter value carries', () => {
+            // the stored value used to be trimmed, which lost the trailing space of a
+            // continuation section that the next section is appended to
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment; filename*0="Annual Report "; filename*1="2024.pdf"'), {
+                value: 'attachment',
+                params: {
+                    filename: 'Annual Report 2024.pdf'
+                }
+            });
+
+            // whitespace outside the quotes is still padding and comes off
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment;  filename =  " x " ; y = 1 '), {
+                value: 'attachment',
+                params: {
+                    filename: ' x ',
+                    y: '1'
+                }
+            });
+        });
+
+        it('should resolve a duplicated parameter to its first occurrence', () => {
+            // the same way a duplicated header resolves. Taking the last one disagrees with
+            // the receivers that take the first, and the two readings of a duplicated
+            // boundary name different delimiters
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; boundary="b1"; boundary="b2"'), {
+                value: 'multipart/mixed',
+                params: {
+                    boundary: 'b1'
+                }
+            });
+
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('text/plain; charset=utf-8; CHARSET=us-ascii'), {
+                value: 'text/plain',
+                params: {
+                    charset: 'utf-8'
+                }
+            });
+        });
+
+        it('should not percent decode a continuation section that is not encoded', () => {
+            // rfc2231 section 4.1: only a section whose name ends in '*' is percent encoded.
+            // The charset of section 0 used to turn the escapes of every section into the
+            // bytes they spell, so a literal '%2F..%2F' was emitted as a filename the
+            // receiving client reads back as a real '/../'
+            const parsed = mimeFuncs.parseHeaderValue("attachment; filename*0*=utf-8''safe; filename*1=%2F..%2Fetc");
+
+            assert.strictEqual(parsed.params.filename, '=?utf-8?Q?safe=252F..=252Fetc?=');
+            assert.strictEqual(libmime.decodeWords(parsed.params.filename), 'safe%2F..%2Fetc');
+
+            // the same escapes in an encoded section still carry the bytes of the value
+            const encoded = mimeFuncs.parseHeaderValue("attachment; filename*0*=utf-8''safe; filename*1*=%2F..%2Fetc");
+
+            assert.strictEqual(libmime.decodeWords(encoded.params.filename), 'safe/../etc');
+        });
+
+        it('should order the continuation sections without allocating up to the section number', () => {
+            // the sections used to be written into an array at their own section number, so
+            // the array became as long as the number the header asked for and the join that
+            // followed walked all of it: the 55 byte value below held a core for over two
+            // minutes. The budget is far above the cost of the two sections it really has
+            const started = Date.now();
+            const parsed = mimeFuncs.parseHeaderValue("attachment; filename*0*=utf-8''a; filename*4000000000=b");
+            const elapsed = Date.now() - started;
+
+            assert.strictEqual(parsed.params.filename, '=?utf-8?Q?ab?=');
+            assert.ok(elapsed < 5000, `joining a continuation with section number 4e9 took ${elapsed}ms`);
+        });
+
+        it('should read a continuation charset that is not a token as unnamed', () => {
+            // the charset goes into the encoded word the value becomes, and the whitespace
+            // only used to come off it because the value was trimmed before it was read. A
+            // charset is a token, so anything else reads as the unnamed case
+            for (const str of ["attachment; filename*=\r\n''x", "attachment; filename*=utf 8''x", "attachment; filename*=win(dows)''x"]) {
+                assert.strictEqual(mimeFuncs.parseHeaderValue(str).params.filename, '=?iso-8859-1?Q?x?=', str);
+            }
+
+            // a charset that is a token is still read as the one it names
+            assert.strictEqual(mimeFuncs.parseHeaderValue("attachment; filename*=iso-8859-15''x").params.filename, '=?iso-8859-15?Q?x?=');
+        });
+
+        it('should order the continuation sections by their number', () => {
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('attachment; filename*2=c; filename*0=a; filename*1=b'), {
+                value: 'attachment',
+                params: {
+                    filename: 'abc'
+                }
+            });
+        });
     });
 
     describe('#_buildHeaderValue', () => {
+        it('should quote a parameter that has no value', () => {
+            // a parameter value is a token or a quoted-string and a token is never empty, so
+            // the bare 'flag=' it used to emit parses as neither
+            assert.strictEqual(
+                mimeFuncs.buildHeaderValue({
+                    value: 'multipart/mixed',
+                    params: {
+                        flag: '',
+                        boundary: 'AAA'
+                    }
+                }),
+                'multipart/mixed; flag=""; boundary=AAA'
+            );
+        });
+
         it('should build header value', () => {
             assert.strictEqual(
                 mimeFuncs.buildHeaderValue({
