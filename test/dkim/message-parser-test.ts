@@ -145,6 +145,13 @@ describe('DKIM MessageParser edge cases', () => {
         assert.deepStrictEqual(result.headers, [{ key: 'x-custom', line: 'X-Custom : value' }]);
     });
 
+    it('should keep the whitespace inside a header key', async () => {
+        // only the surrounding SP and HTAB come off, the run between the two atoms is part
+        // of the name the signature covers
+        const result = await parse(['\tX \t Custom : value\r\n\r\n']);
+        assert.deepStrictEqual(result.headers, [{ key: 'x \t custom', line: '\tX \t Custom : value' }]);
+    });
+
     it('should unfold a run of continuation lines into a single header', async () => {
         const result = await parse(['To: a@example.com,\r\n b@example.com,\r\n\tc@example.com\r\nSubject: x\r\n\r\n']);
         assert.deepStrictEqual(result.headers, [
@@ -183,5 +190,22 @@ describe('DKIM MessageParser edge cases', () => {
         assert.strictEqual(result.headers[1].line.split('\n').length, count + 1);
         assert.strictEqual(result.body.toString(), 'body');
         assert.ok(elapsed < 5000, `unfolding ${count} continuation lines took ${elapsed}ms`);
+    });
+
+    // Trimming the field name with /^[ \t]+|[ \t]+$/g retries the trailing branch at every
+    // offset of a blank run that is followed by other text, so a field name carrying one
+    // between two atoms was quadratic: 128 KiB of spaces took ~6.7s of blocked event loop.
+    // The budget is far above the linear cost (~1ms) and far below the quadratic one.
+    it('should trim a field name holding a long blank run in linear time', async () => {
+        const run = ' '.repeat(256 * 1024);
+        const message = `From: a@example.com\r\nA${run}B: value\r\n\r\nbody`;
+
+        const started = Date.now();
+        const result = await parse([Buffer.from(message, 'binary')]);
+        const elapsed = Date.now() - started;
+
+        assert.strictEqual(result.headers.length, 2);
+        assert.strictEqual(result.headers[1].key, `a${run}b`);
+        assert.ok(elapsed < 5000, `trimming a field name around a ${run.length} byte blank run took ${elapsed}ms`);
     });
 });

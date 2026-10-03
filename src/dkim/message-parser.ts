@@ -11,6 +11,36 @@ export interface MessageParserHeaderLine {
 }
 
 /**
+ * Drops the SP and HTAB from both ends of a field name.
+ *
+ * An index scan rather than `/^[ \t]+|[ \t]+$/g`, which retries the trailing branch at
+ * every offset of a blank run that is followed by other text: the run is consumed greedily,
+ * `$` fails, and the engine gives the characters back one at a time before moving on to
+ * start the same walk one offset further in. A field name carrying a 128 KiB run of spaces
+ * between two atoms took about 6.7 seconds to trim, and the cost grows with its square.
+ *
+ * Not `.trim()`, which takes the other Unicode spaces along: an NBSP in front of a field
+ * name would come off and select the name into the signed set, where the relaxed
+ * canonicalization in sign.ts deliberately leaves everything but SP and HTAB alone.
+ *
+ * @param str Field name to trim
+ * @return The field name without the surrounding SP and HTAB
+ */
+function _trimFieldName(str: string): string {
+    let start = 0;
+    let end = str.length;
+
+    while (start < end && (str.charCodeAt(start) === 0x20 || str.charCodeAt(start) === 0x09)) {
+        start++;
+    }
+    while (end > start && (str.charCodeAt(end - 1) === 0x20 || str.charCodeAt(end - 1) === 0x09)) {
+        end--;
+    }
+
+    return str.slice(start, end);
+}
+
+/**
  * MessageParser instance is a transform stream that separates message headers
  * from the rest of the body. Headers are emitted with the 'headers' event. Message
  * body is passed on as the resulting stream.
@@ -174,10 +204,7 @@ class MessageParser extends Transform {
         return lines
             .filter(line => /[^ \t\r]/.test(line))
             .map(line => ({
-                key: line
-                    .substr(0, line.indexOf(':'))
-                    .replace(/^[ \t]+|[ \t]+$/g, '')
-                    .toLowerCase(),
+                key: _trimFieldName(line.substr(0, line.indexOf(':'))).toLowerCase(),
                 line
             }));
     }
