@@ -136,24 +136,35 @@ class Cookies {
      */
     parse(cookieStr?: string): Cookie {
         const cookie: Cookie = {};
+        let hasNameValue = false;
 
         (cookieStr || '')
             .toString()
             .split(';')
             .forEach(cookiePart => {
-                const valueParts = cookiePart.split('=');
-                // attribute names are case-insensitive, the cookie name is not
-                const name = (valueParts.shift() as string).trim();
-                const key = name.toLowerCase();
-                let value = valueParts.join('=').trim();
-                let domain: string;
-
-                if (!key) {
+                if (!cookiePart.trim()) {
                     // skip empty parts
                     return;
                 }
 
-                switch (key) {
+                const valueParts = cookiePart.split('=');
+                const name = (valueParts.shift() as string).trim();
+                let value = valueParts.join('=').trim();
+                let domain: string;
+
+                // the first part is always the name-value pair, so a cookie named
+                // like an attribute is not mistaken for one (RFC 6265 section 5.2)
+                if (!hasNameValue) {
+                    hasNameValue = true;
+                    if (name) {
+                        // cookie names are case-sensitive, only attribute names are not
+                        cookie.name = name;
+                        cookie.value = value;
+                    }
+                    return;
+                }
+
+                switch (name.toLowerCase()) {
                     case 'expires': {
                         const expires = new Date(value);
                         // ignore date if can not parse it
@@ -186,12 +197,6 @@ class Cookies {
                     case 'httponly':
                         cookie.httponly = true;
                         break;
-
-                    default:
-                        if (!cookie.name) {
-                            cookie.name = name;
-                            cookie.value = value;
-                        }
                 }
             });
 

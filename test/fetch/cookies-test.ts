@@ -367,6 +367,19 @@ describe('Cookie Tests', () => {
             });
         });
 
+        it('should read the first part as the name-value pair even if it looks like an attribute', () => {
+            assert.deepStrictEqual(biskviit.parse('Path=x; Path=/; Secure'), {
+                name: 'Path',
+                value: 'x',
+                path: '/',
+                secure: true
+            });
+            // a missing name means there is no cookie, the next pair is not promoted to one
+            assert.deepStrictEqual(biskviit.parse('=x; theme=plain; Path=/'), {
+                path: '/'
+            });
+        });
+
         it('should derive the expiry date from max-age', () => {
             let before = Date.now();
             let cookie = biskviit.parse('theme=plain; Max-Age=60');
