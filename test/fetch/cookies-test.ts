@@ -335,7 +335,7 @@ describe('Cookie Tests', () => {
             assert.deepStrictEqual(
                 biskviit.parse('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Expires=Wed, 13 Jan 2031 22:23:01 GMT; Secure; HttpOnly'),
                 {
-                    name: 'ssid',
+                    name: 'SSID',
                     value: 'Ap4P….GTEq',
                     domain: '.foo.com',
                     path: '/',
@@ -508,7 +508,7 @@ describe('Cookie Tests', () => {
                         path: '/'
                     },
                     {
-                        name: 'ssid',
+                        name: 'SSID',
                         value: 'Ap4P….GTEq',
                         domain: '.foo.com',
                         path: '/test',
@@ -516,7 +516,7 @@ describe('Cookie Tests', () => {
                         httponly: true
                     },
                     {
-                        name: 'ssid',
+                        name: 'SSID',
                         value: 'Ap4P….GTEq',
                         domain: '.foo.com',
                         path: '/',
@@ -553,11 +553,19 @@ describe('Cookie Tests', () => {
 
         it('should send a domain cookie to the domain itself and to its subdomains', () => {
             biskviit.set('SSID=Ap4P….GTEq; Domain=foo.com; Path=/; Secure', 'https://www.foo.com/');
-            assert.strictEqual(biskviit.get('https://foo.com/'), 'ssid=Ap4P….GTEq');
-            assert.strictEqual(biskviit.get('https://www.foo.com/'), 'ssid=Ap4P….GTEq');
-            assert.strictEqual(biskviit.get('https://sub.foo.com/'), 'ssid=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'SSID=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://www.foo.com/'), 'SSID=Ap4P….GTEq');
+            assert.strictEqual(biskviit.get('https://sub.foo.com/'), 'SSID=Ap4P….GTEq');
             assert.strictEqual(biskviit.get('https://barfoo.com/'), '');
             assert.strictEqual(biskviit.get('https://other.com/'), '');
+        });
+
+        it('should send a cookie back with the name in the case it was set', () => {
+            // cookie names are case-sensitive (RFC 6265 section 4.1.1), only the attribute names are not
+            biskviit.set('JSESSIONID=abc; Path=/', 'https://foo.com/');
+            biskviit.set('sid=lower; Path=/', 'https://foo.com/');
+            biskviit.set('SID=upper; Path=/', 'https://foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'JSESSIONID=abc; sid=lower; SID=upper');
         });
 
         it('should keep a cookie host-only when the Domain attribute is a top level domain', () => {
