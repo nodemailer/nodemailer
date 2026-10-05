@@ -9,6 +9,7 @@ import SMTPConnection from '../../src/smtp-connection/index.js';
 import JSONTransport from '../../src/json-transport/index.js';
 import DKIM from '../../src/dkim/index.js';
 import XOAuth2 from '../../src/xoauth2/index.js';
+import type { NodemailerError } from '../../src/errors.js';
 
 // These tests exist for the type checker: they keep the public type surface
 // and the @types/nodemailer style aliases (Mail.Options, SMTPTransport.Options)
@@ -82,5 +83,15 @@ describe('Type surface', () => {
         const plain: Transporter = transporter;
         const result: SentMessageInfo = await plain.sendMail({ from: 'sender@example.com', to: 'recipient@example.com', text: 'hello' });
         assert.strictEqual(result.custom, true);
+    });
+
+    it('keeps NodemailerError compatible with ErrnoException from @types/node 26', () => {
+        // @types/node 26 declares `code?: string` without `| undefined`
+        interface ErrnoExceptionV26 extends Error {
+            code?: string;
+        }
+        const error: NodemailerError = Object.assign(new Error('failed'), { code: 'EAUTH' });
+        const asErrno: ErrnoExceptionV26 = error;
+        assert.strictEqual(asErrno.code, 'EAUTH');
     });
 });
