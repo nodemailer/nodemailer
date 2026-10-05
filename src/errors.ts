@@ -83,11 +83,11 @@ export const EFETCH = 'EFETCH' satisfies ErrorCode;
  * An Error together with the properties Nodemailer attaches to the errors it
  * hands to callers. Every property is optional, the set that is present
  * depends on where the error originated. Socket level errors keep the errno
- * and syscall fields Node.js sets on them.
+ * and syscall fields Node.js sets on them. `code` (see ERROR_CODES) is
+ * inherited from ErrnoException, not redeclared, so it follows the
+ * consumer's @types/node.
  */
 export interface NodemailerError extends NodeJS.ErrnoException {
-    /** Nodemailer error code, see ERROR_CODES */
-    code?: string;
     /** SMTP command that was in flight when the server replied with an error */
     command?: string | undefined;
     /** Raw SMTP server response */

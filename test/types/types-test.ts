@@ -85,13 +85,11 @@ describe('Type surface', () => {
         assert.strictEqual(result.custom, true);
     });
 
-    it('keeps NodemailerError compatible with ErrnoException from @types/node 26', () => {
-        // @types/node 26 declares `code?: string` without `| undefined`
-        interface ErrnoExceptionV26 extends Error {
-            code?: string;
-        }
-        const error: NodemailerError = Object.assign(new Error('failed'), { code: 'EAUTH' });
-        const asErrno: ErrnoExceptionV26 = error;
-        assert.strictEqual(asErrno.code, 'EAUTH');
+    it('inherits NodemailerError code from ErrnoException', () => {
+        // a redeclared code breaks either @types/node 26 (`code?: string`) or
+        // older versions that accept an explicit undefined, so it must follow the base
+        type Same<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+        const inherited: Same<Pick<NodemailerError, 'code'>, Pick<NodeJS.ErrnoException, 'code'>> = true;
+        assert.ok(inherited);
     });
 });
