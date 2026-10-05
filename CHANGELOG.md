@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.0.15](https://github.com/nodemailer/nodemailer/compare/v10.0.14...v10.0.15) (2026-10-05)
+
+
+### Bug Fixes
+
+* **errors:** inherit NodemailerError code from ErrnoException ([e99db61](https://github.com/nodemailer/nodemailer/commit/e99db61d51c244e184a3a79103d1d732ffb6376b)), closes [#1884](https://github.com/nodemailer/nodemailer/issues/1884)
+* **errors:** keep NodemailerError compatible with @types/node 26 ErrnoException ([#1885](https://github.com/nodemailer/nodemailer/issues/1885)) ([b660328](https://github.com/nodemailer/nodemailer/commit/b6603286cc45bff52c13cc74e5ac47f424452fdc))
+
 ## [10.0.14](https://github.com/nodemailer/nodemailer/compare/v10.0.13...v10.0.14) (2026-10-03)
 
 
