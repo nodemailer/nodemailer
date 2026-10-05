@@ -87,7 +87,7 @@ export const EFETCH = 'EFETCH' satisfies ErrorCode;
  */
 export interface NodemailerError extends NodeJS.ErrnoException {
     /** Nodemailer error code, see ERROR_CODES */
-    code?: string | undefined;
+    code?: string;
     /** SMTP command that was in flight when the server replied with an error */
     command?: string | undefined;
     /** Raw SMTP server response */
