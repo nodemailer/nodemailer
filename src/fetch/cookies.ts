@@ -142,7 +142,9 @@ class Cookies {
             .split(';')
             .forEach(cookiePart => {
                 const valueParts = cookiePart.split('=');
-                const key = (valueParts.shift() as string).trim().toLowerCase();
+                // attribute names are case-insensitive, the cookie name is not
+                const name = (valueParts.shift() as string).trim();
+                const key = name.toLowerCase();
                 let value = valueParts.join('=').trim();
                 let domain: string;
 
@@ -187,7 +189,7 @@ class Cookies {
 
                     default:
                         if (!cookie.name) {
-                            cookie.name = key;
+                            cookie.name = name;
                             cookie.value = value;
                         }
                 }
