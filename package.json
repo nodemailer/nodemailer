@@ -168,7 +168,7 @@
         "smtp-server": "3.19.17",
         "tsx": "4.23.15",
         "typescript": "6.0.3",
-        "typescript-eslint": "8.71.0"
+        "typescript-eslint": "8.71.1"
     },
     "engines": {
         "node": ">=20.0.0"
