@@ -797,7 +797,11 @@ class Tokenizer {
             this.operatorExpecting = this.operators[chr];
             this.escaped = false;
             return;
-        } else if (['"', "'"].includes(this.operatorExpecting) && chr === '\\') {
+        } else if (['"', "'", ')'].includes(this.operatorExpecting) && chr === '\\') {
+            // A backslash escapes the next character inside a quoted string and inside a
+            // comment alike (RFC 5322 3.2.2, ccontent includes quoted-pair). Honouring it
+            // only in quoted strings let an escaped parenthesis close the comment, which
+            // released the rest of it, an address included, into the header
             this.escaped = true;
             return;
         }

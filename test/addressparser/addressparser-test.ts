@@ -1634,5 +1634,16 @@ describe('#addressparser', () => {
                 }
             }
         });
+
+        // RFC 5322 3.2.2: ccontent includes quoted-pair, so an escaped parenthesis does not
+        // close a comment. Ending the comment there let the rest of it out into the header,
+        // and `(x\\) <b@evil.example>) Victim <a@victim.example>` named b@evil.example as the
+        // sender while every RFC reading of it names a@victim.example
+        it('should keep an escaped parenthesis inside a comment', () => {
+            assert.deepStrictEqual(addressparser('(x\\) <b@evil.example>) Victim <a@victim.example>'), [
+                { name: 'Victim', address: 'a@victim.example' }
+            ]);
+            assert.deepStrictEqual(addressparser('a@b.c (x\\) y)'), [{ address: 'a@b.c', name: 'x) y' }]);
+        });
     });
 });
