@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [10.0.16](https://github.com/nodemailer/nodemailer/compare/v10.0.15...v10.0.16) (2026-10-07)
+
+
+### Bug Fixes
+
+* **addressparser:** keep an escaped parenthesis inside a comment ([c4ae20d](https://github.com/nodemailer/nodemailer/commit/c4ae20d074ac0510cc2d0cbd6039ee7fab3a4ca8))
+* **fetch:** keep the case of cookie names ([#1888](https://github.com/nodemailer/nodemailer/issues/1888)) ([9f16eed](https://github.com/nodemailer/nodemailer/commit/9f16eedf8de0485e6d07969113db992ff70f89ce))
+* **fetch:** read the cookie name-value pair by position ([645e97c](https://github.com/nodemailer/nodemailer/commit/645e97c8f0586404d9fb861c9527be7572c2c832))
+
 ## [10.0.15](https://github.com/nodemailer/nodemailer/compare/v10.0.14...v10.0.15) (2026-10-05)
 
 
