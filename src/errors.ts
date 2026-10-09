@@ -80,6 +80,13 @@ export const EURLACCESS = 'EURLACCESS' satisfies ErrorCode;
 export const EFETCH = 'EFETCH' satisfies ErrorCode;
 
 /**
+ * Code Node.js sets on an error when its permission model (`--permission`) denies an
+ * operation. It is not replaced with the Nodemailer code of the failing step (`ESOCKET`,
+ * `EDNS`, `EFETCH`, ...), so a missing grant such as `--allow-net` stays recognizable.
+ */
+export const ERR_ACCESS_DENIED = 'ERR_ACCESS_DENIED';
+
+/**
  * An Error together with the properties Nodemailer attaches to the errors it
  * hands to callers. Every property is optional, the set that is present
  * depends on where the error originated. Socket level errors keep the errno

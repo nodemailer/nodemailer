@@ -50,6 +50,14 @@ describe('Nodemailer Error Codes', () => {
         });
     });
 
+    describe('Permission model code', () => {
+        it('should export the code Node.js uses for a permission model denial', () => {
+            assert.equal(errors.ERR_ACCESS_DENIED, 'ERR_ACCESS_DENIED');
+            // it is the code of Node.js, not one of the codes Nodemailer assigns
+            assert.equal((errors.ERROR_CODES as Record<string, string>).ERR_ACCESS_DENIED, undefined);
+        });
+    });
+
     describe('Error creation usage', () => {
         it('should allow assigning error codes to Error objects', () => {
             const err: NodemailerError = new Error('Connection failed');

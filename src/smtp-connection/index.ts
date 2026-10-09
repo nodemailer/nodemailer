@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import DataStream from './data-stream.js';
 import { PassThrough, type Readable } from 'node:stream';
 import * as shared from '../shared/index.js';
-import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
+import { ERR_ACCESS_DENIED, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
 import type XOAuth2 from '../xoauth2/index.js';
 import type { XOAuth2Options } from '../xoauth2/index.js';
 
@@ -1514,7 +1514,8 @@ class SMTPConnection extends EventEmitter {
             err = new Error(message as string);
         }
 
-        if (type && type !== 'Error') {
+        // a permission model denial keeps its own code, see ERR_ACCESS_DENIED
+        if (type && type !== 'Error' && err.code !== ERR_ACCESS_DENIED) {
             err.code = type;
         }
 

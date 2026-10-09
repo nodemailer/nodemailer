@@ -669,6 +669,77 @@ describe('SMTP-Connection failure handling', () => {
             });
         });
 
+        // Node.js 25+ started with --permission and without --allow-net fails the DNS query
+        // and the connect call with ERR_ACCESS_DENIED, which must not be relabeled
+        it('keeps ERR_ACCESS_DENIED when the permission model denies DNS resolution', (t, done) => {
+            const denied = (syscall: string, hostname: string) =>
+                Object.assign(new Error(syscall + ' ERR_ACCESS_DENIED ' + hostname), { code: 'ERR_ACCESS_DENIED', syscall });
+            const resolverFailure = (hostname: string, callback: (err: Error | null, addresses?: string[]) => void) => {
+                callback(denied('queryA', hostname));
+            };
+            t.mock.method(dns.Resolver.prototype, 'resolve4', resolverFailure);
+            t.mock.method(dns.Resolver.prototype, 'resolve6', resolverFailure);
+            t.mock.method(dns, 'lookup', (hostname: string, options: unknown, callback: (err: Error | null) => void) => {
+                callback(denied('getaddrinfo', hostname));
+            });
+
+            const client = new SMTPConnection({ port: 25, host: 'smtp.example.com', logger: false });
+            let error: NodemailerError | undefined;
+            let connected = false;
+
+            client.on('error', err => {
+                error = err;
+            });
+
+            client.on('end', () => {
+                assert.strictEqual(connected, false);
+                assert.ok(error);
+                assert.strictEqual(error.code, 'ERR_ACCESS_DENIED');
+                assert.strictEqual(error.command, 'CONN');
+                assert.strictEqual(error.message, 'getaddrinfo ERR_ACCESS_DENIED smtp.example.com');
+                done();
+            });
+
+            client.connect(() => {
+                connected = true;
+            });
+        });
+
+        it('keeps ERR_ACCESS_DENIED when the permission model denies the connection', (t, done) => {
+            t.mock.method(net, 'connect', () => {
+                const socket = new net.Socket();
+                setImmediate(() =>
+                    socket.destroy(
+                        Object.assign(new Error('connect ERR_ACCESS_DENIED Access to this API has been restricted.'), {
+                            code: 'ERR_ACCESS_DENIED',
+                            syscall: 'connect'
+                        })
+                    )
+                );
+                return socket;
+            });
+
+            const client = new SMTPConnection({ port: 25, host: '127.0.0.1', logger: false });
+            let error: NodemailerError | undefined;
+            let connected = false;
+
+            client.on('error', err => {
+                error = err;
+            });
+
+            client.on('end', () => {
+                assert.strictEqual(connected, false);
+                assert.ok(error);
+                assert.strictEqual(error.code, 'ERR_ACCESS_DENIED');
+                assert.strictEqual(error.command, 'CONN');
+                done();
+            });
+
+            client.connect(() => {
+                connected = true;
+            });
+        });
+
         it('reports ESOCKET when localAddress cannot be bound', (t, done) => {
             startRawServer({}, server => {
                 // 192.0.2.0/24 is reserved for documentation and never assigned to an interface

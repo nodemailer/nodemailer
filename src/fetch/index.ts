@@ -91,6 +91,18 @@ const TLS_OPTION_KEYS = [
 ];
 
 /**
+ * Marks an error of the request as a fetch error, unless it is a permission model
+ * denial, which keeps its own code (see ERR_ACCESS_DENIED)
+ *
+ * @param err Error to mark
+ */
+function setFetchCode(err: NodemailerError): void {
+    if (err.code !== errors.ERR_ACCESS_DENIED) {
+        err.code = errors.EFETCH;
+    }
+}
+
+/**
  * Resolves a URL only if it is one this module is willing to request.
  *
  * urllib.parse throws for a host that contains forbidden bytes, and it is called for
@@ -201,7 +213,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                     return;
                 }
                 finished = true;
-                err.code = errors.EFETCH;
+                setFetchCode(err);
                 err.sourceUrl = url;
                 fetchRes.emit('error', err);
             });
@@ -278,7 +290,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
     } catch (E: any) {
         finished = true;
         setImmediate(() => {
-            E.code = errors.EFETCH;
+            setFetchCode(E);
             E.sourceUrl = url;
             fetchRes.emit('error', E);
         });
@@ -291,7 +303,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
             return;
         }
         finished = true;
-        err.code = errors.EFETCH;
+        setFetchCode(err);
         err.sourceUrl = sourceUrl;
         fetchRes.emit('error', err);
         req.abort();

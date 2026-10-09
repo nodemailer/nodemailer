@@ -502,6 +502,39 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
         });
     });
 
+    // Node.js 25+ started with --permission and without --allow-net fails the DNS lookup of the
+    // request with ERR_ACCESS_DENIED, which must not be relabeled as EFETCH
+    it('should keep ERR_ACCESS_DENIED when the permission model denies the request', (t, done) => {
+        const request = http.request;
+        t.mock.method(http, 'request', (options: http.RequestOptions) =>
+            request({
+                ...options,
+                lookup: (hostname, lookupOptions, callback) =>
+                    callback(Object.assign(new Error('getaddrinfo ERR_ACCESS_DENIED ' + hostname), { code: 'ERR_ACCESS_DENIED' }), '', 0)
+            })
+        );
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/');
+        req.on('data', () => done(new Error('a denied request should not have produced data')));
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'ERR_ACCESS_DENIED');
+            assert.strictEqual(err.sourceUrl, 'http://localhost:' + HTTP_PORT + '/');
+            done();
+        });
+    });
+
+    it('should keep ERR_ACCESS_DENIED when creating the request throws it', (t, done) => {
+        t.mock.method(http, 'request', () => {
+            throw Object.assign(new Error('Access to this API has been restricted.'), { code: 'ERR_ACCESS_DENIED' });
+        });
+
+        let req = nmfetch('http://localhost:' + HTTP_PORT + '/');
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'ERR_ACCESS_DENIED');
+            done();
+        });
+    });
+
     it('should not let an own __proto__ key of options.headers mutate the prototype chain', (t, done) => {
         // options.headers is the caller's httpHeaders, straight off an attachment
         const mocked = t.mock.method(http, 'request');
