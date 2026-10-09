@@ -19,28 +19,48 @@ const QP_RANGES = [
     [0x3e, 0x7e] // >?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}
 ];
 
+// 1 for every byte value that is written as is, see QP_RANGES
+const QP_LITERAL = new Uint8Array(256);
+for (let i = 0; i < 256; i++) {
+    QP_LITERAL[i] = checkRanges(i, QP_RANGES) ? 1 : 0;
+}
+
+const HEX_DIGITS = Buffer.from('0123456789ABCDEF', 'latin1');
+
+const isWhitespace = (c: number | undefined): boolean => c === 0x20 || c === 0x09;
+
 export function encode(buffer: Buffer | string): string {
-    if (typeof buffer === 'string') {
-        buffer = Buffer.from(buffer, 'utf-8');
-    }
+    return encodeBytes(typeof buffer === 'string' ? Buffer.from(buffer, 'utf-8') : buffer);
+}
 
-    let result = '';
-    let ord: number;
+/**
+ * Encodes bytes that may be followed by more input
+ *
+ * @param buffer Bytes to encode
+ * @param [next] The byte that follows the buffer, whitespace before it is kept literal unless it
+ *        is a line break. Without it the buffer ends the input and its trailing whitespace is encoded
+ * @returns Quoted-Printable encoded string
+ */
+function encodeBytes(buffer: Buffer, next?: number): string {
+    const len = buffer.length;
+    // every byte takes three characters at most
+    const output = Buffer.allocUnsafe(len * 3);
+    let pos = 0;
 
-    for (let i = 0, len = buffer.length; i < len; i++) {
-        ord = buffer[i];
+    for (let i = 0; i < len; i++) {
+        const ord = buffer[i];
+        const following = i + 1 < len ? buffer[i + 1] : next;
         // if the char is in allowed range, then keep as is, unless it is a WS in the end of a line
-        if (
-            checkRanges(ord, QP_RANGES) &&
-            !((ord === 0x20 || ord === 0x09) && (i === len - 1 || buffer[i + 1] === 0x0a || buffer[i + 1] === 0x0d))
-        ) {
-            result += String.fromCharCode(ord);
+        if (QP_LITERAL[ord] && !(isWhitespace(ord) && (following === undefined || following === 0x0a || following === 0x0d))) {
+            output[pos++] = ord;
             continue;
         }
-        result += '=' + (ord < 0x10 ? '0' : '') + ord.toString(16).toUpperCase();
+        output[pos++] = 0x3d; // =
+        output[pos++] = HEX_DIGITS[Math.floor(ord / 16)];
+        output[pos++] = HEX_DIGITS[ord % 16];
     }
 
-    return result;
+    return output.toString('latin1', 0, pos);
 }
 
 /**
@@ -177,6 +197,11 @@ export interface QPEncoderOptions {
 /** The name @types/nodemailer used for QPEncoderOptions */
 export type EncoderOptions = QPEncoderOptions;
 
+// Input is encoded and wrapped this many bytes at a time. wrap() works on strings, and a large
+// chunk handed over at once, such as a whole Buffer attachment, would be held several times over
+// as intermediate strings
+const ENCODE_SLICE_SIZE = 64 * 1024;
+
 /**
  * Creates a transform stream for encoding data to Quoted-Printable encoding
  *
@@ -190,6 +215,8 @@ export class Encoder extends Transform {
     outputBytes: number;
     /** @internal */
     _curLine: string;
+    /** Whitespace from the end of the input so far, see _transform @internal */
+    _remainingBytes: Buffer | false;
 
     constructor(options?: QPEncoderOptions) {
         super();
@@ -201,6 +228,7 @@ export class Encoder extends Transform {
         }
 
         this._curLine = '';
+        this._remainingBytes = false;
 
         this.inputBytes = 0;
         this.outputBytes = 0;
@@ -208,45 +236,81 @@ export class Encoder extends Transform {
 
     /** @internal */
     override _transform(chunk: Buffer | string, encoding: BufferEncoding | 'buffer', done: TransformCallback): void {
-        let qp: string;
+        let buf = encoding !== 'buffer' ? Buffer.from(chunk as string, encoding) : (chunk as Buffer);
 
-        if (encoding !== 'buffer') {
-            chunk = Buffer.from(chunk as string, encoding);
-        }
-
-        if (!chunk || !chunk.length) {
+        if (!buf || !buf.length) {
             return done();
         }
 
-        this.inputBytes += chunk.length;
+        this.inputBytes += buf.length;
 
-        if (this.options.lineLength) {
-            qp = this._curLine + encode(chunk);
-            qp = wrap(qp, this.options.lineLength);
-            qp = qp.replace(/(^|\n)([^\n]*)$/, (match, lineBreak, lastLine) => {
-                this._curLine = lastLine;
-                return lineBreak;
-            });
-
-            if (qp) {
-                this.outputBytes += qp.length;
-                this.push(qp);
-            }
-        } else {
-            qp = encode(chunk);
-            this.outputBytes += qp.length;
-            this.push(qp, 'ascii');
+        if (this._remainingBytes) {
+            buf = Buffer.concat([this._remainingBytes, buf], this._remainingBytes.length + buf.length);
+            this._remainingBytes = false;
         }
 
+        // Whitespace is encoded when it ends a line, and the end of the input counts as one. Hold
+        // back the whitespace a chunk ends with until it is known what follows it, so the output
+        // does not depend on where the input was split
+        let end = buf.length;
+        while (end > 0 && isWhitespace(buf[end - 1])) {
+            end--;
+        }
+        if (buf.length - end <= ENCODE_SLICE_SIZE) {
+            this._remainingBytes = end < buf.length ? Buffer.from(buf.subarray(end)) : false;
+            buf = buf.subarray(0, end);
+        }
+
+        this._encodeSlices(buf);
         done();
     }
 
     /** @internal */
     override _flush(done: TransformCallback): void {
+        if (this._remainingBytes) {
+            this._encodeSlices(this._remainingBytes);
+            this._remainingBytes = false;
+        }
         if (this._curLine) {
             this.outputBytes += this._curLine.length;
             this.push(this._curLine, 'ascii');
+            this._curLine = '';
         }
         done();
+    }
+
+    /**
+     * Encodes the input in slices of ENCODE_SLICE_SIZE bytes. Each slice is told the byte that
+     * follows it, so a slice that ends in whitespace is encoded as if it was not split
+     *
+     * @internal
+     */
+    _encodeSlices(buf: Buffer): void {
+        for (let start = 0; start < buf.length; start += ENCODE_SLICE_SIZE) {
+            const end = Math.min(start + ENCODE_SLICE_SIZE, buf.length);
+            this._encodeSlice(buf.subarray(start, end), end < buf.length ? buf[end] : undefined);
+        }
+    }
+
+    /** @internal */
+    _encodeSlice(buf: Buffer, next: number | undefined): void {
+        let qp: string;
+
+        if (this.options.lineLength) {
+            qp = wrap(this._curLine + encodeBytes(buf, next), this.options.lineLength);
+            // the last line is kept until it is known whether it needs a soft break
+            const lastLF = qp.lastIndexOf('\n');
+            this._curLine = qp.substring(lastLF + 1);
+            qp = qp.substring(0, lastLF + 1);
+
+            if (qp) {
+                this.outputBytes += qp.length;
+                this.push(qp, 'ascii');
+            }
+        } else {
+            qp = encodeBytes(buf, next);
+            this.outputBytes += qp.length;
+            this.push(qp, 'ascii');
+        }
     }
 }

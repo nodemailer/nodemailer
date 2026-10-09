@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import libqp from 'libqp';
 import * as qp from '../../src/qp/index.js';
+import { seededRandom, transformInChunks } from '../helpers/chunking.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
@@ -29,7 +30,9 @@ describe('Quoted-Printable Tests', () => {
 
     const streamFixture = [
         '123456789012345678  90\r\nõäöüõäöüõäöüõäöüõäöüõäöüõäöüõäöü another line === ',
-        '12345678=\r\n90123456=\r\n78=20=20=\r\n90\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=20anoth=\r\ner=20lin=\r\ne=20=3D=\r\n=3D=3D=20'
+        // written one byte at a time, the output is the same as encoding the input at once: the
+        // spaces inside a line stay literal, only the one ending the input is encoded
+        '12345678=\r\n90123456=\r\n78  90\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC=\r\n=C3=B5=\r\n=C3=A4=\r\n=C3=B6=\r\n=C3=BC =\r\nanother =\r\nline =3D=\r\n=3D=3D=20'
     ];
 
     describe('#encode', () => {
@@ -164,6 +167,55 @@ describe('Quoted-Printable Tests', () => {
             });
 
             encoder.end(Buffer.from(input));
+        });
+    });
+
+    describe('Encoder chunking', () => {
+        // text with literal and encoded bytes, runs of whitespace and both kinds of line breaks
+        const pieces = ['a', 'b', 'tere', ' ', ' ', '\t', '=', '.', '\r\n', '\n', '\r', 'õ', '€', '😀', '\x00', '\xff'];
+
+        it('round trips and keeps every line within the limit however the input is split', async () => {
+            for (let seed = 1; seed <= 200; seed++) {
+                const random = seededRandom(seed);
+                const parts: Buffer[] = [];
+                for (let i = random(400); i > 0; i--) {
+                    parts.push(Buffer.from(pieces[random(pieces.length)], pieces[random(pieces.length)] === '\xff' ? 'latin1' : 'utf8'));
+                }
+                const input = Buffer.concat(parts);
+                const lineLength = ([false, 4, 9, 20, 76] as const)[seed % 5];
+
+                const output = // eslint-disable-next-line no-await-in-loop
+                    (await transformInChunks(new qp.Encoder({ lineLength }), input, () => 1 + random(lineLength ? 40 : 6))).toString();
+
+                assert.ok(libqp.decode(output).equals(input), `seed ${seed}: does not decode to the input`);
+                // whitespace that ends a line or the input would be dropped by a decoder
+                assert.ok(!/[ \t](?:\r?\n|\r|$)/.test(output), `seed ${seed}: unencoded whitespace at the end of a line`);
+                if (lineLength) {
+                    for (const line of output.split(/\r?\n|\r/)) {
+                        assert.ok(line.length <= lineLength, `seed ${seed}: line longer than ${lineLength}: ${JSON.stringify(line)}`);
+                    }
+                }
+            }
+        });
+
+        it('keeps whitespace inside a line literal when a chunk ends with it', async () => {
+            const output = await transformInChunks(new qp.Encoder(), Buffer.from('tere  vana kere'), () => 1);
+            assert.strictEqual(output.toString(), 'tere  vana kere');
+        });
+
+        it('encodes a large chunk in slices', async () => {
+            // a whole Buffer attachment arrives as one chunk, encoding it at once held the input
+            // several times over as intermediate strings
+            const encoder = new qp.Encoder();
+            const pushed: number[] = [];
+            encoder.on('data', chunk => pushed.push(chunk.length));
+            const input = Buffer.alloc(1024 * 1024, 'tere vana kere õ ');
+            const ended = new Promise(resolve => encoder.on('end', resolve));
+            encoder.end(input);
+            await ended;
+
+            assert.ok(pushed.length > 10, `${pushed.length} pushes`);
+            assert.ok(Math.max(...pushed) < 512 * 1024, `largest push ${Math.max(...pushed)} bytes`);
         });
     });
 });

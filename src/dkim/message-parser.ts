@@ -130,7 +130,7 @@ class MessageParser extends Transform {
                 const chunk = data.slice(headerPos);
                 this.bodySize += chunk.length;
                 // this would be the first chunk of data sent downstream
-                setImmediate(() => this.push(chunk));
+                this.push(chunk);
             }
             return false;
         }
@@ -167,7 +167,7 @@ class MessageParser extends Transform {
             this.push(chunk);
         }
 
-        setImmediate(callback);
+        callback();
     }
 
     /** @internal */

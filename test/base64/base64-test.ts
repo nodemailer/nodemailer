@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import libbase64 from 'libbase64';
 import * as base64 from '../../src/base64/index.js';
+import { seededRandom, transformInChunks } from '../helpers/chunking.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -244,6 +245,31 @@ describe('Base64 Tests', () => {
             });
 
             encoder.end(input);
+        });
+    });
+
+    describe('Encoder chunking', () => {
+        it('produces the same output however the input is split into chunks', async () => {
+            for (let seed = 1; seed <= 200; seed++) {
+                const random = seededRandom(seed);
+                const input = crypto.randomBytes(random(2000));
+                const lineLength = ([false, 1, 3, 76, 100] as const)[seed % 5];
+                const expected = lineLength ? base64.wrap(base64.encode(input), lineLength) : base64.encode(input);
+
+                // eslint-disable-next-line no-await-in-loop
+                const output = await transformInChunks(new base64.Encoder({ lineLength }), input, () => 1 + random(lineLength ? 300 : 10));
+                assert.strictEqual(output.toString(), expected, `seed ${seed}`);
+            }
+        });
+
+        it('processes every written chunk synchronously', () => {
+            // waiting a macrotask per chunk made an input arriving in small chunks crawl
+            const encoder = new base64.Encoder();
+            encoder.resume();
+            encoder.write(Buffer.from('abc'));
+            encoder.write(Buffer.from('defg'));
+            encoder.write(Buffer.from('h'));
+            assert.strictEqual(encoder.inputBytes, 8);
         });
     });
 });

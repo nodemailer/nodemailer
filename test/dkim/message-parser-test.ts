@@ -208,4 +208,14 @@ describe('DKIM MessageParser edge cases', () => {
         assert.strictEqual(result.headers[1].key, `a${run}b`);
         assert.ok(elapsed < 5000, `trimming a field name around a ${run.length} byte blank run took ${elapsed}ms`);
     });
+
+    it('processes every written chunk synchronously', () => {
+        // waiting a macrotask per chunk made a message arriving in small chunks crawl
+        const parser = new MessageParser();
+        parser.resume();
+        parser.write(Buffer.from('Subject: x\r\n\r\nfirst'));
+        parser.write(Buffer.from(' second'));
+        parser.write(Buffer.from(' third'));
+        assert.strictEqual(parser.bodySize, 'first second third'.length);
+    });
 });
