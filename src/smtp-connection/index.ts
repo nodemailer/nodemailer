@@ -1463,6 +1463,12 @@ class SMTPConnection extends EventEmitter {
         if (typeof socket.setKeepAlive === 'function') {
             socket.setKeepAlive(true, KEEPALIVE_DELAY);
         }
+        // Commands are written in the batches they belong to (see cork() for PIPELINING), Nagle
+        // would only hold a write back until the server acknowledged the previous one. Against a
+        // server that delays its ACKs that costs 40ms on every message
+        if (typeof socket.setNoDelay === 'function') {
+            socket.setNoDelay(true);
+        }
 
         this._greetingTimeout = setTimeout(() => {
             // if still waiting for greeting, give up

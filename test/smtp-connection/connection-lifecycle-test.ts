@@ -195,12 +195,18 @@ describe('SMTPConnection connecting', { timeout: 20000 }, () => {
         }
     });
 
-    it('enables TCP keepalive with a short idle delay', async t => {
+    it('enables TCP keepalive with a short idle delay and turns Nagle off', async t => {
         const calls: unknown[][] = [];
+        const noDelay: unknown[][] = [];
         const setKeepAlive = net.Socket.prototype.setKeepAlive;
+        const setNoDelay = net.Socket.prototype.setNoDelay;
         t.mock.method(net.Socket.prototype, 'setKeepAlive', function (this: net.Socket, ...args: unknown[]) {
             calls.push(args);
             return setKeepAlive.apply(this, args as [boolean, number]);
+        });
+        t.mock.method(net.Socket.prototype, 'setNoDelay', function (this: net.Socket, ...args: unknown[]) {
+            noDelay.push(args);
+            return setNoDelay.apply(this, args as [boolean]);
         });
         const server = await rawServer({});
         try {
@@ -213,6 +219,7 @@ describe('SMTPConnection connecting', { timeout: 20000 }, () => {
             assert.ok(calls.length >= 1);
             assert.strictEqual(calls[0][0], true);
             assert.ok(Number(calls[0][1]) > 0 && Number(calls[0][1]) <= 60 * 1000, `delay ${calls[0][1]}`);
+            assert.deepStrictEqual(noDelay, [[true]]);
         } finally {
             await closeServer(server);
         }

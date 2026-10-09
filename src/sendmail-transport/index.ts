@@ -209,11 +209,11 @@ class SendmailTransport {
                     );
                 } else if (signal) {
                     err = new Error('Sendmail was terminated by ' + signal);
-                } else if (stdinError) {
-                    err = stdinError;
                 } else if (!messageWritten()) {
                     // exiting with 0 before the message was written does not mean it was queued
                     err = new Error('Sendmail exited before the message was written');
+                } else if (stdinError) {
+                    err = stdinError;
                 }
 
                 if (!err) {
