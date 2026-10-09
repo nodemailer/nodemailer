@@ -1494,3 +1494,126 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         });
     });
 });
+
+describe('resolveStream', { timeout: 10000 }, () => {
+    const resolve = (stream: Readable): Promise<{ err: any; value?: Buffer | undefined }> =>
+        new Promise(done => {
+            let calls = 0;
+            shared.resolveStream(stream, (err, value) => {
+                calls++;
+                assert.strictEqual(calls, 1);
+                done({ err, value });
+            });
+        });
+
+    it('reads a stream into a Buffer', async () => {
+        const { err, value } = await resolve(Readable.from([Buffer.from('tere '), Buffer.from('vana kere')]));
+        assert.ifError(err);
+        assert.strictEqual(value!.toString(), 'tere vana kere');
+    });
+
+    it('reads a stream that emits strings', async () => {
+        const stream = new PassThrough();
+        stream.setEncoding('utf8');
+        setImmediate(() => stream.end('õäöü'));
+        const { err, value } = await resolve(stream);
+        assert.ifError(err);
+        assert.strictEqual(value!.toString(), 'õäöü');
+    });
+
+    it('fails a stream that is destroyed without an error instead of waiting forever', async () => {
+        const stream = new PassThrough();
+        stream.write('partial');
+        setImmediate(() => stream.destroy());
+        const { err } = await resolve(stream);
+        assert.strictEqual(err.code, 'ERR_STREAM_PREMATURE_CLOSE');
+    });
+
+    it('fails a stream that was already read to the end', async () => {
+        const stream = Readable.from([Buffer.from('gone')]);
+        stream.resume();
+        await new Promise(done => stream.once('end', done));
+        const { err } = await resolve(stream);
+        assert.strictEqual(err.code, 'ESTREAM');
+    });
+
+    it('reports an error the stream emitted before it was read', async () => {
+        const stream = new PassThrough();
+        shared.recordStreamErrors(stream);
+        stream.emit('error', new Error('early'));
+        const { err } = await resolve(stream);
+        assert.strictEqual(err.message, 'early');
+    });
+});
+
+describe('resolveHostname deadline', { timeout: 10000 }, () => {
+    // resolve4 and resolve6 answer after the given delay in ms, or never when it is null
+    const stubResolver = (delays: { [family: string]: number | null }, calls: string[]) => {
+        (dns as any).Resolver = class {
+            cancelled = false;
+            answer(family: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                calls.push('resolve' + family);
+                const delay = delays[family];
+                if (delay === null) {
+                    return;
+                }
+                setTimeout(() => callback(null, [family === '4' ? '192.0.2.1' : '2001:db8::1']), delay);
+            }
+            resolve4(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                this.answer('4', callback);
+            }
+            resolve6(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                this.answer('6', callback);
+            }
+            cancel() {
+                calls.push('cancel');
+            }
+        };
+    };
+
+    const resolve = (options: shared.ResolveHostnameOptions): Promise<{ err: any; result?: shared.ResolvedHostname | undefined }> =>
+        new Promise(done => shared.resolveHostname(options, (err, result) => done({ err, result })));
+
+    let originalResolver: any;
+    beforeEach(() => {
+        originalResolver = dns.Resolver;
+        shared.dnsCache.clear();
+    });
+    afterEach(() => {
+        (dns as any).Resolver = originalResolver;
+        shared.dnsCache.clear();
+    });
+
+    it('queries both address families at the same time', async () => {
+        const calls: string[] = [];
+        stubResolver({ 4: 100, 6: 100 }, calls);
+        const started = Date.now();
+        const { err, result } = await resolve({ host: 'parallel.example.test', allowInternalNetworkInterfaces: true, timeout: 5000 });
+        assert.ifError(err);
+        assert.deepStrictEqual(calls.slice(0, 2), ['resolve4', 'resolve6']);
+        assert.ok(result!._addresses!.includes('192.0.2.1'));
+        assert.ok(Date.now() - started < 190, `took ${Date.now() - started}ms`);
+    });
+
+    it('stops a lookup that takes longer than the timeout as a whole', async () => {
+        const calls: string[] = [];
+        stubResolver({ 4: null, 6: null }, calls);
+        const started = Date.now();
+        const { err } = await resolve({ host: 'silent.example.test', allowInternalNetworkInterfaces: true, timeout: 200 });
+        assert.ok(err);
+        assert.strictEqual(err.code, dns.TIMEOUT);
+        assert.ok(Date.now() - started < 2000, `took ${Date.now() - started}ms`);
+        assert.ok(calls.includes('cancel'));
+    });
+
+    it('answers with the expired cached value when the lookup times out', async () => {
+        const calls: string[] = [];
+        stubResolver({ 4: null, 6: null }, calls);
+        shared.dnsCache.set('stale.example.test', { value: { addresses: ['192.0.2.7'] }, expires: Date.now() - 1000 });
+        const { err, result } = await resolve({ host: 'stale.example.test', allowInternalNetworkInterfaces: true, timeout: 200 });
+        assert.ifError(err);
+        assert.strictEqual(result!.host, '192.0.2.7');
+        assert.strictEqual(result!.cached, true);
+        assert.strictEqual((result!.error as any).code, dns.TIMEOUT);
+    });
+});

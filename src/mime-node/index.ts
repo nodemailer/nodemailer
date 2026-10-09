@@ -3,7 +3,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import * as punycode from '../punycode/index.js';
-import { PassThrough, type Duplex, type Readable, type Transform, type TransformOptions, type Writable } from 'node:stream';
+import { PassThrough, finished, pipeline, type Duplex, type Readable, type TransformOptions, type Writable } from 'node:stream';
 import * as shared from '../shared/index.js';
 import urlModule from 'node:url';
 
@@ -212,6 +212,16 @@ const PLAIN_ADDRESS = /^[^\s"(),:;<>@[\\\]]+@[^\s"(),:;<>@[\\\]]+$/;
 // characters are legal in a domain, so keep them away from the mapper.
 const URL_PARSER_UNSAFE = /[/\\?#%\x00-\x20\x7F]/;
 
+// pipeline() needs a callback to not throw, the errors it sees reach the last stream anyway
+const PIPELINE_NOOP = () => false;
+
+// The error a node streaming into an output that was destroyed stops with
+function abortedError(): NodemailerError {
+    const err: NodemailerError = new Error('Message stream was closed before the message was generated');
+    err.code = errors.ESTREAM;
+    return err;
+}
+
 /**
  * Encodes a domain the way browsers, the WHATWG URL Standard and DNS facing resolvers do,
  * which is with UTS-46 mapping applied before the Punycode step.
@@ -318,7 +328,7 @@ class MimeNode {
     // declared without a runtime field to keep the node shape the constructor produces
     /** Filename for this node. Useful with attachments */
     declare filename?: string | undefined;
-    /** Body content, or the error a content stream emitted before it was read */
+    /** Body content */
     declare content?: MimeNodeContent | Error | undefined;
     /** Lowercase content type, set when the headers are built */
     declare contentType?: string | undefined;
@@ -326,8 +336,6 @@ class MimeNode {
     declare multipart?: string | false | undefined;
     /** Multipart boundary, false for a non-multipart node, set when the headers are built */
     declare boundary?: string | false | undefined;
-    /** @internal */
-    declare _contentErrorHandler?: ((err: Error) => void) | undefined;
 
     constructor(contentType?: string | false, options?: MimeNodeOptions) {
         this.nodeCounter = 0;
@@ -682,11 +690,7 @@ class MimeNode {
         if (typeof (this.content as Readable).pipe === 'function') {
             // pre-stream handler. might be triggered if a stream is set as content
             // and 'error' fires before anything is done with this stream
-            this._contentErrorHandler = err => {
-                (this.content as Readable).removeListener('error', this._contentErrorHandler as (err: Error) => void);
-                this.content = err;
-            };
-            (this.content as Readable).once('error', this._contentErrorHandler);
+            shared.recordStreamErrors(this.content as Readable);
         } else if (typeof this.content === 'string') {
             this._isPlainText = mimeFuncs.isPlainText(this.content);
             if (this._isPlainText && mimeFuncs.hasLongerLines(this.content, 76)) {
@@ -935,46 +939,51 @@ class MimeNode {
         options = options || {};
 
         const stream = new PassThrough(options);
-        let outputStream: Readable = stream;
-        let transform: Duplex | MimeNodeProcessFunc;
 
         this.stream(stream, options, err => {
             if (err) {
-                outputStream.emit('error', err);
+                stream.destroy(err);
                 return;
             }
             stream.end();
         });
 
-        for (let i = 0, len = this._transforms.length; i < len; i++) {
-            transform =
-                typeof this._transforms[i] === 'function' ? (this._transforms[i] as () => Duplex)() : (this._transforms[i] as Duplex);
-            outputStream.once('error', err => {
-                (transform as Duplex).emit('error', err);
-            });
-            outputStream = outputStream.pipe(transform);
-        }
-
-        // ensure terminating newline after possible user transforms
-        transform = new LastNewline();
-        outputStream.once('error', err => {
-            (transform as Duplex).emit('error', err);
+        // the content streams of the nodes the message did not get to are not going to be read
+        stream.once('close', () => {
+            if (!stream.writableFinished) {
+                this._destroyContentStreams();
+            }
         });
-        outputStream = outputStream.pipe(transform);
 
-        // dkim and stuff
-        for (let i = 0, len = this._processFuncs.length; i < len; i++) {
-            transform = this._processFuncs[i];
-            outputStream = transform(outputStream);
+        // The stages are joined with pipeline, which destroys all of them when any one fails
+        // or is destroyed. An error anywhere reaches the returned stream exactly once, and a
+        // consumer that destroys the returned stream stops the tree from reading its sources
+        const stages: Duplex[] = [stream];
+        for (const transform of this._transforms) {
+            stages.push(typeof transform === 'function' ? transform() : transform);
+        }
+        // ensure terminating newline after possible user transforms
+        stages.push(new LastNewline());
+
+        let outputStream: Readable = pipeline(stages, PIPELINE_NOOP) as unknown as Duplex;
+
+        // dkim and stuff. A process function reads its input itself and reports the errors of
+        // that input on its output, so only a consumer abort has to be carried back upstream
+        for (const processFunc of this._processFuncs) {
+            const input = outputStream;
+            outputStream = processFunc(input);
+            if (outputStream !== input) {
+                finished(outputStream, err => {
+                    if (err) {
+                        input.destroy();
+                    }
+                });
+            }
         }
 
         if (this.newline) {
             const winbreak = ['win', 'windows', 'dos', '\r\n'].includes(this.newline.toString().toLowerCase());
-            const newlineTransform = winbreak ? new LeWindows() : new LeUnix();
-
-            const stream = outputStream.pipe(newlineTransform);
-            outputStream.on('error', err => stream.emit('error', err));
-            return stream;
+            outputStream = pipeline(outputStream, winbreak ? new LeWindows() : new LeUnix(), PIPELINE_NOOP);
         }
 
         return outputStream;
@@ -1004,8 +1013,11 @@ class MimeNode {
 
     stream(outputStream: Writable, options: MimeNodeStreamOptions, done: (err?: Error | null) => void): void {
         const transferEncoding = this.getTransferEncoding();
-        let contentStream: Transform;
-        let localStream: Readable;
+
+        // the streams this node is reading from. A consumer that goes away mid-message destroys
+        // the output, and these are released with it instead of staying paused with a file or a
+        // socket open behind them
+        let activeStreams: Readable[] = [];
 
         // protect actual callback against multiple triggering
         let returned = false;
@@ -1014,7 +1026,33 @@ class MimeNode {
                 return;
             }
             returned = true;
+            outputStream.removeListener('close', onOutputClose);
             done(err);
+        };
+
+        function onOutputClose(): void {
+            for (const stream of activeStreams) {
+                stream.destroy();
+            }
+            return callback(abortedError());
+        }
+
+        // reads the streams into the output. The listener is only attached while the node reads
+        // something, a deeply nested tree would otherwise stack one per level on the output
+        const readInto = (...streams: Readable[]) => {
+            if (!activeStreams.length) {
+                outputStream.once('close', onOutputClose);
+            }
+            activeStreams = streams;
+        };
+
+        // stops here if the output was destroyed in the meantime
+        const aborted = (): boolean => {
+            if (outputStream.destroyed) {
+                callback(abortedError());
+                return true;
+            }
+            return false;
         };
 
         // for multipart nodes, push child nodes
@@ -1022,6 +1060,9 @@ class MimeNode {
         const finalize = () => {
             let childId = 0;
             const processChildNode = () => {
+                if (aborted()) {
+                    return;
+                }
                 if (childId >= this.childNodes.length) {
                     outputStream.write('\r\n--' + this.boundary + '--\r\n');
                     return callback();
@@ -1045,96 +1086,79 @@ class MimeNode {
 
         // pushes node content
         const sendContent = () => {
-            if (this.content) {
-                if (Object.prototype.toString.call(this.content) === '[object Error]') {
-                    // content is already errored
-                    return callback(this.content as Error);
-                }
-
-                if (typeof (this.content as Readable).pipe === 'function') {
-                    (this.content as Readable).removeListener('error', this._contentErrorHandler as (err: Error) => void);
-                    this._contentErrorHandler = err => callback(err);
-                    (this.content as Readable).once('error', this._contentErrorHandler);
-                }
-
-                const createStream = () => {
-                    if (['quoted-printable', 'base64'].includes(transferEncoding as string)) {
-                        contentStream = new (transferEncoding === 'base64' ? base64 : qp).Encoder(options);
-
-                        contentStream.pipe(outputStream, {
-                            end: false
-                        });
-                        contentStream.once('end', finalize);
-                        contentStream.once('error', err => callback(err));
-
-                        localStream = this._getStream(this.content);
-                        localStream.pipe(contentStream);
-                    } else {
-                        // anything that is not QP or Base54 passes as-is
-                        localStream = this._getStream(this.content);
-                        localStream.pipe(outputStream, {
-                            end: false
-                        });
-                        localStream.once('end', finalize);
-                    }
-
-                    localStream.once('error', err => callback(err));
-                };
-
-                if ((this.content as MimeNodeContentObject)._resolve) {
-                    const chunks: Buffer[] = [];
-                    let chunklen = 0;
-                    let returned = false;
-                    const sourceStream = this._getStream(this.content);
-                    sourceStream.on('error', err => {
-                        if (returned) {
-                            return;
-                        }
-                        returned = true;
-                        callback(err);
-                    });
-                    sourceStream.on('readable', () => {
-                        let chunk: Buffer;
-                        while ((chunk = sourceStream.read()) !== null) {
-                            chunks.push(chunk);
-                            chunklen += chunk.length;
-                        }
-                    });
-                    sourceStream.on('end', () => {
-                        if (returned) {
-                            return;
-                        }
-                        returned = true;
-                        (this.content as MimeNodeContentObject)._resolve = false;
-                        (this.content as MimeNodeContentObject)._resolvedValue = Buffer.concat(chunks, chunklen);
-                        setImmediate(createStream);
-                    });
-                } else {
-                    setImmediate(createStream);
-                }
+            if (aborted()) {
                 return;
             }
-            return setImmediate(finalize);
+
+            if (!this.content) {
+                return setImmediate(finalize);
+            }
+
+            const createStream = () => {
+                if (aborted()) {
+                    return;
+                }
+
+                const contentError = this._takeStreamContent(this.content as MimeNodeContent);
+                if (contentError) {
+                    return callback(contentError);
+                }
+
+                const localStream = this._getStream(this.content);
+
+                if (['quoted-printable', 'base64'].includes(transferEncoding as string)) {
+                    const contentStream = new (transferEncoding === 'base64' ? base64 : qp).Encoder(options);
+                    readInto(localStream, contentStream);
+                    contentStream.pipe(outputStream, {
+                        end: false
+                    });
+                    pipeline(localStream, contentStream, err => (err ? callback(err) : finalize()));
+                } else {
+                    // anything that is not QP or Base54 passes as-is
+                    readInto(localStream);
+                    localStream.pipe(outputStream, {
+                        end: false
+                    });
+                    finished(localStream, { writable: false }, err => (err ? callback(err) : finalize()));
+                }
+            };
+
+            if ((this.content as MimeNodeContentObject)._resolve) {
+                const sourceStream = this._getStream(this.content);
+                readInto(sourceStream);
+                shared.resolveStream(sourceStream, (err, value) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    if (returned) {
+                        return;
+                    }
+                    (this.content as MimeNodeContentObject)._resolve = false;
+                    (this.content as MimeNodeContentObject)._resolvedValue = value;
+                    setImmediate(createStream);
+                });
+            } else {
+                setImmediate(createStream);
+            }
         };
 
         if (this._raw) {
             setImmediate(() => {
-                if (Object.prototype.toString.call(this._raw) === '[object Error]') {
-                    // content is already errored
-                    return callback(this._raw as Error);
+                if (aborted()) {
+                    return;
                 }
 
-                // remove default error handler (if set)
-                if (typeof (this._raw as Readable).pipe === 'function') {
-                    (this._raw as Readable).removeListener('error', this._contentErrorHandler as (err: Error) => void);
+                const rawError = this._takeStreamContent(this._raw as MimeNodeContent);
+                if (rawError) {
+                    return callback(rawError);
                 }
 
                 const raw = this._getStream(this._raw);
+                readInto(raw);
                 raw.pipe(outputStream, {
                     end: false
                 });
-                raw.on('error', err => outputStream.emit('error', err));
-                raw.on('end', finalize);
+                finished(raw, { writable: false }, err => (err ? callback(err) : finalize()));
             });
         } else {
             outputStream.write(this.buildHeaders() + '\r\n\r\n');
@@ -1267,11 +1291,7 @@ class MimeNode {
         if (this._raw && typeof (this._raw as Readable).pipe === 'function') {
             // pre-stream handler. might be triggered if a stream is set as content
             // and 'error' fires before anything is done with this stream
-            this._contentErrorHandler = err => {
-                (this._raw as Readable).removeListener('error', this._contentErrorHandler as (err: Error) => void);
-                this._raw = err;
-            };
-            (this._raw as Readable).once('error', this._contentErrorHandler);
+            shared.recordStreamErrors(this._raw as Readable);
         }
 
         return this;
@@ -1299,6 +1319,39 @@ class MimeNode {
             node = node.parentNode;
         }
         return false;
+    }
+
+    /**
+     * Destroys the content streams of this node and of every node below it
+     *
+     * @internal
+     */
+    _destroyContentStreams(): void {
+        shared.destroyStream(this.content);
+        shared.destroyStream(this._raw);
+        for (const child of this.childNodes) {
+            child._destroyContentStreams();
+        }
+    }
+
+    /**
+     * Checks that a content value can still be read before the node streams it. A stream is
+     * refused once it errored, ended or was destroyed: piping it would either never finish or
+     * produce an empty body without any error
+     *
+     * @param content Node content or raw value
+     * @returns The error to stop with, or null when the content can be read
+     * @internal
+     */
+    _takeStreamContent(content: MimeNodeContent | Error): Error | null {
+        if (Object.prototype.toString.call(content) === '[object Error]') {
+            return content as Error;
+        }
+        if (!content || typeof (content as Readable).pipe !== 'function' || (content as MimeNodeContentObject)._resolvedValue) {
+            // the value of a resolved stream is read from the buffered copy
+            return null;
+        }
+        return shared.unreadableStreamError(content as Readable);
     }
 
     /**

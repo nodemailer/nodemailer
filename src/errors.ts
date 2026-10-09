@@ -80,6 +80,12 @@ export const EURLACCESS = 'EURLACCESS' satisfies ErrorCode;
 export const EFETCH = 'EFETCH' satisfies ErrorCode;
 
 /**
+ * Tells whether the error ended the connection rather than rejected what was sent over it
+ */
+export const isTransientError = (err: { code?: string | undefined; responseCode?: number | undefined }): boolean =>
+    err.responseCode === 421 || err.code === ECONNECTION || err.code === ESOCKET || err.code === ETIMEDOUT;
+
+/**
  * Code Node.js sets on an error when its permission model (`--permission`) denies an
  * operation. It is not replaced with the Nodemailer code of the failing step (`ESOCKET`,
  * `EDNS`, `EFETCH`, ...), so a missing grant such as `--allow-net` stays recognizable.
@@ -109,6 +115,10 @@ export interface NodemailerError extends NodeJS.ErrnoException {
     rejected?: string[] | undefined;
     /** Per-recipient errors for the rejected addresses */
     rejectedErrors?: NodemailerError[] | undefined;
+    /** The code the error had before Nodemailer set its own, such as ECONNREFUSED for an ESOCKET error */
+    originalCode?: string | undefined;
+    /** Which wait an ETIMEDOUT error ended: connecting, the greeting, a TLS upgrade or an idle socket */
+    timeoutType?: 'CONNECT_TIMEOUT' | 'GREETING_TIMEOUT' | 'UPGRADE_TIMEOUT' | 'SOCKET_TIMEOUT' | undefined;
 }
 
 /**

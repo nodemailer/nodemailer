@@ -10,7 +10,7 @@ import { isProtoKey, copyOwnKeys } from './objects.js';
 import dns from 'node:dns';
 import net from 'node:net';
 import os from 'node:os';
-import type { Readable } from 'node:stream';
+import { finished, type Readable } from 'node:stream';
 import type { OutgoingHttpHeaders } from 'node:http';
 
 // re-exported for the callers that already depend on this module, see ./objects
@@ -241,11 +241,12 @@ const resolve = (
     hostname: string,
     options: ResolveHostnameOptions | undefined,
     callback: (err: Error | null, addresses?: string[]) => void
-) => {
+): dns.Resolver | null => {
     options = options || {};
 
     if (!isFamilySupported(family, options.allowInternalNetworkInterfaces)) {
-        return callback(null, []);
+        callback(null, []);
+        return null;
     }
 
     const dnsResolver = dns.Resolver ? new dns.Resolver(options) : dns;
@@ -265,6 +266,7 @@ const resolve = (
         }
         return callback(null, Array.isArray(addresses) ? addresses : ([] as string[]).concat(addresses || []));
     });
+    return dns.Resolver ? (dnsResolver as dns.Resolver) : null;
 };
 
 export const dnsCache = new Map<string, DnsCacheEntry>();
@@ -354,32 +356,128 @@ export const resolveHostname = (
         }
     }
 
-    // Resolve both IPv4 and IPv6 addresses for fallback support
+    // The timeout limits the lookup as a whole. It is also handed to the resolver, but there
+    // it applies to every query attempt on its own, and the resolver retries a few times
+    let responded = false;
+    let deadline: NodeJS.Timeout | undefined;
+    const respond = (err: Error | null, result?: ResolvedHostname) => {
+        if (responded) {
+            return;
+        }
+        responded = true;
+        clearTimeout(deadline);
+        callback(err, result);
+    };
+
+    // a stale cached value is still better than no value at all
+    const respondCached = (error: Error) => {
+        if (!cached) {
+            return false;
+        }
+        dnsCache.set(host, {
+            value: cached.value,
+            expires: Date.now() + (options.dnsTtl || DNS_TTL)
+        });
+        respond(
+            null,
+            formatDNSValue(cached.value, {
+                servername,
+                cached: true,
+                error
+            })
+        );
+        return true;
+    };
+
+    const resolvers: dns.Resolver[] = [];
+    const timeout = Number(options.timeout) || 0;
+    if (timeout > 0) {
+        deadline = setTimeout(() => {
+            for (const resolver of resolvers) {
+                if (typeof resolver.cancel === 'function') {
+                    resolver.cancel();
+                }
+            }
+            const err: NodemailerError = new Error('DNS lookup for ' + host + ' timed out');
+            err.code = dns.TIMEOUT;
+            if (!respondCached(err)) {
+                respond(err);
+            }
+        }, timeout);
+    }
+
+    // Resolve both IPv4 and IPv6 addresses for fallback support, at the same time
     let ipv4Addresses: string[] = [];
     let ipv6Addresses: string[] = [];
     let ipv4Error: Error | null = null;
     let ipv6Error: Error | null = null;
+    let pending = 2;
 
-    resolve(4, options.host, options, (err, addresses) => {
-        if (err) {
-            ipv4Error = err;
-        } else {
-            ipv4Addresses = addresses || [];
+    const onResolved = (): void => {
+        if (--pending || responded) {
+            return;
         }
 
-        resolve(6, host, options, (err, addresses) => {
-            if (err) {
-                ipv6Error = err;
-            } else {
-                ipv6Addresses = addresses || [];
-            }
+        // Combine addresses: IPv4 first, then IPv6
+        const allAddresses = ipv4Addresses.concat(ipv6Addresses);
 
-            // Combine addresses: IPv4 first, then IPv6
-            const allAddresses = ipv4Addresses.concat(ipv6Addresses);
+        if (allAddresses.length) {
+            const value: DnsCacheValue = {
+                addresses: allAddresses
+            };
 
-            if (allAddresses.length) {
+            dnsCache.set(host, {
+                value,
+                expires: Date.now() + (options.dnsTtl || DNS_TTL)
+            });
+
+            return respond(
+                null,
+                formatDNSValue(value, {
+                    servername,
+                    cached: false
+                })
+            );
+        }
+
+        // No addresses from resolve4/resolve6, try dns.lookup as fallback
+        if (ipv4Error && ipv6Error && respondCached(ipv4Error)) {
+            // Both resolvers had errors
+            return;
+        }
+
+        try {
+            dns.lookup(host, { all: true }, (err, addresses) => {
+                if (err) {
+                    if (respondCached(err)) {
+                        return;
+                    }
+                    return respond(err);
+                }
+
+                // Get all supported addresses from dns.lookup
+                const supportedAddresses = addresses
+                    ? addresses.filter(addr => isFamilySupported(addr.family)).map(addr => addr.address)
+                    : [];
+
+                if (addresses && addresses.length && !supportedAddresses.length) {
+                    // there are addresses but none can be used
+                    console.warn(`Failed to resolve IPv${addresses[0].family} addresses with current network`);
+                }
+
+                if (!supportedAddresses.length && cached) {
+                    // nothing was found, fallback to cached value
+                    return respond(
+                        null,
+                        formatDNSValue(cached.value, {
+                            servername,
+                            cached: true
+                        })
+                    );
+                }
+
                 const value: DnsCacheValue = {
-                    addresses: allAddresses
+                    addresses: supportedAddresses.length ? supportedAddresses : [host]
                 };
 
                 dnsCache.set(host, {
@@ -387,114 +485,37 @@ export const resolveHostname = (
                     expires: Date.now() + (options.dnsTtl || DNS_TTL)
                 });
 
-                return callback(
+                return respond(
                     null,
                     formatDNSValue(value, {
                         servername,
                         cached: false
                     })
                 );
+            });
+        } catch (lookupErr: any) {
+            if (respondCached(lookupErr)) {
+                return;
             }
+            return respond(ipv4Error || ipv6Error || lookupErr);
+        }
+    };
 
-            // No addresses from resolve4/resolve6, try dns.lookup as fallback
-            if (ipv4Error && ipv6Error) {
-                // Both resolvers had errors
-                if (cached) {
-                    dnsCache.set(host, {
-                        value: cached.value,
-                        expires: Date.now() + (options.dnsTtl || DNS_TTL)
-                    });
-
-                    return callback(
-                        null,
-                        formatDNSValue(cached.value, {
-                            servername,
-                            cached: true,
-                            error: ipv4Error
-                        })
-                    );
-                }
+    for (const family of [4, 6]) {
+        const resolver = resolve(family, host, options, (err, addresses) => {
+            if (family === 4) {
+                ipv4Error = err;
+                ipv4Addresses = addresses || [];
+            } else {
+                ipv6Error = err;
+                ipv6Addresses = addresses || [];
             }
-
-            try {
-                dns.lookup(host, { all: true }, (err, addresses) => {
-                    if (err) {
-                        if (cached) {
-                            dnsCache.set(host, {
-                                value: cached.value,
-                                expires: Date.now() + (options.dnsTtl || DNS_TTL)
-                            });
-
-                            return callback(
-                                null,
-                                formatDNSValue(cached.value, {
-                                    servername,
-                                    cached: true,
-                                    error: err
-                                })
-                            );
-                        }
-                        return callback(err);
-                    }
-
-                    // Get all supported addresses from dns.lookup
-                    const supportedAddresses = addresses
-                        ? addresses.filter(addr => isFamilySupported(addr.family)).map(addr => addr.address)
-                        : [];
-
-                    if (addresses && addresses.length && !supportedAddresses.length) {
-                        // there are addresses but none can be used
-                        console.warn(`Failed to resolve IPv${addresses[0].family} addresses with current network`);
-                    }
-
-                    if (!supportedAddresses.length && cached) {
-                        // nothing was found, fallback to cached value
-                        return callback(
-                            null,
-                            formatDNSValue(cached.value, {
-                                servername,
-                                cached: true
-                            })
-                        );
-                    }
-
-                    const value: DnsCacheValue = {
-                        addresses: supportedAddresses.length ? supportedAddresses : [host]
-                    };
-
-                    dnsCache.set(host, {
-                        value,
-                        expires: Date.now() + (options.dnsTtl || DNS_TTL)
-                    });
-
-                    return callback(
-                        null,
-                        formatDNSValue(value, {
-                            servername,
-                            cached: false
-                        })
-                    );
-                });
-            } catch (lookupErr: any) {
-                if (cached) {
-                    dnsCache.set(host, {
-                        value: cached.value,
-                        expires: Date.now() + (options.dnsTtl || DNS_TTL)
-                    });
-
-                    return callback(
-                        null,
-                        formatDNSValue(cached.value, {
-                            servername,
-                            cached: true,
-                            error: lookupErr
-                        })
-                    );
-                }
-                return callback(ipv4Error || ipv6Error || lookupErr);
-            }
+            onResolved();
         });
-    });
+        if (resolver) {
+            resolvers.push(resolver);
+        }
+    }
 };
 /**
  * Parses connection url to a structured configuration object
@@ -918,48 +939,106 @@ export const encodeXText = (str: string): string => {
     return result;
 };
 
+// The first error a stream emitted, see recordStreamErrors
+const streamErrors = new WeakMap<Readable, Error>();
+
+/**
+ * Keeps the first error a content stream emits before it is read, so the error is reported
+ * when the stream is read instead of being thrown as unhandled. The listener stays attached
+ * for good, a stream that emits 'error' more than once never throws the later ones either
+ *
+ * @param stream Readable stream
+ */
+export function recordStreamErrors(stream: Readable): void {
+    stream.on('error', err => {
+        if (!streamErrors.has(stream)) {
+            streamErrors.set(stream, err);
+        }
+    });
+}
+
+/**
+ * Destroys a value if it is a readable stream that was not destroyed yet
+ *
+ * @param value Any content value
+ */
+export function destroyStream(value: unknown): void {
+    const stream = value as Readable | undefined;
+    if (stream && typeof stream.pipe === 'function' && typeof stream.destroy === 'function' && !stream.destroyed) {
+        stream.destroy();
+    }
+}
+
+/**
+ * Tells why a stream can not be read from start to end anymore. A stream that ended or was
+ * destroyed before anyone read it would never emit 'end' to a new reader, or, when piped, would
+ * end the destination right away and turn into an empty value without any error
+ *
+ * @param stream Readable stream
+ * @returns The error the stream failed with, an ESTREAM error, or null when it can be read
+ */
+export function unreadableStreamError(stream: Readable): NodemailerError | null {
+    const err = streamErrors.get(stream) || stream.errored;
+    if (err) {
+        return err as NodemailerError;
+    }
+    if (stream.readableEnded || stream.destroyed) {
+        const unreadable: NodemailerError = new Error('Content stream was already read or destroyed');
+        unreadable.code = errors.ESTREAM;
+        return unreadable;
+    }
+    return null;
+}
+
 /**
  * Streams a stream value into a Buffer
  *
  * @param stream Readable stream
  * @param callback Callback function with (err, value)
  */
-function resolveStream(stream: Readable, callback: (err: Error | null, value?: Buffer) => void): void {
+export function resolveStream(stream: Readable, callback: (err: Error | null, value?: Buffer) => void): void {
     let responded = false;
+    const respond = (err: Error | null, value?: Buffer) => {
+        if (responded) {
+            return;
+        }
+        responded = true;
+        callback(err, value);
+    };
+
+    const unreadable = unreadableStreamError(stream);
+    if (unreadable) {
+        // absorbs a later 'error' from the stream, there is nobody left to report it to
+        stream.on('error', () => false);
+        setImmediate(() => respond(unreadable));
+        return;
+    }
+
     const chunks: Buffer[] = [];
     let chunklen = 0;
 
-    stream.on('error', err => {
-        if (responded) {
-            return;
+    stream.on('data', (chunk: Buffer | string) => {
+        if (typeof chunk === 'string') {
+            chunk = Buffer.from(chunk);
         }
-
-        responded = true;
-        callback(err);
+        chunks.push(chunk);
+        chunklen += chunk.length;
     });
 
-    stream.on('readable', () => {
-        let chunk;
-        while ((chunk = stream.read()) !== null) {
-            chunks.push(chunk);
-            chunklen += chunk.length;
+    // finished() also reports a stream that is destroyed before 'end', which would otherwise
+    // leave the callback waiting forever
+    finished(stream, { writable: false }, err => {
+        if (err) {
+            return respond(err);
         }
-    });
-
-    stream.on('end', () => {
-        if (responded) {
-            return;
-        }
-        responded = true;
 
         let value: Buffer;
-
         try {
             value = Buffer.concat(chunks, chunklen);
         } catch (E: any) {
-            return callback(E);
+            return respond(E);
         }
-        callback(null, value);
+        respond(null, value);
     });
 }
 

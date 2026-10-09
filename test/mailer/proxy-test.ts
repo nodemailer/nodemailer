@@ -319,9 +319,9 @@ describe('Mail proxy setup', { timeout: 10000 }, () => {
         it('should resolve the proxy hostname before connecting', (t, done) => {
             let seen: any;
             const resolved: string[] = [];
-            t.mock.method(dns, 'resolve', (hostname: string, callback: (err: Error | null, addresses?: string[]) => void) => {
+            t.mock.method(dns, 'lookup', (hostname: string, callback: (err: Error | null, address?: string, family?: number) => void) => {
                 resolved.push(hostname);
-                setImmediate(() => callback(null, ['127.0.0.1', '127.0.0.2']));
+                setImmediate(() => callback(null, '127.0.0.1', 4));
             });
 
             const transporter = proxied('socks5://proxy.example:1080');
@@ -337,16 +337,16 @@ describe('Mail proxy setup', { timeout: 10000 }, () => {
                 assert.ok(!err);
                 assert.deepStrictEqual(info.accepted, ['rcpt@example.com']);
                 assert.deepStrictEqual(resolved, ['proxy.example']);
-                // the first resolved address is the one used
+                // the looked up address is the one used
                 assert.deepStrictEqual(seen.proxy, { ipaddress: '127.0.0.1', port: 1080, type: 5 });
                 done();
             });
         });
 
         it('should fail when the proxy hostname does not resolve', (t, done) => {
-            const failure: any = new Error('queryA ENOTFOUND proxy.invalid');
+            const failure: any = new Error('getaddrinfo ENOTFOUND proxy.invalid');
             failure.code = 'ENOTFOUND';
-            t.mock.method(dns, 'resolve', (hostname: string, callback: (err: Error | null) => void) => {
+            t.mock.method(dns, 'lookup', (hostname: string, callback: (err: Error | null) => void) => {
                 setImmediate(() => callback(failure));
             });
 

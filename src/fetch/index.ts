@@ -316,6 +316,16 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
 
     req.on('error', (err: NodemailerError) => fail(err));
 
+    // a consumer that destroys the response stream before it ended does not want the rest of
+    // the body, release the request now instead of when the timeout fires
+    fetchRes.once('close', () => {
+        if (finished || fetchRes.readableEnded) {
+            return;
+        }
+        finished = true;
+        req.destroy();
+    });
+
     req.on('response', res => {
         let inflate: zlib.Unzip | undefined;
 

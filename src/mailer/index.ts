@@ -393,6 +393,11 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         }
 
         const mail = new MailMessage(this, data);
+        // a failed message is not going to be read anymore, release its content streams
+        const fail = (err: NodemailerError): void => {
+            mail.releaseStreams();
+            done(err);
+        };
 
         this.logger.debug(
             {
@@ -417,7 +422,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                     'PluginCompile Error: %s',
                     err.message
                 );
-                return done(err);
+                return fail(err);
             }
 
             let recipientCount: number;
@@ -440,7 +445,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                     'Compile Error: %s',
                     err.message
                 );
-                return done(err);
+                return fail(err);
             }
 
             const maxRecipients = mail.data.maxRecipients === undefined ? DEFAULT_MAX_RECIPIENTS : mail.data.maxRecipients;
@@ -459,7 +464,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                     'Send Error: %s',
                     err.message
                 );
-                return done(err);
+                return fail(err);
             }
 
             this._processPlugins('stream', mail, err => {
@@ -473,7 +478,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                         'PluginStream Error: %s',
                         err.message
                     );
-                    return done(err);
+                    return fail(err);
                 }
 
                 if (mail.data.dkim || this.dkim) {
@@ -494,6 +499,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
 
                 this.transporter.send(mail, (...args) => {
                     if (args[0]) {
+                        mail.releaseStreams();
                         this.logger.error(
                             {
                                 err: args[0],
@@ -587,6 +593,8 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         // setup socket handler for the mailer object
         this.getSocket = (options, callback) => {
             const protocol = (proxy.protocol as string).replace(/:$/, '').toLowerCase();
+            // the proxy handshake is a part of connecting, give it the same time limit
+            const connectionTimeout = Number((this.options as { connectionTimeout?: number | undefined }).connectionTimeout) || undefined;
 
             if (this.meta.has('proxy_handler_' + protocol)) {
                 return this.meta.get('proxy_handler_' + protocol)(proxy, options, callback);
@@ -600,7 +608,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                         proxy.href,
                         options.port as number | string,
                         options.host as string,
-                        this.options.tls || {},
+                        connectionTimeout ? Object.assign({}, this.options.tls, { timeout: connectionTimeout }) : this.options.tls || {},
                         (err, socket) => {
                             if (err) {
                                 return callback(err);
@@ -636,6 +644,9 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                             },
                             command: 'connect'
                         };
+                        if (connectionTimeout) {
+                            connectionOpts.timeout = connectionTimeout;
+                        }
 
                         if (proxy.username || proxy.password) {
                             const username = proxy.username || '';
@@ -667,11 +678,13 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                         return connect(proxy.hostname as string);
                     }
 
-                    return dns.resolve(proxy.hostname as string, (err, address) => {
+                    // lookup goes through the hosts file and returns an IPv6 address as well,
+                    // the same way a connection to the proxy host would be resolved otherwise
+                    return dns.lookup(proxy.hostname as string, (err, address) => {
                         if (err) {
                             return callback(err);
                         }
-                        connect(Array.isArray(address) ? address[0] : address);
+                        connect(address);
                     });
                 }
             }

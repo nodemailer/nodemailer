@@ -168,3 +168,17 @@ export function createClient(server: RawServer, options?: Partial<SMTPConnection
         )
     );
 }
+
+/**
+ * Promise form of startRawServer
+ */
+export function startRawServerAsync(script: RawServerScript): Promise<RawServer> {
+    return new Promise(resolve => startRawServer(script, resolve));
+}
+
+/**
+ * Promise form of finishRawServer without assertions
+ */
+export function closeRawServer(server: RawServer): Promise<void> {
+    return new Promise((resolve, reject) => finishRawServer(server, err => (err ? reject(err) : resolve())));
+}

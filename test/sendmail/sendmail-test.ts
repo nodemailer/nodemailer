@@ -649,4 +649,68 @@ describe('Sendmail Transport with a real child process', { skip: process.platfor
             done();
         });
     });
+
+    // larger than a pipe buffer, so the write can not finish unless the binary reads it
+    const largeText = 'tere vana kere\r\n'.repeat(64 * 1024);
+
+    it('should fail when the binary exits with 0 before the message was written', (t, done) => {
+        const script = writeScript('sendmail-noread.sh', 'exit 0\n');
+        const transporter = nodemailer.createTransport({ sendmail: true, path: script });
+        // the attachment is still being produced when the binary exits
+        const content = new PassThrough();
+        const timer = setTimeout(() => content.end('late content'), 500);
+
+        transporter.sendMail(
+            { from: 'sender@example.com', to: 'a@example.com', subject: 'unread', attachments: [{ filename: 'a.txt', content }] },
+            (err: any) => {
+                clearTimeout(timer);
+                assert.ok(err, 'a message the binary never read was reported as queued');
+                assert.strictEqual(err.code, 'ESENDMAIL');
+                done();
+            }
+        );
+    });
+
+    it('should report the exit code rather than the broken pipe', (t, done) => {
+        const script = writeScript('sendmail-partial.sh', 'head -c 100 > /dev/null\nexit 75\n');
+        const transporter = nodemailer.createTransport({ sendmail: true, path: script });
+
+        transporter.sendMail({ from: 'sender@example.com', to: 'a@example.com', subject: 'partial', text: largeText }, (err: any) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ESENDMAIL');
+            assert.strictEqual(err.message, 'Sendmail exited with code 75');
+            done();
+        });
+    });
+
+    it('should fail when the binary is terminated by a signal', (t, done) => {
+        const script = writeScript('sendmail-killed.sh', 'cat > /dev/null\nkill -TERM $$\n');
+        const transporter = nodemailer.createTransport({ sendmail: true, path: script });
+
+        transporter.sendMail({ from: 'sender@example.com', to: 'a@example.com', subject: 'killed', text: 'hello' }, (err: any) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ESENDMAIL');
+            assert.strictEqual(err.message, 'Sendmail was terminated by SIGTERM');
+            done();
+        });
+    });
+
+    it('should close the attachment file when the binary stops reading', (t, done) => {
+        const file = path.join(dir, 'large.bin');
+        fs.writeFileSync(file, Buffer.alloc(4 * 1024 * 1024, 'a'));
+        const content = fs.createReadStream(file);
+        const script = writeScript('sendmail-early-exit.sh', 'head -c 100 > /dev/null\nexit 75\n');
+        const transporter = nodemailer.createTransport({ sendmail: true, path: script });
+
+        transporter.sendMail(
+            { from: 'sender@example.com', to: 'a@example.com', subject: 'file', attachments: [{ filename: 'large.bin', content }] },
+            (err: any) => {
+                assert.ok(err);
+                if (content.closed) {
+                    return done();
+                }
+                content.once('close', () => done());
+            }
+        );
+    });
 });

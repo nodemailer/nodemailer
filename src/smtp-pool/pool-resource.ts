@@ -41,6 +41,10 @@ export default class PoolResource extends EventEmitter {
     _connected: boolean;
     /** @internal */
     _failed: boolean;
+    /** A message is being sent, its callback decides what an error means for it @internal */
+    _sending: boolean;
+    /** Closes the connection once it was idle for options.idleTimeout @internal */
+    _idleTimer: NodeJS.Timeout | false;
 
     messages: number;
     available: boolean;
@@ -106,6 +110,8 @@ export default class PoolResource extends EventEmitter {
         this.messages = 0;
         this.available = true;
         this._failed = false;
+        this._sending = false;
+        this._idleTimer = false;
     }
 
     /**
@@ -160,7 +166,25 @@ export default class PoolResource extends EventEmitter {
 
             this.connection = new SMTPConnection(options);
 
-            this.connection.on('error', err => {
+            this.connection.on('error', (err: NodemailerError) => {
+                if (this._sending) {
+                    // the send callback gets the same error and decides what it means for the message
+                    return;
+                }
+                if (this._connected && errors.isTransientError(err)) {
+                    // the server ended a connection that had nothing in flight, usually after it
+                    // was idle for a while. The 'end' that follows closes this resource
+                    this.logger.info(
+                        {
+                            tnx: 'pool',
+                            cid: this.id
+                        },
+                        'Connection #%s was closed by the server: %s',
+                        this.id,
+                        err.message
+                    );
+                    return;
+                }
                 this._fail(err);
                 if (returned) {
                     return;
@@ -255,10 +279,51 @@ export default class PoolResource extends EventEmitter {
             envelope.requireTLSExtensionEnabled = mail.data.requireTLSExtensionEnabled;
         }
 
-        this.connection.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
+        this._sending = true;
+        // a connection that sent messages before may have been dropped by the server in between
+        const reused = this.messages > 0;
+        const messageStream = mail.message.createReadStream();
+
+        this.connection.send(envelope as SMTPEnvelope, messageStream, (err, info) => {
+            this._sending = false;
             this.messages++;
 
             if (err) {
+                if (reused && messageStream.readableDidRead === false && errors.isTransientError(err)) {
+                    // Not a byte of the message was sent, so it can go out over another
+                    // connection. The pool requeues the message when this resource closes
+                    this.logger.info(
+                        {
+                            tnx: 'pool',
+                            cid: this.id,
+                            messageId
+                        },
+                        'Connection #%s was closed by the server before message %s was sent: %s',
+                        this.id,
+                        messageId,
+                        err.message
+                    );
+                    this.connection.close();
+                    return;
+                }
+
+                if (
+                    (err.code === errors.EENVELOPE || err.code === errors.EMESSAGE) &&
+                    err.responseCode !== 421 &&
+                    !this.connection._destroyed
+                ) {
+                    // The server refused this message, the connection itself is fine. Reset the
+                    // session and keep using it instead of opening a new one
+                    this.connection.reset(resetErr => {
+                        if (resetErr) {
+                            this.connection.close();
+                            return;
+                        }
+                        this._release();
+                    });
+                    return callback(err);
+                }
+
                 this.connection.close();
                 this._fail(err);
                 return callback(err);
@@ -270,22 +335,72 @@ export default class PoolResource extends EventEmitter {
             };
             (info as SMTPPoolSentMessageInfo).messageId = messageId;
 
-            setImmediate(() => {
-                if (this.messages >= this.options.maxMessages) {
-                    const err: NodemailerError = new Error('Resource exhausted');
-                    err.code = errors.EMAXLIMIT;
-                    this.connection.close();
-                    this._fail(err);
-                } else {
-                    this.pool._checkRateLimit(() => {
-                        this.available = true;
-                        this.emit('available');
-                    });
-                }
-            });
+            setImmediate(() => this._release());
 
             callback(null, info as SMTPPoolSentMessageInfo);
         });
+    }
+
+    /**
+     * Makes the connection available for the next message, or closes it once it has sent
+     * maxMessages messages
+     *
+     * @internal
+     */
+    _release(): void {
+        if (this.messages >= this.options.maxMessages) {
+            const err: NodemailerError = new Error('Resource exhausted');
+            err.code = errors.EMAXLIMIT;
+            this.connection.close();
+            this._fail(err);
+            return;
+        }
+
+        this.pool._checkRateLimit(() => {
+            this.available = true;
+            this._startIdleTimer();
+            this.emit('available');
+        });
+    }
+
+    /** @internal */
+    _startIdleTimer(): void {
+        if (!this.options.idleTimeout || this.options.idleTimeout < 0) {
+            return;
+        }
+        // one timer per connection, restarted every time the connection becomes available. A
+        // connection that is busy when it fires is simply not closed
+        if (this._idleTimer && typeof this._idleTimer.refresh === 'function') {
+            this._idleTimer.refresh();
+            return;
+        }
+        clearTimeout(this._idleTimer as NodeJS.Timeout);
+        this._idleTimer = setTimeout(() => {
+            if (!this.available) {
+                return;
+            }
+            this.logger.debug(
+                {
+                    tnx: 'pool',
+                    cid: this.id
+                },
+                'Closing connection #%s after it was idle for %sms',
+                this.id,
+                this.options.idleTimeout
+            );
+            // not handed another message while it says goodbye
+            this.available = false;
+            this.connection.quit();
+        }, this.options.idleTimeout);
+        if (typeof this._idleTimer.unref === 'function') {
+            this._idleTimer.unref();
+        }
+    }
+
+    /** @internal */
+    _stopIdleTimer(): void {
+        clearTimeout(this._idleTimer as NodeJS.Timeout);
+        this._idleTimer = false;
     }
 
     /**
@@ -293,6 +408,7 @@ export default class PoolResource extends EventEmitter {
      */
     close(): void {
         this._connected = false;
+        this._stopIdleTimer();
         if (this.auth && this.auth.oauth2) {
             this.auth.oauth2.removeAllListeners();
         }

@@ -102,27 +102,44 @@ class DKIMSigner {
 
         this.hasErrored = false;
 
-        this.input.on('error', err => {
+        this.input.on('error', err => this.fail(err));
+
+        // A consumer that goes away before the signed message was read in full destroys the
+        // output. Stop reading the input and drop the cache file instead of leaving them open
+        this.output.once('close', () => {
+            if (this.output.writableFinished) {
+                return;
+            }
             this.hasErrored = true;
+            this.input.unpipe();
+            this.input.destroy();
             this.cleanup();
-            output.emit('error', err);
         });
+    }
+
+    /**
+     * Ends the output with an error and releases the cache file
+     */
+    fail(err: Error): void {
+        this.hasErrored = true;
+        this.cleanup();
+        this.output.destroy(err);
     }
 
     cleanup(): void {
         if (!this.cache || !this.cachePath) {
             return;
         }
+        const cache = this.cache;
+        this.cache = false;
+        cache.destroy();
         fs.unlink(this.cachePath, () => false);
     }
 
     createReadCache(): void {
         // pipe remainings to cache file
         this.cache = fs.createReadStream(this.cachePath as string);
-        this.cache.once('error', err => {
-            this.cleanup();
-            this.output.emit('error', err);
-        });
+        this.cache.once('error', err => this.fail(err));
         this.cache.once('close', () => {
             this.cleanup();
         });
@@ -130,28 +147,28 @@ class DKIMSigner {
     }
 
     sendNextChunk(): void {
-        if (this.hasErrored) {
-            return;
-        }
-
-        if (this.readPos >= this.chunks.length) {
-            if (!this.cache) {
-                this.output.end();
+        while (!this.hasErrored) {
+            if (this.readPos >= this.chunks.length) {
+                if (!this.cache) {
+                    this.output.end();
+                    return;
+                }
+                return this.createReadCache();
+            }
+            const chunk = this.chunks[this.readPos++];
+            if (this.output.write(chunk) === false) {
+                this.output.once('drain', () => {
+                    this.sendNextChunk();
+                });
                 return;
             }
-            return this.createReadCache();
         }
-        const chunk = this.chunks[this.readPos++];
-        if (this.output.write(chunk) === false) {
-            this.output.once('drain', () => {
-                this.sendNextChunk();
-            });
-            return;
-        }
-        setImmediate(() => this.sendNextChunk());
     }
 
     sendSignedOutput(): void {
+        if (this.hasErrored) {
+            return;
+        }
         let keyPos = 0;
         const signNextKey = (): void => {
             if (keyPos >= this.keys.length) {
@@ -170,9 +187,7 @@ class DKIMSigner {
                     skipFields: this.options.skipFields
                 });
             } catch (err: any) {
-                this.hasErrored = true;
-                this.cleanup();
-                this.output.emit('error', err);
+                this.fail(err);
                 return;
             }
             if (dkimField) {
@@ -194,7 +209,6 @@ class DKIMSigner {
         // pipe remainings to cache file
         this.cache = fs.createWriteStream(this.cachePath as string);
         this.cache.once('error', err => {
-            this.cleanup();
             // drain input
             (this.relaxedBody as RelaxedBody).unpipe(this.cache as fs.WriteStream);
             (this.relaxedBody as RelaxedBody).on('readable', () => {
@@ -202,11 +216,12 @@ class DKIMSigner {
                     // do nothing
                 }
             });
-            this.hasErrored = true;
-            // emit error
-            this.output.emit('error', err);
+            this.fail(err);
         });
         this.cache.once('close', () => {
+            if (this.hasErrored) {
+                return;
+            }
             this.sendSignedOutput();
         });
         (this.relaxedBody as RelaxedBody).removeAllListeners('readable');
@@ -297,7 +312,7 @@ class DKIM {
             } catch (_E) {
                 // the body hash is created here, an unknown hashAlgo throws inside this timer
                 // where nothing else could catch it
-                output.emit('error', sign.unsupportedHashAlgoError(signer.hashAlgo));
+                signer.fail(sign.unsupportedHashAlgoError(signer.hashAlgo));
                 return;
             }
             if (writeValue) {

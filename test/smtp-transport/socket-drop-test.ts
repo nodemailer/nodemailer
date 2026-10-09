@@ -4,18 +4,10 @@ import type { Socket } from 'node:net';
 import { PassThrough } from 'node:stream';
 import SMTPTransport from '../../src/smtp-transport/index.js';
 import SMTPPool from '../../src/smtp-pool/index.js';
-import { startRawServer, finishRawServer, type RawServer, type RawServerScript } from '../smtp-connection/raw-smtp-server.js';
+import { startRawServerAsync as withRawServer, closeRawServer } from '../smtp-connection/raw-smtp-server.js';
 import { mockMail, settle } from './smtp-fixtures.js';
 
 const envelope = { from: 'sender@example.com', to: 'recipient@example.com' };
-
-function withRawServer(script: RawServerScript): Promise<RawServer> {
-    return new Promise(resolve => startRawServer(script, resolve));
-}
-
-function closeRawServer(server: RawServer): Promise<void> {
-    return new Promise((resolve, reject) => finishRawServer(server, err => (err ? reject(err) : resolve())));
-}
 
 /**
  * A message whose stream sends part of the body, then stalls until the test destroys it

@@ -280,6 +280,28 @@ export default class MailMessage<T = SentMessageInfo> {
         setImmediate(() => resolveNext());
     }
 
+    /**
+     * Destroys the content streams of the message once sending failed. A stream that was not
+     * read to the end would otherwise keep the file or the socket behind it open
+     */
+    releaseStreams(): void {
+        const data = this.data as MailDataBag;
+        const values: any[] = [data.html, data.text, data.watchHtml, data.amp, data.raw, data.icalEvent];
+        for (const key of ['attachments', 'alternatives']) {
+            if (Array.isArray(data[key])) {
+                values.push(...data[key]);
+            }
+        }
+
+        for (const value of values) {
+            if (value && typeof value === 'object') {
+                shared.destroyStream(value);
+                shared.destroyStream(value.content);
+                shared.destroyStream(value.raw);
+            }
+        }
+    }
+
     normalize(callback: MailMessageDataCallback): void {
         const envelope = this.message.getEnvelope();
         const messageId = this.message.messageId();

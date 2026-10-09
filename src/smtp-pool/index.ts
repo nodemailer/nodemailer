@@ -31,6 +31,8 @@ export interface SMTPPoolOptions extends SMTPTransportOptions {
     rateDelta?: number | undefined;
     /** How many times a message is requeued when its connection closes while sending, defaults to 5, a negative value means unlimited */
     maxRequeues?: number | undefined;
+    /** Time in milliseconds a connection may stay idle before it is closed, defaults to 4 minutes, 0 keeps it open until the server closes it */
+    idleTimeout?: number | undefined;
 }
 
 /** First delay before a requeued message is retried, doubled on every further requeue */
@@ -45,6 +47,7 @@ export type SMTPPoolResolvedOptions = SMTPPoolOptions & {
     maxConnections: number;
     maxMessages: number;
     maxRequeues: number;
+    idleTimeout: number;
 };
 
 /**
@@ -150,6 +153,9 @@ class SMTPPool extends EventEmitter {
         this.options.maxMessages = this.options.maxMessages || 100;
         // a default bound, a server that closes every connection before the greeting would otherwise be retried forever
         this.options.maxRequeues = typeof this.options.maxRequeues === 'number' ? this.options.maxRequeues : 5;
+        // below the 5 minutes RFC 5321 asks servers to wait at least, the connection is closed by us
+        // and not by the server in the middle of handing it a message
+        this.options.idleTimeout = typeof this.options.idleTimeout === 'number' ? this.options.idleTimeout : 4 * 60 * 1000;
 
         this.logger = shared.getLogger(this.options, {
             component: this.options.component || 'smtp-pool'

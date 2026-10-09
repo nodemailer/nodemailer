@@ -4,6 +4,7 @@ import http from 'node:http';
 import net from 'node:net';
 import proxy from 'proxy';
 import httpProxyClient from '../../src/smtp-connection/http-proxy-client.js';
+import SMTPConnection from '../../src/smtp-connection/index.js';
 import { SMTPServer } from 'smtp-server';
 import { createHttpsProxy } from './https-connect-proxy.js';
 
@@ -358,6 +359,89 @@ describe('HTTP Proxy Client CONNECT responses', { timeout: 10 * 1000 }, () => {
                     assert.ok(!socket);
                     assert.strictEqual(err.code, 'ETIMEDOUT');
                     assert.strictEqual(err.message, 'Proxy socket timed out');
+                    server.close(done);
+                });
+            }
+        );
+    });
+
+    it('lets SMTPConnection read a greeting that arrives together with the CONNECT response', (t, done) => {
+        startRawProxy(
+            socket => {
+                // the greeting shares the packet with the response headers, and SMTPConnection
+                // only attaches its own listener a tick after it gets the socket
+                socket.write('HTTP/1.1 200 Connection established\r\n\r\n220 smtp.example.com ESMTP\r\n');
+                socket.on('data', chunk => {
+                    if (/^EHLO /i.test(chunk.toString())) {
+                        socket.write('250 smtp.example.com\r\n');
+                    }
+                });
+            },
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', (err, socket) => {
+                    assert.ifError(err);
+                    const connection = new SMTPConnection({ connection: socket, greetingTimeout: 2000, logger: false });
+                    connection.once('error', err => {
+                        server.close();
+                        done(err);
+                    });
+                    connection.connect(() => {
+                        connection.close();
+                        server.close(() => done());
+                    });
+                });
+            }
+        );
+    });
+
+    it('fails when the proxy closes the connection without answering', (t, done) => {
+        startRawProxy(
+            socket => socket.end(),
+            (server, port) => {
+                const started = Date.now();
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', { timeout: 5000 }, (err, socket) => {
+                    assert.ok(err);
+                    assert.ok(!socket);
+                    assert.strictEqual(err.code, 'EPROXY');
+                    assert.ok(Date.now() - started < 2000);
+                    server.close(done);
+                });
+            }
+        );
+    });
+
+    it('limits the whole handshake, not the time between bytes', (t, done) => {
+        startRawProxy(
+            socket => {
+                // a byte at a time, never finishing the headers
+                const timer = setInterval(() => socket.write('X'), 20);
+                socket.on('close', () => clearInterval(timer));
+            },
+            (server, port) => {
+                const started = Date.now();
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, 'smtp.example.com', { timeout: 200 }, (err, socket) => {
+                    assert.ok(err);
+                    assert.ok(!socket);
+                    assert.strictEqual(err.code, 'ETIMEDOUT');
+                    assert.ok(Date.now() - started < 2000);
+                    server.close(done);
+                });
+            }
+        );
+    });
+
+    it('puts an IPv6 destination in brackets', (t, done) => {
+        let request = '';
+        startRawProxy(
+            (socket, req) => {
+                request = req;
+                socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
+            },
+            (server, port) => {
+                httpProxyClient('http://127.0.0.1:' + port + '/', 25, '2001:db8::1', err => {
+                    assert.ok(err);
+                    assert.ok(request.startsWith('CONNECT [2001:db8::1]:25 HTTP/1.1\r\n'), request);
+                    assert.ok(request.includes('\r\nHost: [2001:db8::1]:25\r\n'), request);
                     server.close(done);
                 });
             }

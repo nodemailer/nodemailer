@@ -1,4 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { pipeline, type Readable } from 'node:stream';
 import * as packageData from '../package-info.js';
 import * as shared from '../shared/index.js';
 import type { Logger } from '../shared/index.js';
@@ -9,6 +10,9 @@ import LeUnix from '../mime-node/le-unix.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 import type MailMessage from '../mailer/mail-message.js';
 import type { default as Mail, SentMessageInfo, SendMailOptions, TransportOptions } from '../mailer/index.js';
+
+// how long an stdin error waits for the exit code of the process before it is reported
+const STDIN_ERROR_EXIT_WAIT = 1000;
 
 /**
  * Options for the Sendmail transport
@@ -162,6 +166,25 @@ class SendmailTransport {
         }
 
         if (sendmail) {
+            let stream: Readable | undefined;
+            // ended once the whole message was handed to stdin
+            const messageWritten = (): boolean => !!stream && stream.readableEnded;
+            // an EPIPE says less than the exit code that usually follows it, so it is only
+            // reported when the process exits without one
+            let stdinError: Error | null = null;
+
+            // releases whatever the message is still being read from
+            const release = (): void => {
+                if (stream && !messageWritten()) {
+                    stream.destroy();
+                }
+            };
+
+            const fail = (err: Error): void => {
+                release();
+                callback(err);
+            };
+
             sendmail.on('error', err => {
                 this.logger.error(
                     {
@@ -173,17 +196,30 @@ class SendmailTransport {
                     messageId,
                     err.message
                 );
-                callback(err);
+                fail(err);
             });
 
-            sendmail.once('exit', code => {
-                if (!code) {
+            // 'close' follows 'exit' with the same arguments, it is only listened to in case the
+            // process ends without an 'exit' event
+            const onExit = (code: number | null, signal: NodeJS.Signals | null): void => {
+                let err: NodemailerError | null = null;
+                if (code) {
+                    err = new Error(
+                        code === 127 ? 'Sendmail command not found, process exited with code ' + code : 'Sendmail exited with code ' + code
+                    );
+                } else if (signal) {
+                    err = new Error('Sendmail was terminated by ' + signal);
+                } else if (stdinError) {
+                    err = stdinError;
+                } else if (!messageWritten()) {
+                    // exiting with 0 before the message was written does not mean it was queued
+                    err = new Error('Sendmail exited before the message was written');
+                }
+
+                if (!err) {
                     return callback();
                 }
-                const err: NodemailerError = new Error(
-                    code === 127 ? 'Sendmail command not found, process exited with code ' + code : 'Sendmail exited with code ' + code
-                );
-                err.code = errors.ESENDMAIL;
+                err.code = err.code || errors.ESENDMAIL;
 
                 this.logger.error(
                     {
@@ -195,11 +231,10 @@ class SendmailTransport {
                     messageId,
                     err.message
                 );
-                callback(err);
-            });
-            // the close listener is handed the exit code as its first argument, so a non-zero
-            // code reaching it before the exit listener did counts as the error value
-            sendmail.once('close', callback as (code: number | null) => void);
+                fail(err);
+            };
+            sendmail.once('exit', onExit);
+            sendmail.once('close', onExit);
 
             sendmail.stdin.on('error', err => {
                 this.logger.error(
@@ -212,7 +247,15 @@ class SendmailTransport {
                     messageId,
                     err.message
                 );
-                callback(err);
+                if (stdinError) {
+                    return;
+                }
+                stdinError = err;
+                release();
+                // a process that closed its stdin normally exits right after, with a code that
+                // tells more than the EPIPE. Report the EPIPE if it does not
+                const exitTimer = setTimeout(() => fail(err), STDIN_ERROR_EXIT_WAIT);
+                sendmail.once('exit', () => clearTimeout(exitTimer));
             });
 
             const recipients = ([] as string[]).concat(envelope.to || []);
@@ -230,12 +273,11 @@ class SendmailTransport {
             );
 
             const sourceStream = mail.message.createReadStream();
-            let stream = sourceStream;
+            stream = sourceStream;
             if (this.options.newline) {
                 // apply the transport-level line ending transform; the message-level
                 // `newline` option is handled by MimeNode in createReadStream()
-                stream = sourceStream.pipe(this.winbreak ? new LeWindows() : new LeUnix());
-                sourceStream.once('error', err => stream.emit('error', err));
+                stream = pipeline(sourceStream, this.winbreak ? new LeWindows() : new LeUnix(), () => false);
             }
 
             stream.once('error', err => {

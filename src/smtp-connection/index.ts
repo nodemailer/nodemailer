@@ -2,12 +2,13 @@ import * as packageData from '../package-info.js';
 import { EventEmitter } from 'node:events';
 import net from 'node:net';
 import tls from 'node:tls';
+import type { LookupOptions } from 'node:dns';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import DataStream from './data-stream.js';
 import { PassThrough, type Readable } from 'node:stream';
 import * as shared from '../shared/index.js';
-import { ERR_ACCESS_DENIED, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
+import { ERR_ACCESS_DENIED, isTransientError, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
 import type XOAuth2 from '../xoauth2/index.js';
 import type { XOAuth2Options } from '../xoauth2/index.js';
 
@@ -16,7 +17,26 @@ const CONNECTION_TIMEOUT = 2 * 60 * 1000; // how much to wait for the connection
 const SOCKET_TIMEOUT = 10 * 60 * 1000; // how much to wait for socket inactivity before disconnecting the client
 const GREETING_TIMEOUT = 30 * 1000; // how much to wait after connection is established but SMTP greeting is not receieved
 const DNS_TIMEOUT = 30 * 1000; // how much to wait for resolveHostname
+const CLOSE_TIMEOUT = 5 * 1000; // how much to wait for the server to close its side after we closed ours
+const KEEPALIVE_DELAY = 30 * 1000; // idle time before TCP keepalive probes start, keeps NAT mappings of idle connections alive
 const TEARDOWN_NOOP = () => {}; // reusable no-op handler for absorbing errors during socket teardown
+
+// Random order, so that connections spread over the addresses of a host
+function shuffle<T>(list: T[]): T[] {
+    const result = list.slice();
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}
+
+// Every timeout is reported with the ETIMEDOUT code, timeoutType tells which one it was
+function timeoutError(message: string, timeoutType: NonNullable<NodemailerError['timeoutType']>): NodemailerError {
+    const err: NodemailerError = new Error(message);
+    err.timeoutType = timeoutType;
+    return err;
+}
 
 // how many bytes a single server response may occupy while it is still being received.
 // Generous compared to any real reply, it only stops a peer that never completes one
@@ -239,6 +259,10 @@ export interface SMTPConnectionEnvelope extends SMTPEnvelope {
     rejectedErrors: NodemailerError[];
     /** Recipients the server accepted */
     accepted: string[];
+    /** MAIL FROM, RCPT TO and DATA were sent at once, the replies are read afterwards @internal */
+    pipelined?: boolean | undefined;
+    /** The MAIL FROM failure of a pipelined envelope, reported once the DATA reply is in @internal */
+    mailError?: NodemailerError | undefined;
 }
 
 /**
@@ -318,6 +342,10 @@ export interface SMTPConnectionConnectOptions extends tls.ConnectionOptions {
     allowInternalNetworkInterfaces?: boolean | undefined;
     /** DNS lookup timeout in ms */
     timeout?: number | undefined;
+    /** Try the addresses of both IP families in turn, see net.connect */
+    autoSelectFamily?: boolean | undefined;
+    /** Hands the resolved addresses to net.connect */
+    lookup?: net.LookupFunction | undefined;
 }
 
 /**
@@ -507,6 +535,18 @@ class SMTPConnection extends EventEmitter {
     _greetingTimeout: NodeJS.Timeout | false;
 
     /**
+     * Timeout variable for waiting the TLS handshake of a connection upgrade
+     * @internal
+     */
+    _upgradeTimeout: NodeJS.Timeout | false;
+
+    /**
+     * EHLO response received before STARTTLS, applied only if the session stays in plaintext
+     * @internal
+     */
+    _plaintextEhlo: string | false;
+
+    /**
      * Timeout variable for waiting the connection to start
      * @internal
      */
@@ -580,6 +620,8 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _connectOpts?: SMTPConnectionConnectOptions | undefined;
+    /** Time by which the connection has to be established, DNS lookup included @internal */
+    _connectionDeadline?: number | undefined;
 
     /**
      * Authentication data, set by login()
@@ -694,6 +736,10 @@ class SMTPConnection extends EventEmitter {
 
         this._greetingTimeout = false;
 
+        this._upgradeTimeout = false;
+
+        this._plaintextEhlo = false;
+
         this._connectionTimeout = false;
 
         this._destroyed = false;
@@ -739,11 +785,15 @@ class SMTPConnection extends EventEmitter {
             }
         }
 
+        // connectionTimeout covers the whole of connecting: the DNS lookup and every address tried
+        const connectionTimeout = this.options.connectionTimeout || CONNECTION_TIMEOUT;
+        this._connectionDeadline = Date.now() + connectionTimeout;
+
         let opts: SMTPConnectionConnectOptions = {
             port: this.port,
             host: this.host,
             allowInternalNetworkInterfaces: this.allowInternalNetworkInterfaces,
-            timeout: this.options.dnsTimeout || DNS_TIMEOUT
+            timeout: Math.min(this.options.dnsTimeout || DNS_TIMEOUT, connectionTimeout)
         };
 
         if (this.options.localAddress) {
@@ -775,8 +825,6 @@ class SMTPConnection extends EventEmitter {
             return this._resolveAndConnect(opts, _resolved => {
                 try {
                     (this._socket as net.Socket).connect(this.port, this.host, () => {
-                        (this._socket as net.Socket).setKeepAlive(true);
-
                         // a `secure` connection over a caller-provided socket must still
                         // perform the TLS handshake, otherwise AUTH and the message body
                         // would be sent in cleartext despite the caller requesting TLS
@@ -809,8 +857,29 @@ class SMTPConnection extends EventEmitter {
             }
 
             return this._resolveAndConnect(opts, resolved => {
-                // Store fallback addresses for retry on connection failure
-                this._fallbackAddresses = (resolved._addresses || []).filter(addr => addr !== opts.host);
+                const addresses = resolved._addresses || [];
+                const ipv6 = addresses.filter(addr => net.isIPv6(addr));
+                const ipv4 = addresses.filter(addr => net.isIPv4(addr));
+
+                if (ipv6.length && ipv4.length && !opts.localAddress) {
+                    // With both families net.connect starts on IPv6 and moves on to the next
+                    // address after a short delay (RFC 8305), so a host with a broken IPv6 path
+                    // costs a fraction of a second instead of a whole connection timeout
+                    const ordered = shuffle(ipv6).concat(shuffle(ipv4));
+                    opts.host = this.host;
+                    opts.autoSelectFamily = true;
+                    opts.lookup = ((hostname: string, lookupOptions: LookupOptions, callback: (...args: any[]) => void) => {
+                        if (lookupOptions && lookupOptions.all) {
+                            const all = ordered.map(address => ({ address, family: net.isIPv6(address) ? 6 : 4 }));
+                            return setImmediate(() => callback(null, all));
+                        }
+                        setImmediate(() => callback(null, ordered[0], net.isIPv6(ordered[0]) ? 6 : 4));
+                    }) as net.LookupFunction;
+                    this._fallbackAddresses = [];
+                } else {
+                    // Store fallback addresses for retry on connection failure
+                    this._fallbackAddresses = addresses.filter(addr => addr !== opts.host);
+                }
                 this._connectOpts = Object.assign({}, opts);
 
                 this._connectToHost(opts, this.secureConnection);
@@ -880,7 +949,6 @@ class SMTPConnection extends EventEmitter {
                 if (this._connectionAttemptId !== currentAttemptId) {
                     return;
                 }
-                (this._socket as net.Socket).setKeepAlive(true);
                 this._onConnect();
             });
             this._setupConnectionHandlers();
@@ -895,9 +963,15 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _setupConnectionHandlers(): void {
-        this._connectionTimeout = setTimeout(() => {
-            this._onConnectionError('Connection timeout', 'ETIMEDOUT');
-        }, this.options.connectionTimeout || CONNECTION_TIMEOUT);
+        // the time left is shared between this address and the ones still to try
+        const remaining = Math.max((this._connectionDeadline || Date.now()) - Date.now(), 0);
+        const attempts = 1 + (this._fallbackAddresses ? this._fallbackAddresses.length : 0);
+        this._connectionTimeout = setTimeout(
+            () => {
+                this._onConnectionError(timeoutError('Connection timeout', 'CONNECT_TIMEOUT'), 'ETIMEDOUT');
+            },
+            Math.ceil(remaining / attempts)
+        );
 
         (this._socket as net.Socket).on('error', this._onConnectionSocketError);
     }
@@ -968,6 +1042,7 @@ class SMTPConnection extends EventEmitter {
     close(): void {
         clearTimeout(this._connectionTimeout as NodeJS.Timeout);
         clearTimeout(this._greetingTimeout as NodeJS.Timeout);
+        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
         this._responseActions = [];
 
         // allow to run this function only once
@@ -999,13 +1074,15 @@ class SMTPConnection extends EventEmitter {
             this._currentDataStream = false;
         }
 
-        // Detach from the message stream as well. The listener is swapped for a no-op rather than
-        // removed, a stream destroyed with an error later on would otherwise throw it as unhandled
+        // Detach from the message stream as well and release whatever it reads from, the message
+        // can not be sent over this connection anymore. The listener is swapped for a no-op rather
+        // than removed, a stream destroyed with an error would otherwise throw it as unhandled
         if (this._pendingSend) {
             const { stream, onStreamError } = this._pendingSend;
             if (stream) {
                 stream.removeListener('error', onStreamError);
                 stream.on('error', TEARDOWN_NOOP);
+                stream.destroy();
             }
             this._pendingSend = false;
         }
@@ -1025,6 +1102,15 @@ class SMTPConnection extends EventEmitter {
                 // sending cleartext after TLS shutdown triggers ERR_SSL_BAD_RECORD_TYPE)
                 socket.on('error', TEARDOWN_NOOP);
                 socket[closeMethod]();
+                if (closeMethod === 'end') {
+                    // end() only closes our side, a server that never closes its own would keep
+                    // the socket, and the process with it, around for good
+                    const closeTimer = setTimeout(() => socket.destroy(), CLOSE_TIMEOUT);
+                    if (typeof closeTimer.unref === 'function') {
+                        closeTimer.unref();
+                    }
+                    socket.once('close', () => clearTimeout(closeTimer));
+                }
             } catch (_E) {
                 // just ignore
             }
@@ -1269,13 +1355,9 @@ class SMTPConnection extends EventEmitter {
         const startTime = Date.now();
         this._setEnvelope(envelope, (err, info) => {
             if (err) {
-                // create passthrough stream to consume to prevent OOM
-                const stream = new PassThrough();
-                if (typeof (message as Readable).pipe === 'function') {
-                    (message as Readable).pipe(stream);
-                } else {
-                    stream.write(message);
-                    stream.end();
+                // the message is not going to be sent, release whatever the stream reads from
+                if (typeof (message as Readable).destroy === 'function') {
+                    (message as Readable).destroy();
                 }
 
                 return callback(err);
@@ -1377,10 +1459,15 @@ class SMTPConnection extends EventEmitter {
         socket.setTimeout(this.options.socketTimeout || SOCKET_TIMEOUT);
         socket.on('timeout', this._onSocketTimeout);
 
+        // keepalive also covers sockets handed over by a proxy or by the caller
+        if (typeof socket.setKeepAlive === 'function') {
+            socket.setKeepAlive(true, KEEPALIVE_DELAY);
+        }
+
         this._greetingTimeout = setTimeout(() => {
             // if still waiting for greeting, give up
             if (this._socket && !this._destroyed && this._responseActions[0] === this._actionGreeting) {
-                this._onError('Greeting never received', 'ETIMEDOUT', false, 'CONN');
+                this._onError(timeoutError('Greeting never received', 'GREETING_TIMEOUT'), 'ETIMEDOUT', false, 'CONN');
             }
         }, this.options.greetingTimeout || GREETING_TIMEOUT);
 
@@ -1477,6 +1564,7 @@ class SMTPConnection extends EventEmitter {
     _onError(err: NodemailerError | string, type: string | false, data: string | false, command: string | false): void {
         clearTimeout(this._connectionTimeout as NodeJS.Timeout);
         clearTimeout(this._greetingTimeout as NodeJS.Timeout);
+        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
 
         if (this._destroyed) {
             // just ignore, already closed
@@ -1487,11 +1575,11 @@ class SMTPConnection extends EventEmitter {
 
         err = this._formatError(err, type, data, command);
 
-        const transientCodes = ['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'];
-        if (transientCodes.includes(err.code as string)) {
-            this.logger.warn(data as any, err.message);
+        // the message carries the server response, it is an argument and not the format string
+        if (isTransientError(err)) {
+            this.logger.warn({ tnx: 'smtp', err }, '%s', err.message);
         } else {
-            this.logger.error(data as any, err.message);
+            this.logger.error({ tnx: 'smtp', err }, '%s', err.message);
         }
 
         // close() forgets the send in flight, it is completed with this same error afterwards so
@@ -1516,6 +1604,10 @@ class SMTPConnection extends EventEmitter {
 
         // a permission model denial keeps its own code, see ERR_ACCESS_DENIED
         if (type && type !== 'Error' && err.code !== ERR_ACCESS_DENIED) {
+            // the code of a system error, such as ECONNREFUSED, still tells what happened
+            if (err.code && err.code !== type && !err.originalCode) {
+                err.originalCode = err.code;
+            }
             err.code = type;
         }
 
@@ -1612,7 +1704,7 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _onTimeout(): void {
-        return this._onError(new Error('Timeout'), 'ETIMEDOUT', false, 'CONN');
+        return this._onError(timeoutError('Timeout', 'SOCKET_TIMEOUT'), 'ETIMEDOUT', false, 'CONN');
     }
 
     /**
@@ -1630,8 +1722,10 @@ class SMTPConnection extends EventEmitter {
         // the greeting timer, and with it the process, alive until it fires
         clearTimeout(this._connectionTimeout as NodeJS.Timeout);
         clearTimeout(this._greetingTimeout as NodeJS.Timeout);
+        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
         this._connectionTimeout = false;
         this._greetingTimeout = false;
+        this._upgradeTimeout = false;
         this.emit('end');
     }
 
@@ -1649,6 +1743,19 @@ class SMTPConnection extends EventEmitter {
         // inject plaintext bytes after the "220" reply (e.g. a CRLF-free fragment that
         // would otherwise be prepended to the first post-TLS response and parsed as
         // part of the secured EHLO capabilities). STARTTLS response injection.
+        const discarded = this._remainder.length + this._responseQueue.reduce((total, response) => total + response.length, 0);
+        if (discarded) {
+            // a server does not send anything here on its own, this is worth knowing about
+            this.logger.warn(
+                {
+                    tnx: 'smtp',
+                    discarded
+                },
+                'Discarded %s bytes received in plaintext after the STARTTLS response',
+                discarded
+            );
+        }
+        this._plaintextEhlo = false;
         this._remainder = '';
         this._responseQueue = [];
         this._responsePartial = false;
@@ -1660,6 +1767,7 @@ class SMTPConnection extends EventEmitter {
         const socketPlain = this._socket as net.Socket;
         socketPlain.removeListener('data', this._onSocketData); // incoming data is going to be gibberish from this point onwards
         socketPlain.removeListener('timeout', this._onSocketTimeout); // timeout will be re-set for the new socket object
+        socketPlain.setTimeout(0);
 
         const opts: tls.ConnectionOptions = Object.assign(
             {
@@ -1687,9 +1795,19 @@ class SMTPConnection extends EventEmitter {
         };
 
         this.upgrading = true;
+
+        // the socket timeout only notices a server that sends nothing at all, a handshake that
+        // trickles along would otherwise hold the connection for as long as the server likes
+        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
+        this._upgradeTimeout = setTimeout(() => {
+            this._onError(timeoutError('TLS handshake timed out', 'UPGRADE_TIMEOUT'), 'ETIMEDOUT', false, 'CONN');
+        }, this.options.greetingTimeout || GREETING_TIMEOUT);
+
         // tls.connect is not an asynchronous function however it may still throw errors and requires to be wrapped with try/catch
         try {
             this._socket = tls.connect(opts, () => {
+                clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
+                this._upgradeTimeout = false;
                 this.secure = true;
                 this.upgrading = false;
                 (this._socket as net.Socket).on('data', this._onSocketData);
@@ -1699,6 +1817,8 @@ class SMTPConnection extends EventEmitter {
                 return callback(null, true);
             });
         } catch (err: any) {
+            clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
+            this._upgradeTimeout = false;
             removePlainSocketListeners();
             return callback(err);
         }
@@ -1756,6 +1876,17 @@ class SMTPConnection extends EventEmitter {
         if (typeof action === 'function') {
             action.call(this, str);
             setImmediate(() => this._processResponse());
+        } else if (/^421[ -]/.test(str) && !this._pendingSend && this.stage === 'connected') {
+            // RFC 5321 4.2: a server may send 421 at any time when it is about to close the
+            // connection. Nothing was waiting for a reply, so this ends an idle session
+            this.logger.info(
+                {
+                    tnx: 'smtp'
+                },
+                'Server closed the idle connection: %s',
+                str
+            );
+            this.close();
         } else {
             return this._onError(new Error('Unexpected Response'), 'EPROTOCOL', str, 'CONN');
         }
@@ -1872,6 +2003,10 @@ class SMTPConnection extends EventEmitter {
             }
         }
 
+        // RFC 2920: with PIPELINING the whole envelope and DATA go out without waiting for the
+        // replies in between, which saves two round trips for every message
+        this._envelope.pipelined = this._supportedExtensions.includes('PIPELINING');
+
         this._responseActions.push(str => {
             this._actionMAIL(str, callback);
         });
@@ -1915,7 +2050,40 @@ class SMTPConnection extends EventEmitter {
             args.push('REQUIRETLS');
         }
 
-        this._sendCommand('MAIL FROM:<' + this._envelope.from + '>' + (args.length ? ' ' + args.join(' ') : ''));
+        const mailFrom = 'MAIL FROM:<' + this._envelope.from + '>' + (args.length ? ' ' + args.join(' ') : '');
+        if (!this._envelope.pipelined) {
+            this._sendCommand(mailFrom);
+            return;
+        }
+
+        // corked, so the batch leaves in one segment instead of the first command alone
+        const socket = this._socket as net.Socket;
+        socket.cork();
+        this._sendCommand(mailFrom);
+        this._recipientQueue = [];
+        while (this._envelope.rcptQueue.length) {
+            this._sendRcpt(this._envelope.rcptQueue.shift() as string, callback);
+        }
+        this._responseActions.push(str => {
+            this._actionDATA(str, callback);
+        });
+        this._sendCommand('DATA');
+        socket.uncork();
+    }
+
+    /**
+     * Sends RCPT TO for a recipient and queues the handler for the reply
+     *
+     * @param recipient Recipient address
+     * @param callback Callback to run once the envelope is processed
+     * @internal
+     */
+    _sendRcpt(recipient: string, callback: SMTPConnectionEnvelopeCallback): void {
+        this._recipientQueue.push(recipient);
+        this._responseActions.push(str => {
+            this._actionRCPT(str, callback);
+        });
+        this._sendCommand('RCPT TO:<' + recipient + '>' + this._getDsnRcptToArgs());
     }
 
     /** @internal */
@@ -2095,8 +2263,6 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _actionEHLO(str: string): void {
-        let match: RegExpMatchArray | null;
-
         if (str.substr(0, 3) === '421') {
             this._onError(new Error('Server terminates connection. response=' + str), 'ECONNECTION', str, 'EHLO');
             return;
@@ -2119,18 +2285,33 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
+        // Detect if the server supports STARTTLS
+        if (!this.secure && !this.options.ignoreTLS && (/[ -]STARTTLS\b/im.test(str) || this.options.requireTLS)) {
+            // kept for opportunisticTLS, a session that stays in plaintext still has these extensions
+            this._plaintextEhlo = str;
+            this._sendCommand('STARTTLS');
+            this._responseActions.push(this._actionSTARTTLS);
+            return;
+        }
+
+        this._parseEhloExtensions(str);
+        this.emit('connect');
+    }
+
+    /**
+     * Reads the extensions and the authentication mechanisms out of an EHLO response
+     *
+     * @param str EHLO response from the server
+     * @internal
+     */
+    _parseEhloExtensions(str: string): void {
+        let match: RegExpMatchArray | null;
+
         this._ehloLines = str
             .split(/\r?\n/)
             .map(line => line.replace(/^\d+[ -]/, '').trim())
             .filter(line => line)
             .slice(1);
-
-        // Detect if the server supports STARTTLS
-        if (!this.secure && !this.options.ignoreTLS && (/[ -]STARTTLS\b/im.test(str) || this.options.requireTLS)) {
-            this._sendCommand('STARTTLS');
-            this._responseActions.push(this._actionSTARTTLS);
-            return;
-        }
 
         // Detect if the server supports SMTPUTF8
         if (/[ -]SMTPUTF8\b/im.test(str)) {
@@ -2188,8 +2369,6 @@ class SMTPConnection extends EventEmitter {
             this._supportedExtensions.push('SIZE');
             this._maxAllowedSize = Number(match[1]) || 0;
         }
-
-        this.emit('connect');
     }
 
     /**
@@ -2228,6 +2407,14 @@ class SMTPConnection extends EventEmitter {
                     },
                     'Failed STARTTLS upgrade, continuing unencrypted'
                 );
+                // the plaintext session goes on with what the server announced for it, except for
+                // AUTH: credentials are not sent over a connection that failed to encrypt
+                if (this._plaintextEhlo) {
+                    this._parseEhloExtensions(this._plaintextEhlo);
+                    this._plaintextEhlo = false;
+                    this.allowsAuth = false;
+                    this._supportedAuth = [];
+                }
                 this.emit('connect');
                 return;
             }
@@ -2450,7 +2637,19 @@ class SMTPConnection extends EventEmitter {
                 this._usingSmtpUtf8 && /^550 /.test(str) && /[\x80-\uFFFF]/.test(envelope.from as string)
                     ? 'Internationalized mailbox name not allowed'
                     : 'Mail command failed';
-            return callback(this._formatError(message, 'EENVELOPE', str, 'MAIL FROM'));
+            const err = this._formatError(message, 'EENVELOPE', str, 'MAIL FROM');
+            if (envelope.pipelined && !/^421/.test(str)) {
+                // the replies to the RCPT TO and DATA commands sent along are still to come. A 421
+                // is reported right away, the server closes the connection instead of sending them
+                envelope.mailError = err;
+                return;
+            }
+            return callback(err);
+        }
+
+        if (envelope.pipelined) {
+            // the recipients were sent along already
+            return;
         }
 
         if (!envelope.rcptQueue.length) {
@@ -2458,16 +2657,7 @@ class SMTPConnection extends EventEmitter {
         }
 
         this._recipientQueue = [];
-        const usePipelining = this._supportedExtensions.includes('PIPELINING');
-
-        do {
-            const curRecipient = envelope.rcptQueue.shift() as string;
-            this._recipientQueue.push(curRecipient);
-            this._responseActions.push(str => {
-                this._actionRCPT(str, callback);
-            });
-            this._sendCommand('RCPT TO:<' + curRecipient + '>' + this._getDsnRcptToArgs());
-        } while (usePipelining && envelope.rcptQueue.length);
+        this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
     }
 
     /**
@@ -2496,6 +2686,11 @@ class SMTPConnection extends EventEmitter {
             envelope.accepted.push(curRecipient);
         }
 
+        if (envelope.pipelined) {
+            // DATA was sent along, its reply decides how the envelope went
+            return;
+        }
+
         if (!envelope.rcptQueue.length && !this._recipientQueue.length) {
             if (envelope.rejected.length < (envelope.to as string[]).length) {
                 this._responseActions.push(str => {
@@ -2503,23 +2698,30 @@ class SMTPConnection extends EventEmitter {
                 });
                 this._sendCommand('DATA');
             } else {
-                // report a temporary rejection when there is one, taking the last reply would mark the
-                // whole message as permanently failed although some recipients were only deferred
-                const deferred = envelope.rejectedErrors.find(rejectedErr => rejectedErr.responseCode && rejectedErr.responseCode < 500);
-                const reply = deferred?.response ?? str;
-                err = this._formatError("Can't send mail - all recipients were rejected", 'EENVELOPE', reply, 'RCPT TO');
-                err.rejected = envelope.rejected;
-                err.rejectedErrors = envelope.rejectedErrors;
-                return callback(err);
+                return callback(this._allRecipientsRejectedError(str));
             }
         } else if (envelope.rcptQueue.length) {
-            const nextRecipient = envelope.rcptQueue.shift() as string;
-            this._recipientQueue.push(nextRecipient);
-            this._responseActions.push(str => {
-                this._actionRCPT(str, callback);
-            });
-            this._sendCommand('RCPT TO:<' + nextRecipient + '>' + this._getDsnRcptToArgs());
+            this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
         }
+    }
+
+    /**
+     * The error for an envelope whose recipients were all rejected
+     *
+     * @param str Reply to the last RCPT TO command
+     * @internal
+     */
+    _allRecipientsRejectedError(str: string): NodemailerError {
+        const envelope = this._envelope as SMTPConnectionEnvelope;
+        // report a temporary rejection when there is one, taking the last reply would mark the
+        // whole message as permanently failed although some recipients were only deferred
+        const deferred = envelope.rejectedErrors.find(rejectedErr => rejectedErr.responseCode && rejectedErr.responseCode < 500);
+        const lastRejected = envelope.rejectedErrors[envelope.rejectedErrors.length - 1];
+        const reply = deferred?.response ?? (envelope.pipelined && lastRejected ? lastRejected.response : str);
+        const err = this._formatError("Can't send mail - all recipients were rejected", 'EENVELOPE', reply as string, 'RCPT TO');
+        err.rejected = envelope.rejected;
+        err.rejectedErrors = envelope.rejectedErrors;
+        return err;
     }
 
     /**
@@ -2531,6 +2733,22 @@ class SMTPConnection extends EventEmitter {
      */
     _actionDATA(str: string, callback: SMTPConnectionEnvelopeCallback): void {
         const envelope = this._envelope as SMTPConnectionEnvelope;
+
+        if (envelope.pipelined) {
+            const err = envelope.mailError || (!envelope.accepted.length ? this._allRecipientsRejectedError(str) : false);
+            if (err) {
+                if (/^3/.test(str)) {
+                    // A server must refuse DATA without an accepted recipient, this one took it
+                    // anyway. End the empty message, it has nobody to go to, so the session
+                    // stays usable
+                    this._responseActions.push(() => callback(err));
+                    this._sendCommand('.');
+                    return;
+                }
+                return callback(err);
+            }
+        }
+
         // response should be 354 but according to this issue https://github.com/eleith/emailjs/issues/24
         // some servers might use 250 instead, so lets check for 2 or 3 as the first digit
         if (!/^[23]/.test(str)) {
