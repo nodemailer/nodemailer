@@ -237,8 +237,8 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
         !URL_PARSER_UNSAFE.test(domain)
     ) {
         // The U-label form is decoded from the A-label form rather than from the input:
-        // domainToASCII returns an empty string for an invalid domain on every runtime,
-        // while Deno's domainToUnicode returns it with U+FFFD in place of a bad label
+        // Deno's domainToASCII returns an empty string for a label it cannot decode, while
+        // its domainToUnicode returns the label with U+FFFD in place of the bad part
         const ascii = urlModule.domainToASCII(domain);
         const mapped = ascii && toUnicode ? urlModule.domainToUnicode(ascii) : ascii;
         if (mapped) {
