@@ -135,7 +135,7 @@ export default class PoolResource extends EventEmitter {
     connect(callback: PoolResourceConnectCallback): void {
         // the proxy handshake, if any, counts against connectionTimeout as well
         const connectStartedAt = Date.now();
-        this.pool.getSocket(this.options, (err, socketOptions) => {
+        this.pool.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
             if (err) {
                 // nothing was connected, so no 'close' event is coming that would free the
                 // slot this resource holds in the pool, report the failure the way a failed

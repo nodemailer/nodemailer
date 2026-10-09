@@ -593,8 +593,11 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         // setup socket handler for the mailer object
         this.getSocket = (options, callback) => {
             const protocol = (proxy.protocol as string).replace(/:$/, '').toLowerCase();
-            // the proxy handshake is a part of connecting, give it the same time limit
-            const connectionTimeout = Number((this.options as { connectionTimeout?: number | undefined }).connectionTimeout) || undefined;
+            // The proxy handshake is a part of connecting and draws from the same deadline as the
+            // SMTP connection that follows it: whatever the proxy takes, the connection does not get
+            const configuredTimeout = Number((this.options as { connectionTimeout?: number | undefined }).connectionTimeout) || 0;
+            const connectStartedAt = Number(options.connectStartedAt) || Date.now();
+            const connectionTimeout = configuredTimeout ? Math.max(connectStartedAt + configuredTimeout - Date.now(), 1) : undefined;
 
             if (this.meta.has('proxy_handler_' + protocol)) {
                 return this.meta.get('proxy_handler_' + protocol)(proxy, options, callback);

@@ -244,7 +244,7 @@ class SMTPTransport extends EventEmitter {
     send(mail: MailMessage<SMTPSentMessageInfo>, callback: SMTPTransportSendCallback): void {
         // the proxy handshake, if any, counts against connectionTimeout as well
         const connectStartedAt = Date.now();
-        this.getSocket(this.options, (err, socketOptions) => {
+        this.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
             if (err) {
                 return callback(err);
             }
@@ -426,7 +426,7 @@ class SMTPTransport extends EventEmitter {
 
         const connectStartedAt = Date.now();
 
-        this.getSocket(this.options, (err, socketOptions) => {
+        this.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
             if (err) {
                 return done(err);
             }

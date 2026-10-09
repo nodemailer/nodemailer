@@ -697,7 +697,7 @@ class SMTPPool extends EventEmitter {
 
         const connectStartedAt = Date.now();
 
-        this.getSocket(this.options, (err, socketOptions) => {
+        this.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
             if (err) {
                 return done(err);
             }

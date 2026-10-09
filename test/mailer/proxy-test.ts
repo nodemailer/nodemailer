@@ -452,3 +452,42 @@ describe('Mail proxy setup', { timeout: 10000 }, () => {
         });
     });
 });
+
+describe('Mail proxy deadline', { timeout: 10000 }, () => {
+    it('gives the proxy handshake only what is left of connectionTimeout', async () => {
+        // a proxy that accepts the connection and never answers the CONNECT request
+        const sockets = new Set<net.Socket>();
+        const proxyServer = net.createServer(socket => {
+            sockets.add(socket);
+            socket.on('error', () => false);
+        });
+        await new Promise<void>(resolve => proxyServer.listen(0, '127.0.0.1', resolve));
+        const port = (proxyServer.address() as AddressInfo).port;
+
+        try {
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.example.com',
+                port: 25,
+                connectionTimeout: 800,
+                proxy: 'http://127.0.0.1:' + port,
+                logger: false
+            });
+            // connecting started 600ms ago, 200ms of the 800ms are left for the proxy
+            const started = Date.now();
+            const err = await new Promise<any>(resolve =>
+                (transporter as any).getSocket({ host: 'smtp.example.com', port: 25, connectStartedAt: Date.now() - 600 }, (err: any) =>
+                    resolve(err)
+                )
+            );
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ETIMEDOUT');
+            assert.ok(Date.now() - started < 600, `took ${Date.now() - started}ms`);
+            transporter.close();
+        } finally {
+            for (const socket of sockets) {
+                socket.destroy();
+            }
+            await new Promise(resolve => proxyServer.close(resolve));
+        }
+    });
+});
