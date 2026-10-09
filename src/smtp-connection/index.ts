@@ -597,6 +597,8 @@ class SMTPConnection extends EventEmitter {
     _connectionDeadline?: number | undefined;
     /** When connecting started, set by a transport that connected a proxy for this connection first @internal */
     _connectStartedAt?: number | undefined;
+    /** connect() was called, it may be called only once @internal */
+    _connectCalled?: boolean | undefined;
 
     /**
      * Authentication data, set by login()
@@ -735,6 +737,19 @@ class SMTPConnection extends EventEmitter {
      * listener
      */
     connect(connectCallback?: SMTPConnectionConnectCallback): void {
+        if (this._connectCalled && !this._destroyed) {
+            // A connection is opened once. A second call would open a second socket over the
+            // first one and run the session handlers of both against the same state
+            const err = this._formatError('Cannot connect - connect() was already called for this connection', 'ECONNECTION', false, 'API');
+            if (typeof connectCallback === 'function') {
+                setImmediate(() => connectCallback(err));
+                return;
+            }
+            this.logger.warn({ tnx: 'smtp' }, '%s', err.message);
+            return;
+        }
+        this._connectCalled = true;
+
         if (typeof connectCallback === 'function') {
             this._connectCallback = connectCallback;
             this.once('connect', () => {

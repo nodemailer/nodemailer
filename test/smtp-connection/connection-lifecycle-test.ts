@@ -370,3 +370,28 @@ describe('SMTPConnection 421 replies', { timeout: 10000 }, () => {
         }
     });
 });
+
+describe('SMTPConnection connect()', { timeout: 10000 }, () => {
+    it('refuses a second call instead of opening another socket', async () => {
+        const server = await rawServer({});
+        let connections = 0;
+        server.on('connection', () => connections++);
+        try {
+            const client = createClient(server);
+            await new Promise<void>((resolve, reject) => {
+                client.once('error', reject);
+                client.connect(() => resolve());
+            });
+            const err = await new Promise<NodemailerError | null | undefined>(resolve => client.connect(err => resolve(err)));
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ECONNECTION');
+            assert.strictEqual(connections, 1);
+
+            // the first connection is still usable
+            await new Promise<void>((resolve, reject) => client.reset(err => (err ? reject(err) : resolve())));
+            client.close();
+        } finally {
+            await closeServer(server);
+        }
+    });
+});
