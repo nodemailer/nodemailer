@@ -2162,6 +2162,25 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._normalizeAddress('jõser@xn--$.com'), 'jõser@xn--$.com');
         });
 
+        it('should fall back to the supplied domain when domainToUnicode would return a replacement character', t => {
+            // Deno maps a label it cannot decode to U+FFFD instead of returning an empty string,
+            // so an invalid domain must never reach domainToUnicode
+            const mocked = t.mock.method(urlModule, 'domainToUnicode', (domain: string) => domain.replace(/^x/, '\uFFFD'));
+            try {
+                let mb = new MimeNode();
+                assert.strictEqual(mb._normalizeAddress('jõser@xn--$.com'), 'jõser@xn--$.com');
+            } finally {
+                mocked.mock.restore();
+            }
+        });
+
+        it('should keep the supplied domain when its A-label form does not decode', () => {
+            // 'ßxn--' maps to an A-label that domainToUnicode cannot decode back, which must not
+            // leave the address with an empty domain
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('jõser@ßxn--'), 'jõser@ßxn--');
+        });
+
         it('should re-quote a quoted local-part that lost its quotes in parsing (security)', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._normalizeAddress('user@evil.com@good.com'), '"user@evil.com"@good.com');

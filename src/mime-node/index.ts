@@ -231,10 +231,16 @@ const URL_PARSER_UNSAFE = /[/\\?#%\x00-\x20\x7F]/;
  */
 function normalizeDomain(domain: string, toUnicode: boolean): string {
     // domainToASCII and domainToUnicode landed in Node 7, the bundled codec covers Node 6
-    const mapper = toUnicode ? urlModule.domainToUnicode : urlModule.domainToASCII;
-
-    if (typeof mapper === 'function' && !URL_PARSER_UNSAFE.test(domain)) {
-        const mapped = mapper(domain);
+    if (
+        typeof urlModule.domainToASCII === 'function' &&
+        typeof urlModule.domainToUnicode === 'function' &&
+        !URL_PARSER_UNSAFE.test(domain)
+    ) {
+        // The U-label form is decoded from the A-label form rather than from the input:
+        // domainToASCII returns an empty string for an invalid domain on every runtime,
+        // while Deno's domainToUnicode returns it with U+FFFD in place of a bad label
+        const ascii = urlModule.domainToASCII(domain);
+        const mapped = ascii && toUnicode ? urlModule.domainToUnicode(ascii) : ascii;
         if (mapped) {
             return mapped;
         }
