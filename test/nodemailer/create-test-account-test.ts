@@ -13,9 +13,7 @@ interface ApiRequest {
     body: string;
 }
 
-// The module reads ETHEREAL_API, ETHEREAL_API_KEY and ETHEREAL_WEB when it is loaded, so the
-// environment is set up around a local server first and the module is imported after that.
-// The account cache is module state as well, which is why the failing requests come first.
+// The account cache is module state, which is why the failing requests come first.
 describe('createTestAccount', { timeout: 10000 }, () => {
     let server: http.Server;
     let nodemailer: typeof Nodemailer;
@@ -40,9 +38,9 @@ describe('createTestAccount', { timeout: 10000 }, () => {
         process.env.ETHEREAL_API_KEY = ' unit-test-key ';
         process.env.ETHEREAL_WEB = 'https://web.example/';
 
-        // a query string makes this a module instance of its own, so the environment above is
-        // what it reads even when the test runner has loaded the module before (bun test runs
-        // every file in one process)
+        // a query string makes this a module instance of its own, so the account cache starts
+        // empty even when the test runner has loaded the module before (bun test runs every
+        // file in one process)
         const specifier = '../../src/nodemailer.js?create-test-account';
         nodemailer = ((await import(specifier)) as { default: typeof Nodemailer }).default;
     });
@@ -54,6 +52,42 @@ describe('createTestAccount', { timeout: 10000 }, () => {
             nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }),
             'https://web.example/message/abc'
         );
+    });
+
+    it('should not read the environment when the module is loaded', async () => {
+        // Deno throws on any environment access without --allow-env, so a plain import
+        // must not need it
+        const env = process.env;
+        const read: string[] = [];
+        process.env = new Proxy(env, {
+            get(target, key) {
+                read.push(String(key));
+                return Reflect.get(target, key);
+            }
+        });
+        try {
+            const specifier = '../../src/nodemailer.js?no-env-at-load';
+            await import(specifier);
+        } finally {
+            process.env = env;
+        }
+        assert.deepStrictEqual(
+            read.filter(key => key.startsWith('ETHEREAL_')),
+            []
+        );
+    });
+
+    it('should pick up a change of ETHEREAL_WEB made after the module was loaded', () => {
+        const previous = process.env.ETHEREAL_WEB;
+        process.env.ETHEREAL_WEB = 'https://later.example/';
+        try {
+            assert.strictEqual(
+                nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }),
+                'https://later.example/message/abc'
+            );
+        } finally {
+            process.env.ETHEREAL_WEB = previous;
+        }
     });
 
     it('should post to the API endpoint of the environment and report an error response', (t, done) => {

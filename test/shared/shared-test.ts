@@ -7,6 +7,7 @@ import * as shared from '../../src/shared/index.js';
 import http from 'node:http';
 import fs from 'node:fs';
 import dns from 'node:dns';
+import os from 'node:os';
 import zlib from 'node:zlib';
 import { PassThrough, Readable } from 'node:stream';
 
@@ -822,11 +823,29 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         });
     });
 
+    describe('#networkInterfaces', () => {
+        it('should not read the interface table until it is needed', async t => {
+            // Deno prompts for --allow-sys on os.networkInterfaces(), so a plain import must not call it
+            const mocked = t.mock.method(os, 'networkInterfaces', () => ({}));
+            try {
+                const specifier = '../../src/shared/index.js?no-interfaces-at-load';
+                const fresh = (await import(specifier)) as typeof shared;
+                assert.strictEqual(mocked.mock.callCount(), 0);
+
+                fresh._readNetworkInterfaces();
+                fresh._readNetworkInterfaces();
+                assert.strictEqual(mocked.mock.callCount(), 1);
+            } finally {
+                mocked.mock.restore();
+            }
+        });
+    });
+
     describe('#resolveHostname tests', () => {
         let networkInterfaces: any;
 
         before((t, done) => {
-            networkInterfaces = JSON.parse(JSON.stringify(shared.networkInterfaces));
+            networkInterfaces = JSON.parse(JSON.stringify(shared._readNetworkInterfaces()));
             done();
         });
 
@@ -1108,7 +1127,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         };
 
         beforeEach(() => {
-            networkInterfaces = JSON.parse(JSON.stringify(shared.networkInterfaces));
+            networkInterfaces = JSON.parse(JSON.stringify(shared._readNetworkInterfaces()));
             originalResolver = dns.Resolver;
             originalLookup = dns.lookup;
 

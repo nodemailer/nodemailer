@@ -208,14 +208,25 @@ export const _resetCacheCleanup = () => {
 };
 
 export let networkInterfaces: NodeJS.Dict<os.NetworkInterfaceInfo[]> | undefined;
-try {
-    networkInterfaces = os.networkInterfaces();
-} catch (_err) {
-    // fails on some systems
-}
+let networkInterfacesRead = false;
+
+// Read on first use rather than at load, so that importing the module does not ask for
+// the interface table (Deno prompts for --allow-sys on it)
+/** @internal */
+export const _readNetworkInterfaces = () => {
+    if (!networkInterfacesRead) {
+        networkInterfacesRead = true;
+        try {
+            networkInterfaces = os.networkInterfaces();
+        } catch (_err) {
+            // fails on some systems
+        }
+    }
+    return networkInterfaces;
+};
 
 const isFamilySupported = (family: number | string, allowInternal?: boolean): boolean => {
-    const addresses = Object.values(networkInterfaces || {}).flat() as os.NetworkInterfaceInfo[];
+    const addresses = Object.values(_readNetworkInterfaces() || {}).flat() as os.NetworkInterfaceInfo[];
     if (!addresses.length) {
         // hope for the best. Runtimes without an interface table (Cloudflare
         // Workers) report an empty object rather than throwing
