@@ -307,3 +307,66 @@ describe('SMTPConnection idle close and deadlines', { timeout: 10000 }, () => {
         assert.ok(Date.now() - started < 1100, `took ${Date.now() - started}ms`);
     });
 });
+
+describe('SMTPConnection 421 replies', { timeout: 10000 }, () => {
+    // the server answers the command with 421 but keeps the connection open, the client is the
+    // one that has to stop waiting for the replies to the commands it sent along
+    const sendOnce = (client: SMTPConnection) =>
+        new Promise<{ err: NodemailerError | null; calls: number }>(resolve => {
+            let calls = 0;
+            client.send({ from: 'sender@example.com', to: ['a@example.com', 'b@example.com'] }, 'Subject: x\r\n\r\nhi\r\n', err => {
+                calls++;
+                setTimeout(() => resolve({ err, calls }), 50);
+            });
+        });
+
+    for (const pipelining of [true, false]) {
+        it(`ends the session on a 421 to RCPT TO ${pipelining ? 'with' : 'without'} PIPELINING`, async () => {
+            const server = await rawServer({
+                EHLO: pipelining ? '250-test\r\n250 PIPELINING\r\n' : '250 test\r\n',
+                RCPT: '421 4.3.2 shutting down\r\n',
+                DATA: false
+            });
+            try {
+                const client = createClient(server);
+                await new Promise<void>((resolve, reject) => {
+                    client.once('error', reject);
+                    client.connect(() => resolve());
+                });
+                const errors: Error[] = [];
+                client.on('error', err => errors.push(err));
+                const ended = new Promise(resolve => client.once('end', resolve));
+
+                const { err, calls } = await sendOnce(client);
+                assert.ok(err);
+                assert.strictEqual(calls, 1);
+                assert.strictEqual(err.responseCode, 421);
+                await ended;
+                assert.deepStrictEqual(errors, []);
+            } finally {
+                await closeServer(server);
+            }
+        });
+    }
+
+    it('keeps the error code of the command a 421 answered', async () => {
+        const server = await rawServer({ EHLO: '250-test\r\n250 AUTH PLAIN\r\n', AUTH: '421 4.3.2 shutting down\r\n' });
+        try {
+            const client = createClient(server);
+            await new Promise<void>((resolve, reject) => {
+                client.once('error', reject);
+                client.connect(() => resolve());
+            });
+            const ended = new Promise(resolve => client.once('end', resolve));
+            const err = await new Promise<NodemailerError | null>(resolve =>
+                client.login({ user: 'user', pass: 'pass' }, err => resolve(err))
+            );
+            assert.ok(err);
+            assert.strictEqual(err.code, 'EAUTH');
+            assert.strictEqual(err.responseCode, 421);
+            await ended;
+        } finally {
+            await closeServer(server);
+        }
+    });
+});

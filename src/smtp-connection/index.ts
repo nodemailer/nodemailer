@@ -1413,6 +1413,28 @@ class SMTPConnection extends EventEmitter {
     }
 
     /**
+     * Ends the session after a 421 reply. The replies queued for commands sent along with the
+     * answered one are not going to come, so the message in flight is failed here
+     *
+     * @param str The 421 reply
+     * @internal
+     */
+    _onServerClosing(str: string): void {
+        if (this._destroyed) {
+            return;
+        }
+        const pendingSend = this._pendingSend;
+        const envelope = this._envelope as SMTPConnectionEnvelope | false;
+        this._responseActions = [];
+        this.close();
+        if (pendingSend) {
+            pendingSend.callback(
+                (envelope && envelope.mailError) || this._formatError('Server closed the connection', 'ECONNECTION', str, 'CONN')
+            );
+        }
+    }
+
+    /**
      * 'data' listener for data coming from the server
      *
      * @event
@@ -1814,11 +1836,17 @@ class SMTPConnection extends EventEmitter {
         }
 
         const action = this._responseActions.shift();
+        // RFC 5321 4.2: 421 means the server is about to close the connection, whatever it answers
+        const closing = /^421[ -]/.test(str);
 
         if (typeof action === 'function') {
+            // the command gets its own error first, the code tells which step failed
             action.call(this, str);
+            if (closing) {
+                return this._onServerClosing(str);
+            }
             setImmediate(() => this._processResponse());
-        } else if (/^421[ -]/.test(str) && !this._pendingSend && this.stage === 'connected') {
+        } else if (closing && !this._pendingSend && this.stage === 'connected') {
             // RFC 5321 4.2: a server may send 421 at any time when it is about to close the
             // connection. Nothing was waiting for a reply, so this ends an idle session
             this.logger.info(
@@ -1993,6 +2021,7 @@ class SMTPConnection extends EventEmitter {
         }
 
         const mailFrom = 'MAIL FROM:<' + this._envelope.from + '>' + (args.length ? ' ' + args.join(' ') : '');
+        this._recipientQueue = [];
         if (!this._envelope.pipelined) {
             this._sendCommand(mailFrom);
             return;
@@ -2002,7 +2031,6 @@ class SMTPConnection extends EventEmitter {
         const socket = this._socket as net.Socket;
         socket.cork();
         this._sendCommand(mailFrom);
-        this._recipientQueue = [];
         while (this._envelope.rcptQueue.length) {
             this._sendRcpt(this._envelope.rcptQueue.shift() as string, callback);
         }
@@ -2579,27 +2607,10 @@ class SMTPConnection extends EventEmitter {
                 this._usingSmtpUtf8 && /^550 /.test(str) && /[\x80-\uFFFF]/.test(envelope.from as string)
                     ? 'Internationalized mailbox name not allowed'
                     : 'Mail command failed';
-            const err = this._formatError(message, 'EENVELOPE', str, 'MAIL FROM');
-            if (envelope.pipelined && !/^421/.test(str)) {
-                // the replies to the RCPT TO and DATA commands sent along are still to come. A 421
-                // is reported right away, the server closes the connection instead of sending them
-                envelope.mailError = err;
-                return;
-            }
-            return callback(err);
+            envelope.mailError = this._formatError(message, 'EENVELOPE', str, 'MAIL FROM');
         }
 
-        if (envelope.pipelined) {
-            // the recipients were sent along already
-            return;
-        }
-
-        if (!envelope.rcptQueue.length) {
-            return callback(this._formatError("Can't send mail - no recipients defined", 'EENVELOPE', false, 'API'));
-        }
-
-        this._recipientQueue = [];
-        this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
+        this._advanceEnvelope(str, callback);
     }
 
     /**
@@ -2628,23 +2639,45 @@ class SMTPConnection extends EventEmitter {
             envelope.accepted.push(curRecipient);
         }
 
+        this._advanceEnvelope(str, callback);
+    }
+
+    /**
+     * Moves the envelope on after a reply to MAIL FROM or RCPT TO. A pipelined envelope sent every
+     * command at once and is decided by the reply to DATA. Otherwise the commands go one at a
+     * time: the next recipient, or once every reply is in, DATA or the error that ends the message
+     *
+     * @param str The reply that was handled
+     * @param callback Callback to run once the envelope is processed
+     * @internal
+     */
+    _advanceEnvelope(str: string, callback: SMTPConnectionEnvelopeCallback): void {
+        const envelope = this._envelope as SMTPConnectionEnvelope;
         if (envelope.pipelined) {
-            // DATA was sent along, its reply decides how the envelope went
             return;
         }
 
-        if (!envelope.rcptQueue.length && !this._recipientQueue.length) {
-            const err = this._envelopeError(str);
-            if (err) {
-                return callback(err);
-            }
-            this._responseActions.push(str => {
-                this._actionDATA(str, callback);
-            });
-            this._sendCommand('DATA');
-        } else if (envelope.rcptQueue.length) {
-            this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
+        if (envelope.mailError) {
+            return callback(envelope.mailError);
         }
+
+        if (envelope.rcptQueue.length) {
+            return this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
+        }
+
+        if (this._recipientQueue.length) {
+            // replies still to come
+            return;
+        }
+
+        const err = this._envelopeError(str);
+        if (err) {
+            return callback(err);
+        }
+        this._responseActions.push(str => {
+            this._actionDATA(str, callback);
+        });
+        this._sendCommand('DATA');
     }
 
     /**
