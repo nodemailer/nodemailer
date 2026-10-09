@@ -693,6 +693,10 @@ class SMTPPool extends EventEmitter {
 
         const auth = new PoolResource(this).auth;
 
+        // the proxy handshake, if any, counts against connectionTimeout as well
+
+        const connectStartedAt = Date.now();
+
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
                 return done(err);
@@ -719,6 +723,8 @@ class SMTPPool extends EventEmitter {
             }
 
             const connection = new SMTPConnection(options);
+
+            connection._connectStartedAt = connectStartedAt;
             let returned = false;
 
             connection.once('error', err => {

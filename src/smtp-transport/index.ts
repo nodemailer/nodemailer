@@ -242,6 +242,8 @@ class SMTPTransport extends EventEmitter {
      * @param callback Callback function
      */
     send(mail: MailMessage<SMTPSentMessageInfo>, callback: SMTPTransportSendCallback): void {
+        // the proxy handshake, if any, counts against connectionTimeout as well
+        const connectStartedAt = Date.now();
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
                 return callback(err);
@@ -271,6 +273,8 @@ class SMTPTransport extends EventEmitter {
             }
 
             const connection = new SMTPConnection(options);
+
+            connection._connectStartedAt = connectStartedAt;
 
             let perCallAuth: SMTPTransportAuth | false | null | undefined;
             const cleanupPerCallAuth = () => {
@@ -418,6 +422,10 @@ class SMTPTransport extends EventEmitter {
         // the error paths hand over the error alone
         const done = callback as ResultCallback<true>;
 
+        // the proxy handshake, if any, counts against connectionTimeout as well
+
+        const connectStartedAt = Date.now();
+
         this.getSocket(this.options, (err, socketOptions) => {
             if (err) {
                 return done(err);
@@ -445,6 +453,8 @@ class SMTPTransport extends EventEmitter {
             }
 
             const connection = new SMTPConnection(options);
+
+            connection._connectStartedAt = connectStartedAt;
             let returned = false;
             let perCallAuth: SMTPTransportAuth | false | null | undefined;
             const cleanupPerCallAuth = () => {

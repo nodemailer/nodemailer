@@ -340,8 +340,7 @@ describe('SMTP-Connection failure handling', () => {
                             assert.ok(connectErr);
                             assert.strictEqual(connectErr.code, 'ECONNECTION');
                             assert.strictEqual(connectErr.command, 'CONN');
-                            assert.strictEqual(client._greetingTimeout, false);
-                            assert.strictEqual(client._connectionTimeout, false);
+                            assert.strictEqual(client._phaseTimer, false);
                             assert.strictEqual(client.destroyed, true);
                         });
                     });

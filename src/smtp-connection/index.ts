@@ -342,8 +342,10 @@ export interface SMTPConnectionConnectOptions extends tls.ConnectionOptions {
     allowInternalNetworkInterfaces?: boolean | undefined;
     /** DNS lookup timeout in ms */
     timeout?: number | undefined;
-    /** Try the addresses of both IP families in turn, see net.connect */
+    /** Try the resolved addresses in turn, see net.connect */
     autoSelectFamily?: boolean | undefined;
+    /** Time in ms an address gets before the next one is tried, see net.connect */
+    autoSelectFamilyAttemptTimeout?: number | undefined;
     /** Hands the resolved addresses to net.connect */
     lookup?: net.LookupFunction | undefined;
 }
@@ -529,28 +531,16 @@ class SMTPConnection extends EventEmitter {
     _recipientQueue: string[];
 
     /**
-     * Timeout variable for waiting the greeting
+     * Timer of the connection phase in progress: connecting, the greeting or a TLS upgrade
      * @internal
      */
-    _greetingTimeout: NodeJS.Timeout | false;
-
-    /**
-     * Timeout variable for waiting the TLS handshake of a connection upgrade
-     * @internal
-     */
-    _upgradeTimeout: NodeJS.Timeout | false;
+    _phaseTimer: NodeJS.Timeout | false;
 
     /**
      * EHLO response received before STARTTLS, applied only if the session stays in plaintext
      * @internal
      */
     _plaintextEhlo: string | false;
-
-    /**
-     * Timeout variable for waiting the connection to start
-     * @internal
-     */
-    _connectionTimeout: NodeJS.Timeout | false;
 
     /**
      * If the socket is deemed already closed
@@ -603,25 +593,10 @@ class SMTPConnection extends EventEmitter {
      */
     _onConnectionSocketError: (err: Error) => void;
 
-    /**
-     * Connection attempt counter for fallback race condition protection
-     * @internal
-     */
-    _connectionAttemptId: number;
-
-    /**
-     * Alternative resolved addresses to try when the connection fails, set by connect()
-     * @internal
-     */
-    _fallbackAddresses?: string[] | undefined;
-
-    /**
-     * Options of the current connection attempt, set by connect()
-     * @internal
-     */
-    _connectOpts?: SMTPConnectionConnectOptions | undefined;
     /** Time by which the connection has to be established, DNS lookup included @internal */
     _connectionDeadline?: number | undefined;
+    /** When connecting started, set by a transport that connected a proxy for this connection first @internal */
+    _connectStartedAt?: number | undefined;
 
     /**
      * Authentication data, set by login()
@@ -734,13 +709,9 @@ class SMTPConnection extends EventEmitter {
         this._responseActions = [];
         this._recipientQueue = [];
 
-        this._greetingTimeout = false;
-
-        this._upgradeTimeout = false;
+        this._phaseTimer = false;
 
         this._plaintextEhlo = false;
-
-        this._connectionTimeout = false;
 
         this._destroyed = false;
 
@@ -756,9 +727,7 @@ class SMTPConnection extends EventEmitter {
         this._onSocketEnd = () => this._onEnd();
         this._onSocketTimeout = () => this._onTimeout();
 
-        this._onConnectionSocketError = err => this._onConnectionError(err, 'ESOCKET');
-
-        this._connectionAttemptId = 0;
+        this._onConnectionSocketError = err => this._onError(err, 'ESOCKET', false, 'CONN');
     }
 
     /**
@@ -787,7 +756,8 @@ class SMTPConnection extends EventEmitter {
 
         // connectionTimeout covers the whole of connecting: the DNS lookup and every address tried
         const connectionTimeout = this.options.connectionTimeout || CONNECTION_TIMEOUT;
-        this._connectionDeadline = Date.now() + connectionTimeout;
+        // a transport that first opened a proxy connection for this one sets when that started
+        this._connectionDeadline = (this._connectStartedAt || Date.now()) + connectionTimeout;
 
         let opts: SMTPConnectionConnectOptions = {
             port: this.port,
@@ -857,17 +827,30 @@ class SMTPConnection extends EventEmitter {
             }
 
             return this._resolveAndConnect(opts, resolved => {
-                const addresses = resolved._addresses || [];
-                const ipv6 = addresses.filter(addr => net.isIPv6(addr));
-                const ipv4 = addresses.filter(addr => net.isIPv4(addr));
+                let addresses = resolved._addresses || [];
+                if (opts.localAddress) {
+                    // a socket bound to an address of one family can not reach the other one
+                    const localFamily = net.isIPv6(opts.localAddress) ? 6 : 4;
+                    const sameFamily = addresses.filter(addr => net.isIP(addr) === localFamily);
+                    addresses = sameFamily.length ? sameFamily : addresses;
+                }
 
-                if (ipv6.length && ipv4.length && !opts.localAddress) {
-                    // With both families net.connect starts on IPv6 and moves on to the next
-                    // address after a short delay (RFC 8305), so a host with a broken IPv6 path
-                    // costs a fraction of a second instead of a whole connection timeout
+                if (addresses.length > 1) {
+                    // net.connect tries the addresses in turn and moves on to the next one when an
+                    // attempt fails or takes too long. With both families it starts on IPv6 and
+                    // alternates (RFC 8305), so a host with a broken IPv6 path costs a fraction of
+                    // a second instead of a whole connection timeout
+                    const ipv6 = addresses.filter(addr => net.isIPv6(addr));
+                    const ipv4 = addresses.filter(addr => !net.isIPv6(addr));
                     const ordered = shuffle(ipv6).concat(shuffle(ipv4));
                     opts.host = this.host;
                     opts.autoSelectFamily = true;
+                    if (!ipv6.length || !ipv4.length) {
+                        // a slow address of the only family gets its share of the time, not the
+                        // quarter second meant for an address family that does not work
+                        const remaining = (this._connectionDeadline as number) - Date.now();
+                        opts.autoSelectFamilyAttemptTimeout = Math.max(Math.floor(remaining / ordered.length), 10);
+                    }
                     opts.lookup = ((hostname: string, lookupOptions: LookupOptions, callback: (...args: any[]) => void) => {
                         if (lookupOptions && lookupOptions.all) {
                             const all = ordered.map(address => ({ address, family: net.isIPv6(address) ? 6 : 4 }));
@@ -875,12 +858,9 @@ class SMTPConnection extends EventEmitter {
                         }
                         setImmediate(() => callback(null, ordered[0], net.isIPv6(ordered[0]) ? 6 : 4));
                     }) as net.LookupFunction;
-                    this._fallbackAddresses = [];
-                } else {
-                    // Store fallback addresses for retry on connection failure
-                    this._fallbackAddresses = addresses.filter(addr => addr !== opts.host);
+                } else if (addresses.length) {
+                    opts.host = addresses[0];
                 }
-                this._connectOpts = Object.assign({}, opts);
 
                 this._connectToHost(opts, this.secureConnection);
             });
@@ -937,20 +917,11 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
-        this._connectionAttemptId++;
-        const currentAttemptId = this._connectionAttemptId;
-
         const connectFn: (options: SMTPConnectionConnectOptions, connectionListener: () => void) => net.Socket = secure
             ? tls.connect
             : net.connect;
         try {
-            this._socket = connectFn(opts, () => {
-                // Ignore callback if this is a stale connection attempt
-                if (this._connectionAttemptId !== currentAttemptId) {
-                    return;
-                }
-                this._onConnect();
-            });
+            this._socket = connectFn(opts, () => this._onConnect());
             this._setupConnectionHandlers();
         } catch (E: any) {
             setImmediate(() => this._onError(E, 'ECONNECTION', false, 'CONN'));
@@ -963,69 +934,34 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _setupConnectionHandlers(): void {
-        // the time left is shared between this address and the ones still to try
-        const remaining = Math.max((this._connectionDeadline || Date.now()) - Date.now(), 0);
-        const attempts = 1 + (this._fallbackAddresses ? this._fallbackAddresses.length : 0);
-        this._connectionTimeout = setTimeout(
-            () => {
-                this._onConnectionError(timeoutError('Connection timeout', 'CONNECT_TIMEOUT'), 'ETIMEDOUT');
-            },
-            Math.ceil(remaining / attempts)
+        this._startPhase(
+            Math.max((this._connectionDeadline || Date.now()) - Date.now(), 0),
+            timeoutError('Connection timeout', 'CONNECT_TIMEOUT')
         );
 
         (this._socket as net.Socket).on('error', this._onConnectionSocketError);
     }
 
     /**
-     * Handles connection errors with fallback to alternative addresses
+     * Starts the timer of a connection phase: connecting, waiting for the greeting or a TLS
+     * upgrade. The phases follow one another, so starting one ends the one before
      *
-     * @param err Error object or message
-     * @param code Error code
+     * @param timeout Time the phase may take
+     * @param err Error to fail with when it takes longer
      * @internal
      */
-    _onConnectionError(err: Error | string, code: string): void {
-        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
+    _startPhase(timeout: number, err: NodemailerError): void {
+        this._clearPhase();
+        this._phaseTimer = setTimeout(() => {
+            this._phaseTimer = false;
+            this._onError(err, 'ETIMEDOUT', false, 'CONN');
+        }, timeout);
+    }
 
-        // Check if we have fallback addresses to try
-        const canFallback = this._fallbackAddresses && this._fallbackAddresses.length && this.stage === 'init' && !this._destroyed;
-
-        if (!canFallback) {
-            // No more fallback addresses, report the error
-            this._onError(err, code, false, 'CONN');
-            return;
-        }
-
-        const nextHost = (this._fallbackAddresses as string[]).shift() as string;
-
-        this.logger.info(
-            {
-                tnx: 'network',
-                failedHost: (this._connectOpts as SMTPConnectionConnectOptions).host,
-                nextHost,
-                error: (err as Error).message || err
-            },
-            'Connection to %s failed, trying %s',
-            (this._connectOpts as SMTPConnectionConnectOptions).host,
-            nextHost
-        );
-
-        // Clean up current socket
-        if (this._socket) {
-            try {
-                this._socket.removeListener('error', this._onConnectionSocketError);
-                // Absorb any late teardown error (e.g. a TLS fallback socket emitting
-                // after destroy), mirroring the guard used in close()
-                this._socket.on('error', TEARDOWN_NOOP);
-                this._socket.destroy();
-            } catch (_E) {
-                // ignore
-            }
-            this._socket = null;
-        }
-
-        // Update host and retry
-        (this._connectOpts as SMTPConnectionConnectOptions).host = nextHost;
-        this._connectToHost(this._connectOpts as SMTPConnectionConnectOptions, this.secureConnection);
+    /** @internal */
+    _clearPhase(): void {
+        clearTimeout(this._phaseTimer as NodeJS.Timeout);
+        this._phaseTimer = false;
     }
 
     /**
@@ -1040,9 +976,7 @@ class SMTPConnection extends EventEmitter {
      * Closes the connection to the server
      */
     close(): void {
-        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
-        clearTimeout(this._greetingTimeout as NodeJS.Timeout);
-        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
+        this._clearPhase();
         this._responseActions = [];
 
         // allow to run this function only once
@@ -1416,7 +1350,7 @@ class SMTPConnection extends EventEmitter {
      */
     _onConnect(): void {
         const socket = this._socket as net.Socket;
-        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
+        this._clearPhase();
 
         this.logger.info(
             {
@@ -1470,12 +1404,7 @@ class SMTPConnection extends EventEmitter {
             socket.setNoDelay(true);
         }
 
-        this._greetingTimeout = setTimeout(() => {
-            // if still waiting for greeting, give up
-            if (this._socket && !this._destroyed && this._responseActions[0] === this._actionGreeting) {
-                this._onError(timeoutError('Greeting never received', 'GREETING_TIMEOUT'), 'ETIMEDOUT', false, 'CONN');
-            }
-        }, this.options.greetingTimeout || GREETING_TIMEOUT);
+        this._startPhase(this.options.greetingTimeout || GREETING_TIMEOUT, timeoutError('Greeting never received', 'GREETING_TIMEOUT'));
 
         this._responseActions.push(this._actionGreeting);
 
@@ -1568,9 +1497,7 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _onError(err: NodemailerError | string, type: string | false, data: string | false, command: string | false): void {
-        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
-        clearTimeout(this._greetingTimeout as NodeJS.Timeout);
-        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
+        this._clearPhase();
 
         if (this._destroyed) {
             // just ignore, already closed
@@ -1682,6 +1609,25 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
+        if (
+            !failureResponse &&
+            this.stage === 'connected' &&
+            !this._responseActions.length &&
+            !this._pendingSend &&
+            !this._destroyed &&
+            !this._closing
+        ) {
+            // nothing was waiting for the server, so this is the server ending an idle session
+            // (usually after its idle timeout), not a failure
+            this.logger.info(
+                {
+                    tnx: 'network'
+                },
+                'Server closed the idle connection'
+            );
+            return this._destroy();
+        }
+
         if (failureResponse || (this._responseActions[0] !== this.close && !this._destroyed)) {
             return this._onError(new Error('Connection closed unexpectedly'), 'ECONNECTION', failureResponse, 'CONN');
         }
@@ -1726,12 +1672,7 @@ class SMTPConnection extends EventEmitter {
         this.destroyed = true;
         // a connection the server dropped before the greeting would otherwise keep
         // the greeting timer, and with it the process, alive until it fires
-        clearTimeout(this._connectionTimeout as NodeJS.Timeout);
-        clearTimeout(this._greetingTimeout as NodeJS.Timeout);
-        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
-        this._connectionTimeout = false;
-        this._greetingTimeout = false;
-        this._upgradeTimeout = false;
+        this._clearPhase();
         this.emit('end');
     }
 
@@ -1804,16 +1745,12 @@ class SMTPConnection extends EventEmitter {
 
         // the socket timeout only notices a server that sends nothing at all, a handshake that
         // trickles along would otherwise hold the connection for as long as the server likes
-        clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
-        this._upgradeTimeout = setTimeout(() => {
-            this._onError(timeoutError('TLS handshake timed out', 'UPGRADE_TIMEOUT'), 'ETIMEDOUT', false, 'CONN');
-        }, this.options.greetingTimeout || GREETING_TIMEOUT);
+        this._startPhase(this.options.greetingTimeout || GREETING_TIMEOUT, timeoutError('TLS handshake timed out', 'UPGRADE_TIMEOUT'));
 
         // tls.connect is not an asynchronous function however it may still throw errors and requires to be wrapped with try/catch
         try {
             this._socket = tls.connect(opts, () => {
-                clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
-                this._upgradeTimeout = false;
+                this._clearPhase();
                 this.secure = true;
                 this.upgrading = false;
                 (this._socket as net.Socket).on('data', this._onSocketData);
@@ -1823,8 +1760,7 @@ class SMTPConnection extends EventEmitter {
                 return callback(null, true);
             });
         } catch (err: any) {
-            clearTimeout(this._upgradeTimeout as NodeJS.Timeout);
-            this._upgradeTimeout = false;
+            this._clearPhase();
             removePlainSocketListeners();
             return callback(err);
         }
@@ -2227,7 +2163,7 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _actionGreeting(str: string): void {
-        clearTimeout(this._greetingTimeout as NodeJS.Timeout);
+        this._clearPhase();
 
         if (str.substr(0, 3) !== '220') {
             this._onError(new Error('Invalid greeting. response=' + str), 'EPROTOCOL', str, 'CONN');
@@ -2698,32 +2634,41 @@ class SMTPConnection extends EventEmitter {
         }
 
         if (!envelope.rcptQueue.length && !this._recipientQueue.length) {
-            if (envelope.rejected.length < (envelope.to as string[]).length) {
-                this._responseActions.push(str => {
-                    this._actionDATA(str, callback);
-                });
-                this._sendCommand('DATA');
-            } else {
-                return callback(this._allRecipientsRejectedError(str));
+            const err = this._envelopeError(str);
+            if (err) {
+                return callback(err);
             }
+            this._responseActions.push(str => {
+                this._actionDATA(str, callback);
+            });
+            this._sendCommand('DATA');
         } else if (envelope.rcptQueue.length) {
             this._sendRcpt(envelope.rcptQueue.shift() as string, callback);
         }
     }
 
     /**
-     * The error for an envelope whose recipients were all rejected
+     * Decides how the envelope went once every reply to MAIL FROM and RCPT TO is in. Called after
+     * the last RCPT TO reply, or with PIPELINING on the reply to the DATA command sent along
      *
-     * @param str Reply to the last RCPT TO command
+     * @param str The reply being handled
+     * @returns The error to fail the message with, or null when DATA can go ahead
      * @internal
      */
-    _allRecipientsRejectedError(str: string): NodemailerError {
+    _envelopeError(str: string): NodemailerError | null {
         const envelope = this._envelope as SMTPConnectionEnvelope;
+        if (envelope.mailError) {
+            return envelope.mailError;
+        }
+        if (envelope.accepted.length) {
+            return null;
+        }
         // report a temporary rejection when there is one, taking the last reply would mark the
         // whole message as permanently failed although some recipients were only deferred
         const deferred = envelope.rejectedErrors.find(rejectedErr => rejectedErr.responseCode && rejectedErr.responseCode < 500);
         const lastRejected = envelope.rejectedErrors[envelope.rejectedErrors.length - 1];
         const reply = deferred?.response ?? (envelope.pipelined && lastRejected ? lastRejected.response : str);
+        // every recipient was rejected
         const err = this._formatError("Can't send mail - all recipients were rejected", 'EENVELOPE', reply as string, 'RCPT TO');
         err.rejected = envelope.rejected;
         err.rejectedErrors = envelope.rejectedErrors;
@@ -2741,7 +2686,7 @@ class SMTPConnection extends EventEmitter {
         const envelope = this._envelope as SMTPConnectionEnvelope;
 
         if (envelope.pipelined) {
-            const err = envelope.mailError || (!envelope.accepted.length ? this._allRecipientsRejectedError(str) : false);
+            const err = this._envelopeError(str);
             if (err) {
                 if (/^3/.test(str)) {
                     // A server must refuse DATA without an accepted recipient, this one took it

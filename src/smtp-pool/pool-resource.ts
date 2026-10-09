@@ -133,6 +133,8 @@ export default class PoolResource extends EventEmitter {
      * @param callback Callback function to run once the connection is established or failed
      */
     connect(callback: PoolResourceConnectCallback): void {
+        // the proxy handshake, if any, counts against connectionTimeout as well
+        const connectStartedAt = Date.now();
         this.pool.getSocket(this.options, (err, socketOptions) => {
             if (err) {
                 // nothing was connected, so no 'close' event is coming that would free the
@@ -165,6 +167,8 @@ export default class PoolResource extends EventEmitter {
             }
 
             this.connection = new SMTPConnection(options);
+
+            this.connection._connectStartedAt = connectStartedAt;
 
             this.connection.on('error', (err: NodemailerError) => {
                 if (this._sending) {

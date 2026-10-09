@@ -5,7 +5,6 @@ import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import dns from 'node:dns';
-import EventEmitter from 'node:events';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -400,7 +399,7 @@ describe('SMTP-Connection Tests', () => {
             sock.on('error', conn._onSocketError);
             conn._onConnect();
             const dupes = sock.listeners('error').filter(fn => fn === conn._onSocketError).length;
-            clearTimeout(conn._greetingTimeout as NodeJS.Timeout);
+            clearTimeout(conn._phaseTimer as NodeJS.Timeout);
             sock.removeAllListeners();
             sock.destroy();
             assert.strictEqual(dupes, 1);
@@ -417,27 +416,6 @@ describe('SMTP-Connection Tests', () => {
             // and it has not been received in full, so it is not the last server response
             assert.strictEqual(conn.lastServerResponse, '250 previous');
             assert.strictEqual(conn._responseActions.length, 1);
-        });
-
-        it('absorbs a late teardown error from a failed fallback socket', (t, done) => {
-            const conn = new SMTPConnection({ logger: false });
-            conn.stage = 'init';
-            conn._fallbackAddresses = ['127.0.0.2'];
-            conn._connectOpts = { host: '127.0.0.1', port: 1 };
-            // do not actually dial the next address
-            conn._connectToHost = () => {};
-
-            const fakeSocket: any = new EventEmitter();
-            fakeSocket.destroy = () => {
-                // emit a late async error during teardown, as a TLS socket can
-                setImmediate(() => fakeSocket.emit('error', new Error('late teardown')));
-            };
-            fakeSocket.on('error', conn._onConnectionSocketError);
-            conn._socket = fakeSocket;
-
-            conn._onConnectionError(new Error('first address failed'), 'ESOCKET');
-            // an unhandled late error here would crash the test via uncaughtException
-            setTimeout(done, 60);
         });
     });
 
@@ -1184,6 +1162,7 @@ describe('SMTP-Connection Tests', () => {
 
     describe('Connection fallback tests', () => {
         let server: any;
+        let originalResolver: any;
 
         before((t, done) => {
             server = new SMTPServer({
@@ -1194,34 +1173,51 @@ describe('SMTP-Connection Tests', () => {
                 },
                 logger: false
             });
-            server.listen(PORT_NUMBER + 20, done);
+            server.listen(PORT_NUMBER + 20, '127.0.0.1', done);
         });
 
         after((t, done) => {
             server.close(done);
         });
 
-        it('should connect using fallback address when first address fails', (t, done) => {
-            let client = new SMTPConnection({
+        beforeEach(() => {
+            originalResolver = dns.Resolver;
+            shared.dnsCache.clear();
+        });
+
+        afterEach(() => {
+            (dns as any).Resolver = originalResolver;
+            shared.dnsCache.clear();
+        });
+
+        // the hostname resolves to the given IPv4 addresses and to no IPv6 address
+        const stubResolver = (ipv4: string[]) => {
+            (dns as any).Resolver = class {
+                resolve4(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                    setImmediate(() => callback(null, ipv4));
+                }
+                resolve6(hostname: string, callback: (err: Error | null, addresses?: string[]) => void) {
+                    setImmediate(() => callback(null, []));
+                }
+                cancel() {
+                    // nothing to cancel
+                }
+            };
+        };
+
+        it('should connect using the next address when the first one does not answer', (t, done) => {
+            // 192.0.2.1 is in a documentation range, connecting to it fails or never completes
+            stubResolver(['192.0.2.1', '127.0.0.1']);
+            const client = new SMTPConnection({
                 port: PORT_NUMBER + 20,
-                host: '127.0.0.1',
+                host: 'fallback.example.test',
                 ignoreTLS: true,
+                connectionTimeout: 4000,
                 logger: false
             });
 
-            // Simulate fallback addresses by directly setting them
-            let originalConnect = client.connect.bind(client);
-            client.connect = (callback: any) => {
-                originalConnect(err => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback();
-                });
-            };
-
             client.connect(() => {
-                assert.strictEqual(client.secure, false);
+                assert.strictEqual(client._socket && (client._socket as net.Socket).remoteAddress, '127.0.0.1');
                 client.close();
             });
 
@@ -1232,107 +1228,24 @@ describe('SMTP-Connection Tests', () => {
             client.on('end', done);
         });
 
-        it('should emit error when all fallback addresses fail', (t, done) => {
-            let client = new SMTPConnection({
+        it('should emit error when all addresses fail', (t, done) => {
+            stubResolver(['127.0.0.1', '127.0.0.1']);
+            const client = new SMTPConnection({
                 port: PORT_NUMBER + 99, // Non-existent port
-                host: '127.0.0.1',
+                host: 'fallback.example.test',
                 ignoreTLS: true,
                 logger: false,
                 connectionTimeout: 1000
             });
 
-            // Manually set fallback addresses to test exhaustion
-            client._fallbackAddresses = ['127.0.0.2', '127.0.0.3'];
-
             client.connect(() => {
-                // Should not reach here
                 assert.ok(false, 'Should not connect');
                 client.close();
             });
 
             client.once('error', err => {
                 assert.ok(err);
-                assert.ok(['ECONNREFUSED', 'ESOCKET', 'ETIMEDOUT', 'ECONNECTION'].includes(err.code));
-            });
-
-            client.on('end', done);
-        });
-
-        it('should try fallback address on connection error', (t, done) => {
-            // Create a client pointing to a non-existent server
-            let client = new SMTPConnection({
-                port: PORT_NUMBER + 98, // Non-existent port
-                host: '127.0.0.1',
-                ignoreTLS: true,
-                logger: false,
-                connectionTimeout: 500
-            });
-
-            let fallbackAttempted = false;
-            let originalConnectToHost = client._connectToHost.bind(client);
-            let attemptCount = 0;
-
-            client._connectToHost = (opts, secure) => {
-                attemptCount++;
-                if (attemptCount === 1) {
-                    // First attempt should fail, triggering fallback
-                    originalConnectToHost(opts, secure);
-                } else if (attemptCount === 2) {
-                    // Second attempt (fallback) - redirect to working server
-                    fallbackAttempted = true;
-                    opts.port = PORT_NUMBER + 20;
-                    originalConnectToHost(opts, secure);
-                }
-            };
-
-            // Set up fallback address
-            client._fallbackAddresses = ['127.0.0.1'];
-
-            client.connect(() => {
-                assert.ok(fallbackAttempted, 'Should have attempted fallback');
-                assert.strictEqual(attemptCount, 2, 'Should have made 2 connection attempts');
-                client.close();
-            });
-
-            client.on('error', err => {
-                // Only fail if we get an error after fallback was attempted
-                if (fallbackAttempted) {
-                    assert.ok(!err);
-                }
-            });
-
-            client.on('end', done);
-        });
-
-        it('should not attempt fallback after connection is established', (t, done) => {
-            let client = new SMTPConnection({
-                port: PORT_NUMBER + 20,
-                host: '127.0.0.1',
-                ignoreTLS: true,
-                logger: false
-            });
-
-            client.connect(() => {
-                // Connection established, stage should be 'connected'
-                assert.strictEqual(client.stage, 'connected');
-
-                // Set fallback addresses - these should NOT be used since we're already connected
-                client._fallbackAddresses = ['127.0.0.2', '127.0.0.3'];
-
-                // Verify that _onConnectionError would not trigger fallback
-                let canFallback =
-                    client._fallbackAddresses &&
-                    client._fallbackAddresses.length &&
-                    (client.stage as string) === 'init' &&
-                    !client._destroyed;
-
-                assert.strictEqual(canFallback, false, 'Should not be able to fallback after connection');
-
-                client.close();
-            });
-
-            client.on('error', err => {
-                assert.ok(!err);
+                assert.ok(['ESOCKET', 'ETIMEDOUT'].includes(err.code as string), err.code);
             });
 
             client.on('end', done);

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import dns from 'node:dns';
 import SMTPConnection from '../../src/smtp-connection/index.js';
+import SMTPTransport from '../../src/smtp-transport/index.js';
 import * as shared from '../../src/shared/index.js';
 import { closeRawServer as closeServer, createClient, startRawServerAsync as rawServer, type RawServer } from './raw-smtp-server.js';
 import { captureLogger, freePort } from '../smtp-transport/smtp-fixtures.js';
@@ -265,5 +266,44 @@ describe('SMTPConnection connecting', { timeout: 20000 }, () => {
         } finally {
             await closeServer(server);
         }
+    });
+});
+
+describe('SMTPConnection idle close and deadlines', { timeout: 10000 }, () => {
+    it('ends without an error when the server closes an idle connection', async () => {
+        const server = await rawServer({});
+        try {
+            const client = createClient(server);
+            await new Promise<void>((resolve, reject) => {
+                client.once('error', reject);
+                client.connect(() => resolve());
+            });
+            const errors: Error[] = [];
+            client.on('error', err => errors.push(err));
+            const ended = new Promise(resolve => client.once('end', resolve));
+            server.closeAll();
+            await ended;
+            assert.deepStrictEqual(errors, []);
+        } finally {
+            await closeServer(server);
+        }
+    });
+
+    it('counts the time a proxy took against connectionTimeout', async () => {
+        // the custom socket provider takes most of the time, connecting gets what is left.
+        // 192.0.2.1 is in a documentation range, a connection to it does not complete
+        const transport = new SMTPTransport({
+            host: '192.0.2.1',
+            port: 25,
+            connectionTimeout: 700,
+            logger: false,
+            getSocket(options, callback) {
+                setTimeout(() => callback(null, false), 500);
+            }
+        });
+        const started = Date.now();
+        const err = await new Promise<any>(resolve => transport.verify(err => resolve(err)));
+        assert.ok(err);
+        assert.ok(Date.now() - started < 1100, `took ${Date.now() - started}ms`);
     });
 });
