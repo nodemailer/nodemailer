@@ -2750,6 +2750,13 @@ class SMTPConnection extends EventEmitter {
             const err = this._envelopeError(str);
             if (err) {
                 if (/^3/.test(str)) {
+                    if (envelope.mailError) {
+                        // A server that refused the sender has no transaction to end, one that
+                        // took DATA anyway can not be trusted with an empty message either.
+                        // Drop the connection instead of answering it
+                        this.close();
+                        return callback(err);
+                    }
                     // A server must refuse DATA without an accepted recipient, this one took it
                     // anyway. End the empty message, it has nobody to go to, so the session
                     // stays usable

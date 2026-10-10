@@ -142,4 +142,20 @@ describe('SMTPConnection envelope pipelining', { timeout: 10000 }, () => {
             await closeServer(server);
         }
     });
+
+    it('drops the connection instead of ending data mode after a refused sender', async () => {
+        // a server that refuses MAIL FROM and still takes DATA could deliver whatever follows
+        const server = await rawServer({ MAIL: '550 5.7.1 sender refused\r\n', RCPT: '250 2.1.5 ok\r\n', DATA: '354 go ahead\r\n' });
+        try {
+            const client = await connect(server);
+            const ended = new Promise(resolve => client.once('end', resolve));
+            const { err } = await send(client, ['a@example.com']);
+            assert.ok(err);
+            assert.strictEqual(err.command, 'MAIL FROM');
+            await ended;
+            assert.deepStrictEqual(server.messages, []);
+        } finally {
+            await closeServer(server);
+        }
+    });
 });
