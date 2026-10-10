@@ -1112,7 +1112,11 @@ class MimeNode {
                     contentStream.pipe(outputStream, {
                         end: false
                     });
-                    pipeline(localStream, contentStream, err => (err ? callback(err) : finalize()));
+                    // pipeline reports errors and tears both streams down. It calls back once the
+                    // encoder took all of its input, the encoded output may still be waiting to
+                    // be read, so the node is only done once the encoder's readable side ended
+                    pipeline(localStream, contentStream, err => err && callback(err));
+                    finished(contentStream, { writable: false }, err => (err ? callback(err) : finalize()));
                 } else {
                     // anything that is not QP or Base54 passes as-is
                     readInto(localStream);

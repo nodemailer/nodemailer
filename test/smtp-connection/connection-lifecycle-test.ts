@@ -395,3 +395,44 @@ describe('SMTPConnection connect()', { timeout: 10000 }, () => {
         }
     });
 });
+
+describe('SMTPConnection STARTTLS and connectionTimeout', { timeout: 10000 }, () => {
+    it('limits a STARTTLS handshake by what is left of connectionTimeout', async () => {
+        // the server agrees to STARTTLS and then never answers the client hello
+        const server = await rawServer({ EHLO: EHLO_WITH_STARTTLS, STARTTLS: '220 2.0.0 Ready to start TLS\r\n' });
+        try {
+            const client = createClient(server, { ignoreTLS: false, connectionTimeout: 400, greetingTimeout: 30 * 1000 });
+            const started = Date.now();
+            const err = await new Promise<NodemailerError>((resolve, reject) => {
+                client.once('error', resolve);
+                client.connect(() => reject(new Error('connected')));
+            });
+            assert.strictEqual(err.timeoutType, 'UPGRADE_TIMEOUT');
+            assert.ok(Date.now() - started < 2000, `took ${Date.now() - started}ms`);
+        } finally {
+            await closeServer(server);
+        }
+    });
+
+    it('does not count a slow greeting against connectionTimeout', async () => {
+        // a server that pauses before its greeting, the way postscreen does
+        const server = await rawServer({
+            greeting: (line, socket) => {
+                setTimeout(() => socket.write('220 test ESMTP\r\n'), 600);
+                return false;
+            },
+            EHLO: '250-test\r\n250 STARTTLS\r\n',
+            STARTTLS: '454 4.7.0 TLS not available\r\n'
+        });
+        try {
+            const client = createClient(server, { ignoreTLS: false, opportunisticTLS: true, connectionTimeout: 400 });
+            await new Promise<void>((resolve, reject) => {
+                client.once('error', reject);
+                client.connect(() => resolve());
+            });
+            client.close();
+        } finally {
+            await closeServer(server);
+        }
+    });
+});

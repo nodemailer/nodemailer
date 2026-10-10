@@ -599,6 +599,8 @@ class SMTPConnection extends EventEmitter {
     _connectStartedAt?: number | undefined;
     /** connect() was called, it may be called only once @internal */
     _connectCalled?: boolean | undefined;
+    /** When the wait for the greeting started @internal */
+    _greetingWaitStarted?: number | undefined;
 
     /**
      * Authentication data, set by login()
@@ -1419,6 +1421,7 @@ class SMTPConnection extends EventEmitter {
             socket.setNoDelay(true);
         }
 
+        this._greetingWaitStarted = Date.now();
         this._startPhase(this.options.greetingTimeout || GREETING_TIMEOUT, timeoutError('Greeting never received', 'GREETING_TIMEOUT'));
 
         this._responseActions.push(this._actionGreeting);
@@ -1782,7 +1785,13 @@ class SMTPConnection extends EventEmitter {
 
         // the socket timeout only notices a server that sends nothing at all, a handshake that
         // trickles along would otherwise hold the connection for as long as the server likes
-        this._startPhase(this.options.greetingTimeout || GREETING_TIMEOUT, timeoutError('TLS handshake timed out', 'UPGRADE_TIMEOUT'));
+        // bounded by greetingTimeout and by what is left of connectionTimeout, STARTTLS is the last
+        // step of connecting
+        const upgradeTimeout = Math.min(
+            this.options.greetingTimeout || GREETING_TIMEOUT,
+            Math.max((this._connectionDeadline || Infinity) - Date.now(), 1)
+        );
+        this._startPhase(upgradeTimeout, timeoutError('TLS handshake timed out', 'UPGRADE_TIMEOUT'));
 
         // tls.connect is not an asynchronous function however it may still throw errors and requires to be wrapped with try/catch
         try {
@@ -2207,6 +2216,11 @@ class SMTPConnection extends EventEmitter {
      */
     _actionGreeting(str: string): void {
         this._clearPhase();
+        // the wait for the greeting has a limit of its own (greetingTimeout), it does not use up
+        // the time connectionTimeout leaves for setting the session up
+        if (this._connectionDeadline && this._greetingWaitStarted) {
+            this._connectionDeadline += Date.now() - this._greetingWaitStarted;
+        }
 
         if (str.substr(0, 3) !== '220') {
             this._onError(new Error('Invalid greeting. response=' + str), 'EPROTOCOL', str, 'CONN');

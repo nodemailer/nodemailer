@@ -5,7 +5,9 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough, Readable, Transform } from 'node:stream';
+import { PassThrough, Readable, Transform, Writable } from 'node:stream';
+import libqp from 'libqp';
+import libbase64 from 'libbase64';
 import MimeNode from '../../src/mime-node/index.js';
 import nodemailer from '../../src/nodemailer.js';
 import DKIM from '../../src/dkim/index.js';
@@ -342,5 +344,70 @@ describe('MimeNode stream lifecycle', { timeout: 20000 }, () => {
             assert.ifError(err);
             assert.ok(content.readableEnded);
         });
+    });
+});
+
+describe('MimeNode output read by a slow consumer', { timeout: 30000 }, () => {
+    // A consumer that takes one chunk at a time and acknowledges it a macrotask later, the way
+    // a slow or congested receiving server does. The encoded output of a part then waits in the
+    // encoder, and the node must not move on to the next part before it has drained
+    const readSlowly = (node: MimeNode): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const chunks: Buffer[] = [];
+            const output = new Writable({
+                highWaterMark: 1,
+                write(chunk, encoding, callback) {
+                    chunks.push(chunk);
+                    setImmediate(callback);
+                }
+            });
+            output.on('finish', () => resolve(Buffer.concat(chunks).toString('latin1')));
+            const message = node.createReadStream();
+            message.on('error', reject);
+            message.pipe(output);
+        });
+
+    const streamOf = (content: Buffer) => {
+        let pos = 0;
+        return new Readable({
+            read() {
+                this.push(pos < content.length ? content.subarray(pos, (pos += 1000)) : null);
+            }
+        });
+    };
+
+    const bodies = (message: string, boundary: string): string[] =>
+        message
+            .split('--' + boundary)
+            .slice(1, -1)
+            .map(part => part.slice(part.indexOf('\r\n\r\n') + 4).replace(/\r\n$/, ''));
+
+    it('writes every encoded byte of a part before the next part starts', async () => {
+        const first = crypto.randomBytes(1024 * 1024);
+        const second = Buffer.from('tere vana kere, õäöü \r\n'.repeat(40 * 1024));
+
+        const root = new MimeNode('multipart/mixed');
+        root.createChild('application/octet-stream', { filename: 'first.bin' }).setContent(streamOf(first));
+        root.createChild('text/plain; charset=utf-8')
+            .setHeader('Content-Transfer-Encoding', 'quoted-printable')
+            .setContent(streamOf(second));
+
+        const message = await readSlowly(root);
+        const [firstBody, secondBody] = bodies(message, root.boundary as string);
+
+        assert.ok(libbase64.decode(firstBody.replace(/\r\n/g, '')).equals(first), 'the base64 part lost bytes');
+        assert.ok(libqp.decode(secondBody).equals(second), 'the quoted-printable part lost bytes');
+    });
+
+    it('sends a whole stream attachment to a slow reader', async () => {
+        const content = crypto.randomBytes(1024 * 1024);
+        const root = new MimeNode('multipart/mixed');
+        root.createChild('application/octet-stream', { filename: 'a.bin' }).setContent(streamOf(content));
+        root.createChild('text/plain').setContent('after');
+
+        const message = await readSlowly(root);
+        const [attachment, text] = bodies(message, root.boundary as string);
+        assert.ok(libbase64.decode(attachment.replace(/\r\n/g, '')).equals(content));
+        assert.strictEqual(text, 'after');
     });
 });
