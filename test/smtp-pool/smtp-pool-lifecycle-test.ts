@@ -163,7 +163,7 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 port: ts.port,
                 maxConnections: 1,
                 rateLimit: 2,
-                rateDelta: 300,
+                rateDelta: 1000,
                 auth,
                 logger: false
             });
@@ -178,8 +178,11 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                         })
                     )
                 );
-                assert.ok(finished[0] < 200 && finished[1] < 200, 'the first two messages go out at once: ' + finished.join(', '));
-                assert.ok(finished[2] >= 290 && finished[3] >= 290, 'later messages wait for the window: ' + finished.join(', '));
+                // The window is wide compared to opening the connection and sending a message,
+                // which on Linux can take 150-200ms on loopback alone (delayed ACKs), so the
+                // assertions test the rate limit and not how fast the machine is
+                assert.ok(finished[0] < 800 && finished[1] < 800, 'the first two messages go out at once: ' + finished.join(', '));
+                assert.ok(finished[2] >= 990 && finished[3] >= 990, 'later messages wait for the window: ' + finished.join(', '));
             } finally {
                 pool.close();
                 await ts.close();
