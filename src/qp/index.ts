@@ -39,9 +39,12 @@ export function encode(buffer: Buffer | string): string {
  * @param buffer Bytes to encode
  * @param [next] The byte that follows the buffer, whitespace before it is kept literal unless it
  *        is a line break. Without it the buffer ends the input and its trailing whitespace is encoded
+ * @param [binary] Keep only CRLF pairs literal. A lone CR or LF is data, not a line break, and
+ *        anything that rewrites line endings on the way would change it
+ * @param [previous] The byte before the buffer, for a buffer that starts with LF
  * @returns Quoted-Printable encoded string
  */
-function encodeBytes(buffer: Buffer, next?: number): string {
+function encodeBytes(buffer: Buffer, next?: number, binary?: boolean, previous?: number): string {
     const len = buffer.length;
     // every byte takes three characters at most
     const output = Buffer.allocUnsafe(len * 3);
@@ -50,8 +53,18 @@ function encodeBytes(buffer: Buffer, next?: number): string {
     for (let i = 0; i < len; i++) {
         const ord = buffer[i];
         const following = i + 1 < len ? buffer[i + 1] : next;
+        const lineBreakByte =
+            binary && (ord === 0x0d || ord === 0x0a)
+                ? ord === 0x0d
+                    ? following === 0x0a
+                    : (i > 0 ? buffer[i - 1] : previous) === 0x0d
+                : true;
         // if the char is in allowed range, then keep as is, unless it is a WS in the end of a line
-        if (QP_LITERAL[ord] && !(isWhitespace(ord) && (following === undefined || following === 0x0a || following === 0x0d))) {
+        if (
+            QP_LITERAL[ord] &&
+            lineBreakByte &&
+            !(isWhitespace(ord) && (following === undefined || following === 0x0a || following === 0x0d))
+        ) {
             output[pos++] = ord;
             continue;
         }
@@ -192,6 +205,8 @@ function checkRanges(nr: number, ranges: number[][]): boolean {
 export interface QPEncoderOptions {
     /** Maximum length for lines, set to false to disable wrapping */
     lineLength?: number | false | undefined;
+    /** The input is binary data: a CR or LF that is not part of a CRLF pair is encoded */
+    binary?: boolean | undefined;
 }
 
 /** The name @types/nodemailer used for QPEncoderOptions */
@@ -217,6 +232,8 @@ export class Encoder extends Transform {
     _curLine: string;
     /** Whitespace from the end of the input so far, see _transform @internal */
     _remainingBytes: Buffer | false;
+    /** The last byte encoded so far, a slice that starts with LF needs it @internal */
+    _lastByte: number | undefined;
 
     constructor(options?: QPEncoderOptions) {
         super();
@@ -229,6 +246,7 @@ export class Encoder extends Transform {
 
         this._curLine = '';
         this._remainingBytes = false;
+        this._lastByte = undefined;
 
         this.inputBytes = 0;
         this.outputBytes = 0;
@@ -253,7 +271,8 @@ export class Encoder extends Transform {
         // back the whitespace a chunk ends with until it is known what follows it, so the output
         // does not depend on where the input was split
         let end = buf.length;
-        while (end > 0 && isWhitespace(buf[end - 1])) {
+        // a binary CR can only be written once it is known whether LF follows
+        while (end > 0 && (isWhitespace(buf[end - 1]) || (this.options.binary && buf[end - 1] === 0x0d))) {
             end--;
         }
         if (buf.length - end <= ENCODE_SLICE_SIZE) {
@@ -289,6 +308,7 @@ export class Encoder extends Transform {
         for (let start = 0; start < buf.length; start += ENCODE_SLICE_SIZE) {
             const end = Math.min(start + ENCODE_SLICE_SIZE, buf.length);
             this._encodeSlice(buf.subarray(start, end), end < buf.length ? buf[end] : undefined);
+            this._lastByte = buf[end - 1];
         }
     }
 
@@ -297,7 +317,7 @@ export class Encoder extends Transform {
         let qp: string;
 
         if (this.options.lineLength) {
-            qp = wrap(this._curLine + encodeBytes(buf, next), this.options.lineLength);
+            qp = wrap(this._curLine + encodeBytes(buf, next, this.options.binary, this._lastByte), this.options.lineLength);
             // the last line is kept until it is known whether it needs a soft break
             const lastLF = qp.lastIndexOf('\n');
             this._curLine = qp.substring(lastLF + 1);
@@ -308,7 +328,7 @@ export class Encoder extends Transform {
                 this.push(qp, 'ascii');
             }
         } else {
-            qp = encodeBytes(buf, next);
+            qp = encodeBytes(buf, next, this.options.binary, this._lastByte);
             this.outputBytes += qp.length;
             this.push(qp, 'ascii');
         }

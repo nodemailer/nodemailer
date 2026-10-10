@@ -1107,7 +1107,12 @@ class MimeNode {
                 const localStream = this._getStream(this.content);
 
                 if (['quoted-printable', 'base64'].includes(transferEncoding as string)) {
-                    const contentStream = new (transferEncoding === 'base64' ? base64 : qp).Encoder(options);
+                    const contentStream =
+                        transferEncoding === 'base64'
+                            ? new base64.Encoder(options)
+                            : // outside of text a lone CR or LF is data, encoding it keeps it from being
+                              // turned into a line break by a newline transform or the receiving side
+                              new qp.Encoder(Object.assign({}, options, { binary: !/^text\//i.test(this.contentType || '') }));
                     readInto(localStream, contentStream);
                     contentStream.pipe(outputStream, {
                         end: false

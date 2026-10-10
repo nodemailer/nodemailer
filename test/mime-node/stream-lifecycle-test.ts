@@ -411,3 +411,19 @@ describe('MimeNode output read by a slow consumer', { timeout: 30000 }, () => {
         assert.strictEqual(text, 'after');
     });
 });
+
+describe('MimeNode binary quoted-printable', () => {
+    it('keeps the bytes of a binary part when line endings are converted', async () => {
+        const content = crypto.randomBytes(64 * 1024);
+        const root = new MimeNode('multipart/mixed', { newline: 'unix' });
+        root.createChild('application/octet-stream', { filename: 'a.bin' })
+            .setHeader('Content-Transfer-Encoding', 'quoted-printable')
+            .setContent(content);
+        root.createChild('text/plain').setContent('after');
+
+        const message = (await root.build()).toString('latin1').replace(/\n/g, '\r\n');
+        const part = message.split('--' + root.boundary)[1];
+        const body = part.slice(part.indexOf('\r\n\r\n') + 4).replace(/\r\n$/, '');
+        assert.ok(libqp.decode(body).equals(content));
+    });
+});

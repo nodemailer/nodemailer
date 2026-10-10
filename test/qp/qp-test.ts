@@ -218,4 +218,32 @@ describe('Quoted-Printable Tests', () => {
             assert.ok(Math.max(...pushed) < 512 * 1024, `largest push ${Math.max(...pushed)} bytes`);
         });
     });
+
+    describe('Binary encoding', () => {
+        it('writes a CR or LF outside of a CRLF pair encoded, however the input is split', async () => {
+            for (let seed = 1; seed <= 100; seed++) {
+                const random = seededRandom(seed);
+                // binary data rich in CR, LF and CRLF
+                const input = Buffer.alloc(200 + random(800));
+                for (let i = 0; i < input.length; i++) {
+                    input[i] = [0x0d, 0x0a, 0x20, 0x41, random(256)][random(5)];
+                }
+
+                // eslint-disable-next-line no-await-in-loop
+                const output = (await transformInChunks(new qp.Encoder({ binary: true }), input, () => 1 + random(40))).toString('latin1');
+
+                assert.ok(!/\r(?!\n)|(?<!\r)\n/.test(output), `seed ${seed}: a lone CR or LF was written as is`);
+                assert.ok(libqp.decode(output).equals(input), `seed ${seed}: does not decode to the input`);
+                // line endings rewritten on the way, the way a newline transform does, change nothing
+                assert.ok(
+                    libqp.decode(output.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')).equals(input),
+                    `seed ${seed}: changed by a line ending rewrite`
+                );
+            }
+        });
+
+        it('keeps text line breaks literal outside of binary mode', () => {
+            assert.strictEqual(qp.encode('a\nb\r\nc'), 'a\nb\r\nc');
+        });
+    });
 });
