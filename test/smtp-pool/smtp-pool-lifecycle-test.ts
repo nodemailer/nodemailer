@@ -141,13 +141,34 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
 
         it('emits clear once the last connection is retired with an empty queue', async () => {
             const ts = await startServer();
-            const pool = new SMTPPool({ host: '127.0.0.1', port: ts.port, maxMessages: 1, auth, logger: false });
+            // the pool's own log, so a run that never sees 'clear' fails with what did happen
+            // instead of waiting for the suite timeout
+            const { logger, lines } = captureLogger();
+            const pool = new SMTPPool({ host: '127.0.0.1', port: ts.port, maxMessages: 1, auth, logger });
             const cleared = once(pool, 'clear');
+            const within = <T>(promise: Promise<T>, what: string): Promise<T> =>
+                new Promise<T>((resolve, reject) => {
+                    const timer = setTimeout(() => {
+                        const state = { connections: pool._connections.length, queue: pool._queue.length, idling: pool.idling };
+                        const log = lines.map(line => line.level + ' ' + (line.entry.tnx || '') + ' ' + line.message).join('\n');
+                        reject(new Error(what + ' did not happen within 5s, pool ' + JSON.stringify(state) + '\n' + log));
+                    }, 5000);
+                    promise.then(
+                        value => {
+                            clearTimeout(timer);
+                            resolve(value);
+                        },
+                        err => {
+                            clearTimeout(timer);
+                            reject(err);
+                        }
+                    );
+                });
 
             try {
-                const { err } = await settle(pool, mockMail(envelope));
+                const { err } = await within(settle(pool, mockMail(envelope)), 'the send callback');
                 assert.ifError(err);
-                await cleared;
+                await within(cleared, "the 'clear' event");
                 assert.strictEqual(pool._connections.length, 0);
                 assert.strictEqual(pool.isIdle(), true);
             } finally {
