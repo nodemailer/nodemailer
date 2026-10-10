@@ -414,23 +414,23 @@ describe('SMTPConnection STARTTLS and connectionTimeout', { timeout: 10000 }, ()
         }
     });
 
-    it('does not count a slow greeting against connectionTimeout', async () => {
-        // a server that pauses before its greeting, the way postscreen does
+    it('counts the wait for the greeting against connectionTimeout', async () => {
+        // a server that pauses before its greeting for longer than connecting may take
         const server = await rawServer({
             greeting: (line, socket) => {
-                setTimeout(() => socket.write('220 test ESMTP\r\n'), 600);
+                setTimeout(() => socket.write('220 test ESMTP\r\n'), 1500);
                 return false;
-            },
-            EHLO: '250-test\r\n250 STARTTLS\r\n',
-            STARTTLS: '454 4.7.0 TLS not available\r\n'
+            }
         });
         try {
-            const client = createClient(server, { ignoreTLS: false, opportunisticTLS: true, connectionTimeout: 400 });
-            await new Promise<void>((resolve, reject) => {
-                client.once('error', reject);
-                client.connect(() => resolve());
+            const client = createClient(server, { connectionTimeout: 400, greetingTimeout: 30 * 1000 });
+            const started = Date.now();
+            const err = await new Promise<NodemailerError>((resolve, reject) => {
+                client.once('error', resolve);
+                client.connect(() => reject(new Error('connected')));
             });
-            client.close();
+            assert.strictEqual(err.timeoutType, 'GREETING_TIMEOUT');
+            assert.ok(Date.now() - started < 1200, `took ${Date.now() - started}ms`);
         } finally {
             await closeServer(server);
         }
