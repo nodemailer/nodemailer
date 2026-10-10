@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## [10.1.0](https://github.com/nodemailer/nodemailer/compare/v10.0.16...v10.1.0) (2026-10-10)
+
+
+### Features
+
+* harden message streams, SMTP connections and the connection pool ([8009da6](https://github.com/nodemailer/nodemailer/commit/8009da6e10bb8e10d7f0948a25d65895fdcd64f1))
+
+
+### Bug Fixes
+
+* do not read the environment or the interface table on import ([094179d](https://github.com/nodemailer/nodemailer/commit/094179d176d2ebe7a28742411ad427d3c87a3981))
+* end the SMTP session on any 421 reply and drive the envelope through one step ([5638ac1](https://github.com/nodemailer/nodemailer/commit/5638ac1914342460df270f736e7ceb0a844cf83a))
+* keep ERR_ACCESS_DENIED from the Node.js permission model ([8b33a3d](https://github.com/nodemailer/nodemailer/commit/8b33a3d4fedee3431b97da7da12af954c3c8dceb))
+* let the proxy handshake and the SMTP connection share one deadline ([91ed683](https://github.com/nodemailer/nodemailer/commit/91ed683f7a1e9ff8c56e24fb76facf16af08b162))
+* **mime-node:** decode an SMTPUTF8 domain from its A-label form ([e436f4d](https://github.com/nodemailer/nodemailer/commit/e436f4dccbc8b0fb57b4747ebaafa5bb035c15cb))
+* **mime-node:** finish an encoded part only after its output was read ([ec97d8f](https://github.com/nodemailer/nodemailer/commit/ec97d8f679a1d9d47bbebb03ea064f5fa6f58d01))
+* **qp:** encode a lone CR or LF in binary quoted-printable parts ([42b91d9](https://github.com/nodemailer/nodemailer/commit/42b91d9a0fe18eea412c9774c5c142adf5b3efc7))
+* **smtp-connection:** count the wait for the greeting against connectionTimeout ([bdcd046](https://github.com/nodemailer/nodemailer/commit/bdcd0462cab163eca3c34058d09b9981ab671c47))
+* **smtp-connection:** drop the connection when DATA is taken after a refused sender ([f90fb04](https://github.com/nodemailer/nodemailer/commit/f90fb045bc24f96a128710791b2fa443e64f55fd))
+* **smtp-connection:** refuse a second connect() call ([24ba2e0](https://github.com/nodemailer/nodemailer/commit/24ba2e0847ecb8202540f1c5e53483bd119ae4f2))
+* turn Nagle off for SMTP sockets and report an early sendmail exit as such ([fa9b8d3](https://github.com/nodemailer/nodemailer/commit/fa9b8d300bf642cd9e11f6732ebb312c09868677))
+
+
+### Performance Improvements
+
+* encode base64 and quoted-printable without per-chunk delays ([fd377bb](https://github.com/nodemailer/nodemailer/commit/fd377bbf559363860aedbedba6f107348fc152d2))
+
 ## [10.0.16](https://github.com/nodemailer/nodemailer/compare/v10.0.15...v10.0.16) (2026-10-07)
 
 
