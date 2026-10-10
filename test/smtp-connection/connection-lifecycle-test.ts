@@ -35,7 +35,12 @@ describe('SMTPConnection STARTTLS upgrade', { timeout: 10000 }, () => {
 
     it('times out a TLS handshake the server never completes', async () => {
         // the server agrees to STARTTLS and then never answers the client hello
-        const server = await rawServer({ EHLO: EHLO_WITH_STARTTLS, STARTTLS: '220 2.0.0 Ready to start TLS\r\n' });
+        const server = await rawServer({
+            EHLO: EHLO_WITH_STARTTLS,
+            STARTTLS: '220 2.0.0 Ready to start TLS\r\n',
+            // the client hello is binary, a line break in it must not make the server answer
+            DEFAULT: false
+        });
         try {
             const client = createClient(server, { ignoreTLS: false, greetingTimeout: 300, socketTimeout: 60 * 1000 });
             const started = Date.now();
@@ -399,7 +404,12 @@ describe('SMTPConnection connect()', { timeout: 10000 }, () => {
 describe('SMTPConnection STARTTLS and connectionTimeout', { timeout: 10000 }, () => {
     it('limits a STARTTLS handshake by what is left of connectionTimeout', async () => {
         // the server agrees to STARTTLS and then never answers the client hello
-        const server = await rawServer({ EHLO: EHLO_WITH_STARTTLS, STARTTLS: '220 2.0.0 Ready to start TLS\r\n' });
+        const server = await rawServer({
+            EHLO: EHLO_WITH_STARTTLS,
+            STARTTLS: '220 2.0.0 Ready to start TLS\r\n',
+            // the client hello is binary, a line break in it must not make the server answer
+            DEFAULT: false
+        });
         try {
             const client = createClient(server, { ignoreTLS: false, connectionTimeout: 400, greetingTimeout: 30 * 1000 });
             const started = Date.now();
