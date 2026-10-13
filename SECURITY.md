@@ -29,7 +29,7 @@ its own to establish security impact.
 In particular, explain:
 
 - **Attacker capabilities:** Who is the attacker, and what inputs, systems, or
-  responses can they control *without* already having the privileges or secrets
+  responses can they control _without_ already having the privileges or secrets
   they are trying to gain?
 - **Attack path:** How does attacker-controlled input reach the affected code
   through a supported Nodemailer API or a realistic application integration?
