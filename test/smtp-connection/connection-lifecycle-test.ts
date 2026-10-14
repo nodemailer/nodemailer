@@ -272,6 +272,28 @@ describe('SMTPConnection connecting', { timeout: 20000 }, () => {
             await closeServer(server);
         }
     });
+
+    it('times out once connectionTimeout has passed when no address answers', async t => {
+        // #1891: every address used to get a whole connectionTimeout of its own.
+        // 192.0.2.0/24 is a documentation range, connections to it do not complete
+        stubResolver({ 4: ['192.0.2.1', '192.0.2.2', '192.0.2.3'], 6: [] });
+        const client = new SMTPConnection({
+            host: 'unreachable.example.test',
+            port: 25,
+            connectionTimeout: 600,
+            logger: false
+        });
+        const started = Date.now();
+        const err = await connectError(client);
+        const elapsed = Date.now() - started;
+        if (err.code !== 'ETIMEDOUT') {
+            // a host without a route to the range fails right away, nothing to time
+            t.skip(`no address hangs here: ${err.code}`);
+            return;
+        }
+        assert.strictEqual(err.timeoutType, 'CONNECT_TIMEOUT');
+        assert.ok(elapsed >= 550 && elapsed < 1000, `took ${elapsed}ms`);
+    });
 });
 
 describe('SMTPConnection idle close and deadlines', { timeout: 10000 }, () => {
