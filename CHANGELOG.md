@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.1.1](https://github.com/nodemailer/nodemailer/compare/v10.1.0...v10.1.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **fetch:** strip credentials on any cross-origin redirect ([a15360c](https://github.com/nodemailer/nodemailer/commit/a15360cd2cd12e4670e96ab0b7290e8c862391cf))
+
 ## [10.1.0](https://github.com/nodemailer/nodemailer/compare/v10.0.16...v10.1.0) (2026-10-10)
 
 
