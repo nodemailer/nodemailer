@@ -333,6 +333,14 @@
         "secure": false
     },
 
+    "Oveyon": {
+        "description": "Oveyon",
+        "host": "smtp.oveyon.com",
+        "port": 587,
+        "secure": false,
+        "requireTLS": true
+    },
+
     "Postmark": {
         "description": "Postmark",
         "aliases": ["PostmarkApp"],
