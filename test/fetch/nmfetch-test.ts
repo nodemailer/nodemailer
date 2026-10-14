@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 //let http = require('http');
 import nmfetch from '../../src/fetch/index.js';
+import { createTransport } from '../../src/nodemailer.js';
 import http from 'node:http';
 import https from 'node:https';
 import zlib from 'node:zlib';
@@ -752,6 +753,91 @@ describe('NMFetch Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(Buffer.concat(buf).toString(), 'NO_AUTH');
             done();
         });
+    });
+});
+
+describe('NMFetch credentials on redirect', { timeout: 10 * 1000 }, () => {
+    const sensitive = ['authorization', 'cookie', 'proxy-authorization'];
+
+    const listen = (handler: http.RequestListener): Promise<http.Server> =>
+        new Promise(resolve => {
+            const server = http.createServer(handler);
+            server.listen(0, '127.0.0.1', () => resolve(server));
+        });
+    const portOf = (server: http.Server) => (server.address() as AddressInfo).port;
+
+    // an origin that redirects to `location(target)` and a target that records the credentials it got
+    const redirectServers = async (location: (targetPort: number) => string) => {
+        const received: string[] = [];
+        const target = await listen((req, res) => {
+            received.push(...sensitive.filter(key => key in req.headers));
+            res.end('ok');
+        });
+        const origin = await listen((req, res) => {
+            res.writeHead(302, { Location: location(portOf(target)) });
+            res.end();
+        });
+        return {
+            received,
+            originPort: portOf(origin),
+            close: () => {
+                origin.close();
+                target.close();
+            }
+        };
+    };
+
+    const fetchAll = (url: string, headers: http.OutgoingHttpHeaders): Promise<void> =>
+        new Promise((resolve, reject) => {
+            const req = nmfetch(url, { headers });
+            req.on('error', reject);
+            req.on('end', resolve);
+            req.resume();
+        });
+
+    it('drops sensitive headers whose names are padded with whitespace on a cross-host redirect', async () => {
+        const servers = await redirectServers(port => 'http://127.0.0.1:' + port + '/');
+        try {
+            await fetchAll('http://localhost:' + servers.originPort + '/', {
+                ' Authorization ': 'Bearer SECRET_TOKEN',
+                '\tCookie': 'session=SECRET',
+                'Proxy-Authorization ': 'Basic SECRET'
+            });
+            assert.deepStrictEqual(servers.received, []);
+        } finally {
+            servers.close();
+        }
+    });
+
+    it('drops the Authorization header on a redirect to another port of the same host', async () => {
+        const servers = await redirectServers(port => 'http://127.0.0.1:' + port + '/');
+        try {
+            await fetchAll('http://127.0.0.1:' + servers.originPort + '/', { Authorization: 'Bearer SECRET_TOKEN' });
+            assert.deepStrictEqual(servers.received, []);
+        } finally {
+            servers.close();
+        }
+    });
+
+    it('does not forward the httpHeaders of an attachment to another host', async () => {
+        const servers = await redirectServers(port => 'http://127.0.0.1:' + port + '/');
+        try {
+            await createTransport({ streamTransport: true, buffer: true }).sendMail({
+                from: 'a@example.com',
+                to: 'b@example.com',
+                text: 'test',
+                attachments: [
+                    {
+                        filename: 'test.txt',
+                        href: 'http://localhost:' + servers.originPort + '/',
+                        httpHeaders: { ' Authorization ': 'Bearer SECRET_TOKEN' }
+                    }
+                ]
+            });
+            assert.deepStrictEqual(servers.received, []);
+        } finally {
+            servers.close();
+        }
     });
 });
 

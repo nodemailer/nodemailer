@@ -128,6 +128,11 @@ function parseFetchUrl(url: string): urllib.ParsedUrl | false {
     return parsed;
 }
 
+// the port a request to the URL goes to, explicit or the default of its scheme
+function fetchPort(parsed: urllib.ParsedUrl): number {
+    return parsed.port ? Number(parsed.port) : parsed.protocol === 'https:' ? 443 : 80;
+}
+
 function nmfetch(url: string, options?: FetchOptions): FetchResponse {
     options = options || {};
 
@@ -257,7 +262,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         method,
         host: parsed.hostname,
         path: parsed.path,
-        port: parsed.port ? parsed.port : parsed.protocol === 'https:' ? 443 : 80,
+        port: fetchPort(parsed),
         headers,
         // Validate TLS certificates by default. Callers that genuinely need to
         // reach a self-signed/internal host opt out explicitly with
@@ -374,17 +379,20 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
                 return fail(new Error('Unsupported protocol for URL ' + redirectUrl), redirectUrl);
             }
 
-            // Do not forward credentials when the redirect leaves the original
-            // security context: a different host, or a downgrade from https to
-            // http (which would otherwise put them on the wire in cleartext).
-            // Strip sensitive request headers so an attacker who controls the
-            // redirect target cannot harvest them.
-            const crossHost = redirectParsed.hostname !== parsed.hostname;
-            const downgrade = parsed.protocol === 'https:' && redirectParsed.protocol === 'http:';
-            if (options.headers && (crossHost || downgrade)) {
+            // Do not forward credentials when the redirect leaves the origin: a different
+            // scheme, host or port is a different security context (an https to http
+            // downgrade would also put them on the wire in cleartext). Strip sensitive
+            // request headers so an attacker who controls the redirect target cannot
+            // harvest them.
+            const crossOrigin =
+                redirectParsed.protocol !== parsed.protocol ||
+                redirectParsed.hostname !== parsed.hostname ||
+                fetchPort(redirectParsed) !== fetchPort(parsed);
+            if (options.headers && crossOrigin) {
                 const sensitive = ['authorization', 'cookie', 'proxy-authorization'];
                 Object.keys(options.headers).forEach(key => {
-                    if (sensitive.includes(key.toLowerCase())) {
+                    // normalized the way the request headers are built above, a padded name is sent too
+                    if (sensitive.includes(key.toLowerCase().trim())) {
                         delete (options.headers as http.OutgoingHttpHeaders)[key];
                     }
                 });
