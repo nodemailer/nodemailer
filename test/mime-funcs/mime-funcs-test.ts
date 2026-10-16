@@ -125,6 +125,27 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mimeFuncs.encodeWords(input3, 'Q', 52, true), output4);
         });
 
+        it('should keep the whitespace that separates an encoded word from the text before it', () => {
+            // U+00A0 needs encoding and is whitespace at the same time, the word scan used to
+            // pull the space before it into the encoded word and glue that word to 'ab'
+            const encoded = mimeFuncs.encodeWords('ab  cd', 'Q');
+
+            assert.strictEqual(encoded, 'ab =?UTF-8?Q?=C2=A0cd?=');
+            assert.strictEqual(libmime.decodeWords(encoded), 'ab  cd');
+        });
+
+        it('should find the words to encode in linear time', () => {
+            // the regex that found the last word to encode backtracked over the whole word
+            // from every position in it, 40k characters took close to two seconds
+            const value = 'é'.repeat(100000) + ' é';
+            const started = Date.now();
+
+            const encoded = mimeFuncs.encodeWords(value, 'Q', 0, false);
+
+            assert.ok(Date.now() - started < 1000, 'took ' + (Date.now() - started) + ' ms');
+            assert.strictEqual(libmime.decodeWords(encoded), value);
+        });
+
         it('should split QP on maxLength', () => {
             const inputStr = 'Jõgeva Jõgeva Jõgeva mugeva Jõgeva Jõgeva Jõgeva Jõgeva Jõgeva',
                 outputStr =

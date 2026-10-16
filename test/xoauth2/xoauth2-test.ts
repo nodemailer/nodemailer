@@ -5,6 +5,7 @@ import mockServer, { type OAuthServer } from './server.js';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import querystring from 'node:querystring';
+import util from 'node:util';
 import type { AddressInfo } from 'node:net';
 
 describe('XOAuth2 tests', { timeout: 10000 }, () => {
@@ -729,6 +730,37 @@ describe('XOAuth2 token endpoint handling', { timeout: 10000 }, () => {
                     audience: 'aud'
                 }
             );
+            done();
+        });
+    });
+
+    it('should mask the custom params in the token request log line', (t, done) => {
+        // a custom param is as likely to be a client assertion as a tenant name
+        let xoauth2 = new XOAuth2({
+            user: 'test@example.com',
+            clientId: '{Client ID}',
+            clientSecret: '{Client Secret}',
+            refreshToken: 'saladus',
+            accessUrl: accessUrl + '/echo',
+            customParams: { client_assertion: 'very-secret-assertion-value', audience: 'aud' }
+        });
+
+        const logged: string[] = [];
+        xoauth2.logger.debug = (data: any, message?: string, ...args: any[]) => {
+            if (data.action === 'generate') {
+                logged.push(util.format(message, ...args));
+            }
+        };
+
+        xoauth2.getToken(false, (err, accessToken) => {
+            assert.ok(!err);
+            assert.strictEqual(accessToken, 'echo-token');
+            // the request itself carried the full values
+            assert.strictEqual(lastRequest!.body.client_assertion, 'very-secret-assertion-value');
+            assert.strictEqual(logged.length, 1);
+            assert.ok(logged[0].includes('"client_assertion":"very-s..."'), logged[0]);
+            assert.ok(logged[0].includes('"audience":"aud..."'), logged[0]);
+            assert.ok(!logged[0].includes('very-secret-assertion-value'), logged[0]);
             done();
         });
     });

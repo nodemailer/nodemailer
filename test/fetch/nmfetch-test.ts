@@ -907,6 +907,26 @@ describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => 
                     res.write(' ');
                     break;
 
+                case '/drip': {
+                    // a byte within every inactivity window, only an overall deadline ends it
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    });
+                    const drip = setInterval(() => res.write('.'), 20);
+                    req.socket.once('close', () => clearInterval(drip));
+                    break;
+                }
+
+                case '/slow-redirect':
+                    // takes its time before sending the client on to the dripping route
+                    setTimeout(() => {
+                        res.writeHead(302, {
+                            Location: '/drip'
+                        });
+                        res.end();
+                    }, 400);
+                    break;
+
                 case '/big':
                     res.writeHead(200, {
                         'Content-Type': 'text/plain'
@@ -1117,6 +1137,40 @@ describe('NMFetch request and response handling', { timeout: 50 * 1000 }, () => 
         // a stalled server can not be waited out in a test, the default is pinned instead. The
         // other tests cover that a configured timeout is applied
         assert.strictEqual(nmfetch.DEFAULT_TIMEOUT, 60 * 1000);
+    });
+
+    it('should apply a default time limit to the whole request when none is given', () => {
+        assert.strictEqual(nmfetch.DEFAULT_MAX_TIME, 2 * 60 * 1000);
+    });
+
+    it('should give up on a response that keeps dripping past maxTime', (t, done) => {
+        // every byte resets the inactivity timeout, so without an overall limit the request,
+        // and the message waiting on it, stayed open for as long as the server liked
+        const started = Date.now();
+        let req = nmfetch(base + '/drip', { timeout: 2000, maxTime: 300 });
+        req.on('data', () => false);
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.match(err.message, /exceeded the allowed 300 ms/);
+            assert.ok(Date.now() - started < 1500, 'took ' + (Date.now() - started) + ' ms');
+            done();
+        });
+        req.on('end', () => done(new Error('the response must not end')));
+    });
+
+    it('should count the time spent on redirects against maxTime', (t, done) => {
+        // one deadline for the whole chain: the 400 ms redirect plus a fresh 600 ms limit
+        // would come to a second, the shared deadline ends it at 600 ms
+        const started = Date.now();
+        let req = nmfetch(base + '/slow-redirect', { timeout: 2000, maxTime: 600 });
+        req.on('data', () => false);
+        req.on('error', (err: any) => {
+            assert.strictEqual(err.code, 'EFETCH');
+            assert.match(err.message, /exceeded the allowed 600 ms/);
+            assert.ok(Date.now() - started < 900, 'took ' + (Date.now() - started) + ' ms');
+            done();
+        });
+        req.on('end', () => done(new Error('the response must not end')));
     });
 
     for (const path of ['/big', '/big-gzip']) {

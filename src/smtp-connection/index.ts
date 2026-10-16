@@ -401,6 +401,22 @@ function isPartialLine(line: string): boolean {
 }
 
 /**
+ * The log form of a command a custom authentication handler sends. Such a command carries
+ * the credentials in whatever shape its mechanism uses, so only an AUTH verb with its
+ * mechanism name is kept, the way the built-in mechanisms hide their own secrets.
+ *
+ * @param cmd Command the handler sends
+ * @return What the transaction log gets instead
+ */
+function maskAuthCommand(cmd: string): string {
+    const match = (cmd || '').toString().match(/^AUTH\s+[^\s]+/i);
+    if (!match) {
+        return '/* secret */';
+    }
+    return match[0].length === cmd.length ? cmd : match[0] + ' /* secret */';
+}
+
+/**
  * Generates a SMTP connection object
  *
  * Optional options object takes the following possible properties:
@@ -1186,7 +1202,7 @@ class SMTPConnection extends EventEmitter {
                     }
                     (done as SMTPConnectionCustomAuthCommandCallback)(null, data);
                 });
-                setImmediate(() => this._sendCommand(cmd));
+                setImmediate(() => this._sendCommand(cmd, maskAuthCommand(cmd)));
 
                 return promise;
             };

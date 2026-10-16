@@ -108,6 +108,14 @@ export interface SMTPSentMessageInfo extends SMTPConnectionSendInfo, SentMessage
  */
 export type SMTPTransportSendCallback = ResultCallback<SMTPSentMessageInfo>;
 
+// The keys a message's `auth` may set on top of the transport's auth settings: the ones that
+// say who logs in and with what. Everything else in the auth block (accessUrl, clientId,
+// clientSecret, customHeaders, customParams, tls, privateKey, serviceClient and the rest)
+// names the endpoint the credentials go to or is a secret of the application itself, and
+// a message that could set `auth.accessUrl` and force a refresh would have the transport's
+// client secret and refresh token posted to a URL of its choosing
+const MESSAGE_AUTH_KEYS = ['type', 'user', 'pass', 'accessToken', 'refreshToken', 'expires'];
+
 /**
  * Creates a SMTP transport object for Nodemailer
  *
@@ -197,9 +205,12 @@ class SMTPTransport extends EventEmitter {
 
         const authData: SMTPTransportAuthOptions = Object.assign(
             {},
-            this.options.auth && typeof this.options.auth === 'object' ? this.options.auth : {},
-            typeof authOpts === 'object' ? authOpts : {}
+            this.options.auth && typeof this.options.auth === 'object' ? this.options.auth : {}
         );
+        if (typeof authOpts === 'object') {
+            // see MESSAGE_AUTH_KEYS
+            shared.copyOwnKeys(authData, authOpts, key => !MESSAGE_AUTH_KEYS.includes(key));
+        }
 
         if (Object.keys(authData).length === 0) {
             return false;

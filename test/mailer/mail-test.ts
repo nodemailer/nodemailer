@@ -549,6 +549,30 @@ describe('Mail', () => {
             assert.ok(raw.includes('Content-ID: <' + embeddedCid(raw) + '>'), raw);
         });
 
+        it('should leave a data: url without a media type alone and still convert the next image', async () => {
+            // the media type used to run to the next ';' wherever that was, which merged the two
+            // tags into one attachment whose path was not a data url
+            const raw = await render(
+                { attachDataUrls: true },
+                withImage({ html: '<img src="data:x"><img alt="dot" src="' + pngDataUri + '">' })
+            );
+
+            assert.ok(raw.includes('<img src="data:x"><img alt="dot" src="cid:' + embeddedCid(raw) + '">'), raw);
+            assert.ok(raw.includes('Content-Type: image/png; name=image-1.png'), raw);
+        });
+
+        it('should scan html full of unterminated data: urls in linear time', async () => {
+            // GHSA-9h6g-pr28-7cqp bounded the prefix of the pattern but left the media type
+            // unbounded: 240 KB of these took 3 seconds, 1 MB would have taken a minute
+            const html = '<img src=data:x'.repeat(Math.ceil((240 * 1024) / 15));
+            const started = Date.now();
+
+            const raw = await render({ attachDataUrls: true }, withImage({ html }));
+
+            assert.ok(Date.now() - started < 1000, 'took ' + (Date.now() - started) + ' ms');
+            assert.ok(!raw.includes('Content-ID:'), raw.slice(0, 2000));
+        });
+
         it('should fail the send when the html can not be resolved', (t, done) => {
             const transporter = nodemailer.createTransport({ streamTransport: true, attachDataUrls: true, disableFileAccess: true });
 

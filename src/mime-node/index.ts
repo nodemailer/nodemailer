@@ -212,6 +212,14 @@ const PLAIN_ADDRESS = /^[^\s"(),:;<>@[\\\]]+@[^\s"(),:;<>@[\\\]]+$/;
 // characters are legal in a domain, so keep them away from the mapper.
 const URL_PARSER_UNSAFE = /[/\\?#%\x00-\x20\x7F]/;
 
+// RFC 1035 bounds a label at 63 octets and a domain at 253. An A-label is never shorter than
+// the code points it encodes, so anything past these bounds could not have become a valid
+// domain whichever way it is encoded. The bundled codec is super-linear in the length of a
+// label, a 60 KB label of distinct code points took seconds to encode, several times per
+// address, so it is only handed what could be a domain
+const MAX_DOMAIN_LENGTH = 253;
+const MAX_LABEL_LENGTH = 63;
+
 // pipeline() needs a callback to not throw, the errors it sees reach the last stream anyway
 const PIPELINE_NOOP = () => false;
 
@@ -220,6 +228,27 @@ function abortedError(): NodemailerError {
     const err: NodemailerError = new Error('Message stream was closed before the message was generated');
     err.code = errors.ESTREAM;
     return err;
+}
+
+/**
+ * Checks a domain against the DNS length limits, counted in code points per label and in
+ * total. The label separators are the ones the bundled codec splits on.
+ *
+ * @param domain Domain to check
+ * @return true if a label or the domain as a whole is too long to be a valid domain
+ */
+function exceedsDomainLimits(domain: string): boolean {
+    let total = 0;
+    let label = 0;
+    for (const char of domain) {
+        total++;
+        if (char === '.' || char === '。' || char === '．' || char === '｡') {
+            label = 0;
+        } else if (++label > MAX_LABEL_LENGTH) {
+            return true;
+        }
+    }
+    return total > MAX_DOMAIN_LENGTH;
 }
 
 /**
@@ -254,6 +283,11 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
         if (mapped) {
             return mapped;
         }
+    }
+
+    if (exceedsDomainLimits(domain)) {
+        // too long to be a domain whichever way it is encoded, keep it as supplied
+        return domain;
     }
 
     return toUnicode ? punycode.toUnicode(domain) : punycode.toASCII(domain);
@@ -872,6 +906,18 @@ class MimeNode {
                         /[\u0080-\uFFFF]/.test(this.content)
                     ) {
                         structured.params.charset = 'utf-8';
+                    }
+
+                    if (this.filename) {
+                        // the name parameter is derived from the filename below, so a name that
+                        // arrived inside the content type is dropped first (a plain parameter or
+                        // rfc2231 continuation sections), otherwise the header carries two and a
+                        // receiver that reads the first sees a name the filename does not match
+                        for (const paramKey of Object.keys(structured.params)) {
+                            if (/^name(\*|$)/i.test(paramKey)) {
+                                delete structured.params[paramKey];
+                            }
+                        }
                     }
 
                     value = mimeFuncs.buildHeaderValue(structured);
@@ -1559,12 +1605,12 @@ class MimeNode {
     _normalizeHeaderKey(key: string): string {
         key = (key || '')
             .toString()
-            // no newlines in keys
-            .replace(/\r?\n|\r/g, ' ')
-            // a field name is printable ascii without the colon, so a control char or DEL
-            // can only be dropped, there is no quoting construct around a field name
-            .replace(/[\x00-\x1f\x7f]/g, '')
-            .trim()
+            // a field name is printable ascii without the colon, so a control char, DEL,
+            // whitespace or a colon can only be dropped, there is no quoting construct
+            // around a field name. A colon or a space left in place ends the name early on
+            // the wire: the key 'From: ceo@example.com (' with the value ')' was emitted as a
+            // second From header that neither setHeader() nor the Bcc filter could match
+            .replace(/[\s\x00-\x20\x7f:]/g, '')
             .toLowerCase()
             // use uppercase words, except MIME
             .replace(/^X-SMTPAPI$|^(MIME|DKIM|ARC|BIMI)\b|^[a-z]|-(SPF|FBL|ID|MD5)$|-[a-z]/gi, c => c.toUpperCase())

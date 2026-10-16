@@ -259,6 +259,95 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
             }
         });
 
+        it('takes only the credentials from a message level auth, never the token endpoint or client settings', () => {
+            // a message that could set auth.accessUrl and force a refresh would have had the
+            // transport's client secret and refresh token posted to a URL of its choosing
+            const transport = new SMTPTransport({
+                host: '127.0.0.1',
+                port: 25,
+                logger: false,
+                auth: {
+                    type: 'OAuth2',
+                    user: 'app@example.com',
+                    clientId: 'client-id',
+                    clientSecret: 'client-secret',
+                    refreshToken: 'refresh-token',
+                    accessUrl: 'https://oauth.example/token',
+                    customHeaders: { 'x-tenant': 'one' },
+                    customParams: { tenant: 'one' }
+                }
+            });
+
+            try {
+                const perCall = transport.getAuth({
+                    user: 'other@example.com',
+                    accessToken: '',
+                    expires: 1,
+                    accessUrl: 'http://attacker.invalid/token',
+                    clientId: 'other-client',
+                    clientSecret: 'other-secret',
+                    customHeaders: { 'x-tenant': 'two' },
+                    customParams: { tenant: 'two' },
+                    tls: { rejectUnauthorized: false },
+                    serviceClient: 'service',
+                    privateKey: 'key'
+                }) as SMTPTransportAuth;
+
+                assert.strictEqual(perCall.type, 'OAUTH2');
+                const options = perCall.oauth2!.options;
+                assert.strictEqual(options.user, 'other@example.com');
+                assert.strictEqual(options.accessToken, '');
+                assert.strictEqual(options.expires, 1);
+                assert.strictEqual(options.accessUrl, 'https://oauth.example/token');
+                assert.strictEqual(options.clientId, 'client-id');
+                assert.strictEqual(options.clientSecret, 'client-secret');
+                assert.strictEqual(options.refreshToken, 'refresh-token');
+                assert.deepStrictEqual(options.customHeaders, { 'x-tenant': 'one' });
+                assert.deepStrictEqual(options.customParams, { tenant: 'one' });
+                assert.strictEqual(options.tls, undefined);
+                assert.strictEqual(options.serviceClient, undefined);
+                assert.strictEqual(options.privateKey, undefined);
+            } finally {
+                transport.close();
+            }
+        });
+
+        it('honors the credentials a message level auth supplies', () => {
+            const transport = new SMTPTransport({
+                host: '127.0.0.1',
+                port: 25,
+                logger: false,
+                auth: {
+                    type: 'OAuth2',
+                    user: 'app@example.com',
+                    clientId: 'client-id',
+                    clientSecret: 'client-secret',
+                    refreshToken: 'refresh-token',
+                    accessUrl: 'https://oauth.example/token'
+                }
+            });
+
+            try {
+                const oauth = transport.getAuth({
+                    user: 'other@example.com',
+                    refreshToken: 'other-refresh',
+                    accessToken: 'other-access',
+                    expires: 123
+                }) as SMTPTransportAuth;
+                assert.strictEqual(oauth.oauth2!.options.user, 'other@example.com');
+                assert.strictEqual(oauth.oauth2!.options.refreshToken, 'other-refresh');
+                assert.strictEqual(oauth.oauth2!.accessToken, 'other-access');
+                assert.strictEqual(oauth.oauth2!.expires, 123);
+
+                // a password login for this one message over an OAuth2 transport
+                const login = transport.getAuth({ type: 'login', user: 'other', pass: 'secret' }) as SMTPTransportAuth;
+                assert.strictEqual(login.type, 'LOGIN');
+                assert.deepStrictEqual(login.credentials, { user: 'other', pass: 'secret', options: undefined });
+            } finally {
+                transport.close();
+            }
+        });
+
         it('runs the custom authentication handler of the configured method', async () => {
             const serverAuth: Array<{ method: string; username: string }> = [];
             const ts = await startServer({

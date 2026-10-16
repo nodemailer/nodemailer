@@ -202,9 +202,22 @@ export function encodeWord(data: string | Buffer, mimeWordEncoding?: string, max
 export function encodeWords(value: string, mimeWordEncoding?: string, maxLength?: number, encodeAll?: boolean): string {
     maxLength = maxLength || 0;
 
-    // find first word with a non-printable ascii or special symbol in it
-    const firstMatch = value.match(/(?:^|\s)([^\s]*["\u0080-\uFFFF])/);
-    if (!firstMatch) {
+    // find the first and the last character that needs encoding, a quote or anything outside
+    // printable ascii. A scan rather than a regex: matching the last such word with a
+    // backtracking pattern took quadratic time on a long word of non-ascii characters
+    let firstSpecial = -1;
+    let lastSpecial = -1;
+    for (let i = 0; i < value.length; i++) {
+        const code = value.charCodeAt(i);
+        if (code === 0x22 || code >= 0x80) {
+            if (firstSpecial < 0) {
+                firstSpecial = i;
+            }
+            lastSpecial = i;
+        }
+    }
+
+    if (firstSpecial < 0) {
         return value;
     }
 
@@ -213,21 +226,17 @@ export function encodeWords(value: string, mimeWordEncoding?: string, maxLength?
         return encodeWord(value, mimeWordEncoding, maxLength);
     }
 
-    // find the last word with a non-printable ascii in it
-    const lastMatch = value.match(/(["\u0080-\uFFFF][^\s]*)[^"\u0080-\uFFFF]*$/);
-    if (!lastMatch) {
-        // should not happen
-        return value;
+    // encode from the start of the word holding the first such character to the end of the
+    // word holding the last one, so the encoded words stay separated from the plain text by
+    // the whitespace that was already there
+    let startIndex = firstSpecial;
+    while (startIndex > 0 && !/\s/.test(value.charAt(startIndex - 1))) {
+        startIndex--;
     }
-
-    const startIndex =
-        (firstMatch.index as number) +
-        ((
-            firstMatch[0].match(/[^\s]/) || {
-                index: 0
-            }
-        ).index as number);
-    const endIndex = (lastMatch.index as number) + (lastMatch[1] || '').length;
+    let endIndex = lastSpecial + 1;
+    while (endIndex < value.length && !/\s/.test(value.charAt(endIndex))) {
+        endIndex++;
+    }
 
     return (
         (startIndex ? value.substr(0, startIndex) : '') +

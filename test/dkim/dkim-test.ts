@@ -299,6 +299,53 @@ teine rida
         });
     });
 
+    it('should create the cache file readable by its owner only', (t, done) => {
+        // cacheDir is often a shared directory such as /tmp and the file holds the message body
+        const seen: { path: string; options: any; mode?: number }[] = [];
+        const patchable = fs as { createWriteStream: typeof fs.createWriteStream };
+        const createWriteStream = fs.createWriteStream;
+        patchable.createWriteStream = ((filePath: any, options?: any) => {
+            const stream = createWriteStream.call(fs, filePath, options);
+            const entry: { path: string; options: any; mode?: number } = { path: String(filePath), options };
+            seen.push(entry);
+            stream.once('open', () => {
+                // the permission bits alone, the file type bits above them are not of interest
+                entry.mode = fs.statSync(filePath).mode % 0o1000;
+            });
+            return stream;
+        }) as typeof fs.createWriteStream;
+        const restore = () => {
+            patchable.createWriteStream = createWriteStream;
+        };
+
+        const dkim = new DKIM({
+            domainName: 'node.ee',
+            keySelector: 'dkim',
+            privateKey,
+            cacheDir: path.join(__dirname, 'cache'),
+            cacheTreshold: 1
+        });
+
+        const output = dkim.sign(fs.readFileSync(__dirname + '/fixtures/message1.eml'));
+        output.on('error', err => {
+            restore();
+            done(err);
+        });
+        output.on('data', () => false);
+        output.on('end', () => {
+            restore();
+            assert.ok(output.usingCache);
+            assert.strictEqual(seen.length, 1);
+            assert.ok(seen[0].path.startsWith(path.join(__dirname, 'cache')), seen[0].path);
+            assert.strictEqual(seen[0].options.mode, 0o600);
+            if (process.platform !== 'win32') {
+                // no group or other bits, whatever the umask took off the owner's
+                assert.strictEqual((seen[0].mode as number) % 0o100, 0, 'mode ' + (seen[0].mode as number).toString(8));
+            }
+            done();
+        });
+    });
+
     it('should sign large message as String', (t, done) => {
         const dkim = new DKIM({
             domainName: 'node.ee',

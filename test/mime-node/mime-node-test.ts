@@ -927,6 +927,34 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should emit the name parameter once when the content type already carries one', (t, done) => {
+            // the filename decides the name, a name that came in with the content type used to
+            // stay in front of it and a receiver reading the first one saw a different name
+            let mb = new MimeNode("application/pdf; name=evil.exe; Name*0*=utf-8''j%C3%B5geva", {
+                filename: 'report.pdf'
+            }).setContent('pdf');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: application\/pdf; name=report.pdf$/m.test(msg), true, msg);
+                assert.strictEqual(/evil\.exe|jgeva|j%C3%B5geva/i.test(msg), false, msg);
+                assert.strictEqual(/^Content-Disposition: attachment; filename=report.pdf$/m.test(msg), true, msg);
+                done();
+            });
+        });
+
+        it('should keep the name parameter of the content type when there is no filename', (t, done) => {
+            let mb = new MimeNode('application/pdf; name=report.pdf').setContent('pdf');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(/^Content-Type: application\/pdf; name=report.pdf$/m.test(msg), true, msg);
+                done();
+            });
+        });
+
         it('should fetch ascii filename', (t, done) => {
             let mb = new MimeNode('text/plain', {
                 filename: 'jogeva.txt'
@@ -1835,6 +1863,37 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             let mb = new MimeNode();
 
             assert.strictEqual(mb._normalizeHeaderKey('x-cu\x01st\x7fom'), 'X-Custom');
+        });
+
+        it('should strip the colon and whitespace from a header key', () => {
+            // either one ends the field name on the wire, so a key carrying one was emitted as
+            // a header of a different name than the one setHeader() and the Bcc filter saw
+            let mb = new MimeNode();
+
+            assert.strictEqual(mb._normalizeHeaderKey('From: ceo@example.com ('), 'Fromceo@example.com(');
+            assert.strictEqual(mb._normalizeHeaderKey('x-my key\t'), 'X-Mykey');
+            assert.strictEqual(mb._normalizeHeaderKey(' x-my-key\r\n'), 'X-My-Key');
+        });
+
+        it('should not let a header key smuggle a second From or a visible Bcc into the message', (t, done) => {
+            // 'From: ceo@example.com (' with the value ')' used to come out as
+            // 'From: ceo@example.com (: )', a valid From line with a comment, in front of the
+            // real one, and the same trick on Bcc went past the filter that drops Bcc
+            let mb = new MimeNode('text/plain').setContent('hello');
+            mb.addHeader({ 'From: ceo@example.com (': ')', 'Bcc: hidden@example.com (': ')' });
+            mb.setHeader('From', 'app@example.com');
+            mb.setHeader('Bcc', 'real@example.com');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                const headers: string[] = msg.toString().split('\r\n\r\n')[0].split('\r\n');
+                assert.deepStrictEqual(
+                    headers.filter(line => /^from:/i.test(line)),
+                    ['From: app@example.com']
+                );
+                assert.ok(!headers.some(line => /^bcc:/i.test(line)), headers.join('\n'));
+                done();
+            });
         });
     });
 
@@ -3033,6 +3092,45 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             mb.setHeader('To', 'victim@compa\u00ADny.com');
 
             assert.deepStrictEqual(mb.getEnvelope().to, ['victim@company.com']);
+        });
+
+        // The bundled codec is super-linear in the length of a label, so what could never be
+        // a valid domain is not handed to it: 20k distinct code points took half a second per
+        // call, and an address is normalized several times while a message is built
+        it('should keep a domain over the DNS length limits as supplied without encoding it', () => {
+            const mb = new MimeNode('text/plain');
+            let label = '';
+            for (let i = 0; i < 20000; i++) {
+                label += String.fromCodePoint(0x4e00 + i);
+            }
+            const encode = 'user@' + label + '/x';
+            const decode = 'jõser@xn--' + 'a'.repeat(60000) + '/x';
+            const started = Date.now();
+
+            for (let i = 0; i < 5; i++) {
+                assert.strictEqual(mb._normalizeAddress(encode), encode);
+                assert.strictEqual(mb._normalizeAddress(decode), decode);
+            }
+
+            assert.ok(Date.now() - started < 500, 'took ' + (Date.now() - started) + ' ms');
+        });
+
+        it('should apply the DNS length limits per label and to the whole domain', () => {
+            const mb = new MimeNode('text/plain');
+
+            // the '/' keeps these away from domainToASCII, so they are the bundled codec's
+            const within = mb._normalizeAddress('user@' + 'õ'.repeat(63) + '.ee/x');
+            assert.ok(within.startsWith('user@xn--') && within.endsWith('.ee/x'), within);
+            assert.strictEqual(mb._normalizeAddress('user@' + 'õ'.repeat(64) + '.ee/x'), 'user@' + 'õ'.repeat(64) + '.ee/x');
+
+            const total = mb._normalizeAddress('user@' + 'õ.'.repeat(124) + 'ee/x');
+            assert.ok(total.startsWith('user@xn--') && total.endsWith('.ee/x'), total);
+            assert.strictEqual(mb._normalizeAddress('user@' + 'õ.'.repeat(125) + 'ee/x'), 'user@' + 'õ.'.repeat(125) + 'ee/x');
+
+            // the decoding direction has the same bound
+            assert.strictEqual(mb._normalizeAddress('jõser@xn--jgeva-dua.ee/x'), 'jõser@jõgeva.ee/x');
+            const label = 'xn--' + 'a'.repeat(60);
+            assert.strictEqual(mb._normalizeAddress('jõser@' + label + '.ee/x'), 'jõser@' + label + '.ee/x');
         });
     });
 });

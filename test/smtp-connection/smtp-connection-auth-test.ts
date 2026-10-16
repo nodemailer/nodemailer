@@ -15,6 +15,7 @@ import type { NodemailerError } from '../../src/errors.js';
 import { SMTPServer } from 'smtp-server';
 import nodemailer from '../../src/nodemailer.js';
 import { startRawServer, finishRawServer, createClient } from './raw-smtp-server.js';
+import { captureLogger } from '../smtp-transport/smtp-fixtures.js';
 
 interface SeenAuth {
     method: string;
@@ -516,6 +517,53 @@ describe('SMTP-Connection authentication', () => {
             EHLO: '250-test\r\n250-SIZE 1000\r\n250 AUTH PLAIN\r\n',
             XAUTH: (line: string) => (line === 'XAUTH first' ? '250 2.0.0 ok first\r\n' : 'no status code here\r\n')
         };
+
+        it('masks the commands of a custom handler in the transaction log', (t, done) => {
+            // the handler's commands carry the credentials in whatever shape its mechanism
+            // uses, so they are hidden the way the built-in mechanisms hide theirs
+            const { logger, lines } = captureLogger();
+
+            startRawServer(script, server => {
+                const client = createClient(server, {
+                    logger,
+                    debug: true,
+                    customAuth: {
+                        maskedauth: async ctx => {
+                            await ctx.sendCommand('AUTH MASKEDAUTH dXNlcjpzZWNyZXQ=');
+                            await ctx.sendCommand('c2Vjb25kLXNlY3JldA==');
+                            await ctx.sendCommand('AUTH MASKEDAUTH');
+                        }
+                    }
+                });
+
+                client.on('error', err => {
+                    finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                });
+
+                client.connect(() => {
+                    client.login({ method: 'maskedauth', user: 'testuser', pass: 'testpass' }, err => {
+                        assert.ok(!err, err?.message);
+                        client.quit();
+                    });
+                });
+
+                client.on('end', () => {
+                    finishRawServer(server, done, () => {
+                        // the server got the commands as sent
+                        assert.deepStrictEqual(
+                            server.commands.filter(line => /MASKEDAUTH|c2Vjb25k/.test(line)),
+                            ['AUTH MASKEDAUTH dXNlcjpzZWNyZXQ=', 'c2Vjb25kLXNlY3JldA==', 'AUTH MASKEDAUTH']
+                        );
+                        // the log did not
+                        const logged = lines.filter(line => line.entry && line.entry.tnx === 'client').map(line => line.message);
+                        assert.ok(logged.includes('AUTH MASKEDAUTH /* secret */'), JSON.stringify(logged));
+                        assert.ok(logged.includes('/* secret */'), JSON.stringify(logged));
+                        assert.ok(logged.includes('AUTH MASKEDAUTH'), JSON.stringify(logged));
+                        assert.ok(!logged.some(line => /dXNlcjpzZWNyZXQ|c2Vjb25k/.test(line)), JSON.stringify(logged));
+                    });
+                });
+            });
+        });
 
         it('resolves through a returned promise and parses the replies of sendCommand', (t, done) => {
             const replies: SMTPConnectionCustomAuthResponse[] = [];

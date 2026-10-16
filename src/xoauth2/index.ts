@@ -367,8 +367,14 @@ class XOAuth2 extends Stream {
             };
         }
 
-        Object.assign(urlOptions, this.options.customParams);
-        Object.assign(loggedUrlOptions, this.options.customParams);
+        const customParams: { [key: string]: any } = this.options.customParams || {};
+        Object.assign(urlOptions, customParams);
+        // a custom param is as likely to be a client assertion or an API key as a tenant
+        // name, so the log gets the same glimpse of it that it gets of the client secret
+        for (const key of Object.keys(customParams)) {
+            const param = customParams[key];
+            loggedUrlOptions[key] = (param === undefined || param === null ? '' : String(param)).substr(0, 6) + '...';
+        }
 
         this.logger.debug(
             {

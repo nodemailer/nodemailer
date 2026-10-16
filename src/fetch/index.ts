@@ -13,6 +13,10 @@ import { isProtoKey } from '../shared/objects.js';
 const MAX_REDIRECTS = 5;
 // a stalled server would otherwise hold the request, and whatever waits on it, open forever
 const DEFAULT_TIMEOUT = 60 * 1000;
+// the inactivity timeout above is reset by every byte, so a server dripping one within each
+// window could still hold the request, and the message being built from it, open for as
+// long as it liked. The whole request, redirects included, has to be done within this
+const DEFAULT_MAX_TIME = 2 * 60 * 1000;
 // the body is usually buffered in memory by the caller, so an unbounded download is refused
 const DEFAULT_MAX_BYTES = 64 * 1024 * 1024;
 
@@ -38,6 +42,8 @@ export interface FetchOptions {
     tls?: { [key: string]: any } | undefined;
     /** Socket inactivity timeout in milliseconds, defaults to 60000, 0 disables it */
     timeout?: number | undefined;
+    /** Time limit for the whole request in milliseconds, redirects included, defaults to 120000, 0 disables it */
+    maxTime?: number | undefined;
     /** Maximum size of the (decoded) response body in bytes, defaults to 64 MB, Infinity disables the limit */
     maxBytes?: number | undefined;
     /** Maximum number of redirects to follow (default 5) */
@@ -48,6 +54,8 @@ export interface FetchOptions {
     redirects?: number | undefined;
     /** Response stream shared across redirects, set by nmfetch itself */
     fetchRes?: FetchResponse | undefined;
+    /** Timestamp the whole request has to be done by, shared across redirects, set by nmfetch itself */
+    deadline?: number | undefined;
 }
 
 /**
@@ -140,6 +148,13 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
     options.cookies = options.cookies || new Cookies();
     options.redirects = options.redirects || 0;
     options.maxRedirects = isNaN(options.maxRedirects as number) ? MAX_REDIRECTS : options.maxRedirects;
+
+    if (!options.deadline) {
+        options.maxTime = typeof options.maxTime === 'number' && options.maxTime >= 0 ? options.maxTime : DEFAULT_MAX_TIME;
+        // the one deadline is shared with the requests the redirects lead to, every hop
+        // gets the time that is left rather than starting over
+        options.deadline = options.maxTime ? Date.now() + options.maxTime : 0;
+    }
 
     const fetchRes = options.fetchRes;
     const parsed = parseFetchUrl(url);
@@ -302,12 +317,23 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         return fetchRes;
     }
 
+    // the whole request has to be done by options.deadline, see maxTime. The timer is
+    // released on every way out of the request, so it never outlives it
+    let deadlineTimer: NodeJS.Timeout | undefined;
+    const clearDeadline = (): void => {
+        if (deadlineTimer) {
+            clearTimeout(deadlineTimer);
+            deadlineTimer = undefined;
+        }
+    };
+
     // reports the first failure of this request on fetchRes and releases the request
     const fail = (err: NodemailerError, sourceUrl: string = url): void => {
         if (finished) {
             return;
         }
         finished = true;
+        clearDeadline();
         setFetchCode(err);
         err.sourceUrl = sourceUrl;
         fetchRes.emit('error', err);
@@ -319,11 +345,21 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         req.setTimeout(timeout, () => fail(new Error('Request Timeout')));
     }
 
+    if (options.deadline) {
+        deadlineTimer = setTimeout(
+            () => fail(new Error('Request exceeded the allowed ' + options.maxTime + ' ms')),
+            Math.max(options.deadline - Date.now(), 1)
+        );
+        // a pending deadline is no reason to keep the process alive
+        deadlineTimer.unref();
+    }
+
     req.on('error', (err: NodemailerError) => fail(err));
 
     // a consumer that destroys the response stream before it ended does not want the rest of
     // the body, release the request now instead of when the timeout fires
     fetchRes.once('close', () => {
+        clearDeadline();
         if (finished || fetchRes.readableEnded) {
             return;
         }
@@ -401,6 +437,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
             // this request is done with, release it so its socket and timeout do not
             // outlive it and report a late error on the shared fetchRes
             finished = true;
+            clearDeadline();
             res.resume();
             req.abort();
 
@@ -415,6 +452,8 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         }
 
         res.on('error', (err: NodemailerError) => fail(err));
+        // the response is in, whatever is left of it is in memory and no longer on the network
+        res.once('end', () => clearDeadline());
 
         const maxBytes = typeof options.maxBytes === 'number' && options.maxBytes > 0 ? options.maxBytes : DEFAULT_MAX_BYTES;
         const source: Readable = inflate || res;
@@ -455,6 +494,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
 
 nmfetch.Cookies = Cookies;
 nmfetch.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
+nmfetch.DEFAULT_MAX_TIME = DEFAULT_MAX_TIME;
 
 // the namespace member can not refer to the class of the same name directly
 type CookiesJar = Cookies;

@@ -37,7 +37,11 @@ export interface SendMailOptions extends MailComposerOptions {
     dsn?: SMTPEnvelopeDsn | undefined;
     /** SMTP transports: RFC 8689, send the REQUIRETLS parameter with MAIL FROM */
     requireTLSExtensionEnabled?: boolean | undefined;
-    /** SMTP transports: per-message authentication settings, used instead of the transport level auth */
+    /**
+     * SMTP transports: per-message authentication settings, used instead of the transport level auth.
+     * Only the credential fields are taken from it (type, user, pass, accessToken, refreshToken, expires),
+     * the token endpoint and client settings stay those of the transport
+     */
     auth?: SMTPTransportAuthOptions | undefined;
     /** SES transport: extra SendEmailCommand parameters merged into the API call */
     ses?: SESSendEmailRequest | undefined;

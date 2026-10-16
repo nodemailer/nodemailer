@@ -711,10 +711,13 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                     return callback(err);
                 }
                 let cidCounter = 0;
+                // the media type is a bounded token: a quote, whitespace, '>' or '<' ends the
+                // attribute value and with it the type, so one img tag never scans ahead to a
+                // ';' that belongs to a later tag, which was quadratic
                 html = (html || '')
                     .toString()
                     .replace(
-                        /(<img\b[^<>]{0,1024} src\s{0,20}=[\s"']{0,20})(data:([^;]+);[^"'>\s]+)/gi,
+                        /(<img\b[^<>]{0,1024} src\s{0,20}=[\s"']{0,20})(data:([^;"'<>\s]{1,255});[^"'>\s]+)/gi,
                         (match: string, prefix: string, dataUri: string, mimeType: string) => {
                             const cid = crypto.randomBytes(10).toString('hex') + '@localhost';
                             if (!mail.data.attachments) {

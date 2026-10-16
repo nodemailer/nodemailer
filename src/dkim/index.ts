@@ -206,8 +206,9 @@ class DKIMSigner {
 
     createWriteCache(): void {
         this.output.usingCache = true;
-        // pipe remainings to cache file
-        this.cache = fs.createWriteStream(this.cachePath as string);
+        // pipe remainings to cache file. It holds the message body and cacheDir is often a
+        // shared directory such as /tmp, so nobody but the owner gets to read it
+        this.cache = fs.createWriteStream(this.cachePath as string, { mode: 0o600 });
         this.cache.once('error', err => {
             // drain input
             (this.relaxedBody as RelaxedBody).unpipe(this.cache as fs.WriteStream);
