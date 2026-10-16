@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.1.2](https://github.com/nodemailer/nodemailer/compare/v10.1.1...v10.1.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* bound the work a message can make the mailer do and keep per-message auth off the transport's token endpoint ([e347fa2](https://github.com/nodemailer/nodemailer/commit/e347fa2260a7e342e772a7e187937aa87ac96364))
+
 ## [10.1.1](https://github.com/nodemailer/nodemailer/compare/v10.1.0...v10.1.1) (2026-10-14)
 
 
