@@ -79,6 +79,13 @@ export function isPlainText(value: unknown, isParam?: boolean): boolean {
     return typeof value === 'string' && !re.test(value);
 }
 
+// A parameter value goes out as is only when it is plain text that does not look like an encoded
+// word. Receivers decode encoded words found in parameter values (libmime does so for unencoded
+// continuations), so as plain text it would come back as something else
+function isPlainParamValue(value: unknown): value is string {
+    return isPlainText(value, true) && !(value as string).includes('=?');
+}
+
 /**
  * Wraps a value into a quoted-string. Inside one a quote would end the string early
  * and a backslash would escape whatever follows it, so both go out as quoted-pairs.
@@ -261,7 +268,7 @@ export function buildHeaderValue(structured: StructuredHeaderValue): string {
         const value = (structured.params as Record<string, string>)[key];
         // a parameter name is a token too and it is emitted without any quoting around it
         const param = key.replace(/[\x00-\x1f\x7f]/g, '');
-        if (!isPlainText(value, true) || value.length >= 75) {
+        if (!isPlainParamValue(value) || value.length >= 75) {
             buildHeaderParam(param, value, 50).forEach(encodedParam => {
                 if (!/[\s"\\;:/=(),<>@[\]?]|^[-']|'$/.test(encodedParam.value) || encodedParam.key.substr(-1) === '*') {
                     paramsArray.push(encodedParam.key + '=' + encodedParam.value);
@@ -312,7 +319,7 @@ export function buildHeaderParam(key: string, data: string | Buffer, maxLength?:
     maxLength = maxLength || 50;
 
     // process ascii only text
-    if (isPlainText(data, true)) {
+    if (isPlainParamValue(data)) {
         // check if conversion is even needed
         if (encodedStr.length <= maxLength) {
             return [

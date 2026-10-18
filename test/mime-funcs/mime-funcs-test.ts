@@ -211,6 +211,10 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#buildHeaderParam', () => {
+        it('should encode a value that looks like an encoded word', () => {
+            assert.deepStrictEqual(mimeFuncs.buildHeaderParam('filename', 'a=?b', 50), [{ key: 'filename*0*', value: "utf-8''a%3D%3Fb" }]);
+        });
+
         it('should return unmodified', () => {
             assert.deepStrictEqual(
                 [
@@ -693,6 +697,17 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#_buildHeaderValue', () => {
+        it('should encode a parameter value that looks like an encoded word', () => {
+            let built = mimeFuncs.buildHeaderValue({ value: 'attachment', params: { filename: '=?utf-8?Q?evil?=.txt' } });
+            assert.strictEqual(built, "attachment; filename*0*=utf-8''%3D%3Futf-8%3FQ%3Fevil%3F%3D.txt");
+            assert.deepStrictEqual(libmime.parseHeaderValue(built).params, { filename: '=?utf-8?Q?evil?=.txt' });
+
+            // a long one is split into continuations, unencoded ones were decoded back as an encoded word
+            const filename = '=?utf-8?Q?' + 'a'.repeat(80) + '?=.txt';
+            built = mimeFuncs.buildHeaderValue({ value: 'attachment', params: { filename } });
+            assert.deepStrictEqual(libmime.parseHeaderValue(built).params, { filename });
+        });
+
         it('should quote a parameter that has no value', () => {
             // a parameter value is a token or a quoted-string and a token is never empty, so
             // the bare 'flag=' it used to emit parses as neither
