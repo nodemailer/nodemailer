@@ -3077,6 +3077,13 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             }
         });
 
+        it('should deliver to the mailbox after an obsolete route', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', '<@evil.com,@x.com:user@good.com>');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['user@good.com']);
+        });
+
         it('should not take a recipient out of a nested comment', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'Victim (x(y) <evil@evil.com>) <v@victim.com>');

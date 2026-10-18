@@ -1940,4 +1940,26 @@ describe('#addressparser', () => {
             });
         }
     });
+
+    // An angle-addr may still carry the source route of RFC 822 (obs-route, RFC 5322 4.4). It
+    // names the relays to go through, not the mailbox, and it was folded into the local part
+    describe('Obsolete route in an angle-addr', () => {
+        it('should drop the route and keep the mailbox', () => {
+            for (const [input, expected] of [
+                ['<@evil.com,@x.com:user@good.com>', [{ address: 'user@good.com', name: '' }]],
+                ['Name <@relay.example:user@good.com>', [{ address: 'user@good.com', name: 'Name' }]],
+                ['<@a.com:"x:y"@b.com>', [{ address: '"x:y"@b.com', name: '' }]],
+                ['<@a.com, @b.com: user@c.com>', [{ address: 'user@c.com', name: '' }]],
+                ['<@[IPv6:2001:db8::1]:user@good.com>', [{ address: 'user@good.com', name: '' }]],
+                ['<@a.com(x:y):user@good.com>', [{ address: 'user@good.com', name: 'x:y' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should leave a value without a mailbox after the route alone', () => {
+            assert.deepStrictEqual(addressparser('<@a.com:user>'), [{ address: '@a.com:user', name: '' }]);
+            assert.deepStrictEqual(addressparser('<"@a.com:x"@b.com>'), [{ address: '"@a.com:x"@b.com', name: '' }]);
+        });
+    });
 });
