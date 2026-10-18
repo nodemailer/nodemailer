@@ -3064,6 +3064,19 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             }
         });
 
+        it('should read whitespace and comments beside the "@" as nothing', () => {
+            for (const [recipient, expected] of [
+                ['<a (b) @c.com>', 'a@c.com'],
+                ['"a" @good.com', 'a@good.com'],
+                ['user @ good.com', 'user@good.com']
+            ]) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, [expected], recipient);
+            }
+        });
+
         it('should not take a recipient out of a nested comment', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'Victim (x(y) <evil@evil.com>) <v@victim.com>');

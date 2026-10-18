@@ -1882,4 +1882,62 @@ describe('#addressparser', () => {
             assert.deepStrictEqual(addressparser('"a@evil.com"@[127.0.0.1]'), [{ address: '"a@evil.com"@[127.0.0.1]', name: '' }]);
         });
     });
+
+    // obs-local-part and obs-domain allow CFWS on either side of the '@', so 'user @ good.com'
+    // and '<a (b) @c>' name user@good.com and a@c. The whitespace was kept instead and the
+    // envelope went out to '"user "@ good.com', a mailbox nobody named
+    describe('Whitespace and comments beside the "@"', () => {
+        it('should read whitespace and comments beside the "@" as nothing', () => {
+            for (const [input, expected] of [
+                ['<a(x)(y)@b.com>', [{ address: 'a@b.com', name: 'x y' }]],
+                ['<a (b) @c.com>', [{ address: 'a@c.com', name: 'b' }]],
+                ['<a@ (b) c.com>', [{ address: 'a@c.com', name: 'b' }]],
+                ['<"a" @good.com>', [{ address: '"a"@good.com', name: '' }]],
+                ['<"a@evil.com>"@ good.com>', [{ address: '"a@evil.com>"@good.com', name: '' }]],
+                ['<"a\\"b@evil.com" @ good.com>', [{ address: '"a\\"b@evil.com"@good.com', name: '' }]],
+                ['"a" @good.com', [{ address: 'a@good.com', name: '' }]],
+                ['"a b" @c.com', [{ address: '"a b"@c.com', name: '' }]],
+                ['"a@b" @c.com', [{ address: '"a@b"@c.com', name: '' }]],
+                ['user @ good.com', [{ address: 'user@good.com', name: '' }]],
+                ['Name user @ good.com', [{ address: 'user@good.com', name: 'Name' }]],
+                ['"user" @good.com(x)evil.com', [{ address: 'user@good.com', name: 'evil.com' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should still part two atoms a comment sits between', () => {
+            assert.deepStrictEqual(addressparser('<a(x)(y)b@c.com>'), [{ address: 'b@c.com', name: 'a' }]);
+            assert.deepStrictEqual(addressparser('user@good.com(x)evil.com'), [{ address: 'user@good.com', name: 'evil.com' }]);
+        });
+
+        // with two '@' it is not clear which one the whitespace belongs to, so the first run
+        // that reads as an addr-spec still wins
+        it('should leave whitespace beside one of several "@" alone', () => {
+            assert.deepStrictEqual(addressparser('<x@evil.com @good.com>'), [{ address: 'x@evil.com', name: '@good.com' }]);
+            assert.deepStrictEqual(addressparser('<"a" @b.com @c.com>'), [{ address: '"a" @b.com @c.com', name: '' }]);
+        });
+
+        it('should not join whitespace inside a quoted string', () => {
+            assert.deepStrictEqual(addressparser('<"a @ b">'), [{ address: '"a @ b"', name: '' }]);
+        });
+
+        for (const [label, build] of [
+            ['a long whitespace run in an angle-addr', (count: number) => '<a' + ' '.repeat(count) + 'b@c.com>'],
+            ['long whitespace runs beside the "@"', (count: number) => 'a' + ' '.repeat(count) + '@' + ' '.repeat(count) + 'b'],
+            ['a quoted local part and a long whitespace run', (count: number) => '"a"' + ' '.repeat(count) + '@b.com'],
+            ['many comments beside the "@"', (count: number) => '<a' + '(x)'.repeat(count / 3) + '@b.com>']
+        ] as [string, (count: number) => string][]) {
+            it(`should read ${label} in linear time`, () => {
+                const count = 400000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+    });
 });

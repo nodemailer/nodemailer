@@ -217,6 +217,69 @@ function _indexOfAt(text: string, from: number, to: number): number {
 }
 
 /**
+ * A quoted-string a value opens with.
+ */
+const LEADING_QUOTED_STRING = /^"(?:[^"\\]|\\[\s\S])*"/;
+
+/**
+ * Drops the whitespace on either side of the '@' at an offset.
+ *
+ * obs-local-part and obs-domain allow CFWS around the '@' (RFC 5322 4.4), so 'user @ good.com'
+ * names user@good.com. Kept, the whitespace went into the envelope as '"user "@ good.com'.
+ * The scan is by index, a pattern such as /\s+@/ backtracks over a long whitespace run that
+ * no '@' follows.
+ *
+ * @param value Value holding the '@'
+ * @param at Offset of the '@', or -1
+ * @return The value with the whitespace beside that '@' removed
+ */
+function _joinAtSpacing(value: string, at: number): string {
+    if (at < 0) {
+        return value;
+    }
+
+    let start = at;
+    while (start > 0 && _isSpaceCode(value.charCodeAt(start - 1))) {
+        start--;
+    }
+    let end = at + 1;
+    while (end < value.length && _isSpaceCode(value.charCodeAt(end))) {
+        end++;
+    }
+
+    return start === at && end === at + 1 ? value : value.slice(0, start) + '@' + value.slice(end);
+}
+
+/**
+ * Drops the whitespace beside the '@' that splits the domain off a value. That is the '@'
+ * right after a quoted local part the value opens with, or else the only '@' it holds outside
+ * any quoted string. With several it is not clear which one the whitespace belongs to, and
+ * '<x@evil.com @good.com>' is left to the addr-spec recovery to read as it always has.
+ *
+ * @param value Value to clean up
+ * @return The value with the whitespace beside that '@' removed
+ */
+function _collapseAtSpacing(value: string): string {
+    const quoted = LEADING_QUOTED_STRING.exec(value);
+    if (quoted) {
+        let at = quoted[0].length;
+        while (at < value.length && _isSpaceCode(value.charCodeAt(at))) {
+            at++;
+        }
+        if (value.charAt(at) === '@' && value.indexOf('@', at + 1) < 0) {
+            return _joinAtSpacing(value, at);
+        }
+    }
+
+    const at = value.indexOf('@');
+    if (at < 0 || value.indexOf('@', at + 1) >= 0 || value.lastIndexOf('"') > at) {
+        return value;
+    }
+
+    return _joinAtSpacing(value, at);
+}
+
+/**
  * Finds the offset LOOSE_TEXT_ADDR matches at, or -1 when it does not match at all.
  *
  * Letting the pattern search for itself is quadratic: '[^@\s]+' is retried from every
@@ -312,6 +375,7 @@ function _looseAddressStart(text: string): number {
  * @param data Collected address parts, mutated in place
  */
 function _recoverAddrSpec(data: { address: string; text: string }): void {
+    data.address = _collapseAtSpacing(data.address);
     if (!HAS_WHITESPACE.test(data.address)) {
         return;
     }
@@ -387,6 +451,11 @@ function _stripAddressComments(address: string): { address: string; comments: st
     // carried along rather than read back off the growing result, which would flatten it on
     // every comment (see lastChars in _handleAddress)
     let lastChar = '';
+    // A comment that just closed stands for a space, written once the next character shows
+    // whether one is wanted: not beside an '@', and not on top of whitespace that follows.
+    // Deciding on the spot saw only the character right after the ')', so a second comment
+    // in a row hid the '@' behind it and 'a(x)(y)@b' read as 'a @b'
+    let pendingSpace = false;
 
     for (let i = 0, len = address.length; i < len; i++) {
         const chr = address.charAt(i);
@@ -400,14 +469,19 @@ function _stripAddressComments(address: string): { address: string; comments: st
             } else if (chr === ')' && !--depth) {
                 comments.push(comment.trim());
                 comment = '';
-                if (lastChar !== '@' && address.charAt(i + 1) !== '@') {
-                    result += ' ';
-                    lastChar = ' ';
-                }
+                pendingSpace = lastChar !== '@';
             } else {
                 comment += chr;
             }
             continue;
+        }
+
+        if (pendingSpace && chr !== '(') {
+            pendingSpace = false;
+            if (chr !== '@' && chr !== '<' && !_isSpaceCode(address.charCodeAt(i))) {
+                result += ' ';
+                lastChar = ' ';
+            }
         }
 
         if (closer) {
@@ -597,12 +671,18 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
 
         // If no address was found, try to detect one from regular text
         if (!data.address.length && data.text.length) {
+            // Whitespace beside the '@' is CFWS, so 'user @ good.com' is read as one run. Both
+            // tiers read the collapsed runs, and only a run an address comes out of is replaced
+            // by its collapsed form, the display text keeps its spacing
+            const candidates: string[] = data.text.map((part: string) => _collapseAtSpacing(part));
+
             for (let i = data.text.length - 1; i >= 0; i--) {
                 // Security: Do not extract email addresses from quoted strings.
                 // RFC 5321 allows @ inside quoted local-parts like "user@domain"@example.com.
                 // Extracting emails from quoted text leads to misrouting vulnerabilities.
-                if (!data.textWasQuoted[i] && _isAddrSpec(data.text[i])) {
-                    data.address = data.text.splice(i, 1);
+                if (!data.textWasQuoted[i] && _isAddrSpec(candidates[i])) {
+                    data.address = [candidates[i]];
+                    data.text.splice(i, 1);
                     data.textWasQuoted.splice(i, 1);
                     break;
                 }
@@ -614,8 +694,9 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 for (let i = data.text.length - 1; i >= 0; i--) {
                     // Security: Do not extract email addresses from quoted strings
                     if (!data.textWasQuoted[i]) {
-                        const part: string = data.text[i];
-                        let remainder = part;
+                        // the strict tier found nothing, so it spliced nothing and the indexes still line up
+                        const part = candidates[i];
+                        let remainder = data.text[i];
 
                         const at = _looseAddressStart(part);
                         if (at >= 0) {
@@ -671,7 +752,9 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
             // on a value that is no addr-spec at all (GHSA-g57g-f23g-4646). Putting the quotes
             // back first is what lets the recovery tell the whitespace an addr-spec may carry
             // from the wreckage trailing one, as only a quoted local part may hold whitespace
-            data.address = _quoteLocalPart(data.text);
+            // The quotes are gone at this point, so the '@' the domain splits off at is the
+            // last one, not the single one _collapseAtSpacing insists on
+            data.address = _quoteLocalPart(_joinAtSpacing(data.text, _domainAt(data.text)));
             data.text = '';
         }
 
