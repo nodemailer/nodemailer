@@ -1109,7 +1109,7 @@ describe('#addressparser', () => {
             assert.strictEqual(result[0].group[0].address, 'user@example.com');
         });
 
-        it('should handle nested groups at depth limit (depth 10)', () => {
+        it('should handle nested groups (depth 10)', () => {
             let input = buildDeepGroup(10);
             let result: any = addressparser(input);
             assert.strictEqual(result.length, 1);
@@ -1120,28 +1120,25 @@ describe('#addressparser', () => {
             assert.strictEqual(result[0].group[0].address, 'user@example.com');
         });
 
-        // Every level parses what is left of the value once more, so the limit is the factor
-        // a crafted header multiplies the parse by. RFC 5322 allows no nesting at all and the
-        // deepest seen in real mail is two or three levels from broken clients
-        it('should drop the members of a group nested past the limit (depth 11)', () => {
+        // A group is read in the same pass as the rest of the list, so nesting costs nothing
+        // and there is no depth past which members are dropped. Each level used to parse what
+        // was left of the value once more, which a depth limit of ten had to bound
+        it('should keep the members of a group however deep it is nested (depth 11)', () => {
             let result: any = addressparser(buildDeepGroup(11));
             assert.strictEqual(result.length, 1);
             assert.strictEqual(result[0].name, 'g0');
-            assert.deepStrictEqual(result[0].group, []);
+            assert.deepStrictEqual(result[0].group, [{ address: 'user@example.com', name: '' }]);
         });
 
         it('should parse a large list behind many group openers in linear time', () => {
-            for (const [openers, members] of [
-                [10, 80000],
-                [1000, 0]
-            ]) {
+            for (const openers of [10, 1000, 100000]) {
                 const input = 'g: '.repeat(openers) + 'a@b.com, '.repeat(80000);
 
                 const started = Date.now();
                 const result: any = addressparser(input, { flatten: true });
                 const elapsed = Date.now() - started;
 
-                assert.strictEqual(result.length, members);
+                assert.strictEqual(result.length, 80000, String(openers));
                 assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
             }
         });
@@ -2033,6 +2030,66 @@ describe('#addressparser', () => {
             ] as [string, any][]) {
                 assert.deepStrictEqual(addressparser(input), expected, input);
             }
+        });
+    });
+
+    // A group is read in the same pass as the rest of the list rather than cut out at its ';'
+    // and parsed again on its own, once per level of nesting
+    describe('Groups read in a single pass', () => {
+        it('should flatten a nested group into the one around it, as before', () => {
+            for (const [input, expected] of [
+                ['g1: g2: a@b.com;', [{ name: 'g1', group: [{ address: 'a@b.com', name: '' }] }]],
+                [
+                    'g1: x@y.com, g2: a@b.com;',
+                    [
+                        {
+                            name: 'g1',
+                            group: [
+                                { address: 'x@y.com', name: '' },
+                                { address: 'a@b.com', name: '' }
+                            ]
+                        }
+                    ]
+                ],
+                [
+                    'g1: g2: a@b.com; c@d.com;',
+                    [
+                        { name: 'g1', group: [{ address: 'a@b.com', name: '' }] },
+                        { address: 'c@d.com', name: '' }
+                    ]
+                ],
+                [
+                    'FirstName Surname-WithADash :: Company <firstname@company.com>',
+                    [{ name: 'FirstName Surname-WithADash', group: [{ address: 'firstname@company.com', name: 'Company' }] }]
+                ]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it("should end an angle-addr left open inside a group at the group's ';'", () => {
+            assert.deepStrictEqual(addressparser('G: a@b<.com, c@d.com; e@f.com'), [
+                { name: 'G', group: [{ address: 'c@d.com', name: 'a@b .com,' }] },
+                { address: 'e@f.com', name: '' }
+            ]);
+            assert.deepStrictEqual(addressparser('G: <a;b@c.com>; d@e.com'), [
+                { name: 'G', group: [{ address: '', name: 'a' }] },
+                { address: 'b@c.com>', name: '' },
+                { address: 'd@e.com', name: '' }
+            ]);
+        });
+
+        it("should not end a group at a ';' inside a domain literal of an angle-addr", () => {
+            assert.deepStrictEqual(addressparser('G: <a@[x;y]>; d@e.com'), [
+                { name: 'G', group: [{ address: 'a@[x;y]', name: '' }] },
+                { address: 'd@e.com', name: '' }
+            ]);
+        });
+
+        it('should merge display name fragments inside a group', () => {
+            assert.deepStrictEqual(addressparser('G: Joe Foo, PhD <joe@example.com>;'), [
+                { name: 'G', group: [{ address: 'joe@example.com', name: 'Joe Foo, PhD' }] }
+            ]);
         });
     });
 });
