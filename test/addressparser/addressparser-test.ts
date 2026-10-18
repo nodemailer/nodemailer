@@ -2091,5 +2091,14 @@ describe('#addressparser', () => {
                 { name: 'G', group: [{ address: 'joe@example.com', name: 'Joe Foo, PhD' }] }
             ]);
         });
+
+        // No conformant reading exists: an angle-addr followed by a ':' is neither a mailbox nor a
+        // group name. The group wins and the angle-addr is dropped, as it always has been, so
+        // the envelope never holds an address the group syntax hid
+        it('should read an angle-addr followed by a group as the group alone', () => {
+            assert.deepStrictEqual(addressparser('Name <a@b.com>: x@y.com;'), [
+                { name: 'Name', group: [{ address: 'x@y.com', name: '' }] }
+            ]);
+        });
     });
 });
