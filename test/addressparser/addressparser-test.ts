@@ -1962,4 +1962,32 @@ describe('#addressparser', () => {
             assert.deepStrictEqual(addressparser('<"@a.com:x"@b.com>'), [{ address: '"@a.com:x"@b.com', name: '' }]);
         });
     });
+
+    // A comment is never part of a mailbox. One that stood alone was promoted to the display
+    // text and then read as the address, so '(a@evil.com)' delivered to evil.com where no
+    // conformant reading has a mailbox at all
+    describe('Mailbox read out of a comment', () => {
+        it('should keep a comment that stands alone as the display name only', () => {
+            for (const input of ['(a@evil.com)', '<> (a@evil.com)', '"" (a@evil.com)', '<(a@evil.com)>', '(x) (a@evil.com)']) {
+                const result = addressparser(input);
+                assert.strictEqual(result.length, 1, input);
+                assert.strictEqual(result[0].address, '', input);
+                assert.ok(result[0].name.includes('a@evil.com'), input);
+            }
+            assert.deepStrictEqual(addressparser('G: (a@evil.com);'), [{ name: 'G', group: [{ address: '', name: 'a@evil.com' }] }]);
+        });
+
+        it('should still name a mailbox with a comment', () => {
+            for (const [input, expected] of [
+                ['andris@tr.ee (andris)', [{ address: 'andris@tr.ee', name: 'andris' }]],
+                ['andris@tr.ee (reinman) andris', [{ address: 'andris@tr.ee', name: 'andris' }]],
+                ['<a@b.com> (Name)', [{ address: 'a@b.com', name: 'Name' }]],
+                ['(Name) <a@b.com>', [{ address: 'a@b.com', name: 'Name' }]],
+                ['(Name) a@b.com', [{ address: 'a@b.com', name: 'Name' }]],
+                ['(Undisclosed recipients)', [{ address: '', name: 'Undisclosed recipients' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+    });
 });

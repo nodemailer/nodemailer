@@ -648,10 +648,14 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         }
     }
 
-    // If there is no text but a comment, replace the two
+    // If there is no text but a comment, replace the two. A comment is never part of a
+    // mailbox, so text that came out of one only ever names it: reading an address out of it
+    // made '(a@evil.com)' a recipient where no conformant reading has a mailbox at all
+    let textFromComment = false;
     if (!data.text.length && data.comment.length) {
         data.text = data.comment;
         data.comment = [];
+        textFromComment = true;
     }
 
     if (isGroup) {
@@ -692,7 +696,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         data.address = addressParts;
 
         // If no address was found, try to detect one from regular text
-        if (!data.address.length && data.text.length) {
+        if (!data.address.length && data.text.length && !textFromComment) {
             // Whitespace beside the '@' is CFWS, so 'user @ good.com' is read as one run. Both
             // tiers read the collapsed runs, and only a run an address comes out of is replaced
             // by its collapsed form, the display text keeps its spacing
@@ -785,10 +789,11 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         // a comment names the mailbox only when nothing else does, as one outside the brackets
         if (!data.text && addressComments.length) {
             data.text = addressComments.join(' ');
+            textFromComment = true;
         }
 
         const address: MailboxAddress = {
-            address: data.address || data.text || '',
+            address: data.address || (textFromComment ? '' : data.text) || '',
             name: data.text || data.address || ''
         };
 

@@ -3084,6 +3084,15 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.deepStrictEqual(mb.getEnvelope().to, ['user@good.com']);
         });
 
+        it('should not take a recipient out of a comment that stands alone', () => {
+            for (const recipient of ['(a@evil.com)', '<(a@evil.com)>', 'G: (a@evil.com);']) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, [], recipient);
+            }
+        });
+
         it('should not take a recipient out of a nested comment', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'Victim (x(y) <evil@evil.com>) <v@victim.com>');
