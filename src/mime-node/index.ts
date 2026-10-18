@@ -204,6 +204,32 @@ const QUOTED_STRING = /^"(?:[^"\\]|\\[\s\S])*"$/;
 // the envelope carries
 const PLAIN_ADDRESS = /^[^\s"(),:;<>@[\\\]]+@[^\s"(),:;<>@[\\\]]+$/;
 
+/**
+ * Removes the whitespace inside every <...> of a References value. A "<" with no ">" after
+ * it is left as it is. An index scan, the regex /<[^>]*>/g rescans the rest of the value
+ * from every such "<"
+ *
+ * @param value References header value
+ * @returns The value with the msg-ids closed up
+ */
+function stripWhitespaceInAngleBrackets(value: string): string {
+    let result = '';
+    let pos = 0;
+    for (;;) {
+        const open = value.indexOf('<', pos);
+        if (open < 0) {
+            break;
+        }
+        const close = value.indexOf('>', open + 1);
+        if (close < 0) {
+            break;
+        }
+        result += value.slice(pos, open) + value.slice(open, close + 1).replace(/\s/g, '');
+        pos = close + 1;
+    }
+    return result + value.slice(pos);
+}
+
 // domainToASCII and domainToUnicode are WHATWG host parsers rather than plain IDNA
 // mappers, so they do more than map: they cut the host at '/', '\\', '?' and '#', drop C0
 // controls, and percent-decode. Handing them 'evil.example/mail.corp.example' returns the
@@ -1706,30 +1732,27 @@ class MimeNode {
                 return value;
 
             // space separated list of values enclosed in <>
-            case 'References':
-                value = ([] as string[]).concat
-                    .apply(
-                        [],
-                        ([] as MimeNodeHeaderValue[]).concat(value || '').map(elm => {
-                            elm = (elm || '')
-                                .toString()
-                                .replace(/\r?\n|\r/g, ' ')
-                                .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
-                                .trim();
-                            return elm.replace(/<[^>]*>/g, str => str.replace(/\s/g, '')).split(/\s+/);
-                        })
-                    )
-                    .map(elm => {
-                        if (elm.charAt(0) !== '<') {
-                            elm = '<' + elm;
+            case 'References': {
+                const ids: string[] = [];
+                for (const entry of ([] as MimeNodeHeaderValue[]).concat(value || '')) {
+                    const elm = (entry || '')
+                        .toString()
+                        .replace(/\r?\n|\r/g, ' ')
+                        .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+                        .trim();
+                    for (let id of stripWhitespaceInAngleBrackets(elm).split(/\s+/)) {
+                        if (id.charAt(0) !== '<') {
+                            id = '<' + id;
                         }
-                        if (elm.charAt(elm.length - 1) !== '>') {
-                            elm = elm + '>';
+                        if (id.charAt(id.length - 1) !== '>') {
+                            id = id + '>';
                         }
-                        return elm;
-                    });
+                        ids.push(id);
+                    }
+                }
 
-                return value.join(' ').trim();
+                return ids.join(' ').trim();
+            }
 
             case 'Date':
                 if (Object.prototype.toString.call(value) === '[object Date]') {

@@ -130,6 +130,15 @@ describe('MailMessage Tests', () => {
         });
     });
 
+    describe('releaseStreams', () => {
+        it('should release the streams of a list longer than the argument limit', () => {
+            const mailer: any = { options: {}, _defaults: {} };
+            // spreading the attachments into the arguments of push threw at about 150k entries
+            const message = new MailMessage(mailer, { attachments: new Array(200000).fill({ content: 'x' }) });
+            assert.doesNotThrow(() => message.releaseStreams());
+        });
+    });
+
     describe('resolveContent', () => {
         // the transporter level access policy lives on the message, not on the call
         const sandboxed = (data: any) =>

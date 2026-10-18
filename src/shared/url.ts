@@ -42,10 +42,27 @@ export interface ParsedUrl {
 // to re-insert the authority separator the legacy parser did not require.
 const SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)([\s\S]+)$/;
 
-// Leading and trailing C0 controls and spaces, which the WHATWG parser strips before it
-// looks at the input. Stripped up front so that the slash-less form is recognized in a
-// value read from a file with a trailing newline as well.
-const SURROUNDING_WHITESPACE = /^[\x00-\x20]+|[\x00-\x20]+$/g;
+/**
+ * Drops the leading and trailing C0 controls and spaces, which the WHATWG parser strips
+ * before it looks at the input. Stripped up front so that the slash-less form is recognized
+ * in a value read from a file with a trailing newline as well. An index scan, the regex
+ * /^[\x00-\x20]+|[\x00-\x20]+$/g retried a run of spaces inside the value from every
+ * position in it
+ *
+ * @param input URL string
+ * @returns The string without the surrounding controls and spaces
+ */
+function stripSurroundingWhitespace(input: string): string {
+    let start = 0;
+    let end = input.length;
+    while (start < end && input.charCodeAt(start) <= 0x20) {
+        start++;
+    }
+    while (end > start && input.charCodeAt(end - 1) <= 0x20) {
+        end--;
+    }
+    return input.slice(start, end);
+}
 
 // Leading characters legacy url.parse() skips before it reads the scheme
 const LEGACY_TRIM = /^[\x00-\x20\u00a0\ufeff]+/;
@@ -146,7 +163,7 @@ function normalizeHostname(raw: string, href: string): string {
 }
 
 export const parse = (input?: string | null, parseQueryString?: boolean): ParsedUrl => {
-    input = (input || '').replace(SURROUNDING_WHITESPACE, '');
+    input = stripSurroundingWhitespace(input || '');
 
     // Legacy url.parse() parses a "user:pass@host:port" authority that follows
     // the scheme even without the "//" separator, for schemes outside its

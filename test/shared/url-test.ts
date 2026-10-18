@@ -135,6 +135,16 @@ describe('URL wrapper Tests', { timeout: 10 * 1000 }, () => {
             assert.throws(() => urllib.parse('smtps://localhost%2500.example.com:465'), rejected);
         });
 
+        it('should strip surrounding whitespace in linear time', () => {
+            // the regex that stripped it retried a run of spaces inside the value from every
+            // position in the run
+            const start = Date.now();
+            const parsed = urllib.parse('http://example.com/?q=a' + ' '.repeat(200000) + 'b');
+            const elapsed = Date.now() - start;
+            assert.strictEqual(parsed.hostname, 'example.com');
+            assert.ok(elapsed < 5000, `took ${elapsed} ms`);
+        });
+
         it('should keep the slash-less form of a value with surrounding whitespace', () => {
             for (const input of [
                 'smtp:user:pass@mail.example.com:25\n',

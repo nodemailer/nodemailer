@@ -1969,6 +1969,31 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._encodeHeaderValue('x-my', 'a\tb'), 'a\tb');
         });
 
+        it('should format references in linear time', () => {
+            const mb = new MimeNode('text/plain');
+            // every "<" without a ">" after it used to rescan the rest of the value
+            const count = 200000;
+            const start = Date.now();
+            const formatted = mb._encodeHeaderValue('references', '<a b@x.test> '.repeat(count) + '<'.repeat(count));
+            const elapsed = Date.now() - start;
+            assert.ok(formatted.startsWith('<ab@x.test> <ab@x.test> '));
+            assert.ok(formatted.endsWith(' ' + '<'.repeat(count) + '>'));
+            assert.ok(elapsed < 5000, `took ${elapsed} ms`);
+        });
+
+        it('should keep an unclosed angle bracket as it is', () => {
+            const mb = new MimeNode('text/plain');
+            // whitespace is removed inside <...> only, a "<" with no ">" after it is text
+            assert.strictEqual(mb._encodeHeaderValue('references', '<a b> c <d e'), '<ab> <c> <d> <e>');
+            assert.strictEqual(mb._encodeHeaderValue('references', '<a <b c>'), '<a<bc>');
+        });
+
+        it('should format a references list longer than the argument limit', () => {
+            const mb = new MimeNode('text/plain');
+            const list = new Array<string>(200000).fill('<a@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('references', list), list.join(' '));
+        });
+
         it('should format references', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._encodeHeaderValue('references', 'abc def'), '<abc> <def>');

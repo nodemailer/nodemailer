@@ -293,7 +293,10 @@ export default class MailMessage<T = SentMessageInfo> {
         const values: any[] = [data.html, data.text, data.watchHtml, data.amp, data.raw, data.icalEvent];
         for (const key of ['attachments', 'alternatives']) {
             if (Array.isArray(data[key])) {
-                values.push(...data[key]);
+                // one at a time, spreading a long enough list into the arguments throws
+                for (const entry of data[key]) {
+                    values.push(entry);
+                }
             }
         }
 
