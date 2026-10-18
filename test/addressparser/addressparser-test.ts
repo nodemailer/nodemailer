@@ -1773,4 +1773,48 @@ describe('#addressparser', () => {
             });
         }
     });
+
+    // RFC 5322 comments nest. Ending one at the first ')' let the ')' of a nested comment
+    // close the outer one, and the rest of it was parsed as header text, the address it held
+    // included: 'Victim (x(y) <evil@evil.com>) <v@victim.com>' delivered to evil.com
+    describe('Nested comments', () => {
+        it('should end a comment only at the ")" that closes the outermost one', () => {
+            for (const [input, expected] of [
+                ['Victim (x(y) <evil@evil.com>) <v@victim.com>', [{ address: 'v@victim.com', name: 'Victim' }]],
+                ['(a(b)c; <evil@evil.com>) <v@victim.com>', [{ address: 'v@victim.com', name: 'a(b)c; <evil@evil.com>' }]],
+                ['user@example.com (outer (nested) comment)', [{ address: 'user@example.com', name: 'outer (nested) comment' }]],
+                ['a@b.com (x((y)) z)', [{ address: 'a@b.com', name: 'x((y)) z' }]],
+                ['G: (a(;)b) <x@y>;', [{ name: 'G', group: [{ address: 'x@y', name: 'a(;)b' }] }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should not open a nested comment at an escaped "("', () => {
+            assert.deepStrictEqual(addressparser('a@b.com (x\\( y), c@d.com'), [
+                { address: 'a@b.com', name: 'x( y' },
+                { address: 'c@d.com', name: '' }
+            ]);
+        });
+
+        it('should read an unclosed nested comment to the end of the value', () => {
+            assert.deepStrictEqual(addressparser('a@b.com (x(y), c@d.com'), [{ address: 'a@b.com', name: 'x(y), c@d.com' }]);
+        });
+
+        for (const [label, build] of [
+            ['deeply nested comments', (count: number) => 'a@b.com (' + '('.repeat(count) + ')'.repeat(count) + ')'],
+            ['an unclosed run of comment openers', (count: number) => 'a@b.com ' + '('.repeat(count)]
+        ] as [string, (count: number) => string][]) {
+            it(`should tokenize ${label} in linear time`, () => {
+                const count = 400000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `tokenizing a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+    });
 });

@@ -3044,6 +3044,13 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.deepStrictEqual(mb.getEnvelope().to, ['v@victim.com'], recipient);
             }
         });
+
+        it('should not take a recipient out of a nested comment', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', 'Victim (x(y) <evil@evil.com>) <v@victim.com>');
+
+            assert.deepStrictEqual(mb.getEnvelope().to, ['v@victim.com']);
+        });
     });
     describe('UTS-46 domain encoding', () => {
         // The bundled Punycode codec maps nothing, so an ignored or mapped code point
