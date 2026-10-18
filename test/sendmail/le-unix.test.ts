@@ -41,4 +41,42 @@ describe('Sendmail Unix Newlines', () => {
         const data = Buffer.from(source);
         out.end(data);
     });
+
+    it('should turn a lone CR into a line break (byte by byte)', (t, done) => {
+        const source = 'esimene rida\rteine rida\r\rkolmas rida\r\nneljas rida\r';
+
+        const chunks: Buffer[] = [];
+        const out = new LeUnix();
+        out.on('data', chunk => chunks.push(chunk));
+        out.on('end', () => {
+            assert.strictEqual(Buffer.concat(chunks).toString(), 'esimene rida\nteine rida\n\nkolmas rida\nneljas rida\n');
+            done();
+        });
+
+        const data = Buffer.from(source);
+        let pos = 0;
+        const writeNextByte = () => {
+            if (pos >= data.length) {
+                return out.end();
+            }
+            out.write(Buffer.from([data[pos++]]));
+            setImmediate(writeNextByte);
+        };
+
+        setImmediate(writeNextByte);
+    });
+
+    it('should turn a lone CR into a line break (all at once)', (t, done) => {
+        const source = 'esimene rida\rteine rida\r\rkolmas rida\r\nneljas rida\r';
+
+        const chunks: Buffer[] = [];
+        const out = new LeUnix();
+        out.on('data', chunk => chunks.push(chunk));
+        out.on('end', () => {
+            assert.strictEqual(Buffer.concat(chunks).toString(), 'esimene rida\nteine rida\n\nkolmas rida\nneljas rida\n');
+            done();
+        });
+
+        out.end(Buffer.from(source));
+    });
 });
