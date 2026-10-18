@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.1.5](https://github.com/nodemailer/nodemailer/compare/v10.1.4...v10.1.5) (2026-10-18)
+
+
+### Bug Fixes
+
+* **addressparser:** handle an address list without copying it per address ([6bd09b3](https://github.com/nodemailer/nodemailer/commit/6bd09b395cb7ffd1b0ae95f960f3985ba9c25afb))
+* **addressparser:** tokenize into offsets instead of an object per token ([3fd3f50](https://github.com/nodemailer/nodemailer/commit/3fd3f50ce86671884896ef1eaddafff5e137f820))
+
 ## [10.1.4](https://github.com/nodemailer/nodemailer/compare/v10.1.3...v10.1.4) (2026-10-18)
 
 
