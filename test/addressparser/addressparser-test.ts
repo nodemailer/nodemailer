@@ -1098,8 +1098,8 @@ describe('#addressparser', () => {
             return parts.join(' ') + ' user@example.com;';
         }
 
-        it('should handle moderately nested groups (depth 10)', () => {
-            let input = buildDeepGroup(10);
+        it('should handle moderately nested groups (depth 5)', () => {
+            let input = buildDeepGroup(5);
             let result: any = addressparser(input);
             assert.strictEqual(result.length, 1);
             assert.strictEqual(result[0].name, 'g0');
@@ -1109,8 +1109,8 @@ describe('#addressparser', () => {
             assert.strictEqual(result[0].group[0].address, 'user@example.com');
         });
 
-        it('should handle nested groups at depth limit (depth 50)', () => {
-            let input = buildDeepGroup(50);
+        it('should handle nested groups at depth limit (depth 10)', () => {
+            let input = buildDeepGroup(10);
             let result: any = addressparser(input);
             assert.strictEqual(result.length, 1);
             assert.strictEqual(result[0].name, 'g0');
@@ -1118,6 +1118,32 @@ describe('#addressparser', () => {
             // At the limit, should still work
             assert.strictEqual(result[0].group.length, 1);
             assert.strictEqual(result[0].group[0].address, 'user@example.com');
+        });
+
+        // Every level parses what is left of the value once more, so the limit is the factor
+        // a crafted header multiplies the parse by. RFC 5322 allows no nesting at all and the
+        // deepest seen in real mail is two or three levels from broken clients
+        it('should drop the members of a group nested past the limit (depth 11)', () => {
+            let result: any = addressparser(buildDeepGroup(11));
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'g0');
+            assert.deepStrictEqual(result[0].group, []);
+        });
+
+        it('should parse a large list behind many group openers in linear time', () => {
+            for (const [openers, members] of [
+                [10, 80000],
+                [1000, 0]
+            ]) {
+                const input = 'g: '.repeat(openers) + 'a@b.com, '.repeat(80000);
+
+                const started = Date.now();
+                const result: any = addressparser(input, { flatten: true });
+                const elapsed = Date.now() - started;
+
+                assert.strictEqual(result.length, members);
+                assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
+            }
         });
 
         it('should safely truncate groups exceeding depth limit (depth 100)', () => {

@@ -1093,9 +1093,10 @@ class Tokenizer {
 /**
  * Maximum recursion depth for parsing nested groups.
  * RFC 5322 doesn't allow nested groups, so this is a safeguard against
- * malicious input that could cause stack overflow.
+ * malicious input that could cause stack overflow. Every level parses what is left of the
+ * value once more, so the limit is also the factor a crafted header multiplies the parse by.
  */
-const MAX_NESTED_GROUP_DEPTH = 50;
+const MAX_NESTED_GROUP_DEPTH = 10;
 
 /**
  * Parses an address list, recursing into the groups it holds.
