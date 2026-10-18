@@ -59,6 +59,24 @@ interface AddressParts {
 type AddressPartsState = 'text' | 'address' | 'comment' | 'group';
 
 /**
+ * A domain literal that ends an address. dtext includes '@' (RFC 5322 3.4.1), so the '@'
+ * in front of the literal is the one that splits the domain off, not the last one: reading
+ * 'a@[x@evil.com]' at its last '@' made it an address at evil.com.
+ */
+const DOMAIN_LITERAL_TAIL = /@(\[[^[\]\\]*\])$/;
+
+/**
+ * Offset of the '@' that splits the domain off an address, or -1 when there is none
+ *
+ * @param address Address to split
+ * @return Offset of the '@'
+ */
+function _domainAt(address: string): number {
+    const literal = address.charAt(address.length - 1) === ']' ? DOMAIN_LITERAL_TAIL.exec(address) : null;
+    return literal ? address.length - literal[1].length - 1 : address.lastIndexOf('@');
+}
+
+/**
  * Restores the quoting of a local part that was read out of a quoted string.
  *
  * RFC 5321 allows '@' inside a quoted local part, so handing '"user@evil.com"@good.com'
@@ -76,7 +94,7 @@ type AddressPartsState = 'text' | 'address' | 'comment' | 'group';
  * @return Address with the local part as a quoted-string
  */
 function _quoteLocalPart(address: string): string {
-    const lastAt = address.lastIndexOf('@');
+    const lastAt = _domainAt(address);
     if (lastAt < 0) {
         // no domain to split off, nothing can be misrouted
         return address;
@@ -107,6 +125,21 @@ const QUOTED_LOCAL_ADDR = /^("(?:[^"\\]|\\[\s\S])*"@\S+)(?:\s+([\s\S]+))?$/;
  * One run holding a single '@' and no whitespace, the shape an addr-spec has to have.
  */
 const ADDR_SPEC = /^[^@\s]+@[^@\s]+$/;
+
+/**
+ * The same with a domain literal for the domain, which may hold an '@' of its own.
+ */
+const LITERAL_ADDR_SPEC = /^[^@\s]+@\[[^[\]\\\s]*\]$/;
+
+/**
+ * Whether a whitespace free run reads as an addr-spec under the strict grammar
+ *
+ * @param value Run to check
+ * @return true when it does
+ */
+function _isAddrSpec(value: string): boolean {
+    return ADDR_SPEC.test(value) || LITERAL_ADDR_SPEC.test(value);
+}
 
 /**
  * The looser reading applied once the strict one finds nothing, which tolerates the
@@ -309,7 +342,7 @@ function _recoverAddrSpec(data: { address: string; text: string }): void {
 
         const parts = data.address.split(/\s+/);
 
-        let addrIndex = parts.findIndex(part => ADDR_SPEC.test(part));
+        let addrIndex = parts.findIndex(_isAddrSpec);
         if (addrIndex < 0) {
             addrIndex = parts.findIndex(part => LOOSE_ADDR_SPEC.test(part));
         }
@@ -568,7 +601,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 // Security: Do not extract email addresses from quoted strings.
                 // RFC 5321 allows @ inside quoted local-parts like "user@domain"@example.com.
                 // Extracting emails from quoted text leads to misrouting vulnerabilities.
-                if (!data.textWasQuoted[i] && ADDR_SPEC.test(data.text[i])) {
+                if (!data.textWasQuoted[i] && _isAddrSpec(data.text[i])) {
                     data.address = data.text.splice(i, 1);
                     data.textWasQuoted.splice(i, 1);
                     break;

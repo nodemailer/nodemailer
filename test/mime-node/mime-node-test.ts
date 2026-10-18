@@ -2209,6 +2209,16 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#_normalizeAddress', () => {
+        // dtext includes '@', so the '@' that splits a domain literal off is the one in front
+        // of the '['. Splitting at the last one delivered 'a@[x@evil.com]' to evil.com
+        it('should split a domain literal off at the "@" in front of it', () => {
+            let mb = new MimeNode();
+            assert.strictEqual(mb._normalizeAddress('a@[x@evil.com]'), 'a@[x@evil.com]');
+            assert.strictEqual(mb._normalizeAddress('a@[IPv6:2001:db8::1]'), 'a@[ipv6:2001:db8::1]');
+            assert.strictEqual(mb._normalizeAddress('a@evil.com@[127.0.0.1]'), '"a@evil.com"@[127.0.0.1]');
+            assert.strictEqual(mb._normalizeAddress('a@[x]@evil.com'), '"a@[x]"@evil.com');
+        });
+
         it('should punycode the domain when local part is ASCII', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._normalizeAddress('safe@jõgeva.ee'), 'safe@xn--jgeva-dua.ee');
@@ -3042,6 +3052,15 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 mb.setHeader('To', recipient);
 
                 assert.deepStrictEqual(mb.getEnvelope().to, ['v@victim.com'], recipient);
+            }
+        });
+
+        it('should not deliver a domain literal holding an "@" to the domain inside it', () => {
+            for (const recipient of ['a@[x@evil.com]', '<a@[x@evil.com]>', 'Name <a@[x@evil.com]>']) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, ['a@[x@evil.com]'], recipient);
             }
         });
 

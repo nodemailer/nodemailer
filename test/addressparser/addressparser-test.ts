@@ -1860,4 +1860,26 @@ describe('#addressparser', () => {
             assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
         });
     });
+
+    // dtext includes '@' (RFC 5322 3.4.1), so 'a@[x@evil.com]' is the mailbox a at the domain
+    // literal [x@evil.com]. Reading the domain off the last '@' turned it into an address at
+    // evil.com, which a check against the conformant reading never sees
+    describe('Domain literal holding an "@"', () => {
+        it('should keep the whole domain literal as the domain', () => {
+            for (const [input, expected] of [
+                ['a@[x@evil.com]', [{ address: 'a@[x@evil.com]', name: '' }]],
+                ['<a@[x@evil.com]>', [{ address: 'a@[x@evil.com]', name: '' }]],
+                ['Name <a@[x@evil.com]>', [{ address: 'a@[x@evil.com]', name: 'Name' }]],
+                ['a@[x@evil.com] (c)', [{ address: 'a@[x@evil.com]', name: 'c' }]],
+                ['"a b"@[x@evil.com]', [{ address: '"a b"@[x@evil.com]', name: '' }]],
+                ['a@[IPv6:2001:db8::1]', [{ address: 'a@[IPv6:2001:db8::1]', name: '' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should still quote a local part that holds an "@" in front of a domain literal', () => {
+            assert.deepStrictEqual(addressparser('"a@evil.com"@[127.0.0.1]'), [{ address: '"a@evil.com"@[127.0.0.1]', name: '' }]);
+        });
+    });
 });

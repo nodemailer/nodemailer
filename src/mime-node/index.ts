@@ -205,6 +205,11 @@ const QUOTED_STRING = /^"(?:[^"\\]|\\[\s\S])*"$/;
 const PLAIN_ADDRESS = /^[^\s"(),:;<>@[\\\]]+@[^\s"(),:;<>@[\\\]]+$/;
 
 /**
+ * A domain literal that ends an address, see _normalizeAddress
+ */
+const DOMAIN_LITERAL_TAIL = /@(\[[^[\]\\]*\])$/;
+
+/**
  * Removes the whitespace inside every <...> of a References value. A "<" with no ">" after
  * it is left as it is. An index scan, the regex /<[^>]*>/g rescans the rest of the value
  * from every such "<"
@@ -1849,7 +1854,10 @@ class MimeNode {
             return address;
         }
 
-        const lastAt = address.lastIndexOf('@');
+        // dtext includes '@', so a domain literal is split off at the '@' in front of it and
+        // not at the last one, which delivered 'a@[x@evil.com]' to evil.com
+        const literal = address.charAt(address.length - 1) === ']' ? DOMAIN_LITERAL_TAIL.exec(address) : null;
+        const lastAt = literal ? address.length - literal[1].length - 1 : address.lastIndexOf('@');
         if (lastAt < 0) {
             // Bare username, there is no domain to split off
             return this._normalizeLocalPart(address);
