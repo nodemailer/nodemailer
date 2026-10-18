@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [10.1.4](https://github.com/nodemailer/nodemailer/compare/v10.1.3...v10.1.4) (2026-10-18)
+
+
+### Bug Fixes
+
+* **addressparser:** apply the unexpected "&lt;" rule outside quotes and comments ([ee35f57](https://github.com/nodemailer/nodemailer/commit/ee35f5745658bf46952651fa53207255e9dc3406))
+* **addressparser:** bound group nesting at ten levels ([ce63303](https://github.com/nodemailer/nodemailer/commit/ce633031d58f8d2e9c9b0f5b671944a1afe71f95))
+* **addressparser:** drop the obsolete route from an angle-addr ([3dbc730](https://github.com/nodemailer/nodemailer/commit/3dbc7304b0cfa06551543fa2dc01222447c2b554))
+* **addressparser:** end a comment only at the ")" that closes the outermost one ([0a87617](https://github.com/nodemailer/nodemailer/commit/0a8761762ac78f2db2ba37f712f2a52a404ce011))
+* **addressparser:** honour quoted strings and comments inside an angle-addr and a group ([1cd57d2](https://github.com/nodemailer/nodemailer/commit/1cd57d2b8c49dff048c21cdbafdb54439a7f07e2))
+* **addressparser:** never read a mailbox out of a comment ([a1538ea](https://github.com/nodemailer/nodemailer/commit/a1538ea39c76c48a4134806c41e31e59a258b1e5))
+* **addressparser:** read CFWS beside the "@" of an addr-spec as nothing ([ba3c095](https://github.com/nodemailer/nodemailer/commit/ba3c0952542581f95cb20d9322cc9e27baa470a2))
+* **addressparser:** read the first addr-spec of the display text ([038940a](https://github.com/nodemailer/nodemailer/commit/038940a069a2cecb64a70d0e81b17eb8ce200d3a))
+* split a domain literal off at the "@" in front of it ([d5983b0](https://github.com/nodemailer/nodemailer/commit/d5983b0ae234cd22ab45be817fefd434e9a53d58))
+
 ## [10.1.3](https://github.com/nodemailer/nodemailer/compare/v10.1.2...v10.1.3) (2026-10-18)
 
 
