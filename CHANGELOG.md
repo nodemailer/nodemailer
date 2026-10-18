@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.1.6](https://github.com/nodemailer/nodemailer/compare/v10.1.5...v10.1.6) (2026-10-18)
+
+
+### Bug Fixes
+
+* **addressparser:** read groups in the same pass as the rest of the list ([ddf0de1](https://github.com/nodemailer/nodemailer/commit/ddf0de1e7615908101bf593c62edcadccc05c8d3))
+
 ## [10.1.5](https://github.com/nodemailer/nodemailer/compare/v10.1.4...v10.1.5) (2026-10-18)
 
 
