@@ -2016,4 +2016,23 @@ describe('#addressparser', () => {
             }
         });
     });
+
+    // A conformant parser reading as far as it can names the first addr-spec. The free text
+    // tiers took the last one, so a comment that parted two of them picked the second, while
+    // the same two in one run picked the first
+    describe('Several addr-specs in the display text', () => {
+        it('should take the first one, whatever parts them', () => {
+            for (const [input, expected] of [
+                ['user@good.com (x) evil@evil.com', [{ address: 'user@good.com', name: 'evil@evil.com' }]],
+                ['user@good.com (x) evil @ evil.com', [{ address: 'user@good.com', name: 'evil @ evil.com' }]],
+                ['a@b.com c@d.com', [{ address: 'a@b.com', name: 'c@d.com' }]],
+                ['"user"@good.com (x) evil@evil.com', [{ address: 'user@good.com', name: 'evil@evil.com' }]],
+                ['"user@evil.com"@good.com (x) a@b.com', [{ address: '"user@evil.com"@good.com', name: 'a@b.com' }]],
+                ['""@good.com (x) evil@evil.com', [{ address: '""@good.com', name: 'evil@evil.com' }]],
+                ['Name (x) a@b.com', [{ address: 'a@b.com', name: 'Name' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+    });
 });

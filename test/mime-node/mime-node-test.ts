@@ -3093,6 +3093,15 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             }
         });
 
+        it('should deliver to the first of several addr-specs in the display text', () => {
+            for (const recipient of ['user@good.com (x) evil@evil.com', '"user"@good.com (x) evil@evil.com']) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, ['user@good.com'], recipient);
+            }
+        });
+
         it('should not take a recipient out of a nested comment', () => {
             const mb = new MimeNode('text/plain');
             mb.setHeader('To', 'Victim (x(y) <evil@evil.com>) <v@victim.com>');
