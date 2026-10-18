@@ -562,11 +562,13 @@ function _stripAddressComments(address: string): { address: string; comments: st
 /**
  * Converts tokens for a single address into an address object
  *
- * @param tokens Tokens object
+ * @param tokens Tokens of the whole address list
+ * @param from Index of the first token of this address
+ * @param to Index just past the last token of this address
  * @param depth Current recursion depth for nested group protection
  * @return Address object
  */
-function _handleAddress(tokens: Token[], depth: number): Address[] {
+function _handleAddress(tokens: Token[], from: number, to: number, depth: number): Address[] {
     let isGroup = false;
     let state: AddressPartsState = 'text';
     const addresses: Address[] = [];
@@ -590,9 +592,9 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
     const lastChars: Record<AddressPartsState, string> = { address: '', comment: '', group: '', text: '' };
 
     // Filter out <addresses>, (comments) and regular text
-    for (let i = 0, len = tokens.length; i < len; i++) {
+    for (let i = from; i < to; i++) {
         const token = tokens[i];
-        const prevToken = i ? tokens[i - 1] : null;
+        const prevToken = i > from ? tokens[i - 1] : null;
         if (token.type === 'operator') {
             switch (token.value) {
                 case '<':
@@ -625,7 +627,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
             // the quotes never go back on, and the value is no longer an addr-spec a trailing
             // comment can be peeled off of. It only ever opens a run: a run that already holds
             // material collected outside the quotes is not a quoted string, whatever follows it
-            const prevPrevToken = i > 1 ? tokens[i - 2] : null;
+            const prevPrevToken = i > from + 1 ? tokens[i - 2] : null;
             const opensAfterEmptyQuotedString =
                 prevToken?.type === 'operator' &&
                 prevToken.value === '"' &&
@@ -915,20 +917,24 @@ class Tokenizer {
      * @return An array of operator|text tokens
      */
     tokenize(): Token[] {
-        const list: Token[] = [];
-
         for (let i = 0, len = this.str.length; i < len; i++) {
             const chr = this.str.charAt(i);
             const nextChr = i < len - 1 ? this.str.charAt(i + 1) : null;
             this.checkChar(chr, nextChr);
         }
 
-        this.list.forEach(node => {
+        // Compacted in place rather than copied, the list holds a token for every operator
+        // and every run of text, and a second array of them doubled what a long header holds
+        const list = this.list;
+        let kept = 0;
+        for (let i = 0, len = list.length; i < len; i++) {
+            const node = list[i];
             node.value = (node.value || '').toString().trim();
             if (node.value) {
-                list.push(node);
+                list[kept++] = node;
             }
-        });
+        }
+        list.length = kept;
 
         return list;
     }
@@ -1155,33 +1161,29 @@ function _parseAddressList(str: string | null | undefined, depth: number): Addre
     const tokenizer = new Tokenizer(str);
     const tokens = tokenizer.tokenize();
 
-    const addresses: Token[][] = [];
-    let address: Token[] = [];
     const parsedAddresses: Address[] = [];
 
-    tokens.forEach(token => {
-        if (token.type === 'operator' && (token.value === ',' || token.value === ';')) {
-            if (address.length) {
-                addresses.push(address);
+    // Every address is handed over as the range of the token list it covers, as soon as the
+    // separator after it is seen. Copying the tokens of each address into an array of its own,
+    // and collecting those before handling any, held a second structure as large as the token
+    // list for the whole parse, and an array that receives a single push is allocated room for
+    // seventeen: a list of one letter names took some 80 times its size in that alone
+    let from = 0;
+    for (let i = 0, len = tokens.length; i <= len; i++) {
+        const token = tokens[i];
+        if (i < len && !(token.type === 'operator' && (token.value === ',' || token.value === ';'))) {
+            continue;
+        }
+        if (i > from) {
+            const handled = _handleAddress(tokens, from, i, depth);
+            // Appended in place. Rebuilding the accumulator with concat() would copy every
+            // entry collected so far on each address, making a flat list cost O(n^2).
+            for (let j = 0; j < handled.length; j++) {
+                parsedAddresses.push(handled[j]);
             }
-            address = [];
-        } else {
-            address.push(token);
         }
-    });
-
-    if (address.length) {
-        addresses.push(address);
+        from = i + 1;
     }
-
-    addresses.forEach(addr => {
-        const handled = _handleAddress(addr, depth);
-        // Appended in place. Rebuilding the accumulator with concat() would copy every
-        // entry collected so far on each address, making a flat list cost O(n^2).
-        for (let i = 0; i < handled.length; i++) {
-            parsedAddresses.push(handled[i]);
-        }
-    });
 
     // Merge fragments produced when unquoted display names contain commas.
     // "Joe Foo, PhD <joe@example.com>" is split on the comma into
