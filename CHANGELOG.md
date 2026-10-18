@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.1.3](https://github.com/nodemailer/nodemailer/compare/v10.1.2...v10.1.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* format References and strip URLs in linear time, release any number of streams ([2f18641](https://github.com/nodemailer/nodemailer/commit/2f186418cf6c8fff18f235d4318892fd42f810fa))
+
 ## [10.1.2](https://github.com/nodemailer/nodemailer/compare/v10.1.1...v10.1.2) (2026-10-16)
 
 
