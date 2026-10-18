@@ -3027,6 +3027,23 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 assert.deepStrictEqual(mb.getEnvelope().to, [expected], recipient);
             }
         });
+
+        it('should deliver to the domain of the angle-addr when a quoted local part holds a ">"', () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('To', '<"a@evil.com>"@good.com>');
+
+            // the '>' can not go into RCPT TO, so it is blanked, the domain is what counts
+            assert.deepStrictEqual(mb.getEnvelope().to, ['"a@evil.com "@good.com']);
+        });
+
+        it('should not take a recipient out of a quoted string or a comment inside a group', () => {
+            for (const recipient of ['G: (a; <evil@evil.com>) <v@victim.com>;', 'G: "a;" "<evil@evil.com>" <v@victim.com>;']) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, ['v@victim.com'], recipient);
+            }
+        });
     });
     describe('UTS-46 domain encoding', () => {
         // The bundled Punycode codec maps nothing, so an ignored or mapped code point
