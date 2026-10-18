@@ -1817,4 +1817,47 @@ describe('#addressparser', () => {
             });
         }
     });
+
+    // Apple Mail drops everything between an unexpected '<' and the address that follows it,
+    // and the parser does the same. It did so before it knew where the quoted strings and
+    // comments in the brackets were, so a '<' inside a quoted local part cut the mailbox in
+    // half: '<"a<b"@victim.com>' became the address 'b"@victim.com'
+    describe('Unexpected "<" inside an angle-addr', () => {
+        it('should not cut at a "<" inside a quoted string, a comment or a domain literal', () => {
+            for (const [input, expected] of [
+                ['<"a<b"@victim.com>', [{ address: '"a<b"@victim.com', name: '' }]],
+                ['<"<"@good.com>', [{ address: '"<"@good.com', name: '' }]],
+                ['<(x<y)a@victim.com>', [{ address: 'a@victim.com', name: 'x<y' }]],
+                ['<(<)a@b.com>', [{ address: 'a@b.com', name: '<' }]],
+                ['<a@[<]>', [{ address: 'a@[<]', name: '' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should still drop what comes before an unexpected "<"', () => {
+            for (const [input, expected] of [
+                ['<junk <a@b.com>', [{ address: 'a@b.com', name: '' }]],
+                ['<a<b<c@d.com>', [{ address: 'c@d.com', name: '' }]],
+                ['<(x) junk <a@b.com>', [{ address: 'a@b.com', name: '' }]],
+                ['Name <<user@example.com>>', [{ address: 'user@example.com', name: 'Name>' }]],
+                ['reinman > andris < test <andris@tr.ee>', [{ address: 'andris@tr.ee', name: 'reinman > andris' }]],
+                // no conformant reading, the address after the "<" is the one Apple Mail shows
+                ['<victim@good.com <evil@evil.com>', [{ address: 'evil@evil.com', name: '' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        it('should read many unexpected "<" in linear time', () => {
+            const input = '<' + '"b"(c)a<'.repeat(100000) + 'd@e.com>';
+
+            const started = Date.now();
+            const result = addressparser(input);
+            const elapsed = Date.now() - started;
+
+            assert.deepStrictEqual(result, [{ address: 'd@e.com', name: '' }]);
+            assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
+        });
+    });
 });

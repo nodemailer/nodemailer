@@ -340,6 +340,7 @@ function _recoverAddrSpec(data: { address: string; text: string }): void {
  * A comment is folding whitespace, so it is read as a space that splits two atoms and as
  * nothing next to an '@', the same rule the token walk applies outside the brackets. Quoted
  * strings and domain literals are copied through untouched, a '(' in there is not a comment.
+ * An unexpected '<' outside them drops everything in front of it, comments included.
  *
  * @param address Contents of the angle brackets
  * @return The address with the comments removed, and the text of the comments
@@ -391,6 +392,15 @@ function _stripAddressComments(address: string): { address: string; comments: st
             closer = ']';
         } else if (chr === '(') {
             depth = 1;
+            continue;
+        } else if (chr === '<') {
+            // Apple Mail drops everything between an unexpected '<' and the address after it.
+            // Read here rather than off the raw brackets so that a '<' inside a quoted string,
+            // a comment or a domain literal stays where it is: '<"a<b"@victim.com>' cut at
+            // the first '<' left the address 'b"@victim.com'
+            result = '';
+            lastChar = '';
+            comments.length = 0;
             continue;
         }
 
@@ -476,12 +486,6 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
                 prevPrevToken?.type === 'operator' &&
                 prevPrevToken.value === '"';
 
-            if (state === 'address') {
-                // Handle unquoted name that includes a "<".
-                // Apple Mail truncates everything between an unexpected < and an address.
-                token.value = token.value.replace(/^[^<]*<\s*/, '');
-            }
-
             // A comment is folding whitespace. It may sit inside an addr-spec, on either side
             // of the '@', but it cannot join two atoms into one: gluing across it would read
             // 'user@example.com(x)evil.com' as the single domain 'example.comevil.com' and
@@ -544,7 +548,7 @@ function _handleAddress(tokens: Token[], depth: number): Address[] {
         const addressComments: string[] = [];
         const addressParts: string[] = [];
         for (const part of data.address as string[]) {
-            if (part.indexOf('(') < 0) {
+            if (part.indexOf('(') < 0 && part.indexOf('<') < 0) {
                 addressParts.push(part);
                 continue;
             }
