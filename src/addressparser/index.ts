@@ -30,15 +30,100 @@ export interface GroupAddress {
  */
 export type Address = MailboxAddress | GroupAddress;
 
+/* eslint-disable no-bitwise -- the kind of a token is a set of bit flags packed into one slot of a typed array */
+
+/** The token is an operator, a text run otherwise */
+const TOKEN_OPERATOR = 1;
+/** The next character continues the same run without whitespace in between */
+const TOKEN_NO_BREAK = 2;
+/** The text run holds characters its value leaves out or changes, so it is no plain slice */
+const TOKEN_DIRTY = 4;
+/** A backslash escapes the next character in the text run, inside a quoted string or a comment */
+const TOKEN_ESCAPES = 8;
+/** The text run opens on a character an escaping backslash in front of it has escaped */
+const TOKEN_STARTS_ESCAPED = 16;
+
 /**
- * A token produced by the Tokenizer
+ * The tokens of an address field, kept as offsets into it.
+ *
+ * Every token used to be an object of its own, an operator for every ',' and a value string
+ * for every run of text, and a list of one letter names, 'a,a,a,...', took some 65 times its
+ * size in tokens before any address was read. A token is now three numbers in one typed
+ * array, its kind and the range of the field it covers, and its value is sliced off the field
+ * when it is read. The few text runs whose value differs from their slice, as they hold an
+ * escaping backslash, a line break or a control character, are rebuilt once and kept aside.
  */
-interface Token {
-    type: 'operator' | 'text';
-    value: string;
-    /** The next character continues the same run without whitespace in between */
-    noBreak?: boolean | undefined;
+class TokenList {
+    str: string;
+    /** Kind, start and end of every token, three slots each */
+    slots: Int32Array;
+    length: number;
+    /** Values of the text runs that are no plain slice of the field, by token index */
+    cleaned: Map<number, string>;
+
+    constructor(str: string) {
+        this.str = str;
+        this.slots = new Int32Array(48);
+        this.length = 0;
+        this.cleaned = new Map();
+    }
+
+    /**
+     * Appends a token
+     *
+     * @param kind Kind and flags of the token
+     * @param start Offset of its first character
+     * @param end Offset just past its last character
+     * @return Index of the token
+     */
+    push(kind: number, start: number, end: number): number {
+        if ((this.length + 1) * 3 > this.slots.length) {
+            const grown = new Int32Array(this.slots.length * 2);
+            grown.set(this.slots);
+            this.slots = grown;
+        }
+        const at = this.length * 3;
+        this.slots[at] = kind;
+        this.slots[at + 1] = start;
+        this.slots[at + 2] = end;
+        return this.length++;
+    }
+
+    /**
+     * The character of an operator token, an empty string for a text run
+     */
+    operatorAt(index: number): string {
+        const at = index * 3;
+        return this.slots[at] & TOKEN_OPERATOR ? this.str.charAt(this.slots[at + 1]) : '';
+    }
+
+    /**
+     * Whether a token is an operator
+     */
+    isOperator(index: number): boolean {
+        return (this.slots[index * 3] & TOKEN_OPERATOR) !== 0;
+    }
+
+    /**
+     * Whether the next character continues the run of a token without whitespace in between
+     */
+    noBreak(index: number): boolean {
+        return (this.slots[index * 3] & TOKEN_NO_BREAK) !== 0;
+    }
+
+    /**
+     * Value of a token
+     */
+    value(index: number): string {
+        const cleaned = this.cleaned.get(index);
+        if (cleaned !== undefined) {
+            return cleaned;
+        }
+        return this.str.slice(this.slots[index * 3 + 1], this.slots[index * 3 + 2]);
+    }
 }
+
+/* eslint-enable no-bitwise */
 
 /**
  * Parts collected for a single address. `address` and `text` are lists of strings while
@@ -568,7 +653,7 @@ function _stripAddressComments(address: string): { address: string; comments: st
  * @param depth Current recursion depth for nested group protection
  * @return Address object
  */
-function _handleAddress(tokens: Token[], from: number, to: number, depth: number): Address[] {
+function _handleAddress(tokens: TokenList, from: number, to: number, depth: number): Address[] {
     let isGroup = false;
     let state: AddressPartsState = 'text';
     const addresses: Address[] = [];
@@ -593,10 +678,12 @@ function _handleAddress(tokens: Token[], from: number, to: number, depth: number
 
     // Filter out <addresses>, (comments) and regular text
     for (let i = from; i < to; i++) {
-        const token = tokens[i];
-        const prevToken = i > from ? tokens[i - 1] : null;
-        if (token.type === 'operator') {
-            switch (token.value) {
+        const value = tokens.value(i);
+        // the operator in front of this token, if there is one, and whether it runs on into it
+        const prevOperator = i > from ? tokens.operatorAt(i - 1) : '';
+        const prevNoBreak = i > from && tokens.noBreak(i - 1);
+        if (tokens.isOperator(i)) {
+            switch (value) {
                 case '<':
                     state = 'address';
                     insideQuotes = false;
@@ -619,7 +706,7 @@ function _handleAddress(tokens: Token[], from: number, to: number, depth: number
                     insideQuotes = false;
                     break;
             }
-        } else if (token.value) {
+        } else {
             // An empty quoted string is dropped by the tokenizer, leaving no text token of its
             // own for textWasQuoted to be recorded on, so the pair of quote operators right in
             // front of this token is all that is left of it and the run it opens carries the
@@ -627,47 +714,35 @@ function _handleAddress(tokens: Token[], from: number, to: number, depth: number
             // the quotes never go back on, and the value is no longer an addr-spec a trailing
             // comment can be peeled off of. It only ever opens a run: a run that already holds
             // material collected outside the quotes is not a quoted string, whatever follows it
-            const prevPrevToken = i > from + 1 ? tokens[i - 2] : null;
-            const opensAfterEmptyQuotedString =
-                prevToken?.type === 'operator' &&
-                prevToken.value === '"' &&
-                !!prevToken.noBreak &&
-                prevPrevToken?.type === 'operator' &&
-                prevPrevToken.value === '"';
+            const opensAfterEmptyQuotedString = prevOperator === '"' && prevNoBreak && i > from + 1 && tokens.operatorAt(i - 2) === '"';
 
             // A comment is folding whitespace. It may sit inside an addr-spec, on either side
             // of the '@', but it cannot join two atoms into one: gluing across it would read
             // 'user@example.com(x)evil.com' as the single domain 'example.comevil.com' and
             // deliver to a domain the sender never named.
             const parts = data[state];
-            const joins =
-                prevToken &&
-                prevToken.noBreak &&
-                parts.length &&
-                (prevToken.value !== ')' || lastChars[state] === '@' || token.value.charAt(0) === '@');
+            const joins = prevNoBreak && parts.length && (prevOperator !== ')' || lastChars[state] === '@' || value.charAt(0) === '@');
 
             if (joins) {
                 const last = data[state].length - 1;
                 if (state === 'text' && !insideQuotes) {
-                    if (lastTextPureQuoted && token.value.charAt(0) === '@') {
+                    if (lastTextPureQuoted && value.charAt(0) === '@') {
                         data.quotedLocalAt[last] = data.text[last].length;
                     }
                     lastTextPureQuoted = false;
                 }
-                data[state][last] += token.value;
-                if (token.value) {
-                    lastChars[state] = token.value.charAt(token.value.length - 1);
-                }
+                data[state][last] += value;
+                lastChars[state] = value.charAt(value.length - 1);
                 if (state === 'text' && insideQuotes) {
                     data.textWasQuoted[last] = true;
                 }
             } else {
-                data[state].push(token.value);
-                lastChars[state] = token.value.charAt(token.value.length - 1);
+                data[state].push(value);
+                lastChars[state] = value.charAt(value.length - 1);
                 if (state === 'text') {
                     data.textWasQuoted.push(insideQuotes || opensAfterEmptyQuotedString);
                     // an empty quoted string leaves no text of its own, so the '@' opens the run
-                    data.quotedLocalAt.push(opensAfterEmptyQuotedString && token.value.charAt(0) === '@' ? 0 : -1);
+                    data.quotedLocalAt.push(opensAfterEmptyQuotedString && value.charAt(0) === '@' ? 0 : -1);
                     lastTextPureQuoted = insideQuotes;
                 }
             }
@@ -849,6 +924,8 @@ function _handleAddress(tokens: Token[], from: number, to: number, depth: number
     return addresses;
 }
 
+/* eslint-disable no-bitwise -- see TokenList */
+
 /**
  * Creates a Tokenizer object for tokenizing address field strings
  *
@@ -859,7 +936,8 @@ class Tokenizer {
     str: string;
     operatorCurrent: string;
     operatorExpecting: string;
-    node: Token | null;
+    /** Index of the text run being collected, -1 when none is */
+    node: number;
     escaped: boolean;
     inDomainLiteral: boolean;
     /** The last addr-spec character seen was an "@", with only whitespace or comments since */
@@ -875,14 +953,14 @@ class Tokenizer {
     innerLiteral: boolean;
     /** The previous character inside an inner quoted string or comment was a backslash */
     innerEscaped: boolean;
-    list: Token[];
+    list: TokenList;
     operators: { [operator: string]: string };
 
     constructor(str?: string | null) {
         this.str = (str || '').toString();
         this.operatorCurrent = '';
         this.operatorExpecting = '';
-        this.node = null;
+        this.node = -1;
         this.escaped = false;
         this.inDomainLiteral = false;
         this.afterAt = false;
@@ -891,7 +969,7 @@ class Tokenizer {
         this.innerLiteral = false;
         this.innerEscaped = false;
 
-        this.list = [];
+        this.list = new TokenList(this.str);
         /**
          * Operator tokens and which tokens are expected to end the sequence
          */
@@ -916,23 +994,46 @@ class Tokenizer {
      *
      * @return An array of operator|text tokens
      */
-    tokenize(): Token[] {
-        for (let i = 0, len = this.str.length; i < len; i++) {
-            const chr = this.str.charAt(i);
-            const nextChr = i < len - 1 ? this.str.charAt(i + 1) : null;
-            this.checkChar(chr, nextChr);
+    tokenize(): TokenList {
+        const str = this.str;
+        const len = str.length;
+        for (let i = 0; i < len; i++) {
+            this.checkChar(str.charAt(i), i);
         }
+        this._closeText(len);
 
-        // Compacted in place rather than copied, the list holds a token for every operator
-        // and every run of text, and a second array of them doubled what a long header holds
+        // Compacted in place: a text run is trimmed to its value and one left empty is
+        // dropped, and the value of a run that is no plain slice is rebuilt and kept aside
         const list = this.list;
+        const slots = list.slots;
         let kept = 0;
-        for (let i = 0, len = list.length; i < len; i++) {
-            const node = list[i];
-            node.value = (node.value || '').toString().trim();
-            if (node.value) {
-                list[kept++] = node;
+        for (let i = 0, count = list.length; i < count; i++) {
+            const kind = slots[i * 3];
+            let start = slots[i * 3 + 1];
+            let end = slots[i * 3 + 2];
+
+            if (kind & TOKEN_DIRTY) {
+                const value = this._cleanValue(start, end, kind).trim();
+                if (!value) {
+                    continue;
+                }
+                list.cleaned.set(kept, value);
+            } else if (!(kind & TOKEN_OPERATOR)) {
+                while (start < end && _isSpaceCode(str.charCodeAt(start))) {
+                    start++;
+                }
+                while (end > start && _isSpaceCode(str.charCodeAt(end - 1))) {
+                    end--;
+                }
+                if (start === end) {
+                    continue;
+                }
             }
+
+            slots[kept * 3] = kind;
+            slots[kept * 3 + 1] = start;
+            slots[kept * 3 + 2] = end;
+            kept++;
         }
         list.length = kept;
 
@@ -940,12 +1041,55 @@ class Tokenizer {
     }
 
     /**
+     * Ends the text run being collected, if there is one
+     *
+     * @param end Offset just past its last character
+     */
+    _closeText(end: number): void {
+        if (this.node >= 0) {
+            this.list.slots[this.node * 3 + 2] = end;
+            this.node = -1;
+        }
+    }
+
+    /**
+     * Rebuilds the value of a text run that is no plain slice of the field, applying the
+     * rules checkChar collects characters by: an escaping backslash is dropped, a line break
+     * reads as a space and any other control character is left out
+     *
+     * @param start Offset of the first character of the run
+     * @param end Offset just past its last character
+     * @param kind Kind and flags of the run
+     * @return Value of the run
+     */
+    _cleanValue(start: number, end: number, kind: number): string {
+        const str = this.str;
+        const escapes = (kind & TOKEN_ESCAPES) !== 0;
+        let escaped = (kind & TOKEN_STARTS_ESCAPED) !== 0;
+        let value = '';
+        for (let i = start; i < end; i++) {
+            const chr = str.charAt(i);
+            if (escapes && !escaped && chr === '\\') {
+                escaped = true;
+                continue;
+            }
+            escaped = false;
+            if (chr === '\n') {
+                value += ' ';
+            } else if (chr.charCodeAt(0) >= 0x21 || chr === ' ' || chr === '\t') {
+                value += chr;
+            }
+        }
+        return value;
+    }
+
+    /**
      * Checks if a character is an operator or text and acts accordingly
      *
      * @param chr Character from the address field
-     * @param nextChr Character following chr, null at the end of the field
+     * @param i Offset of the character in the field
      */
-    checkChar(chr: string, nextChr: string | null): void {
+    checkChar(chr: string, i: number): void {
         // Track RFC 5322 domain-literals ("[" *dtext "]"). The ":" of an IPv6
         // address-literal (user@[IPv6:2001:db8::1]) is dtext and must not be treated as
         // the group delimiter while inside the brackets. That is the only operator the
@@ -990,17 +1134,13 @@ class Tokenizer {
         if (this.escaped) {
             // ignore next condition blocks
         } else if (chr === this.operatorExpecting && !nested) {
-            this.node = {
-                type: 'operator',
-                value: chr
-            };
-
-            if (nextChr && ![' ', '\t', '\r', '\n', ',', ';'].includes(nextChr)) {
-                this.node.noBreak = true;
-            }
-
-            this.list.push(this.node);
-            this.node = null;
+            const nextChr = this.str.charAt(i + 1);
+            this._closeText(i);
+            this.list.push(
+                nextChr && ![' ', '\t', '\r', '\n', ',', ';'].includes(nextChr) ? TOKEN_OPERATOR | TOKEN_NO_BREAK : TOKEN_OPERATOR,
+                i,
+                i + 1
+            );
             if (chr !== ')') {
                 // a comment is folding whitespace, it does not part the "@" from the "["
                 this.afterAt = false;
@@ -1011,12 +1151,8 @@ class Tokenizer {
 
             return;
         } else if (!this.operatorExpecting && !(this.inDomainLiteral && chr === ':') && chr in this.operators) {
-            this.node = {
-                type: 'operator',
-                value: chr
-            };
-            this.list.push(this.node);
-            this.node = null;
+            this._closeText(i);
+            this.list.push(TOKEN_OPERATOR, i, i + 1);
             if (chr !== '(') {
                 this.afterAt = false;
             }
@@ -1030,31 +1166,39 @@ class Tokenizer {
             // only in quoted strings let an escaped parenthesis close the comment, which
             // released the rest of it, an address included, into the header
             this.escaped = true;
+            if (this.node >= 0) {
+                // the backslash is left out of the value
+                this.list.slots[this.node * 3] |= TOKEN_DIRTY;
+            }
             return;
         }
 
-        if (!this.node) {
-            this.node = {
-                type: 'text',
-                value: ''
-            };
-            this.list.push(this.node);
+        if (this.node < 0) {
+            this.node = this.list.push(
+                (this.operatorExpecting === '"' || this.operatorExpecting === ')' ? TOKEN_ESCAPES : 0) |
+                    (this.escaped ? TOKEN_STARTS_ESCAPED : 0),
+                i,
+                i
+            );
         }
 
         if (chr === '\n') {
             // Convert newlines to spaces. Carriage return is ignored as \r and \n usually
             // go together anyway and there already is a WS for \n. Lone \r means something is fishy.
             chr = ' ';
+            this.list.slots[this.node * 3] |= TOKEN_DIRTY;
         }
 
-        if (chr.charCodeAt(0) >= 0x21 || [' ', '\t'].includes(chr)) {
-            // skip command bytes
-            this.node.value += chr;
+        if (chr.charCodeAt(0) >= 0x21 || chr === ' ' || chr === '\t') {
+            // the character is part of the value, which is read off the field later
             // text inside a quoted string or a comment is not part of an addr-spec. Tracked
             // as it goes rather than read back off the value (see lastChars in _handleAddress)
             if (!this.operatorExpecting && chr !== ' ' && chr !== '\t') {
                 this.afterAt = chr === '@';
             }
+        } else {
+            // skip command bytes
+            this.list.slots[this.node * 3] |= TOKEN_DIRTY;
         }
 
         this.escaped = false;
@@ -1132,6 +1276,8 @@ class Tokenizer {
     }
 }
 
+/* eslint-enable no-bitwise */
+
 /**
  * Maximum recursion depth for parsing nested groups.
  * RFC 5322 doesn't allow nested groups, so this is a safeguard against
@@ -1170,8 +1316,8 @@ function _parseAddressList(str: string | null | undefined, depth: number): Addre
     // seventeen: a list of one letter names took some 80 times its size in that alone
     let from = 0;
     for (let i = 0, len = tokens.length; i <= len; i++) {
-        const token = tokens[i];
-        if (i < len && !(token.type === 'operator' && (token.value === ',' || token.value === ';'))) {
+        const operator = i < len ? tokens.operatorAt(i) : '';
+        if (i < len && operator !== ',' && operator !== ';') {
             continue;
         }
         if (i > from) {

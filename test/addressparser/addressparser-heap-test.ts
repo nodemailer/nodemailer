@@ -11,8 +11,9 @@ const built = path.join(__dirname, '..', '..', 'dist', 'cjs', 'addressparser', '
 // hold a token object for every operator and run of text, a copy of the token list, and an
 // array for the tokens of every address on top, all alive until the whole header was done: a
 // list of one letter names needed some 77MB, and a 1MB header, which mailparser allows per
-// node, some 200MB. The limit leaves the parse twice the room it measures now
-const HEAP_LIMIT_MB = 64;
+// node, some 200MB. It now takes 17MB, 10MB of which are the 200k address objects it returns,
+// and the limit leaves it twice that
+const HEAP_LIMIT_MB = 34;
 
 function parseUnderHeapLimit(build: string): { status: number | null; stderr: string } {
     const script = `
