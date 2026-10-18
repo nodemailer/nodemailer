@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.1.7](https://github.com/nodemailer/nodemailer/compare/v10.1.6...v10.1.7) (2026-10-18)
+
+
+### Bug Fixes
+
+* **mime-funcs:** encode parameter values that look like encoded words ([651d79b](https://github.com/nodemailer/nodemailer/commit/651d79b0e1067b93b0ae8fc1afbdf383a46c214d))
+
 ## [10.1.6](https://github.com/nodemailer/nodemailer/compare/v10.1.5...v10.1.6) (2026-10-18)
 
 
