@@ -29,6 +29,10 @@ jobs:
             - run: npm run lint
             - run: npm run format:check
             - run: npm test
+            # Requires the built CommonJS entry with require(esm) switched off, the way EmailEngine's
+            # pkg binary loads it; Node 20 has no such flag to set
+            - run: npm run test:cjs
+              if: matrix.node == '22.x' || matrix.node == '24.x'
 
     # The library is used from Bun as well: the ESM build and the same test
     # suite are run under the latest Bun release
