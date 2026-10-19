@@ -30,6 +30,15 @@ Each transport must implement `name`, `version`, and `send(mail, callback)`. `Ma
 - Node builtins are imported with the `node:` prefix. Use a default import (`import net from 'node:net'`) when the whole module is used, so tests can still stub methods on it; use named imports otherwise. Do not use `import * as` for builtins.
 - Tests are ES modules too (`.ts`, run through `tsx`). They may use `import.meta.url`; derive `__dirname` with `path.dirname(fileURLToPath(import.meta.url))` rather than `import.meta.dirname`.
 
+## Platform constraints
+
+EmailEngine bundles Nodemailer into a single executable with [`@yao-pkg/pkg`](https://github.com/yao-pkg/pkg), which snapshots a CommonJS `require()` graph and cannot load ES modules. Two rules follow:
+
+- **Node.js 20 is the minimum supported version.** Runtime code, tests and tooling must work on Node 20, 22 and 24 (see above).
+- **The CommonJS build in `dist/cjs/` must be genuinely CommonJS-loadable**, with `require(esm)` switched off. Node 22+ (and 20.19) load ES modules through `require()` by default, which would hide an ES module reached from the CommonJS build until the pkg binary fails on it. A CommonJS entry that only wraps a dynamic `import()` of ESM code does not count. Nodemailer has no runtime dependencies; if one is ever added it must be CommonJS-loadable too, and an ESM-only major is never taken: pin the last CommonJS major in `.ncurc.cjs` (`reject`, or a `target` of `minor`/`patch`) with a comment giving the reason.
+
+Check with `npm run test:cjs`. It builds `dist/`, then `test/package/cjs-smoke.cjs` requires the entry `exports.require` points to and every `./lib/<module>` subpath under `NODE_OPTIONS=--no-experimental-require-module`, composes a DKIM-signed message and delivers one over SMTP to an in-process server. It is plain JavaScript on purpose: tsx's loader would transpile an ES module and mask the failure. CI runs it on Node 22 and 24 (Node 20 has no such flag).
+
 ## Export shapes
 
 Deep imports such as `require('nodemailer/lib/mail-composer')` and `require('nodemailer/lib/smtp-connection')` are used in the wild and documented on nodemailer.com, so the CommonJS shapes are part of the public API:
@@ -56,6 +65,7 @@ Deep imports such as `require('nodemailer/lib/mail-composer')` and `require('nod
 - `npm run test:coverage` - same suite under `c8`, source-mapped back to `src/`.
 - `npm run lint` / `npm run lint:fix` - ESLint; `lint` also runs `npm run typecheck` (`tsc --noEmit` over `src/` and `test/`).
 - `npm run build` - produce `dist/`.
+- `npm run test:cjs` - build, then load the CommonJS build with `require(esm)` switched off (see Platform constraints).
 - `npm run format` / `npm run format:check` (Prettier, `printWidth` 160, shared with the sibling packages).
 - `npm run test:bun` - the same suite under Bun against the built output.
 - Single file: `node --import tsx --test test/mailer/mail-message-test.ts`.
@@ -74,7 +84,7 @@ Conventional Commit prefixes used in this repo: `fix:` (patch release), `feat:` 
 - Do not list Claude or any AI assistant as a co-author in commit messages or PR descriptions (no `Co-Authored-By` trailer).
 - Never put `[skip ci]` on a `fix:` or `feat:` commit; those must run so the release workflow triggers. GitHub reads the marker off the head commit of a push, so a skip-marked commit pushed on top of a `fix:` commit silences both.
 - No emojis in code or documentation, printable ASCII only. Use a single hyphen-minus as a dash, never `--`, em dashes or en dashes.
-- CI (`.github/workflows/test.yml`) runs lint, format check and the suite on Node 20, 22, 24 and 26, plus a Bun job and a coverage job on Node 24.
+- CI (`.github/workflows/test.yml`) runs lint, format check and the suite on Node 20, 22, 24 and 26, plus the CommonJS guard (`npm run test:cjs`) on Node 22 and 24, a Bun job and a coverage job on Node 24.
 
 ## Security
 
