@@ -7,6 +7,10 @@ on:
 permissions:
     contents: read
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     test:
         strategy:
@@ -15,12 +19,13 @@ jobs:
                 os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
             - name: Use Node.js ${{ matrix.node }}
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v6
               with:
                   node-version: ${{ matrix.node }}
-            - run: npm install
+                  cache: npm
+            - run: npm ci
             - run: npm run lint
             - run: npm run format:check
             - run: npm test
@@ -30,15 +35,16 @@ jobs:
     bun:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
             - name: Use Node.js 24.x
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v6
               with:
                   node-version: 24.x
+                  cache: npm
             - uses: oven-sh/setup-bun@v2
               with:
                   bun-version: latest
-            - run: npm install
+            - run: npm ci
             - run: npm run test:bun
 
     # Coverage is gated separately on a single Node.js version: c8's dependency
@@ -47,10 +53,11 @@ jobs:
     coverage:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
             - name: Use Node.js 24.x
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v6
               with:
                   node-version: 24.x
-            - run: npm install
+                  cache: npm
+            - run: npm ci
             - run: npm run test:coverage
