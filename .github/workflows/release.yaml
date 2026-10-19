@@ -13,19 +13,20 @@ jobs:
     release-please:
         runs-on: ubuntu-latest
         steps:
-            - uses: googleapis/release-please-action@v4
+            - uses: googleapis/release-please-action@v5
               id: release
               with:
                   release-type: node
             # The logic below handles the npm publication:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v7
               # these if statements ensure that a publication only occurs when
               # a new release is created:
               if: ${{ steps.release.outputs.release_created }}
-            - uses: actions/setup-node@v5
+            - uses: actions/setup-node@v7
               with:
                   node-version: 24
                   registry-url: 'https://registry.npmjs.org'
+                  package-manager-cache: false
               if: ${{ steps.release.outputs.release_created }}
             - run: npm ci
               if: ${{ steps.release.outputs.release_created }}
