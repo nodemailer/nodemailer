@@ -18,9 +18,7 @@ describe('Base64 Tests', () => {
         ['foo \r\nbar', 'Zm9vIA0KYmFy']
     ];
 
-    const wrapFixtures = [
-        ['dGVyZSwgdGVyZSwgdmFuYSBrZXJlLCBrdWlkYXMgc3VsIGzDpGhlYj8=', 'dGVyZSwgdGVyZSwgdmFu\r\nYSBrZXJlLCBrdWlkYXMg\r\nc3VsIGzDpGhlYj8=']
-    ];
+    const wrapFixtures = [['dGVyZSwgdGVyZSwgdmFuYSBrZXJlLCBrdWlkYXMgc3VsIGzDpGhlYj8=', 'dGVyZSwgdGVyZSwgdmFu\r\nYSBrZXJlLCBrdWlkYXMg\r\nc3VsIGzDpGhlYj8=']];
 
     const exactMultipleBase64 = 'A'.repeat(152);
 

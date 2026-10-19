@@ -295,13 +295,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
         });
     }
 
-    if (
-        parsed.protocol === 'https:' &&
-        parsed.hostname &&
-        parsed.hostname !== reqOptions.host &&
-        !net.isIP(parsed.hostname) &&
-        !reqOptions.servername
-    ) {
+    if (parsed.protocol === 'https:' && parsed.hostname && parsed.hostname !== reqOptions.host && !net.isIP(parsed.hostname) && !reqOptions.servername) {
         reqOptions.servername = parsed.hostname;
     }
 
@@ -421,9 +415,7 @@ function nmfetch(url: string, options?: FetchOptions): FetchResponse {
             // request headers so an attacker who controls the redirect target cannot
             // harvest them.
             const crossOrigin =
-                redirectParsed.protocol !== parsed.protocol ||
-                redirectParsed.hostname !== parsed.hostname ||
-                fetchPort(redirectParsed) !== fetchPort(parsed);
+                redirectParsed.protocol !== parsed.protocol || redirectParsed.hostname !== parsed.hostname || fetchPort(redirectParsed) !== fetchPort(parsed);
             if (options.headers && crossOrigin) {
                 const sensitive = ['authorization', 'cookie', 'proxy-authorization'];
                 Object.keys(options.headers).forEach(key => {

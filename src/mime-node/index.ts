@@ -80,8 +80,7 @@ export interface MimeNodePreparedHeaderValue {
  * The values a header can hold: a string, a number, a Date (for the Date header), address
  * objects (for the address headers), a prepared value object, or a list of these
  */
-export type MimeNodeHeaderValue =
-    string | number | boolean | Date | MimeNodeAddress | MimeNodePreparedHeaderValue | MimeNodeHeaderValue[] | null | undefined;
+export type MimeNodeHeaderValue = string | number | boolean | Date | MimeNodeAddress | MimeNodePreparedHeaderValue | MimeNodeHeaderValue[] | null | undefined;
 
 /**
  * A single header, the shape the headers are stored in and one of the list forms
@@ -301,11 +300,7 @@ function exceedsDomainLimits(domain: string): boolean {
  */
 function normalizeDomain(domain: string, toUnicode: boolean): string {
     // domainToASCII and domainToUnicode landed in Node 7, the bundled codec covers Node 6
-    if (
-        typeof urlModule.domainToASCII === 'function' &&
-        typeof urlModule.domainToUnicode === 'function' &&
-        !URL_PARSER_UNSAFE.test(domain)
-    ) {
+    if (typeof urlModule.domainToASCII === 'function' && typeof urlModule.domainToUnicode === 'function' && !URL_PARSER_UNSAFE.test(domain)) {
         // The U-label form is decoded from the A-label form rather than from the input:
         // Deno's domainToASCII returns an empty string for a label it cannot decode, while
         // its domainToUnicode returns the label with U+FFFD in place of the bad part
@@ -931,11 +926,7 @@ class MimeNode {
 
                     this._handleContentType(structured);
 
-                    if (
-                        structured.value.match(/^text\/plain\b/) &&
-                        typeof this.content === 'string' &&
-                        /[\u0080-\uFFFF]/.test(this.content)
-                    ) {
+                    if (structured.value.match(/^text\/plain\b/) && typeof this.content === 'string' && /[\u0080-\uFFFF]/.test(this.content)) {
                         structured.params.charset = 'utf-8';
                     }
 
@@ -1676,8 +1667,7 @@ class MimeNode {
             // where it came from. MimeNode is exported and subclassable, so the generator is
             // not necessarily the one below. Stripping twice costs nothing, it is idempotent.
             const declared = _stripBoundaryControls((structured.params as Record<string, string>).boundary || this.boundary || '');
-            this.boundary = (structured.params as Record<string, string>).boundary =
-                declared || _stripBoundaryControls(this._generateBoundary());
+            this.boundary = (structured.params as Record<string, string>).boundary = declared || _stripBoundaryControls(this._generateBoundary());
         } else {
             this.boundary = false;
         }
@@ -1787,11 +1777,7 @@ class MimeNode {
      * @return address string
      * @internal
      */
-    _convertAddresses(
-        addresses: MimeNodeAddress | MimeNodeAddress[] | undefined,
-        uniqueList?: MimeNodeAddress[],
-        seenAddresses?: Set<string>
-    ): string {
+    _convertAddresses(addresses: MimeNodeAddress | MimeNodeAddress[] | undefined, uniqueList?: MimeNodeAddress[], seenAddresses?: Set<string>): string {
         const values: string[] = [];
 
         uniqueList = uniqueList || [];
@@ -1826,9 +1812,7 @@ class MimeNode {
                     uniqueList.push(address);
                 }
             } else if (address.group) {
-                const groupListAddresses = (
-                    address.group.length ? this._convertAddresses(address.group, uniqueList, seenAddresses) : ''
-                ).trim();
+                const groupListAddresses = (address.group.length ? this._convertAddresses(address.group, uniqueList, seenAddresses) : '').trim();
                 values.push(`${this._encodeAddressName(address.name as string)}:${groupListAddresses};`);
             }
         });

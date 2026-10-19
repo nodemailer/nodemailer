@@ -813,10 +813,7 @@ function _handleAddress(tokens: TokenList, from: number, to: number): MailboxAdd
             // A run that is a quoted local part with its '@' and domain is an addr-spec of
             // its own, with the quoting put back on, and takes its turn like any other
             const local = data.quotedLocalAt[i];
-            const quotedLocal =
-                data.textWasQuoted[i] && local >= 0 && QUOTED_LOCAL_DOMAIN.test(data.text[i].slice(local))
-                    ? _quoteLocalPart(data.text[i])
-                    : '';
+            const quotedLocal = data.textWasQuoted[i] && local >= 0 && QUOTED_LOCAL_DOMAIN.test(data.text[i].slice(local)) ? _quoteLocalPart(data.text[i]) : '';
             if (quotedLocal || (!data.textWasQuoted[i] && _isAddrSpec(candidates[i]))) {
                 data.address = [quotedLocal || candidates[i]];
                 data.text.splice(i, 1);
@@ -1145,11 +1142,7 @@ class Tokenizer {
         } else if (chr === this.operatorExpecting && !nested) {
             const nextChr = this.str.charAt(i + 1);
             this._closeText(i);
-            this.list.push(
-                nextChr && ![' ', '\t', '\r', '\n', ',', ';'].includes(nextChr) ? TOKEN_OPERATOR | TOKEN_NO_BREAK : TOKEN_OPERATOR,
-                i,
-                i + 1
-            );
+            this.list.push(nextChr && ![' ', '\t', '\r', '\n', ',', ';'].includes(nextChr) ? TOKEN_OPERATOR | TOKEN_NO_BREAK : TOKEN_OPERATOR, i, i + 1);
             if (chr !== ')') {
                 // a comment is folding whitespace, it does not part the "@" from the "["
                 this.afterAt = false;
@@ -1189,8 +1182,7 @@ class Tokenizer {
 
         if (this.node < 0) {
             this.node = this.list.push(
-                (this.operatorExpecting === '"' || this.operatorExpecting === ')' ? TOKEN_ESCAPES : 0) |
-                    (this.escaped ? TOKEN_STARTS_ESCAPED : 0),
+                (this.operatorExpecting === '"' || this.operatorExpecting === ')' ? TOKEN_ESCAPES : 0) | (this.escaped ? TOKEN_STARTS_ESCAPED : 0),
                 i,
                 i
             );

@@ -1,10 +1,5 @@
 import * as shared from '../shared/index.js';
-import MimeNode, {
-    type MimeNodeAddress,
-    type MimeNodeAddressInput,
-    type MimeNodeHeaders,
-    type MimeNodePreparedHeaderValue
-} from '../mime-node/index.js';
+import MimeNode, { type MimeNodeAddress, type MimeNodeAddressInput, type MimeNodeHeaders, type MimeNodePreparedHeaderValue } from '../mime-node/index.js';
 import * as mimeFuncs from '../mime-funcs/index.js';
 import type {
     MailComposerAlternative,
@@ -202,8 +197,7 @@ export default class MailMessage<T = SentMessageInfo> {
                 if (!attachment.filename) {
                     // a backslash separates as well, so a Windows path does not put the sender's directories in the headers
                     attachment.filename =
-                        ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() ||
-                        'attachment-' + (i + 1);
+                        ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() || 'attachment-' + (i + 1);
                     if (attachment.filename.indexOf('.') < 0) {
                         attachment.filename += '.' + mimeFuncs.detectExtension(attachment.contentType);
                     }
@@ -225,9 +219,7 @@ export default class MailMessage<T = SentMessageInfo> {
             let value: MimeNodeAddress[] | undefined;
             if (this.message) {
                 value = ([] as MimeNodeAddress[]).concat(
-                    mimeNode._parseAddresses(
-                        this.message.getHeader(address === 'replyTo' ? 'reply-to' : address) as MimeNodeAddressInput
-                    ) || []
+                    mimeNode._parseAddresses(this.message.getHeader(address === 'replyTo' ? 'reply-to' : address) as MimeNodeAddressInput) || []
                 );
             } else if (this.data[address]) {
                 value = ([] as MimeNodeAddress[]).concat(mimeNode._parseAddresses(this.data[address]) || []);
@@ -255,30 +247,26 @@ export default class MailMessage<T = SentMessageInfo> {
             if (!args[0] || !args[0][args[1]]) {
                 return resolveNext();
             }
-            shared.resolveContent(
-                ...args,
-                { disableFileAccess: this.data.disableFileAccess, disableUrlAccess: this.data.disableUrlAccess },
-                (err, value) => {
-                    if (err) {
-                        return (callback as ResultCallback<MailMessageData>)(err);
-                    }
-
-                    const node = {
-                        content: value
-                    };
-                    if (args[0][args[1]] && typeof args[0][args[1]] === 'object' && !Buffer.isBuffer(args[0][args[1]])) {
-                        // The keys are the caller's, so copying them takes the same "__proto__"
-                        // rule as the constructor. `key in node` stays as the already-set test
-                        // here, unlike for the defaults: it also skips the Object.prototype
-                        // member names, and letting message data land a `toString` string on a
-                        // node only buys a TypeError the first time something stringifies it.
-                        shared.copyOwnKeys(node, args[0][args[1]], key => key in node || ['content', 'path', 'href', 'raw'].includes(key));
-                    }
-
-                    args[0][args[1]] = node;
-                    resolveNext();
+            shared.resolveContent(...args, { disableFileAccess: this.data.disableFileAccess, disableUrlAccess: this.data.disableUrlAccess }, (err, value) => {
+                if (err) {
+                    return (callback as ResultCallback<MailMessageData>)(err);
                 }
-            );
+
+                const node = {
+                    content: value
+                };
+                if (args[0][args[1]] && typeof args[0][args[1]] === 'object' && !Buffer.isBuffer(args[0][args[1]])) {
+                    // The keys are the caller's, so copying them takes the same "__proto__"
+                    // rule as the constructor. `key in node` stays as the already-set test
+                    // here, unlike for the defaults: it also skips the Object.prototype
+                    // member names, and letting message data land a `toString` string on a
+                    // node only buys a TypeError the first time something stringifies it.
+                    shared.copyOwnKeys(node, args[0][args[1]], key => key in node || ['content', 'path', 'href', 'raw'].includes(key));
+                }
+
+                args[0][args[1]] = node;
+                resolveNext();
+            });
         };
 
         setImmediate(() => resolveNext());
@@ -458,9 +446,7 @@ export default class MailMessage<T = SentMessageInfo> {
 
                                 // List-ID expects a bare domain-like identifier, so strip the
                                 // scheme prefix that _formatListUrl adds or passes through
-                                return (
-                                    (value.comment ? comment + ' ' : '') + this._formatListUrl(value.url).replace(/^<[^:]+:\/{0,2}/, '<')
-                                );
+                                return (value.comment ? comment + ' ' : '') + this._formatListUrl(value.url).replace(/^<[^:]+:\/{0,2}/, '<');
                             }
 
                             // List-*: <http://domain> (comment)

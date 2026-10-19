@@ -533,12 +533,7 @@ describe('XOAuth2 token endpoint handling', { timeout: 10000 }, () => {
                             break;
                         }
                         let [header, payload, signature] = body.assertion.split('.');
-                        let verified = crypto.verify(
-                            'RSA-SHA256',
-                            Buffer.from(header + '.' + payload),
-                            keyPair.publicKey,
-                            Buffer.from(signature, 'base64url')
-                        );
+                        let verified = crypto.verify('RSA-SHA256', Buffer.from(header + '.' + payload), keyPair.publicKey, Buffer.from(signature, 'base64url'));
                         if (!verified) {
                             respond(400, JSON.stringify({ error: 'invalid_grant' }));
                             break;
@@ -856,10 +851,7 @@ describe('XOAuth2 token endpoint handling', { timeout: 10000 }, () => {
         xoauth2.getToken(false, (err, accessToken) => {
             assert.ok(err);
             assert.strictEqual((err as any).code, 'EOAUTH2');
-            assert.strictEqual(
-                err!.message,
-                'invalid_grant: Token has been expired or revoked. (https://example.com/errors/invalid_grant)'
-            );
+            assert.strictEqual(err!.message, 'invalid_grant: Token has been expired or revoked. (https://example.com/errors/invalid_grant)');
             assert.ok(!accessToken);
             done();
         });

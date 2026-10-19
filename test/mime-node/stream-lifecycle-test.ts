@@ -165,10 +165,7 @@ describe('MimeNode stream lifecycle', { timeout: 20000 }, () => {
         it('fails a json transport content stream that is destroyed without an error', async () => {
             const content = new PassThrough();
             setImmediate(() => content.destroy());
-            const { err } = await send(
-                { ...message, attachments: [{ filename: 'a.txt', content }] },
-                { streamTransport: false, jsonTransport: true }
-            );
+            const { err } = await send({ ...message, attachments: [{ filename: 'a.txt', content }] }, { streamTransport: false, jsonTransport: true });
             assert.ok(err);
             // ESTREAM when the stream was already destroyed by the time the node got to it
             assert.ok(['ERR_STREAM_PREMATURE_CLOSE', 'ESTREAM'].includes(err.code), err.code);
@@ -388,9 +385,7 @@ describe('MimeNode output read by a slow consumer', { timeout: 30000 }, () => {
 
         const root = new MimeNode('multipart/mixed');
         root.createChild('application/octet-stream', { filename: 'first.bin' }).setContent(streamOf(first));
-        root.createChild('text/plain; charset=utf-8')
-            .setHeader('Content-Transfer-Encoding', 'quoted-printable')
-            .setContent(streamOf(second));
+        root.createChild('text/plain; charset=utf-8').setHeader('Content-Transfer-Encoding', 'quoted-printable').setContent(streamOf(second));
 
         const message = await readSlowly(root);
         const [firstBody, secondBody] = bodies(message, root.boundary as string);
@@ -416,9 +411,7 @@ describe('MimeNode binary quoted-printable', () => {
     it('keeps the bytes of a binary part when line endings are converted', async () => {
         const content = crypto.randomBytes(64 * 1024);
         const root = new MimeNode('multipart/mixed', { newline: 'unix' });
-        root.createChild('application/octet-stream', { filename: 'a.bin' })
-            .setHeader('Content-Transfer-Encoding', 'quoted-printable')
-            .setContent(content);
+        root.createChild('application/octet-stream', { filename: 'a.bin' }).setHeader('Content-Transfer-Encoding', 'quoted-printable').setContent(content);
         root.createChild('text/plain').setContent('after');
 
         const message = (await root.build()).toString('latin1').replace(/\n/g, '\r\n');

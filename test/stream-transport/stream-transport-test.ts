@@ -279,9 +279,7 @@ describe('Stream Transport failure modes', () => {
             assert.strictEqual(line.level, 'info');
             assert.strictEqual(
                 line.message,
-                'Sending message ' +
-                    message.messageId() +
-                    ' to <r1@valid.recipient, r2@valid.recipient, ...and 3 more> using <CR><LF> line breaks'
+                'Sending message ' + message.messageId() + ' to <r1@valid.recipient, r2@valid.recipient, ...and 3 more> using <CR><LF> line breaks'
             );
             (info!.message as any).resume();
             done();

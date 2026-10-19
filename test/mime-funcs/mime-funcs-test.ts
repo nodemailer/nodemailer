@@ -1005,10 +1005,7 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             const word = 'a'.repeat(80);
 
             assert.strictEqual(mimeFuncs.foldLines(word + ' b', 76), word + '\r\n b');
-            assert.strictEqual(
-                mimeFuncs.foldLines('Subject: ' + 'a'.repeat(100) + ' tail', 76),
-                'Subject:\r\n ' + 'a'.repeat(100) + '\r\n tail'
-            );
+            assert.strictEqual(mimeFuncs.foldLines('Subject: ' + 'a'.repeat(100) + ' tail', 76), 'Subject:\r\n ' + 'a'.repeat(100) + '\r\n tail');
         });
 
         it('should keep the space on the folded line for flowed text', () => {

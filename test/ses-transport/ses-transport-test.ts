@@ -412,9 +412,7 @@ describe('SES Transport Tests', { timeout: 90 * 1000 }, () => {
                         }
                     },
                     send(messageData: any) {
-                        assert.ok(
-                            messageData.messageData.Content.Raw.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;')
-                        );
+                        assert.ok(messageData.messageData.Content.Raw.Data.toString().includes('h=from:subject:to:cc:mime-version:content-type;'));
                         return new Promise(resolve => {
                             setImmediate(() => resolve(messageData.send()));
                         });
@@ -582,19 +580,16 @@ describe('SES Transport region and failure handling', () => {
         const { commands, SES } = client('abc');
         const transport = nodemailer.createTransport({ SES, logger });
 
-        transport.sendMail(
-            { ...message, attachments: [{ filename: 'missing.txt', path: path.join(__dirname, 'does-not-exist.txt') }] },
-            (err: any, info) => {
-                assert.ok(err);
-                assert.strictEqual(err.code, 'ENOENT');
-                assert.ok(!info);
-                assert.strictEqual(commands.length, 0);
-                const line = lines.find(line => line.level === 'error');
-                assert.ok(line, 'no error log line');
-                assert.ok(/^Failed creating message for <[^>]+>\. ENOENT/.test(line.message), line.message);
-                done();
-            }
-        );
+        transport.sendMail({ ...message, attachments: [{ filename: 'missing.txt', path: path.join(__dirname, 'does-not-exist.txt') }] }, (err: any, info) => {
+            assert.ok(err);
+            assert.strictEqual(err.code, 'ENOENT');
+            assert.ok(!info);
+            assert.strictEqual(commands.length, 0);
+            const line = lines.find(line => line.level === 'error');
+            assert.ok(line, 'no error log line');
+            assert.ok(/^Failed creating message for <[^>]+>\. ENOENT/.test(line.message), line.message);
+            done();
+        });
     });
 
     it('should accept a MessageRejected response through the Code property when verifying', (t, done) => {

@@ -576,10 +576,7 @@ describe('Sendmail Transport options and failure modes', () => {
             const line = lines.find(line => line.entry.tnx === 'send');
             assert.ok(line, 'no send log line');
             assert.strictEqual(line.level, 'info');
-            assert.strictEqual(
-                line.message,
-                'Sending message ' + mail.message.messageId() + ' to <r1@valid.recipient, r2@valid.recipient, ...and 3 more>'
-            );
+            assert.strictEqual(line.message, 'Sending message ' + mail.message.messageId() + ' to <r1@valid.recipient, r2@valid.recipient, ...and 3 more>');
             t.mock.restoreAll();
             done();
         });
@@ -609,23 +606,20 @@ describe('Sendmail Transport with a real child process', { skip: process.platfor
         const script = writeScript('sendmail-ok.sh', 'printf "%s\\n" "$*" > "' + output + '"\ncat >> "' + output + '"\n');
         const transporter = nodemailer.createTransport({ sendmail: true, path: script, newline: 'unix' });
 
-        transporter.sendMail(
-            { from: 'sender@example.com', to: ['a@example.com', 'b@example.com'], subject: 'real process', text: 'hello' },
-            (err, info) => {
-                assert.ok(!err);
-                assert.strictEqual(info.response, 'Messages queued for delivery');
-                assert.deepStrictEqual(info.envelope, { from: 'sender@example.com', to: ['a@example.com', 'b@example.com'] });
+        transporter.sendMail({ from: 'sender@example.com', to: ['a@example.com', 'b@example.com'], subject: 'real process', text: 'hello' }, (err, info) => {
+            assert.ok(!err);
+            assert.strictEqual(info.response, 'Messages queued for delivery');
+            assert.deepStrictEqual(info.envelope, { from: 'sender@example.com', to: ['a@example.com', 'b@example.com'] });
 
-                const received = fs.readFileSync(output, 'utf8');
-                const [argLine, ...rest] = received.split('\n');
-                const body = rest.join('\n');
-                assert.strictEqual(argLine, '-i -f sender@example.com a@example.com b@example.com');
-                assert.ok(body.includes('\nSubject: real process\n'), body);
-                assert.ok(body.includes('\n\nhello'), body);
-                assert.ok(!body.includes('\r'), 'expected unix newlines');
-                done();
-            }
-        );
+            const received = fs.readFileSync(output, 'utf8');
+            const [argLine, ...rest] = received.split('\n');
+            const body = rest.join('\n');
+            assert.strictEqual(argLine, '-i -f sender@example.com a@example.com b@example.com');
+            assert.ok(body.includes('\nSubject: real process\n'), body);
+            assert.ok(body.includes('\n\nhello'), body);
+            assert.ok(!body.includes('\r'), 'expected unix newlines');
+            done();
+        });
     });
 
     it('should report the exit code of a failing binary', (t, done) => {

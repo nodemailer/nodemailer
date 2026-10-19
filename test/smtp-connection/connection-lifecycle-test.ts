@@ -385,9 +385,7 @@ describe('SMTPConnection 421 replies', { timeout: 10000 }, () => {
                 client.connect(() => resolve());
             });
             const ended = new Promise(resolve => client.once('end', resolve));
-            const err = await new Promise<NodemailerError | null>(resolve =>
-                client.login({ user: 'user', pass: 'pass' }, err => resolve(err))
-            );
+            const err = await new Promise<NodemailerError | null>(resolve => client.login({ user: 'user', pass: 'pass' }, err => resolve(err)));
             assert.ok(err);
             assert.strictEqual(err.code, 'EAUTH');
             assert.strictEqual(err.responseCode, 421);

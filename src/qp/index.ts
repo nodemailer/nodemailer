@@ -54,17 +54,9 @@ function encodeBytes(buffer: Buffer, next?: number, binary?: boolean, previous?:
         const ord = buffer[i];
         const following = i + 1 < len ? buffer[i + 1] : next;
         const lineBreakByte =
-            binary && (ord === 0x0d || ord === 0x0a)
-                ? ord === 0x0d
-                    ? following === 0x0a
-                    : (i > 0 ? buffer[i - 1] : previous) === 0x0d
-                : true;
+            binary && (ord === 0x0d || ord === 0x0a) ? (ord === 0x0d ? following === 0x0a : (i > 0 ? buffer[i - 1] : previous) === 0x0d) : true;
         // if the char is in allowed range, then keep as is, unless it is a WS in the end of a line
-        if (
-            QP_LITERAL[ord] &&
-            lineBreakByte &&
-            !(isWhitespace(ord) && (following === undefined || following === 0x0a || following === 0x0d))
-        ) {
+        if (QP_LITERAL[ord] && lineBreakByte && !(isWhitespace(ord) && (following === undefined || following === 0x0a || following === 0x0d))) {
             output[pos++] = ord;
             continue;
         }
@@ -133,12 +125,7 @@ export function wrap(str: string, lineLength?: number): string {
             }
 
             // ensure that utf-8 sequences are not split
-            while (
-                line.length > 3 &&
-                line.length < len - pos &&
-                !line.match(/^(?:=[\da-f]{2}){1,4}$/i) &&
-                (match = line.match(/[=][\da-f]{2}$/gi))
-            ) {
+            while (line.length > 3 && line.length < len - pos && !line.match(/^(?:=[\da-f]{2}){1,4}$/i) && (match = line.match(/[=][\da-f]{2}$/gi))) {
                 code = parseInt(match[0].substr(1, 2), 16);
                 if (code < 128) {
                     break;

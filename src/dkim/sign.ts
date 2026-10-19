@@ -104,13 +104,7 @@ sign.unsupportedHashAlgoError = unsupportedHashAlgoError;
 
 export default sign;
 
-function generateDKIMHeader(
-    domainName: string | undefined,
-    keySelector: string | undefined,
-    fieldNames: string,
-    hashAlgo: string,
-    bodyHash: string
-): string {
+function generateDKIMHeader(domainName: string | undefined, keySelector: string | undefined, fieldNames: string, hashAlgo: string, bodyHash: string): string {
     // the caller supplied tag values are interpolated straight into the tag list, and none of
     // them has any way to carry a control char, DEL, or one of the delimiters that would close
     // the value and open a tag of its own

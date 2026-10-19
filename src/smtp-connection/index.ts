@@ -948,9 +948,7 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
-        const connectFn: (options: SMTPConnectionConnectOptions, connectionListener: () => void) => net.Socket = secure
-            ? tls.connect
-            : net.connect;
+        const connectFn: (options: SMTPConnectionConnectOptions, connectionListener: () => void) => net.Socket = secure ? tls.connect : net.connect;
         try {
             this._socket = connectFn(opts, () => this._onConnect());
             this._setupConnectionHandlers();
@@ -965,10 +963,7 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _setupConnectionHandlers(): void {
-        this._startPhase(
-            Math.max((this._connectionDeadline || Date.now()) - Date.now(), 0),
-            timeoutError('Connection timeout', 'CONNECT_TIMEOUT')
-        );
+        this._startPhase(Math.max((this._connectionDeadline || Date.now()) - Date.now(), 0), timeoutError('Connection timeout', 'CONNECT_TIMEOUT'));
 
         (this._socket as net.Socket).on('error', this._onConnectionSocketError);
     }
@@ -1170,10 +1165,7 @@ class SMTPConnection extends EventEmitter {
 
             // one implementation serves both sendCommand overloads, the promise is returned
             // exactly when no callback was given
-            const sendCommand = (
-                cmd: string,
-                done?: SMTPConnectionCustomAuthCommandCallback
-            ): Promise<SMTPConnectionCustomAuthResponse> | undefined => {
+            const sendCommand = (cmd: string, done?: SMTPConnectionCustomAuthCommandCallback): Promise<SMTPConnectionCustomAuthResponse> | undefined => {
                 let promise: Promise<SMTPConnectionCustomAuthResponse> | undefined;
 
                 if (!done) {
@@ -1471,9 +1463,7 @@ class SMTPConnection extends EventEmitter {
         this._responseActions = [];
         this.close();
         if (pendingSend) {
-            pendingSend.callback(
-                (envelope && envelope.mailError) || this._formatError('Server closed the connection', 'ECONNECTION', str, 'CONN')
-            );
+            pendingSend.callback((envelope && envelope.mailError) || this._formatError('Server closed the connection', 'ECONNECTION', str, 'CONN'));
         }
     }
 
@@ -1674,14 +1664,7 @@ class SMTPConnection extends EventEmitter {
             return;
         }
 
-        if (
-            !failureResponse &&
-            this.stage === 'connected' &&
-            !this._responseActions.length &&
-            !this._pendingSend &&
-            !this._destroyed &&
-            !this._closing
-        ) {
+        if (!failureResponse && this.stage === 'connected' && !this._responseActions.length && !this._pendingSend && !this._destroyed && !this._closing) {
             // nothing was waiting for the server, so this is the server ending an idle session
             // (usually after its idle timeout), not a failure
             this.logger.info(
@@ -1952,9 +1935,7 @@ class SMTPConnection extends EventEmitter {
         let useSmtpUtf8 = false;
 
         this._envelope = (envelope || {}) as SMTPConnectionEnvelope;
-        this._envelope.from = ((this._envelope.from && (this._envelope.from as SMTPEnvelopeAddress).address) || this._envelope.from || '')
-            .toString()
-            .trim();
+        this._envelope.from = ((this._envelope.from && (this._envelope.from as SMTPEnvelopeAddress).address) || this._envelope.from || '').toString().trim();
 
         this._envelope.to = ([] as Array<string | SMTPEnvelopeAddress>)
             .concat((this._envelope.to as SMTPEnvelope['to']) || [])
@@ -2006,14 +1987,10 @@ class SMTPConnection extends EventEmitter {
         // connection).
         if (this._envelope.requireTLSExtensionEnabled) {
             if (!this.secure) {
-                return callback(
-                    this._formatError('REQUIRETLS can only be used over TLS connections (RFC 8689)', 'EREQUIRETLS', false, 'MAIL FROM')
-                );
+                return callback(this._formatError('REQUIRETLS can only be used over TLS connections (RFC 8689)', 'EREQUIRETLS', false, 'MAIL FROM'));
             }
             if (!this._supportedExtensions.includes('REQUIRETLS')) {
-                return callback(
-                    this._formatError('Server does not support REQUIRETLS extension (RFC 8689)', 'EREQUIRETLS', false, 'MAIL FROM')
-                );
+                return callback(this._formatError('Server does not support REQUIRETLS extension (RFC 8689)', 'EREQUIRETLS', false, 'MAIL FROM'));
             }
         }
 
@@ -2284,12 +2261,7 @@ class SMTPConnection extends EventEmitter {
 
         if (str.charAt(0) !== '2') {
             if (this.options.requireTLS) {
-                this._onError(
-                    new Error('EHLO failed but HELO does not support required STARTTLS. response=' + str),
-                    'ECONNECTION',
-                    str,
-                    'EHLO'
-                );
+                this._onError(new Error('EHLO failed but HELO does not support required STARTTLS. response=' + str), 'ECONNECTION', str, 'EHLO');
                 return;
             }
 
@@ -2504,9 +2476,7 @@ class SMTPConnection extends EventEmitter {
         const challengeMatch = str.match(/^334\s+(.+)$/);
 
         if (!challengeMatch) {
-            return callback(
-                this._formatError('Invalid login sequence while waiting for server challenge string', 'EAUTH', str, 'AUTH CRAM-MD5')
-            );
+            return callback(this._formatError('Invalid login sequence while waiting for server challenge string', 'EAUTH', str, 'AUTH CRAM-MD5'));
         }
 
         // Decode from base64

@@ -139,9 +139,8 @@ describe('MailComposer unit tests', () => {
                 assert.ok(!err);
                 let msg = message.toString();
                 assert.ok(
-                    msg.indexOf(
-                        '\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n'
-                    ) >= 0
+                    msg.indexOf('\r\ntere tere tere tere tere tere tere tere tere tere tere tere tere tere tere =\r\ntere tere tere tere tere tere tere\r\n') >=
+                        0
                 );
                 assert.ok(
                     msg.indexOf(
@@ -1068,9 +1067,7 @@ describe('MailComposer unit tests', () => {
             // read off disk. An app validating the own keys of the blob sees only content
             let data = {
                 text: 'def',
-                icalEvent: JSON.parse(
-                    '{"content":"BEGIN:VCALENDAR\\r\\nEND:VCALENDAR","__proto__":{"path":"' + __dirname + '/fixtures/attachment.bin"}}'
-                )
+                icalEvent: JSON.parse('{"content":"BEGIN:VCALENDAR\\r\\nEND:VCALENDAR","__proto__":{"path":"' + __dirname + '/fixtures/attachment.bin"}}')
             };
 
             let mail = new MailComposer(data).compile();
@@ -1139,10 +1136,7 @@ describe('MailComposer unit tests', () => {
                         assert.ok(!err);
                         let msg = message.toString();
                         let icsPart = msg.substring(msg.indexOf('Content-Type: application/ics'));
-                        assert.ok(
-                            icsPart.includes(Buffer.from('BEGIN:VCALENDAR').toString('base64')),
-                            'application/ics part should not be empty'
-                        );
+                        assert.ok(icsPart.includes(Buffer.from('BEGIN:VCALENDAR').toString('base64')), 'application/ics part should not be empty');
                         // the text/calendar alternative shares the resolved value
                         assert.ok(msg.indexOf('Content-Type: text/calendar') >= 0);
                         assert.strictEqual(requestCount, 1, 'the event url should be fetched only once');

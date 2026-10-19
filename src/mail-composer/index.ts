@@ -273,14 +273,12 @@ class MailComposer {
                 attachment = this._processDataUrl(attachment);
             }
 
-            const contentType =
-                attachment.contentType || mimeFuncs.detectMimeType(attachment.filename || attachment.path || attachment.href || 'bin');
+            const contentType = attachment.contentType || mimeFuncs.detectMimeType(attachment.filename || attachment.path || attachment.href || 'bin');
 
             const isImage = /^image\//i.test(contentType);
             const isMessageNode = /^message\//i.test(contentType);
 
-            const contentDisposition =
-                attachment.contentDisposition || (isMessageNode || (isImage && attachment.cid) ? 'inline' : 'attachment');
+            const contentDisposition = attachment.contentDisposition || (isMessageNode || (isImage && attachment.cid) ? 'inline' : 'attachment');
 
             let contentTransferEncoding: string | false | undefined;
             if ('contentTransferEncoding' in attachment) {
@@ -303,9 +301,7 @@ class MailComposer {
                 data.filename = attachment.filename;
             } else if (!isMessageNode && attachment.filename !== false) {
                 // a backslash separates as well, so a Windows path does not put the sender's directories in the headers
-                data.filename =
-                    ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() ||
-                    'attachment-' + (i + 1);
+                data.filename = ((attachment.path || attachment.href || '').split(/[/\\]/).pop() as string).split('?').shift() || 'attachment-' + (i + 1);
                 if (data.filename.indexOf('.') < 0) {
                     data.filename += '.' + mimeFuncs.detectExtension(data.contentType);
                 }
@@ -485,8 +481,7 @@ class MailComposer {
             eventObject = Object.assign({}, this._getIcalEvent());
 
             eventObject.filename = false;
-            eventObject.contentType =
-                'text/calendar; charset=utf-8; method=' + (eventObject.method || 'PUBLISH').toString().trim().toUpperCase();
+            eventObject.contentType = 'text/calendar; charset=utf-8; method=' + (eventObject.method || 'PUBLISH').toString().trim().toUpperCase();
             if (!eventObject.headers) {
                 eventObject.headers = {};
             }
@@ -516,9 +511,7 @@ class MailComposer {
                 }
 
                 const data: MailComposerAlternative = {
-                    contentType:
-                        alternative.contentType ||
-                        mimeFuncs.detectMimeType(alternative.filename || alternative.path || alternative.href || 'txt'),
+                    contentType: alternative.contentType || mimeFuncs.detectMimeType(alternative.filename || alternative.path || alternative.href || 'txt'),
                     contentTransferEncoding: alternative.contentTransferEncoding
                 };
 

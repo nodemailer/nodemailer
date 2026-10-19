@@ -177,8 +177,7 @@ describe('DKIM MessageParser edge cases', () => {
     // far below the quadratic one, so it only trips if the unfold regresses.
     it('should unfold a deeply folded header in linear time', async () => {
         const count = 100000;
-        const message =
-            'From: a@example.com\r\nTo: x@example.com,\r\n' + ' cont-0000@example.com,\r\n'.repeat(count) + 'Subject: x\r\n\r\nbody';
+        const message = 'From: a@example.com\r\nTo: x@example.com,\r\n' + ' cont-0000@example.com,\r\n'.repeat(count) + 'Subject: x\r\n\r\nbody';
 
         const started = Date.now();
         const result = await parse([Buffer.from(message, 'binary')]);

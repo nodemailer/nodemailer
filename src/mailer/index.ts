@@ -451,9 +451,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
             const maxRecipients = mail.data.maxRecipients === undefined ? DEFAULT_MAX_RECIPIENTS : mail.data.maxRecipients;
 
             if (maxRecipients && recipientCount > maxRecipients) {
-                const err: NodemailerError = new Error(
-                    `Message has ${recipientCount} recipients, which is over the ${maxRecipients} allowed by maxRecipients`
-                );
+                const err: NodemailerError = new Error(`Message has ${recipientCount} recipients, which is over the ${maxRecipients} allowed by maxRecipients`);
                 err.code = errors.EMAXRECIPIENTS;
                 this.logger.error(
                     {
@@ -519,14 +517,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
     }
 
     getVersionString(): string {
-        return util.format(
-            '%s (%s; +%s; %s/%s)',
-            packageData.name,
-            packageData.version,
-            packageData.homepage,
-            this.transporter.name,
-            this.transporter.version
-        );
+        return util.format('%s (%s; +%s; %s/%s)', packageData.name, packageData.version, packageData.homepage, this.transporter.name, this.transporter.version);
     }
 
     /** @internal */

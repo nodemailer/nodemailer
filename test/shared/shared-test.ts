@@ -159,20 +159,17 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
         });
 
         it('should convert boolean and numeric query values', () => {
-            assert.deepStrictEqual(
-                shared.parseConnectionUrl('smtp://localhost:25?pool=true&debug=false&maxConnections=5&tls.servername=mx.example.com'),
-                {
-                    secure: false,
-                    port: 25,
-                    host: 'localhost',
-                    pool: true,
-                    debug: false,
-                    maxConnections: 5,
-                    tls: {
-                        servername: 'mx.example.com'
-                    }
+            assert.deepStrictEqual(shared.parseConnectionUrl('smtp://localhost:25?pool=true&debug=false&maxConnections=5&tls.servername=mx.example.com'), {
+                secure: false,
+                port: 25,
+                host: 'localhost',
+                pool: true,
+                debug: false,
+                maxConnections: 5,
+                tls: {
+                    servername: 'mx.example.com'
                 }
-            );
+            });
         });
 
         it('should not let a query parameter override a url component', () => {
@@ -752,9 +749,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             // the SMTP server while Object.keys(auth) still showed only the legitimate user
             let target = shared.assign(
                 {},
-                JSON.parse(
-                    '{"auth":{"user":"legit@example.com","__proto__":{"pass":"injected"}},"tls":{"__proto__":{"rejectUnauthorized":false}}}'
-                )
+                JSON.parse('{"auth":{"user":"legit@example.com","__proto__":{"pass":"injected"}},"tls":{"__proto__":{"rejectUnauthorized":false}}}')
             );
 
             assert.strictEqual(Object.getPrototypeOf(target.auth), Object.prototype);
@@ -1113,9 +1108,7 @@ describe('Shared Funcs Tests', { timeout: 100 * 1000 }, () => {
             };
         };
 
-        const stubLookup = (
-            impl: (hostname: string, options: any, callback: (err: Error | null, addresses?: LookupResult) => void) => void
-        ) => {
+        const stubLookup = (impl: (hostname: string, options: any, callback: (err: Error | null, addresses?: LookupResult) => void) => void) => {
             (dns as any).lookup = impl;
         };
 

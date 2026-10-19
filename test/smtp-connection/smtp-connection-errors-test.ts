@@ -19,12 +19,7 @@ import { startRawServer, finishRawServer, createClient, type RawServer } from '.
  * Connects the client, expects the session to fail before the connect callback
  * runs and hands the emitted error to the assertions once the server is closed
  */
-function expectConnectError(
-    client: SMTPConnection,
-    server: RawServer,
-    done: (err?: unknown) => void,
-    assertions: (err: NodemailerError) => void
-): void {
+function expectConnectError(client: SMTPConnection, server: RawServer, done: (err?: unknown) => void, assertions: (err: NodemailerError) => void): void {
     let error: NodemailerError | undefined;
     let connected = false;
 
@@ -244,10 +239,7 @@ describe('SMTP-Connection failure handling', () => {
                     assert.strictEqual(err.command, 'CONN');
                     assert.strictEqual(err.responseCode, 554);
                     assert.strictEqual(err.response, '554 5.3.2 No SMTP service here');
-                    assert.strictEqual(
-                        err.message,
-                        'Invalid greeting. response=554 5.3.2 No SMTP service here: 554 5.3.2 No SMTP service here'
-                    );
+                    assert.strictEqual(err.message, 'Invalid greeting. response=554 5.3.2 No SMTP service here: 554 5.3.2 No SMTP service here');
                     assert.deepStrictEqual(server.commands, []);
                 });
             });
@@ -278,43 +270,40 @@ describe('SMTP-Connection failure handling', () => {
             ['250 2.1.0 Sender OK', undefined],
             ['421 4.7.0 Shutting down', 421]
         ] as [string, number | undefined][]) {
-            it(
-                'reports an unterminated "' + fragment + '" at close ' + (responseCode ? 'with' : 'without') + ' a responseCode',
-                (t, done) => {
-                    startRawServer(
-                        {
-                            MAIL: (line, socket) => {
-                                socket.end(fragment);
-                            }
-                        },
-                        server => {
-                            const client = createClient(server);
-                            let eventErr: NodemailerError | null = null;
-                            const sendErrs: NodemailerError[] = [];
-                            // the connection error is emitted and completes the pending send with the same error
-                            client.on('error', err => {
-                                eventErr = err;
-                            });
-                            client.connect(() => {
-                                client.send({ from: 'a@example.com', to: 'b@example.com' }, 'test', err => {
-                                    sendErrs.push(err as NodemailerError);
-                                });
-                            });
-                            client.once('end', () => {
-                                finishRawServer(server, done, () => {
-                                    assert.strictEqual(sendErrs.length, 1);
-                                    assert.strictEqual(sendErrs[0], eventErr);
-                                    const err = eventErr as NodemailerError | null;
-                                    assert.ok(err);
-                                    assert.strictEqual(err.code, 'ECONNECTION');
-                                    assert.strictEqual(err.responseCode, responseCode);
-                                    assert.strictEqual(err.response, responseCode ? fragment : undefined);
-                                });
-                            });
+            it('reports an unterminated "' + fragment + '" at close ' + (responseCode ? 'with' : 'without') + ' a responseCode', (t, done) => {
+                startRawServer(
+                    {
+                        MAIL: (line, socket) => {
+                            socket.end(fragment);
                         }
-                    );
-                }
-            );
+                    },
+                    server => {
+                        const client = createClient(server);
+                        let eventErr: NodemailerError | null = null;
+                        const sendErrs: NodemailerError[] = [];
+                        // the connection error is emitted and completes the pending send with the same error
+                        client.on('error', err => {
+                            eventErr = err;
+                        });
+                        client.connect(() => {
+                            client.send({ from: 'a@example.com', to: 'b@example.com' }, 'test', err => {
+                                sendErrs.push(err as NodemailerError);
+                            });
+                        });
+                        client.once('end', () => {
+                            finishRawServer(server, done, () => {
+                                assert.strictEqual(sendErrs.length, 1);
+                                assert.strictEqual(sendErrs[0], eventErr);
+                                const err = eventErr as NodemailerError | null;
+                                assert.ok(err);
+                                assert.strictEqual(err.code, 'ECONNECTION');
+                                assert.strictEqual(err.responseCode, responseCode);
+                                assert.strictEqual(err.response, responseCode ? fragment : undefined);
+                            });
+                        });
+                    }
+                );
+            });
         }
 
         it('clears its timers when the server drops the connection before the greeting', (t, done) => {
@@ -872,10 +861,7 @@ describe('SMTP-Connection failure handling', () => {
 
                 client.on('end', () => {
                     finishRawServer(server, done, () => {
-                        assert.ok(
-                            server.commands.includes('MAIL FROM:<a@example.com> RET=FULL ENVID=env+20id'),
-                            server.commands.join('\n')
-                        );
+                        assert.ok(server.commands.includes('MAIL FROM:<a@example.com> RET=FULL ENVID=env+20id'), server.commands.join('\n'));
                         assert.ok(
                             server.commands.includes('RCPT TO:<b@example.com> NOTIFY=SUCCESS,FAILURE ORCPT=rfc822;orig@example.com'),
                             server.commands.join('\n')
@@ -917,10 +903,7 @@ describe('SMTP-Connection failure handling', () => {
                 client.on('end', () => {
                     finishRawServer(server, done, () => {
                         assert.ok(server.commands.includes('MAIL FROM:<a@example.com> RET=HDRS ENVID=abc'), server.commands.join('\n'));
-                        assert.ok(
-                            server.commands.includes('RCPT TO:<b@example.com> NOTIFY=NEVER ORCPT=utf-8;x@example.com'),
-                            server.commands.join('\n')
-                        );
+                        assert.ok(server.commands.includes('RCPT TO:<b@example.com> NOTIFY=NEVER ORCPT=utf-8;x@example.com'), server.commands.join('\n'));
                     });
                 });
             });
@@ -1018,10 +1001,7 @@ describe('SMTP-Connection failure handling', () => {
                             assert.strictEqual(err.code, 'EENVELOPE');
                             assert.strictEqual(err.command, 'MAIL FROM');
                             assert.strictEqual(err.responseCode, 550);
-                            assert.strictEqual(
-                                err.message,
-                                'Internationalized mailbox name not allowed: 550 5.6.7 Internationalized sender not allowed'
-                            );
+                            assert.strictEqual(err.message, 'Internationalized mailbox name not allowed: 550 5.6.7 Internationalized sender not allowed');
                             client.quit();
                         });
                     });
@@ -1070,10 +1050,7 @@ describe('SMTP-Connection failure handling', () => {
                     client.on('end', () => {
                         finishRawServer(server, done, () => {
                             assert.ok(server.commands.includes('MAIL FROM:<a@example.com> SMTPUTF8'), server.commands.join('\n'));
-                            assert.ok(
-                                !server.commands.some(line => /^DATA/i.test(line)),
-                                'DATA must not be sent without accepted recipients'
-                            );
+                            assert.ok(!server.commands.some(line => /^DATA/i.test(line)), 'DATA must not be sent without accepted recipients');
                         });
                     });
                 }
@@ -1165,11 +1142,7 @@ describe('SMTP-Connection failure handling', () => {
                     finishRawServer(server, done, () => {
                         assert.ok(dataStream);
                         assert.strictEqual(client._currentDataStream, false);
-                        assert.strictEqual(
-                            (dataStream as PassThrough).listenerCount('data'),
-                            0,
-                            'the data stream must be unpiped from the socket'
-                        );
+                        assert.strictEqual((dataStream as PassThrough).listenerCount('data'), 0, 'the data stream must be unpiped from the socket');
                         assert.strictEqual(sendCallbacks, 0);
                         assert.deepStrictEqual(server.messages, [], 'the message was never terminated');
                     });

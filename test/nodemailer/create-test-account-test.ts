@@ -48,10 +48,7 @@ describe('createTestAccount', { timeout: 10000 }, () => {
     after(() => new Promise(resolve => server.close(resolve)));
 
     it('should build the message url from ETHEREAL_WEB before an account exists', () => {
-        assert.strictEqual(
-            nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }),
-            'https://web.example/message/abc'
-        );
+        assert.strictEqual(nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }), 'https://web.example/message/abc');
     });
 
     it('should not read the environment when the module is loaded', async () => {
@@ -81,10 +78,7 @@ describe('createTestAccount', { timeout: 10000 }, () => {
         const previous = process.env.ETHEREAL_WEB;
         process.env.ETHEREAL_WEB = 'https://later.example/';
         try {
-            assert.strictEqual(
-                nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }),
-                'https://later.example/message/abc'
-            );
+            assert.strictEqual(nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }), 'https://later.example/message/abc');
         } finally {
             process.env.ETHEREAL_WEB = previous;
         }
@@ -179,17 +173,12 @@ describe('createTestAccount', { timeout: 10000 }, () => {
         const account = await nodemailer.createTestAccount();
         assert.strictEqual(account.user, 'someone@ethereal.email');
 
-        const again = await new Promise((resolve, reject) =>
-            nodemailer.createTestAccount((err, value) => (err ? reject(err) : resolve(value)))
-        );
+        const again = await new Promise((resolve, reject) => nodemailer.createTestAccount((err, value) => (err ? reject(err) : resolve(value))));
         assert.strictEqual(again, account);
         assert.strictEqual(requests.length, before);
     });
 
     it('should build the message url from the web address of the account', () => {
-        assert.strictEqual(
-            nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }),
-            'https://ethereal.test/message/abc'
-        );
+        assert.strictEqual(nodemailer.getTestMessageUrl({ response: '250 Accepted [STATUS=new MSGID=abc]' }), 'https://ethereal.test/message/abc');
     });
 });

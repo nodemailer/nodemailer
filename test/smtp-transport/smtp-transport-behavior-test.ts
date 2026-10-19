@@ -86,9 +86,7 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
                 assert.deepStrictEqual(info!.envelope, { from: 'test@valid.sender', to });
                 assert.strictEqual(info!.messageId, '<test@valid.sender>');
 
-                const sendLog = records.find(
-                    record => record.level === 'info' && record.entry.tnx === 'send' && record.entry.component === 'smtp-transport'
-                );
+                const sendLog = records.find(record => record.level === 'info' && record.entry.tnx === 'send' && record.entry.component === 'smtp-transport');
                 assert.ok(sendLog);
                 assert.strictEqual(sendLog.entry.messageId, '<test@valid.sender>');
                 assert.deepStrictEqual(sendLog.args, ['<test@valid.sender>', 'a@valid.recipient, b@valid.recipient, ...and 3 more']);
@@ -117,10 +115,7 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
             const transport = new SMTPTransport({ host: '127.0.0.1', port: ts.port, auth, logger: false });
 
             try {
-                const { err } = await settle(
-                    transport,
-                    mockMail(envelope, { dsn: { ret: 'HDRS', envid: 'dsn-id-1', notify: ['FAILURE', 'DELAY'] } })
-                );
+                const { err } = await settle(transport, mockMail(envelope, { dsn: { ret: 'HDRS', envid: 'dsn-id-1', notify: ['FAILURE', 'DELAY'] } }));
                 assert.ifError(err);
                 assert.deepStrictEqual(envelopeDsn, { ret: 'HDRS', envid: 'dsn-id-1' });
                 assert.deepStrictEqual(rcptDsn, { notify: ['FAILURE', 'DELAY'] });
@@ -230,10 +225,11 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
                 assert.strictEqual(info.rejectedErrors![0].responseCode, 550);
 
                 // nothing is sent when every recipient is rejected
-                await assert.rejects(
-                    transporter.sendMail({ from: 'test@valid.sender', to: 'nobody@invalid.recipient', subject: 'partial', text: 'hello' }),
-                    { code: 'EENVELOPE', command: 'RCPT TO', rejected: ['nobody@invalid.recipient'] }
-                );
+                await assert.rejects(transporter.sendMail({ from: 'test@valid.sender', to: 'nobody@invalid.recipient', subject: 'partial', text: 'hello' }), {
+                    code: 'EENVELOPE',
+                    command: 'RCPT TO',
+                    rejected: ['nobody@invalid.recipient']
+                });
             } finally {
                 await ts.close();
             }
@@ -557,12 +553,8 @@ describe('SMTP transport behavior', { timeout: 20000 }, () => {
                 const { err } = await settle(transport, mockMail(envelope));
                 assert.ifError(err);
 
-                const serverLines = records
-                    .filter(record => record.level === 'debug' && record.entry.tnx === 'server')
-                    .map(record => record.message);
-                const clientLines = records
-                    .filter(record => record.level === 'debug' && record.entry.tnx === 'client')
-                    .map(record => record.message);
+                const serverLines = records.filter(record => record.level === 'debug' && record.entry.tnx === 'server').map(record => record.message);
+                const clientLines = records.filter(record => record.level === 'debug' && record.entry.tnx === 'client').map(record => record.message);
 
                 assert.ok(
                     serverLines.some(line => /^220 /.test(line)),

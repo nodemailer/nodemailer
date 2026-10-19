@@ -1215,10 +1215,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
                 // the whole value stays inside the one filename parameter, semicolon and equals
                 // percent encoded, so nothing after it can be read as a parameter of its own
-                assert.strictEqual(
-                    /^Content-Disposition: attachment; filename\*0\*=utf-8''a%EF%BF%BD%3Bfilename%EF%BF%BD%3Devil\.exe$/m.test(unfolded),
-                    true
-                );
+                assert.strictEqual(/^Content-Disposition: attachment; filename\*0\*=utf-8''a%EF%BF%BD%3Bfilename%EF%BF%BD%3Devil\.exe$/m.test(unfolded), true);
                 assert.strictEqual(/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(headers), false);
                 done();
             });
@@ -1400,8 +1397,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                         'message-id': '67890'
                     })
                     .setContent('Hello world!'),
-                expected =
-                    'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
+                expected = 'Date: 12345\r\nMessage-ID: <67890>\r\nMIME-Version: 1.0\r\nContent-Type: message/rfc822\r\n\r\nHello world!\r\n';
 
             mb.build((err, msg: any) => {
                 assert.ok(!err);
@@ -1471,13 +1467,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     .getEnvelope(),
                 {
                     from: 'from@example.com',
-                    to: [
-                        'receiver1@example.com',
-                        'receiver2@example.com',
-                        'receiver3@example.com',
-                        'receiver4@example.com',
-                        'receiver5@example.com'
-                    ]
+                    to: ['receiver1@example.com', 'receiver2@example.com', 'receiver3@example.com', 'receiver4@example.com', 'receiver5@example.com']
                 }
             );
 
@@ -1495,13 +1485,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                     .getEnvelope(),
                 {
                     from: 'sender@example.com',
-                    to: [
-                        'receiver1@example.com',
-                        'receiver2@example.com',
-                        'receiver3@example.com',
-                        'receiver4@example.com',
-                        'receiver5@example.com'
-                    ]
+                    to: ['receiver1@example.com', 'receiver2@example.com', 'receiver3@example.com', 'receiver4@example.com', 'receiver5@example.com']
                 }
             );
         });
@@ -1517,9 +1501,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
         });
 
         it('should not let an own __proto__ key of an envelope mutate the prototype chain', () => {
-            const node = new MimeNode().setEnvelope(
-                JSON.parse('{"from":"from@example.com","to":"to@example.com","__proto__":{"polluted":true}}')
-            );
+            const node = new MimeNode().setEnvelope(JSON.parse('{"from":"from@example.com","to":"to@example.com","__proto__":{"polluted":true}}'));
             const envelope = node.getEnvelope();
 
             assert.strictEqual(Object.getPrototypeOf(envelope), Object.prototype);
@@ -1781,9 +1763,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
             // an object and a string carrying the same address have to come back the same
             assert.deepStrictEqual(mb._parseAddresses('a@evil.com@good.com'), [{ address: '"a@evil.com"@good.com', name: '' }]);
-            assert.deepStrictEqual(mb._parseAddresses([{ address: 'a@evil.com@good.com' }]), [
-                { address: '"a@evil.com"@good.com', name: '' }
-            ]);
+            assert.deepStrictEqual(mb._parseAddresses([{ address: 'a@evil.com@good.com' }]), [{ address: '"a@evil.com"@good.com', name: '' }]);
         });
 
         it('should normalize the addresses of a parsed group', () => {
@@ -1822,10 +1802,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.deepStrictEqual(mb._parseAddresses(nested), [{ address: 'address@example.com', name: '' }]);
 
             assert.deepStrictEqual(
-                mb._parseAddresses([
-                    [{ address: 'first@example.com', name: 'First' }],
-                    [['second@example.com', 'Third <third@example.com>']]
-                ]),
+                mb._parseAddresses([[{ address: 'first@example.com', name: 'First' }], [['second@example.com', 'Third <third@example.com>']]]),
                 [
                     { address: 'first@example.com', name: 'First' },
                     { address: 'second@example.com', name: '' },
@@ -2165,10 +2142,7 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             let mb = new MimeNode();
             // a quoted local part with no space in it used to be emitted bare, so a parser
             // splitting the list on ',' before becoming quote-aware saw two recipients
-            assert.strictEqual(
-                mb._convertAddresses([{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]),
-                '<"a,b"@good.com>, <"c;d"@good.com>'
-            );
+            assert.strictEqual(mb._convertAddresses([{ address: 'a,b@good.com' }, { address: 'c;d@good.com' }]), '<"a,b"@good.com>, <"c;d"@good.com>');
         });
 
         it('should emit as many recipients as the envelope carries (security)', () => {
@@ -2345,12 +2319,10 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
         it('should be idempotent', () => {
             let mb = new MimeNode();
-            ['"a"@evil.com"@good.com', 'user@evil.com@good.com', 'a"b\\c@good.com', '@example.com', 'a,b', 'safe@jõgeva.ee'].forEach(
-                address => {
-                    let once = mb._normalizeAddress(address);
-                    assert.strictEqual(mb._normalizeAddress(once), once);
-                }
-            );
+            ['"a"@evil.com"@good.com', 'user@evil.com@good.com', 'a"b\\c@good.com', '@example.com', 'a,b', 'safe@jõgeva.ee'].forEach(address => {
+                let once = mb._normalizeAddress(address);
+                assert.strictEqual(mb._normalizeAddress(once), once);
+            });
         });
     });
 

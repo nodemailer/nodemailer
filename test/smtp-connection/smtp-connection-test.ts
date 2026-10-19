@@ -158,9 +158,7 @@ describe('SMTP-Connection Tests', () => {
                 client.connect(() => {
                     // let the trailing empty line be (mis)processed before asserting
                     setTimeout(() => {
-                        safeDone(server, done, () =>
-                            assert.ok(!errored, 'trailing empty line must not error: ' + (errored && errored.message))
-                        );
+                        safeDone(server, done, () => assert.ok(!errored, 'trailing empty line must not error: ' + (errored && errored.message)));
                     }, 80);
                 });
             });
@@ -328,20 +326,12 @@ describe('SMTP-Connection Tests', () => {
                 // away, so the resolver callback lands in _resolveAndConnect only once
                 // deferred() has been called.
                 shared.dnsCache.delete('deferred.invalid');
-                t.mock.method(
-                    dns.Resolver.prototype,
-                    'resolve4',
-                    (hostname: string, cb: (err: Error | null, addresses: string[]) => void) => {
-                        deferred = () => cb(null, ['127.0.0.1']);
-                    }
-                );
-                t.mock.method(
-                    dns.Resolver.prototype,
-                    'resolve6',
-                    (hostname: string, cb: (err: Error | null, addresses: string[]) => void) => {
-                        cb(null, []);
-                    }
-                );
+                t.mock.method(dns.Resolver.prototype, 'resolve4', (hostname: string, cb: (err: Error | null, addresses: string[]) => void) => {
+                    deferred = () => cb(null, ['127.0.0.1']);
+                });
+                t.mock.method(dns.Resolver.prototype, 'resolve6', (hostname: string, cb: (err: Error | null, addresses: string[]) => void) => {
+                    cb(null, []);
+                });
 
                 let client = new SMTPConnection({ host: 'deferred.invalid', port, ignoreTLS: true, logger: false });
                 client.on('error', () => {});
@@ -570,10 +560,7 @@ describe('SMTP-Connection Tests', () => {
                             assert.ok(err);
                             // bytes round-trip from the byte-container form
                             let recovered = Buffer.from(err.response, 'binary');
-                            assert.ok(
-                                recovered.includes(Buffer.from([0xff, 0xfe])),
-                                'expected raw bytes to round-trip, got hex: ' + recovered.toString('hex')
-                            );
+                            assert.ok(recovered.includes(Buffer.from([0xff, 0xfe])), 'expected raw bytes to round-trip, got hex: ' + recovered.toString('hex'));
                             // and the result must NOT contain U+FFFD (would mean a lossy decode shipped to caller)
                             assert.ok(!err.response.includes('\uFFFD'), 'unexpected replacement character in fallback');
                         });
@@ -597,10 +584,7 @@ describe('SMTP-Connection Tests', () => {
                     client.quit();
                     client.on('end', () => {
                         safeDone(server, done, () => {
-                            assert.ok(
-                                lastResp.includes('Привет'),
-                                'expected decoded UTF-8 in lastServerResponse, got: ' + JSON.stringify(lastResp)
-                            );
+                            assert.ok(lastResp.includes('Привет'), 'expected decoded UTF-8 in lastServerResponse, got: ' + JSON.stringify(lastResp));
                             assert.ok(supported.includes('PIPELINING'), 'PIPELINING extension should be detected');
                             assert.ok(supported.includes('SIZE'), 'SIZE extension should be detected');
                         });
@@ -668,10 +652,7 @@ describe('SMTP-Connection Tests', () => {
                     client.send({ from: 'a@example.com', to: ['b@example.com'] }, 'test', (err: any) => {
                         safeDone(server, done, () => {
                             assert.ok(err);
-                            assert.ok(
-                                err.response.includes('ö'),
-                                'expected reassembled ö in err.response, got: ' + JSON.stringify(err.response)
-                            );
+                            assert.ok(err.response.includes('ö'), 'expected reassembled ö in err.response, got: ' + JSON.stringify(err.response));
                         });
                     });
                 });
@@ -1853,11 +1834,7 @@ describe('SMTP-Connection Tests', () => {
                     (err: any, info: any) => {
                         assert.ok(err);
                         assert.ok(!info);
-                        assert.deepStrictEqual(err.rejected, [
-                            'test1@invalid.recipient',
-                            'test2@invalid.recipient',
-                            'test3@invalid.recipient'
-                        ]);
+                        assert.deepStrictEqual(err.rejected, ['test1@invalid.recipient', 'test2@invalid.recipient', 'test3@invalid.recipient']);
                         assert.strictEqual(err.rejectedErrors.length, 3);
                         done();
                     }
@@ -2161,13 +2138,7 @@ describe('SMTP-Connection Tests', () => {
     });
 });
 
-function proxyConnect(
-    port: number,
-    host: string,
-    destinationPort: number,
-    destinationHost: string,
-    callback: (err: Error | null, socket: net.Socket) => void
-) {
+function proxyConnect(port: number, host: string, destinationPort: number, destinationHost: string, callback: (err: Error | null, socket: net.Socket) => void) {
     let socket = net.connect(port, host, () => {
         socket.write('CONNECT ' + destinationHost + ':' + destinationPort + ' HTTP/1.1\r\n\r\n');
 

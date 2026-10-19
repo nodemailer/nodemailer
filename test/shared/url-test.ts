@@ -184,10 +184,7 @@ describe('URL wrapper Tests', { timeout: 10 * 1000 }, () => {
             });
 
             it('should preserve dotted keys', () => {
-                const query = urllib.parse('smtps://localhost?tls.rejectUnauthorized=false&name=horizon', true).query as Record<
-                    string,
-                    string | string[]
-                >;
+                const query = urllib.parse('smtps://localhost?tls.rejectUnauthorized=false&name=horizon', true).query as Record<string, string | string[]>;
                 assert.strictEqual(query['tls.rejectUnauthorized'], 'false');
                 assert.strictEqual(query.name, 'horizon');
             });

@@ -75,8 +75,7 @@ export default class PoolResource extends EventEmitter {
             switch ((this.options.auth.type || '').toString().toUpperCase()) {
                 case 'OAUTH2': {
                     const oauth2 = new XOAuth2(this.options.auth, this.logger);
-                    oauth2.provisionCallback =
-                        (this.pool.mailer && this.pool.mailer.get('oauth2_provision_cb')) || oauth2.provisionCallback;
+                    oauth2.provisionCallback = (this.pool.mailer && this.pool.mailer.get('oauth2_provision_cb')) || oauth2.provisionCallback;
                     this.auth = {
                         type: 'OAUTH2',
                         user: this.options.auth.user,
@@ -311,11 +310,7 @@ export default class PoolResource extends EventEmitter {
                     return;
                 }
 
-                if (
-                    (err.code === errors.EENVELOPE || err.code === errors.EMESSAGE) &&
-                    err.responseCode !== 421 &&
-                    !this.connection._destroyed
-                ) {
+                if ((err.code === errors.EENVELOPE || err.code === errors.EMESSAGE) && err.responseCode !== 421 && !this.connection._destroyed) {
                     // The server refused this message, the connection itself is fine. Reset the
                     // session and keep using it instead of opening a new one
                     this.connection.reset(resetErr => {

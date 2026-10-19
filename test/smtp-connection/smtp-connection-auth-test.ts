@@ -7,10 +7,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import SMTPConnection, {
-    type SMTPConnectionCustomAuthContext,
-    type SMTPConnectionCustomAuthResponse
-} from '../../src/smtp-connection/index.js';
+import SMTPConnection, { type SMTPConnectionCustomAuthContext, type SMTPConnectionCustomAuthResponse } from '../../src/smtp-connection/index.js';
 import type { NodemailerError } from '../../src/errors.js';
 import { SMTPServer } from 'smtp-server';
 import nodemailer from '../../src/nodemailer.js';
@@ -26,11 +23,7 @@ interface SeenAuth {
 /**
  * smtp-server with the given SASL methods, recording what the client submitted
  */
-function startAuthServer(
-    authMethods: string[],
-    callback: (server: any, port: number, seen: SeenAuth[]) => void,
-    validate?: (auth: any) => boolean
-): void {
+function startAuthServer(authMethods: string[], callback: (server: any, port: number, seen: SeenAuth[]) => void, validate?: (auth: any) => boolean): void {
     const seen: SeenAuth[] = [];
     const server = new SMTPServer({
         authMethods,
@@ -71,24 +64,21 @@ describe('SMTP-Connection authentication', () => {
         });
 
         it('reads every advertised SASL method in either AUTH spelling and in order of preference', (t, done) => {
-            startRawServer(
-                { EHLO: '250-test\r\n250-AUTH=login xoauth2\r\n250-AUTH\tCRAM-MD5  PLAIN\r\n250 AUTH X-PLAIN LOGINX\r\n' },
-                server => {
-                    const client = createClient(server);
+            startRawServer({ EHLO: '250-test\r\n250-AUTH=login xoauth2\r\n250-AUTH\tCRAM-MD5  PLAIN\r\n250 AUTH X-PLAIN LOGINX\r\n' }, server => {
+                const client = createClient(server);
 
-                    client.on('error', err => {
-                        finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
-                    });
+                client.on('error', err => {
+                    finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                });
 
-                    client.connect(() => {
-                        assert.strictEqual(client.allowsAuth, true);
-                        assert.deepStrictEqual(client._supportedAuth, ['PLAIN', 'LOGIN', 'CRAM-MD5', 'XOAUTH2']);
-                        client.quit();
-                    });
+                client.connect(() => {
+                    assert.strictEqual(client.allowsAuth, true);
+                    assert.deepStrictEqual(client._supportedAuth, ['PLAIN', 'LOGIN', 'CRAM-MD5', 'XOAUTH2']);
+                    client.quit();
+                });
 
-                    client.on('end', () => finishRawServer(server, done));
-                }
-            );
+                client.on('end', () => finishRawServer(server, done));
+            });
         });
 
         it('does not take a method name that is only the start of another one', (t, done) => {
@@ -346,10 +336,7 @@ describe('SMTP-Connection authentication', () => {
                             assert.strictEqual(err.code, 'EAUTH');
                             assert.strictEqual(err.command, 'AUTH LOGIN');
                             assert.strictEqual(err.responseCode, 535);
-                            assert.strictEqual(
-                                err.message,
-                                'Invalid login sequence while waiting for "334 UGFzc3dvcmQ6": 535 5.7.8 Unknown user'
-                            );
+                            assert.strictEqual(err.message, 'Invalid login sequence while waiting for "334 UGFzc3dvcmQ6": 535 5.7.8 Unknown user');
                             assert.strictEqual(client.authenticated, false);
                             client.quit();
                         });
@@ -474,41 +461,38 @@ describe('SMTP-Connection authentication', () => {
         });
 
         it('reports EAUTH when the server does not send a challenge', (t, done) => {
-            startRawServer(
-                { EHLO: '250-test\r\n250 AUTH CRAM-MD5\r\n', AUTH: '504 5.5.4 Unrecognized authentication type\r\n' },
-                server => {
-                    const client = createClient(server);
+            startRawServer({ EHLO: '250-test\r\n250 AUTH CRAM-MD5\r\n', AUTH: '504 5.5.4 Unrecognized authentication type\r\n' }, server => {
+                const client = createClient(server);
 
-                    client.on('error', err => {
-                        finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
-                    });
+                client.on('error', err => {
+                    finishRawServer(server, done, () => assert.fail('unexpected error: ' + err.message));
+                });
 
-                    client.connect(() => {
-                        client.login({ user: 'testuser', pass: 'testpass' }, err => {
-                            assert.ok(err);
-                            assert.strictEqual(err.code, 'EAUTH');
-                            assert.strictEqual(err.command, 'AUTH CRAM-MD5');
-                            assert.strictEqual(err.responseCode, 504);
-                            assert.strictEqual(
-                                err.message,
-                                'Invalid login sequence while waiting for server challenge string: 504 5.5.4 Unrecognized authentication type'
-                            );
-                            assert.strictEqual(client.authenticated, false);
-                            client.quit();
-                        });
+                client.connect(() => {
+                    client.login({ user: 'testuser', pass: 'testpass' }, err => {
+                        assert.ok(err);
+                        assert.strictEqual(err.code, 'EAUTH');
+                        assert.strictEqual(err.command, 'AUTH CRAM-MD5');
+                        assert.strictEqual(err.responseCode, 504);
+                        assert.strictEqual(
+                            err.message,
+                            'Invalid login sequence while waiting for server challenge string: 504 5.5.4 Unrecognized authentication type'
+                        );
+                        assert.strictEqual(client.authenticated, false);
+                        client.quit();
                     });
+                });
 
-                    client.on('end', () => {
-                        finishRawServer(server, done, () => {
-                            assert.deepStrictEqual(
-                                server.commands.filter(line => !/^(EHLO|QUIT)/i.test(line)),
-                                ['AUTH CRAM-MD5'],
-                                'no digest may be sent without a challenge'
-                            );
-                        });
+                client.on('end', () => {
+                    finishRawServer(server, done, () => {
+                        assert.deepStrictEqual(
+                            server.commands.filter(line => !/^(EHLO|QUIT)/i.test(line)),
+                            ['AUTH CRAM-MD5'],
+                            'no digest may be sent without a challenge'
+                        );
                     });
-                }
-            );
+                });
+            });
         });
     });
 

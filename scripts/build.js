@@ -88,8 +88,7 @@ function listFiles(dir, ext) {
 // exports object keeps that. The alias is non-enumerable so that the enumerable
 // keys of the module are the three functions, as before.
 const ENTRY_POINT_MODULE = 'nodemailer.js';
-const ENTRY_POINT_SHIM =
-    "Object.defineProperty(exports, 'default', { value: exports, enumerable: false, writable: true, configurable: true });\n";
+const ENTRY_POINT_SHIM = "Object.defineProperty(exports, 'default', { value: exports, enumerable: false, writable: true, configurable: true });\n";
 
 // tsc emits `exports.default = X` for `export default X`. For modules whose only
 // runtime export is the default one, make `require()` return X directly. The

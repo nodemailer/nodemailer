@@ -12,14 +12,7 @@ import * as errors from '../errors.js';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
 import type MailMessage from '../mailer/mail-message.js';
-import type {
-    default as Mail,
-    GetSocketCallback,
-    SentMessageInfo,
-    SendMailOptions,
-    TransportOptions,
-    VerifyCallback
-} from '../mailer/index.js';
+import type { default as Mail, GetSocketCallback, SentMessageInfo, SendMailOptions, TransportOptions, VerifyCallback } from '../mailer/index.js';
 import type { MimeNodeEnvelope } from '../mime-node/index.js';
 
 /**
@@ -203,10 +196,7 @@ class SMTPTransport extends EventEmitter {
             return this.auth;
         }
 
-        const authData: SMTPTransportAuthOptions = Object.assign(
-            {},
-            this.options.auth && typeof this.options.auth === 'object' ? this.options.auth : {}
-        );
+        const authData: SMTPTransportAuthOptions = Object.assign({}, this.options.auth && typeof this.options.auth === 'object' ? this.options.auth : {});
         if (typeof authOpts === 'object') {
             // see MESSAGE_AUTH_KEYS
             shared.copyOwnKeys(authData, authOpts, key => !MESSAGE_AUTH_KEYS.includes(key));

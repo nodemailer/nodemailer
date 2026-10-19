@@ -1507,13 +1507,7 @@ describe('#addressparser', () => {
         // brackets holding only a comment have to take the same path as empty ones, which puts
         // the quotes back on a mailbox taken out of a quoted display name
         it('should read brackets holding only a comment as empty ones', () => {
-            for (const name of [
-                '"a@evil.com, b@good.com"',
-                '"a@evil.com; b@evil.com"',
-                '"a@b@evil.com"',
-                '(a@evil.com, b@evil.com)',
-                'Name'
-            ]) {
+            for (const name of ['"a@evil.com, b@good.com"', '"a@evil.com; b@evil.com"', '"a@b@evil.com"', '(a@evil.com, b@evil.com)', 'Name']) {
                 assert.strictEqual(addressparser(`${name} <(x)>`)[0].address, addressparser(`${name} <>`)[0].address, name);
             }
             assert.strictEqual(addressparser('"a@evil.com, b@good.com" <(x)>')[0].address, '"a@evil.com, b"@good.com');
@@ -1561,33 +1555,17 @@ describe('#addressparser', () => {
         // The two readings of one malformed value must not diverge, or the quoted spelling
         // becomes a way around whatever the unquoted one is checked against
         it('should agree with the same value written without the quotes', () => {
-            for (const tail of [
-                '(x)evil.com',
-                '()evil.com',
-                '(x)(y)evil.com',
-                '(x)a(y)b',
-                '(x)evil.com(y)',
-                '(x)evil@evil.com',
-                ' junk here'
-            ]) {
-                assert.strictEqual(
-                    addressparser(`"user"@good-corp.com${tail}`)[0].address,
-                    addressparser(`user@good-corp.com${tail}`)[0].address,
-                    tail
-                );
+            for (const tail of ['(x)evil.com', '()evil.com', '(x)(y)evil.com', '(x)a(y)b', '(x)evil.com(y)', '(x)evil@evil.com', ' junk here']) {
+                assert.strictEqual(addressparser(`"user"@good-corp.com${tail}`)[0].address, addressparser(`user@good-corp.com${tail}`)[0].address, tail);
             }
         });
 
         it('should peel wreckage off a quoted local part that holds an @', () => {
-            assert.deepStrictEqual(addressparser('"user@evil.com"@good-corp.com junk'), [
-                { address: '"user@evil.com"@good-corp.com', name: 'junk' }
-            ]);
+            assert.deepStrictEqual(addressparser('"user@evil.com"@good-corp.com junk'), [{ address: '"user@evil.com"@good-corp.com', name: 'junk' }]);
         });
 
         it('should peel wreckage off a quoted local part that holds whitespace', () => {
-            assert.deepStrictEqual(addressparser('"user name"@good-corp.com(x)evil.com'), [
-                { address: '"user name"@good-corp.com', name: 'evil.com' }
-            ]);
+            assert.deepStrictEqual(addressparser('"user name"@good-corp.com(x)evil.com'), [{ address: '"user name"@good-corp.com', name: 'evil.com' }]);
         });
 
         // An empty quoted string leaves no text token behind, so the run that continues it
@@ -1604,9 +1582,7 @@ describe('#addressparser', () => {
         // would stop an address being read out of that text, and the domain would then be
         // taken from the last '@' in the whole run rather than from the mailbox sitting in it
         it('should not treat text collected before an empty quoted string as quoted', () => {
-            assert.deepStrictEqual(addressparser('a@b.com ""@good-corp.com evil@evil.com'), [
-                { address: 'a@b.com@good-corp.com', name: 'evil@evil.com' }
-            ]);
+            assert.deepStrictEqual(addressparser('a@b.com ""@good-corp.com evil@evil.com'), [{ address: 'a@b.com@good-corp.com', name: 'evil@evil.com' }]);
             assert.strictEqual(addressparser('a""@example.com')[0].address, 'a@example.com');
             assert.deepStrictEqual(addressparser('""x@[1.2.3.4] junk'), [{ address: 'x@[1.2.3.4]', name: 'junk' }]);
         });
@@ -1663,9 +1639,7 @@ describe('#addressparser', () => {
         // and `(x\\) <b@evil.example>) Victim <a@victim.example>` named b@evil.example as the
         // sender while every RFC reading of it names a@victim.example
         it('should keep an escaped parenthesis inside a comment', () => {
-            assert.deepStrictEqual(addressparser('(x\\) <b@evil.example>) Victim <a@victim.example>'), [
-                { name: 'Victim', address: 'a@victim.example' }
-            ]);
+            assert.deepStrictEqual(addressparser('(x\\) <b@evil.example>) Victim <a@victim.example>'), [{ name: 'Victim', address: 'a@victim.example' }]);
             assert.deepStrictEqual(addressparser('a@b.c (x\\) y)'), [{ address: 'a@b.c', name: 'x) y' }]);
         });
     });
@@ -1694,14 +1668,8 @@ describe('#addressparser', () => {
 
         it('should not end a group at a ";" inside a quoted string or a comment', () => {
             for (const [input, expected] of [
-                [
-                    'G: (a; <evil@evil.com>) <v@victim.com>;',
-                    [{ name: 'G', group: [{ address: 'v@victim.com', name: 'a; <evil@evil.com>' }] }]
-                ],
-                [
-                    'G: "a;" "<evil@evil.com>" <v@victim.com>;',
-                    [{ name: 'G', group: [{ address: 'v@victim.com', name: 'a; <evil@evil.com>' }] }]
-                ],
+                ['G: (a; <evil@evil.com>) <v@victim.com>;', [{ name: 'G', group: [{ address: 'v@victim.com', name: 'a; <evil@evil.com>' }] }]],
+                ['G: "a;" "<evil@evil.com>" <v@victim.com>;', [{ name: 'G', group: [{ address: 'v@victim.com', name: 'a; <evil@evil.com>' }] }]],
                 ['G: "a;b" <x@y>;', [{ name: 'G', group: [{ address: 'x@y', name: 'a;b' }] }]],
                 ['G: "a\\";" <x@y>;', [{ name: 'G', group: [{ address: 'x@y', name: 'a";' }] }]],
                 ['G: <"a;"@good.com>;', [{ name: 'G', group: [{ address: '"a;"@good.com', name: '' }] }]]
@@ -2096,9 +2064,7 @@ describe('#addressparser', () => {
         // group name. The group wins and the angle-addr is dropped, as it always has been, so
         // the envelope never holds an address the group syntax hid
         it('should read an angle-addr followed by a group as the group alone', () => {
-            assert.deepStrictEqual(addressparser('Name <a@b.com>: x@y.com;'), [
-                { name: 'Name', group: [{ address: 'x@y.com', name: '' }] }
-            ]);
+            assert.deepStrictEqual(addressparser('Name <a@b.com>: x@y.com;'), [{ name: 'Name', group: [{ address: 'x@y.com', name: '' }] }]);
         });
     });
 });

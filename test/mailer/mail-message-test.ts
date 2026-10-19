@@ -141,8 +141,7 @@ describe('MailMessage Tests', () => {
 
     describe('resolveContent', () => {
         // the transporter level access policy lives on the message, not on the call
-        const sandboxed = (data: any) =>
-            new MailMessage({ options: { disableFileAccess: true, disableUrlAccess: true }, _defaults: {} } as any, data);
+        const sandboxed = (data: any) => new MailMessage({ options: { disableFileAccess: true, disableUrlAccess: true }, _defaults: {} } as any, data);
         const open = (data: any) => new MailMessage({ options: {}, _defaults: {} } as any, data);
 
         it('should reject a file path for the legacy callback signature', (t, done) => {

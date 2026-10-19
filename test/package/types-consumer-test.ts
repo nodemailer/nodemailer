@@ -249,11 +249,7 @@ const resolutions = [node16, { module: 'esnext', moduleResolution: 'bundler' }, 
 // is resolved: the package is linked into a temporary project so that the specifiers go
 // through the package.json exports map
 // One consumer, or several keyed by file name, type-checked as a single program
-const typeCheckConsumer = (
-    source: string | { [file: string]: string },
-    compilerOptions: { [key: string]: unknown },
-    include?: string[]
-): void => {
+const typeCheckConsumer = (source: string | { [file: string]: string }, compilerOptions: { [key: string]: unknown }, include?: string[]): void => {
     const sources = typeof source === 'string' ? { 'consumer.ts': source } : source;
     include = include || Object.keys(sources);
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodemailer-types-'));
@@ -329,9 +325,7 @@ describe('Built package types', { timeout: 120 * 1000 }, () => {
             if (!members.length) {
                 continue;
             }
-            const aliases = [...source.matchAll(/^export type \{([^}]*)\};/gm)].flatMap(match =>
-                [...match[1].matchAll(moduleAlias)].map(alias => alias[1])
-            );
+            const aliases = [...source.matchAll(/^export type \{([^}]*)\};/gm)].flatMap(match => [...match[1].matchAll(moduleAlias)].map(alias => alias[1]));
             // the module level export of the same name is the alias, without a rename
             const named = [...source.matchAll(/^export (?:type|interface|declare function|declare class) (\w+)/gm)].map(match => match[1]);
             const missing = members.filter(member => !aliases.includes(member) && !named.includes(member));

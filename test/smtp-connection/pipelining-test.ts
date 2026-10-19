@@ -1,12 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-    closeRawServer as closeServer,
-    createClient,
-    startRawServerAsync,
-    type RawServer,
-    type RawServerScript
-} from './raw-smtp-server.js';
+import { closeRawServer as closeServer, createClient, startRawServerAsync, type RawServer, type RawServerScript } from './raw-smtp-server.js';
 import type SMTPConnection from '../../src/smtp-connection/index.js';
 import type { NodemailerError } from '../../src/errors.js';
 
@@ -24,9 +18,7 @@ async function connect(server: RawServer): Promise<SMTPConnection> {
 }
 
 function send(client: SMTPConnection, to: string[]): Promise<{ err: NodemailerError | null; info: any }> {
-    return new Promise(resolve =>
-        client.send({ from: 'sender@example.com', to }, 'Subject: test\r\n\r\nhello\r\n', (err, info) => resolve({ err, info }))
-    );
+    return new Promise(resolve => client.send({ from: 'sender@example.com', to }, 'Subject: test\r\n\r\nhello\r\n', (err, info) => resolve({ err, info })));
 }
 
 // RFC 2920: with PIPELINING the client sends MAIL FROM, every RCPT TO and DATA without waiting for
@@ -48,12 +40,7 @@ describe('SMTPConnection envelope pipelining', { timeout: 10000 }, () => {
             const { err, info } = await send(client, ['a@example.com', 'b@example.com']);
             assert.ifError(err);
             assert.deepStrictEqual(info.accepted, ['a@example.com', 'b@example.com']);
-            assert.deepStrictEqual(server.commands.slice(1), [
-                'MAIL FROM:<sender@example.com>',
-                'RCPT TO:<a@example.com>',
-                'RCPT TO:<b@example.com>',
-                'DATA'
-            ]);
+            assert.deepStrictEqual(server.commands.slice(1), ['MAIL FROM:<sender@example.com>', 'RCPT TO:<a@example.com>', 'RCPT TO:<b@example.com>', 'DATA']);
             assert.strictEqual(server.messages.length, 1);
             client.close();
         } finally {
@@ -123,8 +110,7 @@ describe('SMTPConnection envelope pipelining', { timeout: 10000 }, () => {
         // a server must refuse DATA once every recipient was rejected, this one does not
         const server = await rawServer({
             RCPT: line => (/missing/.test(line) ? '550 5.1.1 no such user\r\n' : '250 2.1.5 ok\r\n'),
-            DATA_END: () =>
-                server.messages[server.messages.length - 1] === '' ? '554 5.5.1 no valid recipients\r\n' : '250 2.0.0 queued\r\n'
+            DATA_END: () => (server.messages[server.messages.length - 1] === '' ? '554 5.5.1 no valid recipients\r\n' : '250 2.0.0 queued\r\n')
         });
         try {
             const client = await connect(server);

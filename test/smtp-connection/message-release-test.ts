@@ -90,9 +90,8 @@ describe('SMTPConnection message stream release', { timeout: 20000 }, () => {
 
             const transport = nodemailer.createTransport({ host: '127.0.0.1', port: ts.port, auth, logger: false });
             const err = await new Promise<any>(resolve =>
-                transport.sendMail(
-                    { from: 'test@valid.sender', to: 'test@invalid.recipient', subject: 'test', attachments: [{ path: file }] },
-                    err => resolve(err)
+                transport.sendMail({ from: 'test@valid.sender', to: 'test@invalid.recipient', subject: 'test', attachments: [{ path: file }] }, err =>
+                    resolve(err)
                 )
             );
             assert.strictEqual(err.code, 'EENVELOPE');

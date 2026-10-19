@@ -264,10 +264,7 @@ export interface SendOutcome {
  * Runs send() and resolves with whatever the callback received, so the assertions can live in
  * the test body instead of inside a callback the transport might swallow errors from
  */
-export function settle(
-    transport: { send(mail: MailMessage, callback: SMTPTransportSendCallback): unknown },
-    mail: MailMessage
-): Promise<SendOutcome> {
+export function settle(transport: { send(mail: MailMessage, callback: SMTPTransportSendCallback): unknown }, mail: MailMessage): Promise<SendOutcome> {
     return new Promise(resolve => {
         transport.send(mail, (err, info) => resolve({ err, info }));
     });

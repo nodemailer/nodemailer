@@ -82,10 +82,7 @@ describe('createTestAccount strict TLS', { timeout: 10000 }, () => {
             assert.ok(err, 'expected TLS error');
             // src/fetch overwrites err.code with EFETCH; the underlying TLS
             // reason stays in err.message (self-signed, expired, etc.).
-            assert.ok(
-                /certificate|self.?signed|unable to verify/i.test(err.message),
-                'expected TLS cert error in message, got: ' + err.message
-            );
+            assert.ok(/certificate|self.?signed|unable to verify/i.test(err.message), 'expected TLS cert error in message, got: ' + err.message);
             assert.ok(!account);
             done();
         });

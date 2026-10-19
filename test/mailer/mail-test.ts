@@ -455,10 +455,7 @@ describe('Mail', () => {
         });
 
         it('should prefer the dkim options of the message over the ones of the transport', async () => {
-            const raw = await render(
-                { dkim: transportKey },
-                { ...message(), dkim: { domainName: 'other.ee', keySelector: 'msg', privateKey } }
-            );
+            const raw = await render({ dkim: transportKey }, { ...message(), dkim: { domainName: 'other.ee', keySelector: 'msg', privateKey } });
             const dkim = dkimHeader(raw);
 
             assert.ok(dkim.includes(' d=other.ee;'), dkim);
@@ -541,10 +538,7 @@ describe('Mail', () => {
         });
 
         it('should read html given as a buffer', async () => {
-            const raw = await render(
-                { attachDataUrls: true },
-                withImage({ html: Buffer.from('<img alt="dot" src="' + pngDataUri + '">') })
-            );
+            const raw = await render({ attachDataUrls: true }, withImage({ html: Buffer.from('<img alt="dot" src="' + pngDataUri + '">') }));
 
             assert.ok(raw.includes('Content-ID: <' + embeddedCid(raw) + '>'), raw);
         });
@@ -552,10 +546,7 @@ describe('Mail', () => {
         it('should leave a data: url without a media type alone and still convert the next image', async () => {
             // the media type used to run to the next ';' wherever that was, which merged the two
             // tags into one attachment whose path was not a data url
-            const raw = await render(
-                { attachDataUrls: true },
-                withImage({ html: '<img src="data:x"><img alt="dot" src="' + pngDataUri + '">' })
-            );
+            const raw = await render({ attachDataUrls: true }, withImage({ html: '<img src="data:x"><img alt="dot" src="' + pngDataUri + '">' }));
 
             assert.ok(raw.includes('<img src="data:x"><img alt="dot" src="cid:' + embeddedCid(raw) + '">'), raw);
             assert.ok(raw.includes('Content-Type: image/png; name=image-1.png'), raw);

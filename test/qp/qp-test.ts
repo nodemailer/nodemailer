@@ -20,10 +20,7 @@ describe('Quoted-Printable Tests', () => {
 
     const wrapFixtures = [
         ['tere, tere, vana kere, kuidas sul l=C3=A4heb?', 'tere, tere, vana =\r\nkere, kuidas sul =\r\nl=C3=A4heb?'],
-        [
-            '=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4',
-            '=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4'
-        ],
+        ['=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4=C3=A4', '=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4=\r\n=C3=A4=C3=A4'],
         ['1234567890123456789=C3=A40', '1234567890123456789=\r\n=C3=A40'],
         ['123456789012345678  90', '123456789012345678 =\r\n 90']
     ];
@@ -235,10 +232,7 @@ describe('Quoted-Printable Tests', () => {
                 assert.ok(!/\r(?!\n)|(?<!\r)\n/.test(output), `seed ${seed}: a lone CR or LF was written as is`);
                 assert.ok(libqp.decode(output).equals(input), `seed ${seed}: does not decode to the input`);
                 // line endings rewritten on the way, the way a newline transform does, change nothing
-                assert.ok(
-                    libqp.decode(output.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')).equals(input),
-                    `seed ${seed}: changed by a line ending rewrite`
-                );
+                assert.ok(libqp.decode(output.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')).equals(input), `seed ${seed}: changed by a line ending rewrite`);
             }
         });
 

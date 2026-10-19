@@ -58,14 +58,11 @@ describe('SMTP transport OAuth2 provision callback', { timeout: 10000 }, () => {
             logger: false
         });
 
-        transporter.set(
-            'oauth2_provision_cb',
-            (user: string, renew: boolean, callback: (err: Error | null, accessToken?: string) => void) => {
-                provisionCount++;
-                assert.strictEqual(user, 'user@example.com');
-                callback(null, 'provisioned-token');
-            }
-        );
+        transporter.set('oauth2_provision_cb', (user: string, renew: boolean, callback: (err: Error | null, accessToken?: string) => void) => {
+            provisionCount++;
+            assert.strictEqual(user, 'user@example.com');
+            callback(null, 'provisioned-token');
+        });
 
         const mailData = {
             from: 'sender@example.com',

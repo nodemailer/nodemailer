@@ -92,10 +92,7 @@ describe('XOAuth2 strict TLS for token requests', { timeout: 10000 }, () => {
             // underlying TLS reason in err.message. Match any cert-validation
             // failure (self-signed, expired, unable to verify, etc.), the
             // exact wording depends on the embedded cert and OpenSSL build.
-            assert.ok(
-                /certificate|self.?signed|unable to verify/i.test(err.message),
-                'expected TLS cert error in message, got: ' + err.message
-            );
+            assert.ok(/certificate|self.?signed|unable to verify/i.test(err.message), 'expected TLS cert error in message, got: ' + err.message);
             assert.ok(!token);
             done();
         });

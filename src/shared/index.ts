@@ -291,10 +291,7 @@ const formatDNSValue = (value: DnsCacheValue | undefined, extra?: Partial<Resolv
     );
 };
 
-export const resolveHostname = (
-    options: ResolveHostnameOptions | undefined,
-    callback: (err: Error | null, result?: ResolvedHostname) => void
-): void => {
+export const resolveHostname = (options: ResolveHostnameOptions | undefined, callback: (err: Error | null, result?: ResolvedHostname) => void): void => {
     options = options || {};
 
     if (!options.host && options.servername) {
@@ -456,9 +453,7 @@ export const resolveHostname = (
                 }
 
                 // Get all supported addresses from dns.lookup
-                const supportedAddresses = addresses
-                    ? addresses.filter(addr => isFamilySupported(addr.family)).map(addr => addr.address)
-                    : [];
+                const supportedAddresses = addresses ? addresses.filter(addr => isFamilySupported(addr.family)).map(addr => addr.address) : [];
 
                 if (addresses && addresses.length && !supportedAddresses.length) {
                     // there are addresses but none can be used
@@ -819,12 +814,7 @@ export function resolveContent(
     return promise;
 }
 
-function resolveContentValue(
-    data: { [key: string]: any },
-    key: string | number,
-    options: ResolveContentOptions,
-    callback: ResolveContentCallback
-): void {
+function resolveContentValue(data: { [key: string]: any }, key: string | number, options: ResolveContentOptions, callback: ResolveContentCallback): void {
     let content = (data && data[key] && data[key].content) || data[key];
     const encoding = ((typeof data[key] === 'object' && data[key].encoding) || 'utf8')
         .toString()
@@ -901,11 +891,7 @@ export const assign = function (...args: ({ [key: string]: any } | false | null 
             if (isProtoKey(key)) {
                 return;
             }
-            if (
-                ['tls', 'auth'].includes(key) &&
-                (source as { [key: string]: any })[key] &&
-                typeof (source as { [key: string]: any })[key] === 'object'
-            ) {
+            if (['tls', 'auth'].includes(key) && (source as { [key: string]: any })[key] && typeof (source as { [key: string]: any })[key] === 'object') {
                 // tls and auth are special keys that need to be enumerated separately
                 // other objects are passed as is. Enumerating is a copy of user supplied
                 // keys just like the loop above, so it gets the same treatment

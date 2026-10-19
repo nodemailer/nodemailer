@@ -93,9 +93,7 @@ class SendmailTransport {
             }
         }
 
-        this.winbreak = ['win', 'windows', 'dos', '\r\n'].includes(
-            ((options as SendmailTransportOptions).newline || '').toString().toLowerCase()
-        );
+        this.winbreak = ['win', 'windows', 'dos', '\r\n'].includes(((options as SendmailTransportOptions).newline || '').toString().toLowerCase());
     }
 
     /**
@@ -127,9 +125,7 @@ class SendmailTransport {
         }
 
         // force -i to keep single dots
-        const args = this.args
-            ? ['-i'].concat(this.args).concat(envelope.to)
-            : ['-i'].concat(envelope.from ? ['-f', envelope.from] : []).concat(envelope.to);
+        const args = this.args ? ['-i'].concat(this.args).concat(envelope.to) : ['-i'].concat(envelope.from ? ['-f', envelope.from] : []).concat(envelope.to);
 
         const callback = (err?: Error | null): void => {
             if (returned) {
@@ -204,9 +200,7 @@ class SendmailTransport {
             const onExit = (code: number | null, signal: NodeJS.Signals | null): void => {
                 let err: NodemailerError | null = null;
                 if (code) {
-                    err = new Error(
-                        code === 127 ? 'Sendmail command not found, process exited with code ' + code : 'Sendmail exited with code ' + code
-                    );
+                    err = new Error(code === 127 ? 'Sendmail command not found, process exited with code ' + code : 'Sendmail exited with code ' + code);
                 } else if (signal) {
                     err = new Error('Sendmail was terminated by ' + signal);
                 } else if (!messageWritten()) {

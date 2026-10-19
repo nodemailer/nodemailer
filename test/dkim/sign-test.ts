@@ -184,8 +184,7 @@ describe('DKIM Sign Tests', () => {
 });
 
 describe('DKIM relaxed header canonicalization', () => {
-    const relaxed = (line: string) =>
-        sign.relaxedHeaders([{ key: line.substr(0, line.indexOf(':')).trim().toLowerCase(), line }], 'subject').headers;
+    const relaxed = (line: string) => sign.relaxedHeaders([{ key: line.substr(0, line.indexOf(':')).trim().toLowerCase(), line }], 'subject').headers;
 
     it('should unfold and collapse whitespace', () => {
         assert.strictEqual(relaxed('Subject: a \t b\r\n\t c  \r\n d'), 'subject:a b c d\r\n');

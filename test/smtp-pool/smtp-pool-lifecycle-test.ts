@@ -410,8 +410,7 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 const started = Date.now();
                 await assert.rejects(
                     transporter.sendMail({ from: envelope.from, to: envelope.to, subject: 'x', text: 'x' }),
-                    (err: any) =>
-                        err.code === 'ECONNECTION' && err.message === 'Reached maximum number of retries after connection was closed'
+                    (err: any) => err.code === 'ECONNECTION' && err.message === 'Reached maximum number of retries after connection was closed'
                 );
                 // the requeues back off (50 + 100 + 200 + 400 + 800 ms) instead of reconnecting in a tight loop
                 const elapsed = Date.now() - started;
@@ -609,9 +608,7 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 assert.deepStrictEqual(info!.envelope, { from: 'test@valid.sender', to });
                 assert.strictEqual(info!.messageId, '<test@valid.sender>');
 
-                const sendLog = records.find(
-                    record => record.level === 'info' && record.entry.tnx === 'send' && record.entry.component === 'smtp-pool'
-                );
+                const sendLog = records.find(record => record.level === 'info' && record.entry.tnx === 'send' && record.entry.component === 'smtp-pool');
                 assert.ok(sendLog);
                 assert.strictEqual(sendLog.entry.messageId, '<test@valid.sender>');
                 assert.strictEqual(sendLog.entry.cid, 1);
@@ -642,10 +639,7 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             const pool = new SMTPPool({ host: '127.0.0.1', port: ts.port, auth, logger: false });
 
             try {
-                const { err } = await settle(
-                    pool,
-                    mockMail(envelope, { dsn: { ret: 'HDRS', envid: 'dsn-id-1', notify: ['FAILURE', 'DELAY'] } })
-                );
+                const { err } = await settle(pool, mockMail(envelope, { dsn: { ret: 'HDRS', envid: 'dsn-id-1', notify: ['FAILURE', 'DELAY'] } }));
                 assert.ifError(err);
                 assert.deepStrictEqual(envelopeDsn, { ret: 'HDRS', envid: 'dsn-id-1' });
                 assert.deepStrictEqual(rcptDsn, { notify: ['FAILURE', 'DELAY'] });
@@ -808,10 +802,10 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             });
 
             try {
-                await assert.rejects(
-                    transporter.sendMail({ from: 'test@valid.sender', to: 'test@valid.recipient', subject: 'oauth2', text: 'hello' }),
-                    { code: 'EAUTH', command: 'AUTH XOAUTH2' }
-                );
+                await assert.rejects(transporter.sendMail({ from: 'test@valid.sender', to: 'test@valid.recipient', subject: 'oauth2', text: 'hello' }), {
+                    code: 'EAUTH',
+                    command: 'AUTH XOAUTH2'
+                });
                 // the retry reuses the same token because there is nothing to renew it with
                 assert.deepStrictEqual(attempts, ['stale-token', 'stale-token']);
                 assert.strictEqual((transporter.transporter as unknown as SMTPPool)._connections.length, 0);

@@ -150,23 +150,17 @@ describe('HTTP Proxy Client Tests', { timeout: 10 * 1000 }, () => {
 
         smtpServer.listen(TARGET_PORT, () => {
             createHttpsProxy(httpsOptions, PROXY_PORT, proxyServer => {
-                httpProxyClient(
-                    'https://localhost:' + PROXY_PORT,
-                    TARGET_PORT,
-                    '127.0.0.1',
-                    { rejectUnauthorized: false },
-                    (err, socket: any) => {
-                        assert.ok(!err);
-                        socket.once('data', (chunk: Buffer) => {
-                            assert.strictEqual(/^220[ -]/.test(chunk.toString()), true);
-                            socket.end();
-                            socket.on('close', () => {
-                                socket.destroy();
-                                smtpServer.close(() => proxyServer.close(done));
-                            });
+                httpProxyClient('https://localhost:' + PROXY_PORT, TARGET_PORT, '127.0.0.1', { rejectUnauthorized: false }, (err, socket: any) => {
+                    assert.ok(!err);
+                    socket.once('data', (chunk: Buffer) => {
+                        assert.strictEqual(/^220[ -]/.test(chunk.toString()), true);
+                        socket.end();
+                        socket.on('close', () => {
+                            socket.destroy();
+                            smtpServer.close(() => proxyServer.close(done));
                         });
-                    }
-                );
+                    });
+                });
             });
         });
     });

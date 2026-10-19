@@ -99,10 +99,7 @@ export function createTransport<T = SentMessageInfo, D extends TransportOptions 
     transporter: Transport<T, D>,
     defaults?: MailDefaults
 ): Mail<T, D>;
-export function createTransport(
-    transporter?: SMTPTransportOptions | string,
-    defaults?: MailDefaults
-): Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
+export function createTransport(transporter?: SMTPTransportOptions | string, defaults?: MailDefaults): Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
 export function createTransport(transporter?: TransportConfig | Transport<any, any> | string, defaults?: MailDefaults): Mail<any, any>;
 export function createTransport(transporter?: TransportConfig | Transport<any, any> | string, defaults?: MailDefaults): Mail<any, any> {
     let options: (TransportConfig & TransportOptions) | undefined;
@@ -178,10 +175,7 @@ export function createTestAccount(apiUrl: string | false | null | undefined, cal
  * @returns Promise that resolves with the account object
  */
 export function createTestAccount(apiUrl?: string | false | null): Promise<TestAccount>;
-export function createTestAccount(
-    apiUrl?: string | false | null | TestAccountCallback,
-    callback?: TestAccountCallback
-): Promise<TestAccount> | void {
+export function createTestAccount(apiUrl?: string | false | null | TestAccountCallback, callback?: TestAccountCallback): Promise<TestAccount> | void {
     let promise: Promise<TestAccount> | undefined;
 
     if (!callback && typeof apiUrl === 'function') {

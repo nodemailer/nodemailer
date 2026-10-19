@@ -217,8 +217,7 @@ class Cookies {
         // .foo.com also matches subdomains, foo.com does not
         if (
             urlparts.hostname !== cookie.domain &&
-            ((cookie.domain as string).charAt(0) !== '.' ||
-                ('.' + urlparts.hostname).substr(-(cookie.domain as string).length) !== cookie.domain)
+            ((cookie.domain as string).charAt(0) !== '.' || ('.' + urlparts.hostname).substr(-(cookie.domain as string).length) !== cookie.domain)
         ) {
             return false;
         }
@@ -228,8 +227,7 @@ class Cookies {
         const pathname = urlparts.pathname || '/';
         const cookiePath = cookie.path as string;
         const pathMatches =
-            pathname === cookiePath ||
-            (pathname.startsWith(cookiePath) && (cookiePath.endsWith('/') || pathname.charAt(cookiePath.length) === '/'));
+            pathname === cookiePath || (pathname.startsWith(cookiePath) && (cookiePath.endsWith('/') || pathname.charAt(cookiePath.length) === '/'));
         if (!pathMatches) {
             return false;
         }

@@ -6,12 +6,7 @@ import * as shared from '../shared/index.js';
 import * as errors from '../errors.js';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import * as packageData from '../package-info.js';
-import type {
-    SMTPTransportOptions,
-    SMTPTransportGetSocketCallback,
-    SMTPTransportSendCallback,
-    SMTPSentMessageInfo
-} from '../smtp-transport/index.js';
+import type { SMTPTransportOptions, SMTPTransportGetSocketCallback, SMTPTransportSendCallback, SMTPSentMessageInfo } from '../smtp-transport/index.js';
 import type MailMessage from '../mailer/mail-message.js';
 import type { default as Mail, SendMailOptions, VerifyCallback } from '../mailer/index.js';
 
@@ -636,10 +631,7 @@ class SMTPPool extends EventEmitter {
         }
 
         if (!this._rateLimit.timeout) {
-            this._rateLimit.timeout = setTimeout(
-                () => this._clearRateLimit(),
-                this._rateLimit.delta - (now - (this._rateLimit.checkpoint as number))
-            );
+            this._rateLimit.timeout = setTimeout(() => this._clearRateLimit(), this._rateLimit.delta - (now - (this._rateLimit.checkpoint as number)));
             this._rateLimit.checkpoint = now;
         }
     }

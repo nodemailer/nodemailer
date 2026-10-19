@@ -234,10 +234,7 @@ describe('RFC 8689 REQUIRETLS Tests', () => {
                     'Subject: Test\r\n\r\nTest message',
                     (err, _info) => {
                         assert.ok(err, 'Should error when server does not support REQUIRETLS');
-                        assert.ok(
-                            err.message.includes('REQUIRETLS') || err.code === 'EREQUIRETLS',
-                            'Error should mention REQUIRETLS or have EREQUIRETLS code'
-                        );
+                        assert.ok(err.message.includes('REQUIRETLS') || err.code === 'EREQUIRETLS', 'Error should mention REQUIRETLS or have EREQUIRETLS code');
                         client.close();
                     }
                 );

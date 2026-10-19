@@ -5,11 +5,7 @@ import net from 'node:net';
  * Minimal HTTPS CONNECT proxy for the proxy tests: tunnels every CONNECT request to the
  * host and port it names. Listens on `listenPort`, 0 picks an ephemeral port
  */
-export function createHttpsProxy(
-    httpsOptions: https.ServerOptions,
-    listenPort: number,
-    callback: (proxyServer: https.Server, port: number) => void
-): void {
+export function createHttpsProxy(httpsOptions: https.ServerOptions, listenPort: number, callback: (proxyServer: https.Server, port: number) => void): void {
     const proxyServer = https.createServer(httpsOptions);
     proxyServer.on('connect', (req: any, clientSocket, head) => {
         const parts = req.url.split(':');

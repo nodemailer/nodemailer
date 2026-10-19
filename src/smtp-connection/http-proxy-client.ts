@@ -13,8 +13,7 @@ import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
 const MAX_RESPONSE_HEADER_BYTES = 64 * 1024;
 
 // URL hostnames keep the brackets around an IPv6 literal, socket options and net.isIPv6 take it without
-const unbracket = (host: string): string =>
-    typeof host === 'string' && host.startsWith('[') && host.endsWith(']') ? host.slice(1, -1) : host;
+const unbracket = (host: string): string => (typeof host === 'string' && host.startsWith('[') && host.endsWith(']') ? host.slice(1, -1) : host);
 
 /**
  * TLS options for connecting to an HTTPS proxy
@@ -43,12 +42,7 @@ export type HttpProxyClientCallback = Callback<net.Socket>;
  * @param destinationHost Destination hostname
  * @param callback Callback to run with the socket object once connection is established
  */
-function httpProxyClient(
-    proxyUrl: string,
-    destinationPort: number | string,
-    destinationHost: string,
-    callback: HttpProxyClientCallback
-): void;
+function httpProxyClient(proxyUrl: string, destinationPort: number | string, destinationHost: string, callback: HttpProxyClientCallback): void;
 /**
  * Establishes proxied connection to destinationPort through an HTTPS proxy
  *
@@ -93,8 +87,7 @@ function httpProxyClient(
 
     const proxy = urllib.parse(proxyUrl);
     // the CONNECT request line and the Host header take an IPv6 destination in brackets
-    const authority =
-        (net.isIPv6(unbracket(destinationHost)) ? '[' + unbracket(destinationHost) + ']' : destinationHost) + ':' + destinationPort;
+    const authority = (net.isIPv6(unbracket(destinationHost)) ? '[' + unbracket(destinationHost) + ']' : destinationHost) + ':' + destinationPort;
 
     const connectOptions: tls.ConnectionOptions & net.TcpNetConnectOpts = {
         host: proxy.hostname as string,

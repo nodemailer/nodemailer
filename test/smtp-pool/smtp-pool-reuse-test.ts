@@ -37,8 +37,7 @@ async function startServer(): Promise<ScriptedServer> {
             }
             return reply;
         },
-        RCPT: line =>
-            state.rejected.has((line.match(/<([^>]*)>/) || [])[1] as string) ? '550 5.1.1 no such user\r\n' : '250 2.1.5 ok\r\n',
+        RCPT: line => (state.rejected.has((line.match(/<([^>]*)>/) || [])[1] as string) ? '550 5.1.1 no such user\r\n' : '250 2.1.5 ok\r\n'),
         DATA_END: (line, socket) => {
             if (state.closeAfterMessage) {
                 const { delay, reply } = state.closeAfterMessage;
