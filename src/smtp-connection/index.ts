@@ -1342,6 +1342,13 @@ class SMTPConnection extends EventEmitter {
                 result.messageSize = stream.outByteCount;
                 result.response = str as string;
 
+                // an LMTP server answers the message once per recipient, so recipients can be
+                // refused after the envelope info was built without any rejected errors on it
+                const rejectedErrors = (this._envelope as SMTPConnectionEnvelope | undefined)?.rejectedErrors;
+                if (!result.rejectedErrors && rejectedErrors && rejectedErrors.length) {
+                    result.rejectedErrors = rejectedErrors;
+                }
+
                 return callback(null, result);
             });
             if (typeof (message as Readable).pipe === 'function') {

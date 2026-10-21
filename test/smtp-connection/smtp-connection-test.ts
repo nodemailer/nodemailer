@@ -1897,6 +1897,30 @@ describe('SMTP-Connection Tests', () => {
                 );
             });
 
+            it('should report the recipients an LMTP server refused after DATA', (t, done) => {
+                // every RCPT TO is accepted, so the refusals only come with the replies to DATA
+                lmtpClient.send(
+                    {
+                        from: 'test@valid.sender',
+                        to: ['test1@valid.recipient', 'test2@valid.recipient', 'test3@valid.recipient']
+                    },
+                    'test',
+                    (err: any, info: any) => {
+                        assert.ok(!err);
+                        assert.deepStrictEqual(info.accepted, ['test2@valid.recipient']);
+                        assert.deepStrictEqual(info.rejected, ['test1@valid.recipient', 'test3@valid.recipient']);
+                        assert.deepStrictEqual(
+                            info.rejectedErrors.map((rejected: any) => [rejected.code, rejected.recipient]),
+                            [
+                                ['EMESSAGE', 'test1@valid.recipient'],
+                                ['EMESSAGE', 'test3@valid.recipient']
+                            ]
+                        );
+                        done();
+                    }
+                );
+            });
+
             it('lmtp should send only to valid recipients', (t, done) => {
                 lmtpClient.send(
                     {
