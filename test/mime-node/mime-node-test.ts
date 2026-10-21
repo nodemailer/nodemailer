@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import urlModule, { fileURLToPath } from 'node:url';
 import MimeNode, { type MimeNodeAddress } from '../../src/mime-node/index.js';
 import addressparser from '../../src/addressparser/index.js';
+import * as mimeFuncs from '../../src/mime-funcs/index.js';
+import libmime from 'libmime';
+import { seededRandom } from '../helpers/chunking.js';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -1919,6 +1922,120 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             (mb as any)._nodeId = 'abc';
             mb.rootNode.baseBoundary = 'def';
             assert.strictEqual(mb._generateBoundary(), '--_NmP-def-Part_abc');
+        });
+    });
+
+    describe('#encodeHeaderValue', () => {
+        it('should be the same method as the internal alias', () => {
+            const mb = new MimeNode();
+            const values: [string, Parameters<MimeNode['encodeHeaderValue']>[1]][] = [
+                ['subject', 'test jõgeva value'],
+                ['to', [{ name: 'Jõgeva', address: 'user@exämple.com' }, 'other@example.com']],
+                ['message-id', 'abc@example.com'],
+                ['references', 'a@example.com <b@example.com>'],
+                ['date', new Date(0)]
+            ];
+            for (const [key, value] of values) {
+                assert.strictEqual(mb.encodeHeaderValue(key, value), mb._encodeHeaderValue(key, value));
+            }
+        });
+
+        it('should encode address headers', () => {
+            const mb = new MimeNode();
+            assert.strictEqual(
+                mb.encodeHeaderValue('To', [{ name: 'Jõgeva Küla', address: 'user@exämple.com' }, 'other@example.com']),
+                '=?UTF-8?Q?J=C3=B5geva_K=C3=BCla?= <user@xn--exmple-cua.com>, other@example.com'
+            );
+            assert.strictEqual(mb.encodeHeaderValue('cc', 'Doe, John <john@example.com>'), '"Doe, John" <john@example.com>');
+        });
+
+        it('should wrap message ids in angle brackets', () => {
+            const mb = new MimeNode();
+            assert.strictEqual(mb.encodeHeaderValue('Message-ID', 'abc@example.com'), '<abc@example.com>');
+            assert.strictEqual(mb.encodeHeaderValue('in-reply-to', '<abc@example.com>'), '<abc@example.com>');
+        });
+
+        it('should follow the textEncoding of the node', () => {
+            assert.strictEqual(new MimeNode(false, { textEncoding: 'B' }).encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?B?asO1Z2V2YQ==?=');
+            assert.strictEqual(new MimeNode().encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?Q?j=C3=B5geva?=');
+        });
+
+        it('should remove line breaks from an unstructured value', () => {
+            assert.strictEqual(new MimeNode().encodeHeaderValue('X-Test', 'a\r\nBcc: evil@example.com'), 'a Bcc: evil@example.com');
+        });
+
+        it('should encode without a node through the static method', () => {
+            assert.strictEqual(MimeNode.encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?Q?j=C3=B5geva?=');
+            assert.strictEqual(MimeNode.encodeHeaderValue('Subject', 'jõgeva', { textEncoding: 'B' }), '=?UTF-8?B?asO1Z2V2YQ==?=');
+            assert.strictEqual(MimeNode.encodeHeaderValue('from', { name: 'Jõgeva', address: 'a@example.com' }), '=?UTF-8?Q?J=C3=B5geva?= <a@example.com>');
+            assert.strictEqual(MimeNode.encodeHeaderValue('Subject', 'plain'), 'plain');
+        });
+
+        // property based: random values, built from the character classes that need encoding,
+        // must decode back to what went in once folded the way the node folds them, and the
+        // folded lines must stay within the 76 character limit (and so within the 998 limit)
+        const pick = (random: (max: number) => number, pools: string[], length: number): string => {
+            let value = '';
+            for (let i = 0; i < length; i++) {
+                const pool = Array.from(pools[random(pools.length)]);
+                value += pool[random(pool.length)];
+            }
+            return value;
+        };
+
+        const fold = (key: string, value: string) => {
+            const folded = mimeFuncs.foldLines(key + ': ' + value, 76);
+            for (const line of folded.split('\r\n')) {
+                assert.ok(Buffer.byteLength(line) <= 76, `line too long: ${JSON.stringify(line)}`);
+            }
+            const unfolded = folded.replace(/\r\n(?=[ \t])/g, '');
+            assert.ok(!/[\r\n]/.test(unfolded), `stray line break in ${JSON.stringify(folded)}`);
+            return unfolded.slice(key.length + 2);
+        };
+
+        it('should round trip random unstructured values', () => {
+            const pools = [
+                'abc XYZ 019',
+                ' \t',
+                '!"#$%&\'()*+,-./:;<>@[\\]^_`{|}~',
+                'õäöüšž',
+                'Ж日本語中文',
+                '\u{1F600}\u{1F4E7}',
+                '\x01\x1f\x7f',
+                '\r\n',
+                '=?'
+            ];
+            for (let seed = 1; seed <= 500; seed++) {
+                const random = seededRandom(seed);
+                const value = pick(random, pools, random(300));
+                for (const textEncoding of ['Q', 'B']) {
+                    const encoded = MimeNode.encodeHeaderValue('Subject', value, { textEncoding });
+                    const decoded = libmime.decodeWords(fold('Subject', encoded));
+                    assert.strictEqual(decoded, value.replace(/\r?\n|\r/g, ' '), `seed ${seed}, ${textEncoding}`);
+                }
+            }
+        });
+
+        it('should round trip random address names', () => {
+            const pools = ['abc XYZ 019', ' ', '!"#$%&\'()*+,-./:;<>@[\\]^_`{|}~', 'õäöüšž', 'Ж日本語中文', '\u{1F600}'];
+            for (let seed = 1; seed <= 500; seed++) {
+                const random = seededRandom(seed);
+                const name = pick(random, pools, 1 + random(80))
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (!name) {
+                    continue;
+                }
+                for (const textEncoding of ['Q', 'B']) {
+                    const encoded = MimeNode.encodeHeaderValue('To', [{ name, address: 'user@example.com' }, 'other@example.com'], { textEncoding });
+                    const parsed = addressparser(fold('To', encoded)) as MimeNodeAddress[];
+                    const message = `seed ${seed}, ${textEncoding}: ${encoded}`;
+                    assert.strictEqual(parsed.length, 2, message);
+                    assert.strictEqual(libmime.decodeWords(parsed[0].name), name, message);
+                    assert.strictEqual(parsed[0].address, 'user@example.com', message);
+                    assert.strictEqual(parsed[1].address, 'other@example.com', message);
+                }
+            }
         });
     });
 

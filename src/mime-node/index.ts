@@ -83,6 +83,14 @@ export interface MimeNodePreparedHeaderValue {
 export type MimeNodeHeaderValue = string | number | boolean | Date | MimeNodeAddress | MimeNodePreparedHeaderValue | MimeNodeHeaderValue[] | null | undefined;
 
 /**
+ * Options for the static MimeNode.encodeHeaderValue
+ */
+export interface MimeNodeHeaderEncodingOptions {
+    /** Either 'Q' (the default) or 'B' */
+    textEncoding?: string | undefined;
+}
+
+/**
  * A single header, the shape the headers are stored in and one of the list forms
  * setHeader and addHeader accept
  */
@@ -973,7 +981,7 @@ class MimeNode {
                     break;
             }
 
-            value = this._encodeHeaderValue(key, value);
+            value = this.encodeHeaderValue(key, value);
 
             // skip empty lines
             if (!(value || '').toString().trim()) {
@@ -1686,13 +1694,19 @@ class MimeNode {
     }
 
     /**
-     * Encodes a header value for use in the generated rfc2822 email.
+     * Encodes a header value the way this node encodes it in the generated message:
+     * address headers are punycoded and mime encoded, message id headers get their
+     * angle brackets, a Date object is formatted and any other value is mime encoded
+     * when it holds non-ascii or control characters (using the node's `textEncoding`).
      *
-     * @param key Header key
+     * The result is a single unfolded line without the key. Fold it before writing it
+     * into a message, `key + ': ' + value` folded at 76 characters is what the node does.
+     *
+     * @param key Header key, case insensitive
      * @param value Header value
-     * @internal
+     * @returns Encoded header value
      */
-    _encodeHeaderValue(key: string, value: MimeNodeHeaderValue): string {
+    encodeHeaderValue(key: string, value: MimeNodeHeaderValue): string {
         key = this._normalizeHeaderKey(key);
 
         switch (key) {
@@ -1766,6 +1780,29 @@ class MimeNode {
                 value = (value || '').toString().replace(/\r?\n|\r/g, ' ');
                 return this._encodeHeaderText(value);
         }
+    }
+
+    /**
+     * Encodes a header value without a node at hand. Same as the instance method of a
+     * node created with the given options.
+     *
+     * @param key Header key, case insensitive
+     * @param value Header value
+     * @param [options] Encoding options
+     * @param [options.textEncoding] either 'Q' (the default) or 'B'
+     * @returns Encoded header value
+     */
+    static encodeHeaderValue(key: string, value: MimeNodeHeaderValue, options?: MimeNodeHeaderEncodingOptions): string {
+        return new MimeNode(false, { textEncoding: options?.textEncoding }).encodeHeaderValue(key, value);
+    }
+
+    /**
+     * Alias of encodeHeaderValue, kept for callers that used the method before it was public
+     *
+     * @internal
+     */
+    _encodeHeaderValue(key: string, value: MimeNodeHeaderValue): string {
+        return this.encodeHeaderValue(key, value);
     }
 
     /**
@@ -2001,9 +2038,15 @@ declare namespace MimeNode {
     export type Options = MimeNodeOptions;
     export type Addresses = MimeNodeAddresses;
     export type Envelope = MimeNodeEnvelope;
+    export type HeaderEncodingOptions = MimeNodeHeaderEncodingOptions;
 }
 
 /** The same aliases as module level exports, for `import * as MimeNode` and `import MimeNode = require()` */
-export type { MimeNodeOptions as Options, MimeNodeAddresses as Addresses, MimeNodeEnvelope as Envelope };
+export type {
+    MimeNodeOptions as Options,
+    MimeNodeAddresses as Addresses,
+    MimeNodeEnvelope as Envelope,
+    MimeNodeHeaderEncodingOptions as HeaderEncodingOptions
+};
 
 export default MimeNode;

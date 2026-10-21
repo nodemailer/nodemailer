@@ -351,7 +351,7 @@ export default class MailMessage<T = SentMessageInfo> {
                 value = (value && value.value) || value;
                 if (value) {
                     if (['references', 'in-reply-to', 'message-id', 'content-id'].includes(key)) {
-                        value = this.message._encodeHeaderValue(key, value);
+                        value = this.message.encodeHeaderValue(key, value);
                     }
                     data.normalizedHeaders[key] = value;
                 }
@@ -365,11 +365,11 @@ export default class MailMessage<T = SentMessageInfo> {
             }
 
             if (data.references) {
-                data.normalizedHeaders.references = this.message._encodeHeaderValue('references', data.references);
+                data.normalizedHeaders.references = this.message.encodeHeaderValue('references', data.references);
             }
 
             if (data.inReplyTo) {
-                data.normalizedHeaders['in-reply-to'] = this.message._encodeHeaderValue('in-reply-to', data.inReplyTo);
+                data.normalizedHeaders['in-reply-to'] = this.message.encodeHeaderValue('in-reply-to', data.inReplyTo);
             }
 
             return callback(null, data);

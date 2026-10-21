@@ -28,6 +28,7 @@ import type { Address, Attachment, MailMessage, SendMailOptions, SentMessageInfo
 import type Mail from 'nodemailer/lib/mailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import MailComposer from 'nodemailer/lib/mail-composer';
+import MimeNode from 'nodemailer/lib/mime-node';
 import SMTPConnection from 'nodemailer/lib/smtp-connection';
 
 const address: Address = { name: 'Recipient', address: 'recipient@example.com' };
@@ -70,6 +71,8 @@ export async function send(): Promise<void> {
     void ({} as MailMessage<PluginInfo>);
 
     new MailComposer(message).compile().build();
+    const encoded: string[] = [MimeNode.encodeHeaderValue('Subject', 'x', { textEncoding: 'B' }), new MimeNode().encodeHeaderValue('To', [address])];
+    void encoded;
     new SMTPConnection({ host: 'localhost', port: 25 });
     [...transporters, external].forEach(transporter => transporter.close());
 }
@@ -84,7 +87,7 @@ import { createTransport, getTestMessageUrl } from 'nodemailer';
 import type { Address, SentMessageInfo } from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
 import type MimeNode from 'nodemailer/lib/mime-node';
-import type { MimeNodeOptions } from 'nodemailer/lib/mime-node';
+import type { MimeNodeOptions, MimeNodeHeaderEncodingOptions } from 'nodemailer/lib/mime-node';
 import type { MailComposerOptions } from 'nodemailer/lib/mail-composer';
 import type { SMTPConnectionOptions } from 'nodemailer/lib/smtp-connection';
 import type { HttpProxyClientOptions } from 'nodemailer/lib/smtp-connection/http-proxy-client';
@@ -145,6 +148,7 @@ type _Options = NoneMissing<MissingUndefined<Mail.Options>>;
 type _MailComposer = NoneMissing<MissingUndefined<MailComposerOptions>>;
 type _MimeNode = NoneMissing<MissingUndefined<MimeNode>>;
 type _MimeNodeOptions = NoneMissing<MissingUndefined<MimeNodeOptions>>;
+type _MimeNodeHeaderEncoding = NoneMissing<MissingUndefined<MimeNodeHeaderEncodingOptions>>;
 type _SMTPConnection = NoneMissing<MissingUndefined<SMTPConnectionOptions>>;
 type _HttpProxyClient = NoneMissing<MissingUndefined<HttpProxyClientOptions>>;
 type _SMTPTransport = NoneMissing<MissingUndefined<SMTPTransport.Options>>;
