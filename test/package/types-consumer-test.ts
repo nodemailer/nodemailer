@@ -194,7 +194,7 @@ const typedSmtp: Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createT
 const pendingNow: number = new SMTPPool({ host: 'localhost' }).pendingCount();
 
 t.sendMail(mail).then(info => { info.response.length; info.envelopeTime.toFixed(); info.messageId; });
-t.sendMail(mail, (err, info) => { if (err) { err.code; err.errno; return; } info.accepted.length; });
+t.sendMail(mail, (err, info) => { if (err) { err.code; err.errno; const permanent: boolean | undefined = err.permanent; return; } info.accepted.length; });
 t.verify((err, success) => { if (!err) { const ok: true = success; } });
 
 const bounce: Mail.Options = { envelope: { from: false, to: 'recipient@example.com' }, raw: 'x' };

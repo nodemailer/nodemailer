@@ -86,6 +86,19 @@ export const isTransientError = (err: { code?: string | undefined; responseCode?
     err.responseCode === 421 || err.code === ECONNECTION || err.code === ESOCKET || err.code === ETIMEDOUT;
 
 /**
+ * Tells whether an SMTP reply code is a permanent rejection, one that retrying the same
+ * message would get again. RFC 5321 makes every 5yz reply a permanent negative completion
+ * and every 4yz reply a transient one. 503 (bad sequence of commands) is the exception: it
+ * says the session was in the wrong state for the command rather than that the message was
+ * refused, so the same message can go through on a new connection. 2yz and 3yz replies are
+ * only an error when the client expected something else, and are not permanent either.
+ *
+ * @param responseCode SMTP reply code
+ * @returns true for a permanent rejection
+ */
+export const isPermanentResponseCode = (responseCode: number): boolean => responseCode >= 500 && responseCode < 600 && responseCode !== 503;
+
+/**
  * Code Node.js sets on an error when its permission model (`--permission`) denies an
  * operation. It is not replaced with the Nodemailer code of the failing step (`ESOCKET`,
  * `EDNS`, `EFETCH`, ...), so a missing grant such as `--allow-net` stays recognizable.
@@ -107,6 +120,13 @@ export interface NodemailerError extends NodeJS.ErrnoException {
     response?: string | undefined;
     /** Numeric SMTP response code */
     responseCode?: number | undefined;
+    /**
+     * Set together with responseCode, from the reply class: true when the server rejected the
+     * message for good (5xx except 503), false when the same message may be accepted on a later
+     * attempt (4xx, 503, or an unexpected 2xx or 3xx). Not set on an error that carries no SMTP
+     * reply, such as a connection failure or missing credentials, see isPermanentResponseCode
+     */
+    permanent?: boolean | undefined;
     /** URL of the resource that could not be fetched */
     sourceUrl?: string | undefined;
     /** Recipient address the error applies to */

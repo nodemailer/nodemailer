@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import DataStream from './data-stream.js';
 import { PassThrough, type Readable } from 'node:stream';
 import * as shared from '../shared/index.js';
-import { ERR_ACCESS_DENIED, isTransientError, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
+import { ERR_ACCESS_DENIED, isPermanentResponseCode, isTransientError, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
 import type XOAuth2 from '../xoauth2/index.js';
 import type { XOAuth2Options } from '../xoauth2/index.js';
 
@@ -1614,6 +1614,7 @@ class SMTPConnection extends EventEmitter {
         const responseCode = (typeof response === 'string' && Number((response.match(/^\d+/) || [])[0])) || false;
         if (responseCode) {
             err.responseCode = responseCode;
+            err.permanent = isPermanentResponseCode(responseCode);
         }
 
         if (command) {
