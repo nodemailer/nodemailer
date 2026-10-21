@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [10.2.0](https://github.com/nodemailer/nodemailer/compare/v10.1.7...v10.2.0) (2026-10-21)
+
+
+### Features
+
+* add info.serverMessageId from the final 250 reply ([108dddd](https://github.com/nodemailer/nodemailer/commit/108dddd88d9d71f708630b7aba7fa2a7d2f14076))
+* add pendingCount() to the SMTP pool ([6cffb70](https://github.com/nodemailer/nodemailer/commit/6cffb7037269a6012d992c263a8927fcaf0563f2))
+* make header value encoding public with MimeNode encodeHeaderValue() ([3b048c7](https://github.com/nodemailer/nodemailer/commit/3b048c7a0fb60f946985b09b3143b0680194e47b))
+* mark SMTP errors as permanent or transient with err.permanent ([6a20e2a](https://github.com/nodemailer/nodemailer/commit/6a20e2ae109eeb5662235d72d1e5a2d38515997a))
+
+
+### Bug Fixes
+
+* label an ASCII message/rfc822 attachment 7bit instead of 8bit ([ad66fa1](https://github.com/nodemailer/nodemailer/commit/ad66fa1a048135867a629bcb7b6dc308ee06a945))
+* report the recipients an LMTP server refuses after DATA in rejectedErrors ([dd64eb3](https://github.com/nodemailer/nodemailer/commit/dd64eb3171e3ab5629828084d3944a7859790968))
+
 ## [10.1.7](https://github.com/nodemailer/nodemailer/compare/v10.1.6...v10.1.7) (2026-10-18)
 
 
