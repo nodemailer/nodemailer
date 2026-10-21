@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import stream from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import MailComposer from '../../src/mail-composer/index.js';
 import type MimeNode from '../../src/mime-node/index.js';
@@ -851,7 +852,7 @@ describe('MailComposer unit tests', () => {
             });
         });
 
-        it('should use 8bit transfer encoding for message/rfc822', (t, done) => {
+        it('should use 7bit transfer encoding for an ASCII message/rfc822 attachment', (t, done) => {
             let data = {
                 text: 'abc',
                 baseBoundary: 'test',
@@ -879,7 +880,7 @@ describe('MailComposer unit tests', () => {
                 'abc\r\n-' +
                 '---_NmP-test-Part_1\r\n' +
                 'Content-Type: message/rfc822; name=test.eml\r\n' +
-                'Content-Transfer-Encoding: 8bit\r\n' +
+                'Content-Transfer-Encoding: 7bit\r\n' +
                 'Content-Disposition: inline; filename=test.eml\r\n' +
                 '\r\n' +
                 'test\r\n' +
@@ -923,13 +924,53 @@ describe('MailComposer unit tests', () => {
                 assert.ok(!err);
                 let msg = message.toString();
                 // Verify Content-Transfer-Encoding is 8bit for the nested message
-                assert.ok(msg.includes('Content-Type: message/rfc822'));
-                assert.ok(msg.includes('Content-Transfer-Encoding: 8bit'));
+                assert.ok(msg.includes('Content-Type: message/rfc822; name=forwarded.eml\r\nContent-Transfer-Encoding: 8bit\r\n'));
                 // Verify the non-ASCII content is preserved (not corrupted by 7bit encoding)
                 assert.ok(msg.includes('äöü'));
                 assert.ok(msg.includes('你好'));
                 assert.ok(msg.includes('🎉'));
                 done();
+            });
+        });
+
+        describe('message/rfc822 transfer encoding', () => {
+            const encodingOf = async (attachment: { [key: string]: unknown }): Promise<string> => {
+                const message = await new MailComposer({
+                    text: 'abc',
+                    attachments: [{ contentType: 'message/rfc822', filename: 'forwarded.eml', ...attachment }]
+                })
+                    .compile()
+                    .build();
+                const match = message.toString().match(/Content-Type: message\/rfc822[^\r]*\r\nContent-Transfer-Encoding: ([^\r]+)/);
+                assert.ok(match, message.toString());
+                return match[1];
+            };
+            const ascii = 'From: sender@example.com\r\nSubject: test\r\n\r\nplain ascii body\r\n';
+
+            it('uses 7bit for ASCII string and Buffer content', async () => {
+                assert.strictEqual(await encodingOf({ content: ascii }), '7bit');
+                assert.strictEqual(await encodingOf({ content: Buffer.from(ascii) }), '7bit');
+                // a line of exactly 998 characters still fits
+                assert.strictEqual(await encodingOf({ content: ascii + 'x'.repeat(998) + '\r\n' }), '7bit');
+            });
+
+            it('uses 8bit for content 7bit can not describe', async () => {
+                assert.strictEqual(await encodingOf({ content: ascii + 'õ\r\n' }), '8bit');
+                assert.strictEqual(await encodingOf({ content: Buffer.from(ascii + 'õ\r\n') }), '8bit');
+                assert.strictEqual(await encodingOf({ content: Buffer.concat([Buffer.from(ascii), Buffer.from([0xff])]) }), '8bit');
+                assert.strictEqual(await encodingOf({ content: ascii + '\x00' }), '8bit');
+                assert.strictEqual(await encodingOf({ content: ascii + 'x'.repeat(999) }), '8bit');
+            });
+
+            it('uses 8bit for content it can not check', async () => {
+                assert.strictEqual(await encodingOf({ content: stream.Readable.from([Buffer.from(ascii)]) }), '8bit');
+                // the base64 string is ASCII, what it decodes to does not have to be
+                assert.strictEqual(await encodingOf({ content: Buffer.from(ascii).toString('base64'), encoding: 'base64' }), '8bit');
+            });
+
+            it('keeps an explicit contentTransferEncoding', async () => {
+                assert.strictEqual(await encodingOf({ content: ascii, contentTransferEncoding: '8bit' }), '8bit');
+                assert.strictEqual(await encodingOf({ content: ascii, contentTransferEncoding: 'binary' }), 'binary');
             });
         });
 

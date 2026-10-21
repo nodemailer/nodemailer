@@ -173,6 +173,38 @@ function isContentObject(value: unknown): value is MailComposerAlternative {
     return typeof value === 'object' && !!(content.content || content.path || content.href || content.raw);
 }
 
+/**
+ * Tells whether attachment content is a string or a Buffer that 7bit can describe: ASCII
+ * only, no NUL and no line over the 998 octets of RFC 5322. Anything else, a stream or a
+ * file path included, can not be checked here
+ */
+function fitsSevenBit(content: unknown): boolean {
+    let at: (i: number) => number;
+    let length: number;
+    if (typeof content === 'string') {
+        at = i => content.charCodeAt(i);
+        length = content.length;
+    } else if (Buffer.isBuffer(content)) {
+        at = i => content[i];
+        length = content.length;
+    } else {
+        return false;
+    }
+    let lineLength = 0;
+    for (let i = 0; i < length; i++) {
+        const c = at(i);
+        if (c === 0 || c > 0x7f) {
+            return false;
+        }
+        if (c === 0x0a || c === 0x0d) {
+            lineLength = 0;
+        } else if (++lineLength > 998) {
+            return false;
+        }
+    }
+    return true;
+}
+
 class MailComposer {
     mail: MailComposerOptions;
     message: MimeNode | false;
@@ -285,8 +317,11 @@ class MailComposer {
                 // also contains `false`, to set
                 contentTransferEncoding = attachment.contentTransferEncoding;
             } else if (isMessageNode) {
-                // the content might include non-ASCII bytes but at this point we do not know it yet
-                contentTransferEncoding = '8bit';
+                // a message/* part can not be encoded (RFC 2046 5.2.1), so the label has to describe
+                // the content as it is. A stream or a file might hold non-ASCII bytes that can not be
+                // checked here, so only content at hand that fits 7bit is labelled as such
+                // content with an `encoding` is decoded later, so what it decodes to is not known here either
+                contentTransferEncoding = !attachment.encoding && fitsSevenBit(attachment.content) ? '7bit' : '8bit';
             } else {
                 contentTransferEncoding = 'base64'; // the default
             }
