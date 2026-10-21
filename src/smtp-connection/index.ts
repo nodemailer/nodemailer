@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import DataStream from './data-stream.js';
 import { PassThrough, type Readable } from 'node:stream';
 import * as shared from '../shared/index.js';
+import { parseServerMessageId } from './server-message-id.js';
 import { ERR_ACCESS_DENIED, isPermanentResponseCode, isTransientError, type Callback, type NodemailerError, type ResultCallback } from '../errors.js';
 import type XOAuth2 from '../xoauth2/index.js';
 import type { XOAuth2Options } from '../xoauth2/index.js';
@@ -291,6 +292,12 @@ export interface SMTPConnectionSendInfo extends SMTPConnectionEnvelopeInfo {
     messageSize: number;
     /** Final server response for the message */
     response: string;
+    /**
+     * Message-ID the server gave the message, with angle brackets, when its final reply names
+     * one in a known format (Microsoft 365 and Outlook.com, Amazon SES). Such a server replaces
+     * the Message-ID header, so the delivered copy carries this id instead of messageId
+     */
+    serverMessageId?: string | undefined;
 }
 
 /**
@@ -1341,6 +1348,11 @@ class SMTPConnection extends EventEmitter {
                 result.messageTime = Date.now() - envelopeTime;
                 result.messageSize = stream.outByteCount;
                 result.response = str as string;
+
+                const serverMessageId = parseServerMessageId(result.response, this.options.host);
+                if (serverMessageId) {
+                    result.serverMessageId = serverMessageId;
+                }
 
                 // an LMTP server answers the message once per recipient, so recipients can be
                 // refused after the envelope info was built without any rejected errors on it
