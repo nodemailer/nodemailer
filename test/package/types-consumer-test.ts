@@ -191,6 +191,7 @@ const smtp = new SMTPTransport({ host: 'localhost' });
 const asTransport: Transport = smtp;
 const pooled: Transporter<SMTPPool.SentMessageInfo, SMTPPool.Options> = nodemailer.createTransport(new SMTPPool({ host: 'localhost' }));
 const typedSmtp: Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport(smtp);
+const pendingNow: number = new SMTPPool({ host: 'localhost' }).pendingCount();
 
 t.sendMail(mail).then(info => { info.response.length; info.envelopeTime.toFixed(); info.messageId; });
 t.sendMail(mail, (err, info) => { if (err) { err.code; err.errno; return; } info.accepted.length; });
@@ -239,7 +240,7 @@ const custom: Transport<SentMessageInfo & { queueId: string }> = {
 };
 const anyInfo: SentMessageInfo = { envelope: { from: 'sender@example.com', to: [] }, messageId: 'm' };
 anyInfo.custom.field;
-export { ns, opts, host, asTransport, pooled, typedSmtp, bounce, smtpErr, oauthAuth, stage, dkim, xoauth, mailbox, parsed, enc, custom, jsonPlain };
+export { ns, opts, host, asTransport, pooled, typedSmtp, pendingNow, bounce, smtpErr, oauthAuth, stage, dkim, xoauth, mailbox, parsed, enc, custom, jsonPlain };
 `;
 
 // node16 is what an installed copy resolves through the exports map, bundler is what the

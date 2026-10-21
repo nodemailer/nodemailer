@@ -108,6 +108,8 @@ class SMTPPool extends EventEmitter {
     _connections: PoolResource[];
     /** @internal */
     _connectionCounter: number;
+    /** @internal */
+    _pending: number;
     idling: boolean;
 
     /**
@@ -171,6 +173,7 @@ class SMTPPool extends EventEmitter {
         this._queue = [];
         this._connections = [];
         this._connectionCounter = 0;
+        this._pending = 0;
 
         this.idling = true;
 
@@ -208,10 +211,20 @@ class SMTPPool extends EventEmitter {
             return false;
         }
 
+        // counted until the callback runs, whichever path runs it: delivered, failed, requeued
+        // until it gives up, or drained by close()
+        let counted = true;
+        this._pending++;
         this._queue.push({
             mail,
             requeueAttempts: 0,
-            callback
+            callback: (err, info) => {
+                if (counted) {
+                    counted = false;
+                    this._pending--;
+                }
+                callback(err, info);
+            }
         });
 
         if (this.idling && this._queue.length >= this.options.maxConnections) {
@@ -658,6 +671,20 @@ class SMTPPool extends EventEmitter {
      */
     isIdle(): boolean {
         return this.idling;
+    }
+
+    /**
+     * Counts the messages the pool has not finished with yet: the ones waiting in the queue
+     * plus the ones a connection is transmitting right now. isIdle() only tells whether the
+     * pool can take another message, it is already true while a message is still being sent,
+     * so use this to check that nothing would be lost by closing the pool. A message that is
+     * re-queued after its connection dropped is counted until its callback runs, also while it waits to be put back on the queue, and
+     * it is no longer counted by the time its callback runs.
+     *
+     * @returns Number of queued and in-flight messages
+     */
+    pendingCount(): number {
+        return this._pending;
     }
 
     /**

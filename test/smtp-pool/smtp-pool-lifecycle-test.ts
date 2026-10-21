@@ -13,6 +13,7 @@ import {
     mockMail,
     oauthServerOptions,
     settle,
+    type SendOutcome,
     startOAuthServer,
     startRawSmtpServer,
     startServer
@@ -929,6 +930,139 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
                 pool.close();
                 await ts.close();
             }
+        });
+    });
+
+    describe('pendingCount()', () => {
+        // an SMTP server that holds every message at the end of DATA until it is released
+        const holdingServer = async () => {
+            const held: Array<() => void> = [];
+            let waiting: { count: number; resolve: () => void } | null = null;
+            const check = () => {
+                if (waiting && held.length >= waiting.count) {
+                    const { resolve } = waiting;
+                    waiting = null;
+                    resolve();
+                }
+            };
+            const ts = await startServer({
+                onData(stream: any, session: any, done: any) {
+                    stream.on('data', () => false);
+                    stream.on('end', () => {
+                        held.push(() => done());
+                        check();
+                    });
+                }
+            });
+            // resolves once at least `count` messages are held at the end of DATA
+            const heldCount = (count: number) =>
+                new Promise<void>(resolve => {
+                    waiting = { count, resolve };
+                    check();
+                });
+            const release = () => held.splice(0).forEach(done => done());
+            return { ts, heldCount, release };
+        };
+
+        it('counts a message being sent while isIdle() is already true', async () => {
+            const { ts, heldCount, release } = await holdingServer();
+            const pool = new SMTPPool({ host: '127.0.0.1', port: ts.port, maxConnections: 5, auth, logger: false });
+
+            try {
+                assert.strictEqual(pool.pendingCount(), 0);
+                let countInCallback = -1;
+                const sent = new Promise<SendOutcome>(resolve =>
+                    pool.send(mockMail(envelope), (err, info) => {
+                        countInCallback = pool.pendingCount();
+                        resolve({ err, info });
+                    })
+                );
+                assert.strictEqual(pool.pendingCount(), 1);
+
+                await heldCount(1);
+                // the message is on the wire, the pool has free slots, nothing is queued
+                assert.strictEqual(pool.isIdle(), true);
+                assert.strictEqual(pool._queue.length, 0);
+                assert.strictEqual(pool.pendingCount(), 1);
+
+                release();
+                const { err } = await sent;
+                assert.ifError(err);
+                // a callback that checks whether the pool can be closed sees its own message done
+                assert.strictEqual(countInCallback, 0);
+                assert.strictEqual(pool.pendingCount(), 0);
+            } finally {
+                pool.close();
+                await ts.close();
+            }
+        });
+
+        it('counts queued and in-flight messages together', async () => {
+            const { ts, heldCount, release } = await holdingServer();
+            const pool = new SMTPPool({ host: '127.0.0.1', port: ts.port, maxConnections: 2, auth, logger: false });
+
+            try {
+                const sent = [1, 2, 3].map(() => settle(pool, mockMail(envelope)));
+                assert.strictEqual(pool.pendingCount(), 3);
+
+                await heldCount(2);
+                // two on the wire, one waiting for a slot
+                assert.strictEqual(pool._queue.length, 1);
+                assert.strictEqual(pool.pendingCount(), 3);
+
+                release();
+                await heldCount(1);
+                assert.strictEqual(pool.pendingCount(), 1);
+                release();
+
+                (await Promise.all(sent)).forEach(outcome => assert.ifError(outcome.err));
+                assert.strictEqual(pool.pendingCount(), 0);
+            } finally {
+                pool.close();
+                await ts.close();
+            }
+        });
+
+        it('keeps counting a message while it waits to be requeued', async () => {
+            // every connection is dropped before the greeting, so the message moves between a
+            // connection, the requeue delay and the queue until it fails
+            const raw = await startRawSmtpServer(Infinity);
+            const pool = new SMTPPool({ host: '127.0.0.1', port: raw.port, maxConnections: 1, maxRequeues: 2, logger: false });
+            const samples = new Set<number>();
+            const sampler = setInterval(() => samples.add(pool.pendingCount()), 2);
+
+            try {
+                const { err } = await settle(pool, mockMail(envelope));
+                assert.ok(err);
+                assert.strictEqual(raw.connections, 3);
+                assert.deepStrictEqual([...samples], [1]);
+                assert.strictEqual(pool.pendingCount(), 0);
+            } finally {
+                clearInterval(sampler);
+                pool.close();
+                await raw.close();
+            }
+        });
+
+        it('drops the queued messages close() fails', async () => {
+            const pool = new SMTPPool({ host: '127.0.0.1', port: await freePort(), maxConnections: 1, logger: false });
+
+            const sent = [1, 2].map(() => settle(pool, mockMail(envelope)));
+            assert.strictEqual(pool.pendingCount(), 2);
+            pool.close();
+
+            for (const outcome of await Promise.all(sent)) {
+                assert.ok(outcome.err);
+            }
+            assert.strictEqual(pool.pendingCount(), 0);
+        });
+
+        it('does not count a message refused by a closed pool', async () => {
+            const pool = new SMTPPool({ host: '127.0.0.1', port: 1, logger: false });
+            pool.close();
+            const { err } = await settle(pool, mockMail(envelope));
+            assert.ok(err);
+            assert.strictEqual(pool.pendingCount(), 0);
         });
     });
 });
