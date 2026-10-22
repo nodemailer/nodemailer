@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.2.1](https://github.com/nodemailer/nodemailer/compare/v10.2.0...v10.2.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* drop the comments of a Content-Type or Content-Disposition value with the stripComments option ([b3052b7](https://github.com/nodemailer/nodemailer/commit/b3052b7fe2e49b51dd66d6c7814a072e885f1ac8))
+
 ## [10.2.0](https://github.com/nodemailer/nodemailer/compare/v10.1.7...v10.2.0) (2026-10-21)
 
 
