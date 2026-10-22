@@ -446,6 +446,42 @@ export function buildHeaderParam(key: string, data: string | Buffer, maxLength?:
 const TOKEN = /^[^\x00-\x20\x7f()<>@,;:\\"/[\]?=]+$/;
 
 /**
+ * Options of parseHeaderValue()
+ */
+export interface ParseHeaderValueOptions {
+    /**
+     * Drop the RFC 822 comments outside quoted strings, which the MIME headers allow and
+     * which are not part of the value: 'boundary=b (comment)' names the boundary 'b'. A
+     * parenthesis right behind the '=' of a parameter or behind a token character of its
+     * value continues the token, as it does for Python and postal-mime, so 'Invoice(1).pdf'
+     * keeps its name and 'boundary=(c)b' names the boundary '(c)b'. A comment that never
+     * closes runs to the end of the value, unless a parameter follows it, in which case it is
+     * content and the parameter survives. Comments are kept by default for the sake of the
+     * callers of this exported function, not because keeping them is ever the better reading
+     */
+    stripComments?: boolean | undefined;
+}
+
+/**
+ * Offset of the ')' that closes the RFC 822 comment opening at `start`, or -1 when the
+ * comment never closes. Comments nest, and a backslash escapes the character after it
+ */
+function _findCommentEnd(str: string, start: number): number {
+    let depth = 0;
+    for (let i = start, len = str.length; i < len; i++) {
+        const c = str.charAt(i);
+        if (c === '\\') {
+            i++;
+        } else if (c === '(') {
+            depth++;
+        } else if (c === ')' && --depth === 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
  * Whether a string can be a header parameter name.
  *
  * A parameter name is a token, so it is never empty. A "__proto__" name would target the
@@ -472,13 +508,17 @@ function _isParamName(name: string): boolean {
  *   }
  *
  * @param str Header value
+ * @param options Options, see ParseHeaderValueOptions
  * @return Header value as a parsed structure
  */
-export function parseHeaderValue(str: string): ParsedHeaderValue {
+export function parseHeaderValue(str: string, options?: ParseHeaderValueOptions): ParsedHeaderValue {
     const response: ParsedHeaderValue = {
         value: '',
         params: {}
     };
+
+    // Cleared again by an unclosed '(', see the loop
+    let stripComments = !!options?.stripComments;
 
     // A duplicated parameter resolves to its first occurrence, the way a duplicated header
     // does. Letting the last one win disagrees with the receivers that take the first, and
@@ -548,6 +588,27 @@ export function parseHeaderValue(str: string): ParsedHeaderValue {
 
     for (let i = 0, len = str.length; i < len; i++) {
         chr = str.charAt(i);
+
+        // With stripComments, an RFC 822 comment stands anywhere outside a quoted string but
+        // right behind a token it would continue, see ParseHeaderValueOptions. In the value
+        // of a parameter, no pending whitespace means the last significant character was the
+        // '=' or a character of the token
+        if (stripComments && chr === '(' && !quote && !quoteClosed && !(stage === 'value' && key !== false && !pendingSpace)) {
+            let end = _findCommentEnd(str, i);
+            if (end < 0 && str.indexOf(';', i) < 0) {
+                // a comment that never closes runs to the end of the value, unless a
+                // parameter follows it, which is content then and survives
+                end = len - 1;
+            }
+            if (end >= 0) {
+                i = end;
+                continue;
+            }
+            // looking for a closing ')' again would scan a run of unclosed '(' to its end
+            // once for each of them
+            stripComments = false;
+        }
+
         if (stage === 'key') {
             if (chr === '=') {
                 key = takeValue().trim();

@@ -489,6 +489,25 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             });
         });
 
+        it('should drop a comment from a declared Content-Type and use the boundary without it', (t, done) => {
+            // 'boundary=b (comment)' names the boundary b, so the delimiter lines are '--b' and
+            // the header goes out without the comment. Read as content, the comment became
+            // part of a quoted boundary and of every delimiter line
+            let mb = new MimeNode('multipart/mixed; boundary=b (comment)');
+
+            mb.createChild('text/plain; charset=utf-8 (c)').setContent('Hello world!');
+
+            mb.build((err, msg: any) => {
+                assert.ok(!err);
+                msg = msg.toString();
+                assert.strictEqual(mb.boundary, 'b');
+                assert.ok(msg.includes('Content-Type: multipart/mixed; boundary=b\r\n'), msg);
+                assert.ok(msg.includes('\r\n--b\r\nContent-Type: text/plain; charset=utf-8\r\n'), msg);
+                assert.ok(msg.includes('\r\n--b--\r\n'), msg);
+                done();
+            });
+        });
+
         it('should strip line breaks from custom boundary material', (t, done) => {
             // a line break in the boundary would split the delimiter lines, so the
             // declared boundary could never match them again

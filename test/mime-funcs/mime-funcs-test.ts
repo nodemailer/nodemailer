@@ -395,6 +395,8 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
     });
 
     describe('#parseHeaderValue', () => {
+        const stripped = (str: string) => mimeFuncs.parseHeaderValue(str, { stripComments: true });
+
         it('should drop a __proto__ parameter instead of reaching the prototype chain', () => {
             // an rfc2231 continuation named __proto__ used to read back as Object.prototype,
             // skip the initializer and throw on the write that followed. Any caller supplied
@@ -624,6 +626,51 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
                     y: '1'
                 }
             });
+        });
+
+        it('should keep comments by default and drop them with stripComments', () => {
+            assert.deepStrictEqual(mimeFuncs.parseHeaderValue('multipart/mixed; boundary=b (comment)').params, { boundary: 'b (comment)' });
+            // read as content the comment named a boundary no delimiter line matches, so the
+            // parts stayed hidden from a receiver that reads the boundary b
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary=b (comment)'), { value: 'multipart/mixed', params: { boundary: 'b' } });
+            assert.deepStrictEqual(stripped('(c) text/plain (c); (c) charset= (c)utf-8 (a (nested) c)'), {
+                value: 'text/plain',
+                params: { charset: 'utf-8' }
+            });
+            // a comment stands for whitespace, so it does not join the tokens around it
+            assert.deepStrictEqual(stripped('text/plain; x=a (c)b').params, { x: 'a b' });
+            // an escaped parenthesis does not close the comment
+            assert.deepStrictEqual(stripped('text/plain; charset=utf-8 (a \\) b); format=flowed').params, { charset: 'utf-8', format: 'flowed' });
+            // the type and a parameter name take no parenthesis, behind a closed quoted string it is junk
+            assert.deepStrictEqual(stripped('multipart(c)/mixed; boundary(c)=b'), { value: 'multipart/mixed', params: { boundary: 'b' } });
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary="b"(c)').params, { boundary: 'b' });
+        });
+
+        it('should keep a parenthesis that continues a token with stripComments', () => {
+            // right behind the '=' or a token character, as Python and postal-mime read it
+            assert.deepStrictEqual(stripped('attachment; filename=Invoice(1).pdf').params, { filename: 'Invoice(1).pdf' });
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary=(c)b').params, { boundary: '(c)b' });
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary=(c)"b"').params, { boundary: '(c)b' });
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary= (c)b').params, { boundary: 'b' });
+            // inside a quoted string it is content
+            assert.deepStrictEqual(stripped('attachment; filename="a (1).pdf" (c)').params, { filename: 'a (1).pdf' });
+            // a comment that nothing follows runs to the end of the value, one that a
+            // parameter follows is content and so is every parenthesis after it, so the
+            // parameter survives
+            assert.deepStrictEqual(stripped('multipart/mixed; boundary=b (c').params, { boundary: 'b' });
+            assert.deepStrictEqual(stripped('text/plain; x=a (b; boundary=c (d').params, { x: 'a (b', boundary: 'c (d' });
+        });
+
+        it('should drop comments in linear time', () => {
+            // a closed comment is skipped whole and an unclosed one ends the search, so a value
+            // of a hundred thousand parentheses costs a single pass, not one per parenthesis
+            const start = Date.now();
+            assert.deepStrictEqual(stripped('text/plain; x= ' + '('.repeat(100000)).params, { x: '' });
+            assert.deepStrictEqual(stripped('text/plain; x= ' + '('.repeat(100000) + ')'.repeat(100000) + 'y').params, { x: 'y' });
+            assert.deepStrictEqual(stripped('text/plain; x= ' + '(a) '.repeat(100000) + 'y').params, { x: 'y' });
+            assert.deepStrictEqual(stripped('text/plain; x= ' + '(a '.repeat(100000) + ')').params, { x: '' });
+            assert.deepStrictEqual(stripped('text/plain; x= ' + '( '.repeat(100000) + '; y=1').params, { x: '( '.repeat(100000).trim(), y: '1' });
+            assert.ok(Date.now() - start < 2000);
         });
 
         it('should resolve a duplicated parameter to its first occurrence', () => {

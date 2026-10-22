@@ -916,8 +916,11 @@ class MimeNode {
             }
 
             switch (header.key) {
+                // The comments of a MIME header are not part of its value and are dropped, so a
+                // caller supplied 'boundary=b (comment)' is the boundary b it names, and the
+                // header goes out without the comment
                 case 'Content-Disposition':
-                    structured = mimeFuncs.parseHeaderValue(value);
+                    structured = mimeFuncs.parseHeaderValue(value, { stripComments: true });
                     if (this.filename) {
                         structured.params.filename = this.filename;
                     }
@@ -925,7 +928,7 @@ class MimeNode {
                     break;
 
                 case 'Content-Type':
-                    structured = mimeFuncs.parseHeaderValue(value);
+                    structured = mimeFuncs.parseHeaderValue(value, { stripComments: true });
 
                     // the type token decides multipart and charset below, so clean it before
                     // those run and not just on the way out, otherwise a control char makes
