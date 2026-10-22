@@ -5,12 +5,24 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-// mailauth 5 needs Node.js 22 for its undici dependency, the end to end verification
-// runs where it loads and is skipped elsewhere
-const mailauth = await import('mailauth').then(
-    module => module,
-    () => null
-);
+import { createRequire } from 'node:module';
+
+// mailauth needs a newer Node.js than the oldest version supported here, its engines field
+// says which, so the end to end verification runs where it can and is skipped elsewhere.
+// It is not imported at all on an older Node.js: mailauth 8 fails to load asynchronously
+// there, after the test file has ended, which the test runner reports as a failure
+const mailauthEngine = String(createRequire(import.meta.url)('mailauth/package.json').engines?.node || '').match(/(\d+)\.(\d+)/);
+const nodeVersion = process.versions.node.split('.').map(Number);
+const mailauthSupported =
+    !mailauthEngine ||
+    nodeVersion[0] > Number(mailauthEngine[1]) ||
+    (nodeVersion[0] === Number(mailauthEngine[1]) && nodeVersion[1] >= Number(mailauthEngine[2]));
+const mailauth = mailauthSupported
+    ? await import('mailauth').then(
+          module => module,
+          () => null
+      )
+    : null;
 import DKIM from '../../src/dkim/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
