@@ -1725,7 +1725,7 @@ class MimeNode {
             // values enclosed in <>
             case 'Message-ID':
             case 'In-Reply-To':
-            case 'Content-Id':
+            case 'Content-ID':
                 // a msg-id is structured, so an encoded word inside the angle brackets would
                 // be read as literal text. drop the characters that can not appear in a header
                 // at all, but leave HT alone, it separates the ids of a multi id value

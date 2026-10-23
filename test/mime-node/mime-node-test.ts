@@ -1974,6 +1974,14 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb.encodeHeaderValue('in-reply-to', '<abc@example.com>'), '<abc@example.com>');
         });
 
+        it('should treat Content-ID as a message id', () => {
+            const mb = new MimeNode();
+            assert.strictEqual(mb.encodeHeaderValue('Content-ID', 'part@example.com'), '<part@example.com>');
+            assert.strictEqual(mb.encodeHeaderValue('content-id', '<part@example.com>'), '<part@example.com>');
+            // a msg-id is structured, an encoded word in it would not match the cid: url anymore
+            assert.strictEqual(mb.encodeHeaderValue('Content-Id', '<logo-\u00e4@example.com>'), '<logo-\u00e4@example.com>');
+        });
+
         it('should follow the textEncoding of the node', () => {
             assert.strictEqual(new MimeNode(false, { textEncoding: 'B' }).encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?B?asO1Z2V2YQ==?=');
             assert.strictEqual(new MimeNode().encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?Q?j=C3=B5geva?=');
