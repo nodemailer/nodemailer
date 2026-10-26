@@ -1416,6 +1416,27 @@ describe('MailComposer unit tests', () => {
             });
         });
 
+        it('should not mime encode the Content-ID of an embedded image', (t, done) => {
+            const cid = 'logo-\u00e4@example.com';
+            const mail = new MailComposer({
+                html: '<img src="cid:' + cid + '">',
+                attachments: [
+                    {
+                        content: 'PNGDATA',
+                        cid,
+                        contentType: 'image/png',
+                        filename: 'a.png'
+                    }
+                ]
+            }).compile();
+
+            mail.build((err, message) => {
+                assert.ok(!err);
+                assert.ok(message.toString().includes('\r\nContent-ID: <' + cid + '>\r\n'), message.toString());
+                done();
+            });
+        });
+
         it('should map an http path of an attachment to an href', () => {
             let compiler = new MailComposer({
                 attachments: [
