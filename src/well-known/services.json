@@ -180,6 +180,14 @@
         "port": 25
     },
 
+    "Groundmail": {
+        "description": "Groundmail",
+        "host": "smtp.groundmail.dev",
+        "port": 587,
+        "secure": false,
+        "requireTLS": true
+    },
+
     "hot.ee": {
         "description": "Hot.ee (Estonian email provider)",
         "host": "mail.hot.ee"
