@@ -183,7 +183,9 @@
     "Groundmail": {
         "description": "Groundmail",
         "host": "smtp.groundmail.dev",
-        "port": 587
+        "port": 587,
+        "secure": false,
+        "requireTLS": true
     },
 
     "hot.ee": {
