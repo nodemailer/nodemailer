@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.3.1](https://github.com/nodemailer/nodemailer/compare/v10.3.0...v10.3.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* apply the otp option in MailComposer too ([1d4087f](https://github.com/nodemailer/nodemailer/commit/1d4087f358d124267bddd5eb5e11a4e22fccd3d0))
+
 ## [10.3.0](https://github.com/nodemailer/nodemailer/compare/v10.2.1...v10.3.0) (2026-10-29)
 
 
