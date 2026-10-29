@@ -433,7 +433,6 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                 mail.setMailerHeader();
                 mail.setPriorityHeaders();
                 mail.setListHeaders();
-                mail.setOtpHeader();
 
                 recipientCount = mail.message.getEnvelope().to.length;
             } catch (err: any) {

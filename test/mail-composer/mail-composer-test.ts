@@ -1857,4 +1857,36 @@ describe('MailComposer ReDoS Protection Tests', () => {
             assert.ok(time2 < 100, `POC 2 took too long: ${time2}ms`);
         });
     });
+
+    describe('otp', () => {
+        const compose = (data: ConstructorParameters<typeof MailComposer>[0]): Promise<string> =>
+            new Promise((resolve, reject) => {
+                new MailComposer(data).compile().build((err, message) => (err ? reject(err) : resolve(message.toString())));
+            });
+
+        const otpLines = (raw: string): string[] =>
+            raw
+                .split('\r\n\r\n')[0]
+                .split('\r\n')
+                .filter(line => /^OTP-Token:/i.test(line));
+
+        it('should add the OTP-Token header when the composer is used without the mailer', async () => {
+            const raw = await compose({ from: 'a@example.com', text: 'Your code is 123456', otp: { code: '123456', origin: 'https://example.com/login' } });
+            assert.deepStrictEqual(otpLines(raw), ['OTP-Token: "123456"; origin="https://example.com"']);
+        });
+
+        it('should replace an OTP-Token from the custom headers', async () => {
+            const raw = await compose({
+                text: 'x',
+                headers: { 'otp-token': '"999999"; origin="https://evil.example"' },
+                otp: { code: '123456', origin: 'https://example.com' }
+            });
+            assert.deepStrictEqual(otpLines(raw), ['OTP-Token: "123456"; origin="https://example.com"']);
+        });
+
+        it('should throw EOTP from compile() for an invalid otp value', () => {
+            assert.throws(() => new MailComposer({ text: 'x', otp: { code: '123456', origin: 'http://example.com' } }).compile(), { code: 'EOTP' });
+            assert.throws(() => new MailComposer({ text: 'x', otp: { code: '', origin: 'https://example.com' } }).compile(), { code: 'EOTP' });
+        });
+    });
 });
