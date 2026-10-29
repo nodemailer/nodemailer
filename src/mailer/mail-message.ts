@@ -12,6 +12,7 @@ import type { DKIMOptions } from '../dkim/index.js';
 import type { SMTPEnvelopeDsn } from '../smtp-connection/index.js';
 import type { SMTPTransportAuthOptions } from '../smtp-transport/index.js';
 import type { SESSendEmailRequest } from '../ses-transport/index.js';
+import * as errors from '../errors.js';
 import type { NodemailerError, ResultCallback } from '../errors.js';
 import type { ResolveContentOptions } from '../shared/index.js';
 import type Mail from './index.js';
@@ -415,6 +416,29 @@ export default class MailMessage<T = SentMessageInfo> {
         });
     }
 
+    /**
+     * Sets the OTP-Token header from the otp option. The header is defined by
+     * draft-goto-otp-token-01, an Internet-Draft that expires on 25 March 2027. By then check
+     * for a newer revision of the draft or a published RFC, the header name and its
+     * parameters are still open questions in the draft.
+     */
+    setOtpHeader(): void {
+        const otp = this.data.otp;
+        if (!this.message || !otp) {
+            return;
+        }
+
+        // a structured field String can only hold printable ascii. The code is a secret the recipient
+        // compares against the one in the message body, so it is rejected rather than cleaned up
+        if (typeof otp.code !== 'string' || !/^[\x20-\x7e]+$/.test(otp.code)) {
+            throw otpError('The otp code must be a non-empty string of printable ASCII characters');
+        }
+
+        // a structured field String escapes the same two characters as a quoted-string. setHeader
+        // replaces any OTP-Token from the custom headers, the field may appear only once
+        this.message.setHeader('OTP-Token', mimeFuncs.quoteString(otp.code) + '; origin=' + mimeFuncs.quoteString(getOtpOrigin(otp.origin)));
+    }
+
     /** @internal */
     _getListHeaders(listData: MailComposerListHeaders): MailMessageListHeader[] {
         // make sure an url looks like <protocol:url>
@@ -481,4 +505,41 @@ export default class MailMessage<T = SentMessageInfo> {
 
         return '<http://' + url + '>';
     }
+}
+
+/**
+ * Returns the canonical ascii serialization of the origin the code is bound to. The draft
+ * requires a potentially trustworthy origin, so only https is accepted, plus http on a
+ * loopback host for local development
+ */
+function getOtpOrigin(origin: unknown): string {
+    let url: URL | undefined;
+    try {
+        url = new URL(String(origin));
+    } catch {
+        // handled below
+    }
+
+    // the WHATWG parser lets characters such as a quote or a brace into a host, which the
+    // origin grammar the draft requires (RFC 6454) does not allow, so a receiver would discard
+    // the header. Only a DNS name, an IPv4 address or a bracketed IPv6 address is accepted.
+    // Userinfo is refused as well, an origin never has it and it turns a value built as
+    // 'https://example.com' + input into the origin of whatever host follows an "@"
+    if (!url || url.username || url.password || !/^([a-z0-9_-]+\.)*[a-z0-9_-]+$|^\[[0-9a-f:.]+\]$/.test(url.hostname)) {
+        throw otpError('The otp origin must be an absolute https URL');
+    }
+
+    const isLoopback = /^(localhost|.+\.localhost|127(\.\d+){3}|\[::1\])$/.test(url.hostname);
+    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && isLoopback)) {
+        throw otpError('The otp origin must be an https URL, or an http URL on a loopback host');
+    }
+
+    // the URL parser already lowercases the host, converts it to punycode and drops the default port
+    return url.origin;
+}
+
+function otpError(message: string): NodemailerError {
+    const err: NodemailerError = new Error(message);
+    err.code = errors.EOTP;
+    return err;
 }

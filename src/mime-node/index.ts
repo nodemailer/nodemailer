@@ -1646,7 +1646,7 @@ class MimeNode {
             .replace(/[\s\x00-\x20\x7f:]/g, '')
             .toLowerCase()
             // use uppercase words, except MIME
-            .replace(/^X-SMTPAPI$|^(MIME|DKIM|ARC|BIMI)\b|^[a-z]|-(SPF|FBL|ID|MD5)$|-[a-z]/gi, c => c.toUpperCase())
+            .replace(/^X-SMTPAPI$|^(MIME|DKIM|ARC|BIMI)\b|^OTP(?=-Token$)|^[a-z]|-(SPF|FBL|ID|MD5)$|-[a-z]/gi, c => c.toUpperCase())
             // special case
             .replace(/^Content-Features$/i, 'Content-features');
 
@@ -1742,6 +1742,15 @@ class MimeNode {
                     value = value + '>';
                 }
                 return value;
+
+            // a structured field (RFC 9651) that can not be mime encoded, an encoded word would
+            // turn its quoted strings into text that no structured field parser reads. Only
+            // the characters that can not appear in a header at all are removed
+            case 'OTP-Token':
+                return (value || '')
+                    .toString()
+                    .replace(/\r?\n|\r/g, ' ')
+                    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
 
             // space separated list of values enclosed in <>
             case 'References': {

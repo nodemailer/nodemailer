@@ -27,6 +27,7 @@ export const ERROR_CODES = {
     EPROTOCOL: 'Invalid SMTP server response',
     EENVELOPE: 'Invalid mail envelope (sender or recipients)',
     EMESSAGE: 'Message delivery error',
+    EOTP: 'Invalid one-time passcode data (otp option)',
     ESTREAM: 'Stream processing error',
 
     // Authentication errors
@@ -65,6 +66,7 @@ export const EREQUIRETLS = 'EREQUIRETLS' satisfies ErrorCode;
 export const EPROTOCOL = 'EPROTOCOL' satisfies ErrorCode;
 export const EENVELOPE = 'EENVELOPE' satisfies ErrorCode;
 export const EMESSAGE = 'EMESSAGE' satisfies ErrorCode;
+export const EOTP = 'EOTP' satisfies ErrorCode;
 export const ESTREAM = 'ESTREAM' satisfies ErrorCode;
 export const EAUTH = 'EAUTH' satisfies ErrorCode;
 export const ENOAUTH = 'ENOAUTH' satisfies ErrorCode;

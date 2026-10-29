@@ -115,6 +115,7 @@ void new MailComposer({
     subject: maybeString,
     text: maybeString,
     list: { help: { url: 'https://example.com/help', comment: maybeString } },
+    otp: { code: '123456', origin: 'https://example.com' },
     attachments: [{ filename: maybeString, content: maybeString, cid: maybeString }]
 });
 void new SMTPConnection({ host: maybeString, port: maybeNumber, secure: maybeBoolean, name: maybeString });
@@ -146,6 +147,7 @@ type NoneMissing<T extends never> = T;
 
 type _Options = NoneMissing<MissingUndefined<Mail.Options>>;
 type _MailComposer = NoneMissing<MissingUndefined<MailComposerOptions>>;
+type _Otp = NoneMissing<MissingUndefined<Mail.Otp>>;
 type _MimeNode = NoneMissing<MissingUndefined<MimeNode>>;
 type _MimeNodeOptions = NoneMissing<MissingUndefined<MimeNodeOptions>>;
 type _MimeNodeHeaderEncoding = NoneMissing<MissingUndefined<MimeNodeHeaderEncodingOptions>>;

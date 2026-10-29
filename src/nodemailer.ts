@@ -309,7 +309,8 @@ export type {
     MailComposerAttachment as Attachment,
     MailComposerAlternative as AttachmentLike,
     MailComposerIcalEvent as IcalAttachment,
-    MailComposerListHeaders as ListHeaders
+    MailComposerListHeaders as ListHeaders,
+    MailComposerOtp as Otp
 } from './mail-composer/index.js';
 export type { MimeNodeAddress as Address, MimeNodeHeaders as Headers } from './mime-node/index.js';
 export type { SMTPConnectionOptions, SMTPConnectionAuth, SMTPEnvelope, SMTPEnvelopeDsn } from './smtp-connection/index.js';

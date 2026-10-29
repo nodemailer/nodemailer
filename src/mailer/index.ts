@@ -19,6 +19,7 @@ import type {
     MailComposerIcalEvent,
     MailComposerListHeaderEntry,
     MailComposerListHeaders,
+    MailComposerOtp,
     MailComposerTextEncoding
 } from '../mail-composer/index.js';
 import type { Callback, NodemailerError, ResultCallback } from '../errors.js';
@@ -432,6 +433,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                 mail.setMailerHeader();
                 mail.setPriorityHeaders();
                 mail.setListHeaders();
+                mail.setOtpHeader();
 
                 recipientCount = mail.message.getEnvelope().to.length;
             } catch (err: any) {
@@ -756,6 +758,7 @@ declare namespace Mail {
     export type Headers = MimeNodeHeaders;
     export type ListHeader = MailComposerListHeaderEntry;
     export type ListHeaders = MailComposerListHeaders;
+    export type Otp = MailComposerOtp;
     export type Envelope = MimeNodeEnvelopeInput;
     export type Connection = SocketOptions;
     export type TextEncoding = MailComposerTextEncoding;
@@ -773,6 +776,7 @@ export type {
     MimeNodeHeaders as Headers,
     MailComposerListHeaderEntry as ListHeader,
     MailComposerListHeaders as ListHeaders,
+    MailComposerOtp as Otp,
     MimeNodeEnvelopeInput as Envelope,
     SocketOptions as Connection,
     MailComposerTextEncoding as TextEncoding

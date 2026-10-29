@@ -72,7 +72,7 @@ function sign(headers: MessageParserHeaderLine[], hashAlgo: string, bodyHash: st
         'Content-Description:Resent-Date:Resent-From:Resent-Sender:' +
         'Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:' +
         'List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:' +
-        'List-Owner:List-Archive';
+        'List-Owner:List-Archive:OTP-Token';
 
     const fieldNames = options.headerFieldNames || defaultFieldNames;
 

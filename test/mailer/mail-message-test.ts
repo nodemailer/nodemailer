@@ -566,6 +566,110 @@ describe('MailMessage content handling', () => {
 
             assert.ok(lines.includes('X-Mailer: Test Mailer 1.0'), lines.join('\n'));
         });
+
+        describe('OTP-Token', () => {
+            const otpLines = (lines: string[]): string[] => lines.filter(line => /^OTP-Token:/i.test(line));
+
+            it('should add the OTP-Token header from the otp option', async () => {
+                const lines = headerLines(await render({ ...base, otp: { code: '123456', origin: 'https://example.com' } }));
+
+                assert.deepStrictEqual(otpLines(lines), ['OTP-Token: "123456"; origin="https://example.com"']);
+            });
+
+            it('should escape quotes and backslashes in the code', async () => {
+                const lines = headerLines(await render({ ...base, otp: { code: 'a"b\\c', origin: 'https://example.com' } }));
+
+                assert.deepStrictEqual(otpLines(lines), ['OTP-Token: "a\\"b\\\\c"; origin="https://example.com"']);
+            });
+
+            it('should reduce the origin to its canonical serialization', async () => {
+                const cases: [string, string][] = [
+                    ['https://Example.COM:443/login?next=/x#y', 'https://example.com'],
+                    ['https://example.com:8443/', 'https://example.com:8443'],
+                    ['https://\u00f5ige.example/', 'https://xn--ige-nna.example'],
+                    ['http://localhost:3000/verify', 'http://localhost:3000'],
+                    ['http://app.localhost', 'http://app.localhost'],
+                    ['http://127.0.0.1:8080', 'http://127.0.0.1:8080'],
+                    ['http://[::1]:8080', 'http://[::1]:8080']
+                ];
+                await Promise.all(
+                    cases.map(async ([origin, expected]) => {
+                        const lines = headerLines(await render({ ...base, otp: { code: '1', origin } }));
+                        assert.deepStrictEqual(otpLines(lines), [`OTP-Token: "1"; origin="${expected}"`], origin);
+                    })
+                );
+            });
+
+            it('should reject an origin that is not potentially trustworthy', async () => {
+                await Promise.all(
+                    [
+                        'http://example.com',
+                        'example.com',
+                        'ftp://example.com',
+                        'data:text/plain,x',
+                        'null',
+                        '',
+                        'http://localhost.example.com',
+                        'https://a"b.example',
+                        'https://a{b}.example',
+                        'https://a`b.example',
+                        'https://example.com@evil.example',
+                        'https://user:pass@example.com',
+                        undefined
+                    ].map(origin => assert.rejects(render({ ...base, otp: { code: '123456', origin } as any }), { code: 'EOTP' }, String(origin)))
+                );
+            });
+
+            it('should reject a code that a structured field String can not carry', async () => {
+                await Promise.all(
+                    ['', '12\r\nBcc: x@example.com', '12\t34', '12\u00e434', '12\x7f', 123456, undefined].map(code =>
+                        assert.rejects(render({ ...base, otp: { code, origin: 'https://example.com' } as any }), { code: 'EOTP' }, String(code))
+                    )
+                );
+                await assert.rejects(render({ ...base, otp: '123456' as any }), { code: 'EOTP' });
+            });
+
+            it('should replace an OTP-Token from the custom headers', async () => {
+                const lines = headerLines(
+                    await render({
+                        ...base,
+                        headers: { 'otp-token': '"999999"; origin="https://evil.example"' },
+                        otp: { code: '123456', origin: 'https://example.com' }
+                    })
+                );
+
+                assert.deepStrictEqual(otpLines(lines), ['OTP-Token: "123456"; origin="https://example.com"']);
+            });
+
+            it('should not mime encode a custom OTP-Token header', async () => {
+                const value = '"123456"; origin="https://example.com"';
+                await Promise.all(
+                    [value, { value }].map(async header => {
+                        const raw = await render({ ...base, headers: { 'OTP-Token': header } });
+                        assert.ok(raw.split('\r\n').includes('OTP-Token: ' + value), raw);
+                    })
+                );
+            });
+
+            it('should fold a long custom OTP-Token header only at its whitespace', async () => {
+                const value = '"123456"; origin="https://' + 'a'.repeat(70) + '.example.com"; token=:' + 'QUJD'.repeat(30) + ':';
+                const raw = await render({ ...base, headers: { 'OTP-Token': value } });
+                const header = raw.split('\r\n\r\n')[0].match(/^OTP-Token: .*(\r\n[ \t].*)*/m);
+
+                assert.ok(header && header[0].includes('\r\n '), raw);
+                // unfolding removes the line breaks only, so the value comes back unchanged
+                assert.strictEqual(header[0].replace(/\r\n(?=[ \t])/g, ''), 'OTP-Token: ' + value);
+            });
+
+            it('should not let a custom OTP-Token header inject header lines', async () => {
+                const lines = headerLines(
+                    await render({ ...base, headers: { 'OTP-Token': '"1"; origin="https://example.com"\r\nBcc: x@example.com\n\x00\x7f' } })
+                );
+
+                assert.deepStrictEqual(otpLines(lines), ['OTP-Token: "1"; origin="https://example.com" Bcc: x@example.com '], lines.join('\n'));
+                assert.ok(!lines.some(line => /^Bcc:/i.test(line)), lines.join('\n'));
+            });
+        });
     });
 
     describe('_formatListUrl', () => {

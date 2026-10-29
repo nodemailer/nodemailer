@@ -88,6 +88,17 @@ export interface MailComposerListHeaders {
 }
 
 /**
+ * The otp value: a one-time passcode and the origin it is bound to, sent as the OTP-Token
+ * header (draft-goto-otp-token)
+ */
+export interface MailComposerOtp {
+    /** The passcode, printable ascii */
+    code: string;
+    /** Origin the code is bound to, https or a loopback http origin. A full url is reduced to its origin */
+    origin: string;
+}
+
+/**
  * Encoding for the non-ascii header values: quoted-printable ('Q', the default) or base64
  * ('B'). Only the first letter is read, so the short forms work as well
  */
@@ -130,6 +141,8 @@ export interface MailComposerOptions {
     headers?: MimeNodeHeaders | undefined;
     /** List-* headers, read by the mailer */
     list?: MailComposerListHeaders | undefined;
+    /** One-time passcode for the OTP-Token header, read by the mailer */
+    otp?: MailComposerOtp | undefined;
     /** SMTP envelope to use instead of the one generated from the headers */
     envelope?: MimeNodeEnvelopeInput | undefined;
     /** Content-Transfer-Encoding to force for the text/* nodes that do not set their own */

@@ -463,6 +463,12 @@ describe('Mail', () => {
             assert.ok(!dkim.includes('node.ee'), dkim);
         });
 
+        it('should sign the OTP-Token header', async () => {
+            const raw = await render({ dkim: transportKey }, { ...message(), otp: { code: '123456', origin: 'https://example.com' } });
+
+            assert.ok(signedFields(dkimHeader(raw)).includes('otp-token'), dkimHeader(raw));
+        });
+
         it('should sign with the dkim options of the message when the transport has none', async () => {
             const raw = await render({}, { ...message(), dkim: transportKey });
 
