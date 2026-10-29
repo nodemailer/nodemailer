@@ -167,7 +167,7 @@
         "prettier": "3.9.10",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
-        "smtp-server": "3.21.2",
+        "smtp-server": "3.21.3",
         "tsx": "4.23.15",
         "typescript": "6.0.3",
         "typescript-eslint": "8.72.1"
