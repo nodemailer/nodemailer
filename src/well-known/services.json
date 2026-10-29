@@ -585,6 +585,13 @@
         "port": 2525
     },
 
+    "SpacePost": {
+        "description": "SpacePost",
+        "host": "smtp.spacepost.dev",
+        "port": 25976,
+        "secure": false
+    },
+
     "Sparkpost": {
         "description": "SparkPost",
         "aliases": ["SparkPost", "SparkPost Mail"],
