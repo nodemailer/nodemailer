@@ -161,7 +161,7 @@
         "eslint-config-prettier": "10.1.8",
         "globals": "17.14.0",
         "libbase64": "1.4.1",
-        "libmime": "5.6.3",
+        "libmime": "5.6.4",
         "libqp": "3.0.1",
         "mailauth": "8.0.4",
         "prettier": "3.9.10",
