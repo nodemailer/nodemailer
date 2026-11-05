@@ -1,4 +1,4 @@
-import * as punycode from '../punycode/index.js';
+import * as shared from '../shared/index.js';
 import * as mimeFuncs from '../mime-funcs/index.js';
 import crypto from 'node:crypto';
 import * as errors from '../errors.js';
@@ -114,7 +114,7 @@ function generateDKIMHeader(domainName: string | undefined, keySelector: string 
         'v=1',
         'a=rsa-' + hashAlgo,
         'c=relaxed/relaxed',
-        'd=' + punycode.toASCII(cleanTagValue(domainName)),
+        'd=' + shared.normalizeDomain(cleanTagValue(domainName), false),
         'q=dns/txt',
         's=' + cleanTagValue(keySelector),
         'bh=' + bodyHash,

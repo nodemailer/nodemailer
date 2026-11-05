@@ -10,6 +10,8 @@ import { isProtoKey, copyOwnKeys } from './objects.js';
 import dns from 'node:dns';
 import net from 'node:net';
 import os from 'node:os';
+import urlModule from 'node:url';
+import * as punycode from '../punycode/index.js';
 import { finished, type Readable } from 'node:stream';
 import type { OutgoingHttpHeaders } from 'node:http';
 
@@ -1075,4 +1077,86 @@ function createDefaultLogger(levels: LogLevel[]): ExternalLogger {
     });
 
     return logger;
+}
+
+// domainToASCII and domainToUnicode are WHATWG host parsers rather than plain IDNA
+// mappers, so they do more than map: they cut the host at '/', '\\', '?' and '#', drop C0
+// controls, and percent-decode. Handing them 'evil.example/mail.corp.example' returns the
+// deliverable 'evil.example', which would turn a value the bundled codec leaves as
+// unroutable garbage into mail for a domain the sender never named. None of these
+// characters are legal in a domain, so keep them away from the mapper.
+const URL_PARSER_UNSAFE = /[/\\?#%\x00-\x20\x7F]/;
+
+// RFC 1035 bounds a label at 63 octets and a domain at 253. An A-label is never shorter than
+// the code points it encodes, so anything past these bounds could not have become a valid
+// domain whichever way it is encoded. The bundled codec is super-linear in the length of a
+// label, a 60 KB label of distinct code points took seconds to encode, several times per
+// address, so it is only handed what could be a domain
+const MAX_DOMAIN_LENGTH = 253;
+const MAX_LABEL_LENGTH = 63;
+
+/**
+ * Checks a domain against the DNS length limits, counted in code points per label and in
+ * total. The label separators are the ones the bundled codec splits on.
+ *
+ * @param domain Domain to check
+ * @return true if a label or the domain as a whole is too long to be a valid domain
+ */
+function exceedsDomainLimits(domain: string): boolean {
+    let total = 0;
+    let label = 0;
+    for (const char of domain) {
+        total++;
+        if (char === '.' || char === '。' || char === '．' || char === '｡') {
+            label = 0;
+        } else if (++label > MAX_LABEL_LENGTH) {
+            return true;
+        }
+    }
+    return total > MAX_DOMAIN_LENGTH;
+}
+
+/**
+ * Encodes a domain the way browsers, the WHATWG URL Standard and DNS facing resolvers do,
+ * which is with UTS-46 mapping applied before the Punycode step.
+ *
+ * The bundled codec is plain RFC 3492 and maps nothing, so it disagrees with every
+ * conformant parser on any domain holding a mapped or ignored code point. An invisible
+ * U+00AD in 'compa\u00ADny.com' encoded to 'xn--company-pka.com' where a validator reads
+ * 'company.com', which let an allow-listed domain be checked and a different one mailed.
+ *
+ * Anything the URL parser does not accept as a hostname, an address literal such as
+ * '[127.0.0.1]' included, comes back empty and falls through to the bundled codec, which
+ * leaves those as they were supplied apart from lowercasing them.
+ *
+ * The mapper gets the domain as supplied, since UTS-46 does its own case mapping and
+ * toLowerCase() differs from it: it turns U+1E9E into U+00DF where Node 20 and 22 map it
+ * to 'ss', and a word-final U+03A3 into U+03C2 where UTS-46 gives U+03C3. Lowercasing
+ * first sent 'user@stra\u1E9Ee.de', which a validator reads as strasse.de, to xn--strae-oqa.de.
+ *
+ * @param domain Domain to encode
+ * @param toUnicode Return the U-label form instead of the A-label form
+ * @return Encoded domain
+ */
+export function normalizeDomain(domain: string, toUnicode: boolean): string {
+    // domainToASCII and domainToUnicode landed in Node 7, the bundled codec covers Node 6
+    if (typeof urlModule.domainToASCII === 'function' && typeof urlModule.domainToUnicode === 'function' && !URL_PARSER_UNSAFE.test(domain)) {
+        // The U-label form is decoded from the A-label form rather than from the input:
+        // Deno's domainToASCII returns an empty string for a label it cannot decode, while
+        // its domainToUnicode returns the label with U+FFFD in place of the bad part
+        const ascii = urlModule.domainToASCII(domain);
+        const mapped = ascii && toUnicode ? urlModule.domainToUnicode(ascii) : ascii;
+        if (mapped) {
+            return mapped;
+        }
+    }
+
+    domain = domain.toLowerCase();
+
+    if (exceedsDomainLimits(domain)) {
+        // too long to be a domain whichever way it is encoded, keep it as supplied
+        return domain;
+    }
+
+    return toUnicode ? punycode.toUnicode(domain) : punycode.toASCII(domain);
 }
