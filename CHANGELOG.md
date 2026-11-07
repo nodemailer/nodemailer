@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [10.4.0](https://github.com/nodemailer/nodemailer/compare/v10.3.1...v10.4.0) (2026-11-07)
+
+
+### Features
+
+* let close({ force: true }) end pooled connections that are delivering a message ([aba943c](https://github.com/nodemailer/nodemailer/commit/aba943cf9d24493aca2a3e043df06beadc728feb))
+
 ## [10.3.1](https://github.com/nodemailer/nodemailer/compare/v10.3.0...v10.3.1) (2026-10-29)
 
 
