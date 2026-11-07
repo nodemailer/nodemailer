@@ -237,10 +237,14 @@ class SMTPPool extends EventEmitter {
     }
 
     /**
-     * Closes all connections in the pool. If there is a message being sent, the connection
-     * is closed later
+     * Closes the pool. Idle connections are closed at once and a connection in the middle of a
+     * delivery finishes it first, unless `force` is set: then it is closed too and its message
+     * fails. `force` is for a caller that has given up on a delivery, such as one a server is
+     * stalling by trickling its replies, which no socket timeout notices.
+     *
+     * @param options.force - Also close connections that are delivering a message
      */
-    close(): void {
+    close(options?: { force?: boolean }): void {
         let connection: PoolResource | undefined;
         const len = this._connections.length;
         this._closed = true;
@@ -254,9 +258,10 @@ class SMTPPool extends EventEmitter {
             return;
         }
 
-        // remove all available connections
+        // remove all available connections, and with `force` the busy ones too
+        const force = !!options?.force;
         for (let i = len - 1; i >= 0; i--) {
-            if (this._connections[i] && this._connections[i].available) {
+            if (this._connections[i] && (force || this._connections[i].available)) {
                 connection = this._connections[i];
                 connection.close();
                 this.logger.info(
@@ -513,7 +518,9 @@ class SMTPPool extends EventEmitter {
                 setTimeout(() => {
                     let delay = 0;
                     if (connection.queueEntry) {
-                        if (this._shouldRequeuOnConnectionClose(connection.queueEntry)) {
+                        // a closed pool (a forced close ends a delivery on purpose) fails the
+                        // message rather than queueing it for a retry that would never run
+                        if (!this._closed && this._shouldRequeuOnConnectionClose(connection.queueEntry)) {
                             delay = this._requeueEntryOnConnectionClose(connection);
                         } else {
                             this._failDeliveryOnConnectionClose(connection);

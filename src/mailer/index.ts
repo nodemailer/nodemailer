@@ -236,8 +236,11 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
     // set in the constructor by name, see the loop over the forwarded methods there. Each
     // forwards to the transport method of the same name, or logs a warning and returns
     // false when the transport does not implement it
-    /** Closes the transport, the pooled SMTP transport closes its connections */
-    close!: () => void;
+    /**
+     * Closes the transport, the pooled SMTP transport closes its connections. With `force` the
+     * pooled transport also closes connections that are delivering a message
+     */
+    close!: (options?: { force?: boolean }) => void;
     /** Tells whether the transport can take a message right away */
     isIdle!: () => boolean;
     /** Checks the configuration, the SMTP transports connect and authenticate for it */

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import { once } from 'node:events';
 import SMTPPool from '../../src/smtp-pool/index.js';
+import { waitFor } from '../helpers/wait.js';
 import nodemailer from '../../src/nodemailer.js';
 import type { XOAuth2Token } from '../../src/xoauth2/index.js';
 import {
@@ -1064,5 +1065,48 @@ describe('SMTP pool lifecycle', { timeout: 20000 }, () => {
             assert.ok(err);
             assert.strictEqual(pool.pendingCount(), 0);
         });
+    });
+});
+
+describe('SMTP pool close({ force })', { timeout: 20000 }, () => {
+    // A server that trickles a multi-line greeting keeps the socket busy without ever finishing,
+    // so no socket timeout fires. close() leaves a delivering connection to finish; force ends it.
+    it('closes a connection in the middle of a delivery and fails its message', async () => {
+        const sockets = new Set<net.Socket>();
+        const server = net.createServer(socket => {
+            sockets.add(socket);
+            socket.on('error', () => false);
+            const timer = setInterval(() => socket.write('220-still here\r\n'), 20);
+            socket.on('close', () => {
+                clearInterval(timer);
+                sockets.delete(socket);
+            });
+        });
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        const { port } = server.address() as net.AddressInfo;
+        const pool = new SMTPPool({ host: '127.0.0.1', port, ignoreTLS: true, maxConnections: 1, logger: false });
+
+        try {
+            const sending = settle(pool, mockMail(envelope));
+            await waitFor(() => sockets.size > 0);
+            assert.strictEqual(sockets.size, 1, 'the delivery is under way');
+
+            // a plain close leaves the delivering connection alone
+            pool.close();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            assert.strictEqual(sockets.size, 1);
+
+            pool.close({ force: true });
+            const { err } = await sending;
+            assert.ok(err, 'the message fails');
+            await waitFor(() => sockets.size === 0);
+            assert.strictEqual(sockets.size, 0, 'and its connection is closed');
+        } finally {
+            for (const socket of sockets) {
+                socket.destroy();
+            }
+            server.close();
+        }
     });
 });
