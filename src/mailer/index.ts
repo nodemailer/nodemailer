@@ -157,6 +157,8 @@ export interface MailMeta {
  * declared on Transport, Transporter and Mail
  */
 export interface Transport<T = SentMessageInfo, D extends TransportOptions = TransportOptions> {
+    /** Opt in only if send() cancels its own work and removes its signal listener when finished. */
+    supportsAbortSignal?: boolean | undefined;
     /** Transport name, used for logging */
     name: string;
     /** Transport version, used for logging */
@@ -397,11 +399,41 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         }
 
         const mail = new MailMessage(this, data);
+        const signal = mail.data.signal;
+        let settled = false;
+        const removeAbortListener = () => signal?.removeEventListener('abort', onAbort);
+        const finish: ResultCallback<T> = (err, info) => {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            removeAbortListener();
+            if (err) {
+                mail.releaseStreams();
+            }
+            done(err, info);
+        };
         // a failed message is not going to be read anymore, release its content streams
         const fail = (err: NodemailerError): void => {
-            mail.releaseStreams();
-            done(err);
+            finish(err);
         };
+        function onAbort(): void {
+            fail(errors.createAbortError(signal!));
+        }
+
+        if (signal) {
+            if (!this.transporter.supportsAbortSignal) {
+                const err: NodemailerError = new Error('This transport does not support AbortSignal');
+                err.code = errors.ECONFIG;
+                setImmediate(() => fail(err));
+                return promise;
+            }
+            signal.addEventListener('abort', onAbort, { once: true });
+            if (signal.aborted) {
+                setImmediate(onAbort);
+                return promise;
+            }
+        }
 
         this.logger.debug(
             {
@@ -416,6 +448,9 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         );
 
         this._processPlugins('compile', mail, err => {
+            if (settled) {
+                return;
+            }
             if (err) {
                 this.logger.error(
                     {
@@ -470,6 +505,9 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
             }
 
             this._processPlugins('stream', mail, err => {
+                if (settled) {
+                    return;
+                }
                 if (err) {
                     this.logger.error(
                         {
@@ -499,9 +537,10 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                     });
                 }
 
+                // The transport takes ownership of cancellation from here, including queued work.
+                removeAbortListener();
                 this.transporter.send(mail, (...args) => {
                     if (args[0]) {
-                        mail.releaseStreams();
                         this.logger.error(
                             {
                                 err: args[0],
@@ -512,7 +551,7 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
                             args[0].message
                         );
                     }
-                    done(...args);
+                    finish(...args);
                 });
             });
         });
@@ -555,6 +594,9 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         let pos = 0;
         let block = 'default';
         const processPlugins = (): void => {
+            if (mail.data.signal?.aborted) {
+                return callback(errors.createAbortError(mail.data.signal));
+            }
             let curplugins = block === 'default' ? defaultPlugins : userPlugins;
             if (pos >= curplugins.length) {
                 if (block === 'default' && userPlugins.length) {

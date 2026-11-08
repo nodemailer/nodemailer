@@ -116,6 +116,7 @@ const MESSAGE_AUTH_KEYS = ['type', 'user', 'pass', 'accessToken', 'refreshToken'
  * @param options Connection options
  */
 class SMTPTransport extends EventEmitter {
+    readonly supportsAbortSignal = true;
     options: SMTPTransportOptions;
     logger: shared.Logger;
     name: string;
@@ -243,14 +244,48 @@ class SMTPTransport extends EventEmitter {
      * @param callback Callback function
      */
     send(mail: MailMessage<SMTPSentMessageInfo>, callback: SMTPTransportSendCallback): void {
+        const signal = mail.data.signal;
+        let returned = false;
+        let connection: SMTPConnection | undefined;
+        let perCallAuth: SMTPTransportAuth | false | null | undefined;
+        const cleanupPerCallAuth = () => {
+            if (perCallAuth && perCallAuth !== this.auth && perCallAuth.oauth2) {
+                perCallAuth.oauth2.removeAllListeners();
+            }
+            perCallAuth = null;
+        };
+        const finish: SMTPTransportSendCallback = (err, info) => {
+            if (returned) {
+                return;
+            }
+            returned = true;
+            signal?.removeEventListener('abort', onAbort);
+            cleanupPerCallAuth();
+            connection?.close();
+            callback(err, info);
+        };
+        function onAbort(): void {
+            finish(errors.createAbortError(signal!));
+        }
+        if (signal) {
+            signal.addEventListener('abort', onAbort, { once: true });
+            if (signal.aborted) {
+                setImmediate(onAbort);
+                return;
+            }
+        }
+
         // the proxy handshake, if any, counts against connectionTimeout as well
         const connectStartedAt = Date.now();
         this.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
+            if (returned) {
+                socketOptions && socketOptions.connection?.destroy();
+                return;
+            }
             if (err) {
-                return callback(err);
+                return finish(err);
             }
 
-            let returned = false;
             let options = this.options;
             if (socketOptions && socketOptions.connection) {
                 this.logger.info(
@@ -273,27 +308,9 @@ class SMTPTransport extends EventEmitter {
                 options = Object.assign(shared.assign(false, options), socketOptions);
             }
 
-            const connection = new SMTPConnection(options);
-
-            connection._connectStartedAt = connectStartedAt;
-
-            let perCallAuth: SMTPTransportAuth | false | null | undefined;
-            const cleanupPerCallAuth = () => {
-                if (perCallAuth && perCallAuth !== this.auth && perCallAuth.oauth2) {
-                    perCallAuth.oauth2.removeAllListeners();
-                }
-                perCallAuth = null;
-            };
-
-            connection.once('error', err => {
-                if (returned) {
-                    return;
-                }
-                returned = true;
-                cleanupPerCallAuth();
-                connection.close();
-                return callback(err);
-            });
+            const smtp = (connection = new SMTPConnection(options));
+            smtp._connectStartedAt = connectStartedAt;
+            smtp.once('error', err => finish(err));
 
             const sendMessage = () => {
                 const envelope = mail.message.getEnvelope();
@@ -323,14 +340,11 @@ class SMTPTransport extends EventEmitter {
                     recipients.join(', ')
                 );
 
-                connection.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
+                smtp.send(envelope as SMTPEnvelope, mail.message.createReadStream(), (err, info) => {
                     if (returned) {
                         // the connection error handler has already reported this send
                         return;
                     }
-                    returned = true;
-                    cleanupPerCallAuth();
-                    connection.close();
                     if (err) {
                         this.logger.error(
                             {
@@ -341,7 +355,7 @@ class SMTPTransport extends EventEmitter {
                             messageId,
                             err.message
                         );
-                        return callback(err);
+                        return finish(err);
                     }
                     (info as SMTPSentMessageInfo).envelope = {
                         from: envelope.from,
@@ -349,7 +363,7 @@ class SMTPTransport extends EventEmitter {
                     };
                     (info as SMTPSentMessageInfo).messageId = messageId;
                     try {
-                        return callback(null, info as SMTPSentMessageInfo);
+                        return finish(null, info as SMTPSentMessageInfo);
                     } catch (E: any) {
                         this.logger.error(
                             {
@@ -364,31 +378,27 @@ class SMTPTransport extends EventEmitter {
                 });
             };
 
-            connection.connect(err => {
+            smtp.connect(err => {
                 if (returned) {
                     return;
                 }
 
                 if (err) {
                     // the server closed the connection before the greeting
-                    returned = true;
-                    connection.close();
-                    return callback(err);
+                    return finish(err);
                 }
 
                 perCallAuth = this.getAuth(mail.data.auth);
 
-                if (perCallAuth && (connection.allowsAuth || options.forceAuth)) {
-                    connection.login(perCallAuth, err => {
+                if (perCallAuth && (smtp.allowsAuth || options.forceAuth)) {
+                    smtp.login(perCallAuth, err => {
                         cleanupPerCallAuth();
                         if (returned) {
                             return;
                         }
 
                         if (err) {
-                            returned = true;
-                            connection.close();
-                            return callback(err);
+                            return finish(err);
                         }
 
                         sendMessage();

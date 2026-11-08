@@ -67,6 +67,8 @@ export interface SMTPPoolQueueEntry {
     callback: SMTPPoolSendCallback;
     /** Message-ID value without the angle brackets, set when the entry is assigned to a connection */
     messageId?: string | undefined;
+    /** Assigned resource, retained while its close handler waits to requeue the entry. @internal */
+    resource?: PoolResource | undefined;
 }
 
 /**
@@ -94,6 +96,7 @@ export interface SMTPPoolRateLimit {
  * @param options SMTP Connection options
  */
 class SMTPPool extends EventEmitter {
+    readonly supportsAbortSignal = true;
     options: SMTPPoolResolvedOptions;
     logger: shared.Logger;
     name: string;
@@ -211,21 +214,54 @@ class SMTPPool extends EventEmitter {
             return false;
         }
 
-        // counted until the callback runs, whichever path runs it: delivered, failed, requeued
-        // until it gives up, or drained by close()
+        // One listener for the original entry, retained across connection-close retries.
+        const signal = mail.data.signal;
         let counted = true;
+        let onAbort: () => void;
         this._pending++;
-        this._queue.push({
+        const entry: SMTPPoolQueueEntry = {
             mail,
             requeueAttempts: 0,
             callback: (err, info) => {
-                if (counted) {
-                    counted = false;
-                    this._pending--;
+                if (!counted) {
+                    return;
                 }
+                counted = false;
+                this._pending--;
+                signal?.removeEventListener('abort', onAbort);
+                entry.resource = undefined;
                 callback(err, info);
             }
-        });
+        };
+        onAbort = () => {
+            if (!counted) {
+                return;
+            }
+            const index = this._queue.indexOf(entry);
+            if (index !== -1) {
+                this._queue.splice(index, 1);
+            }
+            const resource = entry.resource;
+            if (resource && resource.queueEntry === entry) {
+                // Detach before closing: the close handler must not retry this message.
+                resource.queueEntry = false;
+                resource.close();
+            }
+            try {
+                entry.callback(errors.createAbortError(signal!));
+            } finally {
+                // Removing a queued entry can make the pool idle again.
+                setImmediate(() => this._processMessages());
+            }
+        };
+        this._queue.push(entry);
+        if (signal) {
+            signal.addEventListener('abort', onAbort, { once: true });
+            if (signal.aborted) {
+                setImmediate(onAbort);
+                return true;
+            }
+        }
 
         if (this.idling && this._queue.length >= this.options.maxConnections) {
             this.idling = false;
@@ -362,6 +398,7 @@ class SMTPPool extends EventEmitter {
         }
 
         const entry = (connection.queueEntry = this._queue.shift() as SMTPPoolQueueEntry);
+        entry.resource = connection;
         entry.messageId = ((connection.queueEntry.mail.message.getHeader('message-id') || '') as string).replace(/[<>\s]/g, '');
 
         connection.available = false;
@@ -596,6 +633,7 @@ class SMTPPool extends EventEmitter {
             connection.id,
             (connection.queueEntry as SMTPPoolQueueEntry).requeueAttempts
         );
+        (connection.queueEntry as SMTPPoolQueueEntry).resource = undefined;
         this._queue.unshift(connection.queueEntry as SMTPPoolQueueEntry);
         connection.queueEntry = false;
         return delay;
