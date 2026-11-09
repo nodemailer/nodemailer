@@ -125,6 +125,20 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mimeFuncs.encodeWords(input3, 'Q', 52, true), output4);
         });
 
+        it('should encode plain text that could be read as an encoded word', () => {
+            // sent as is, a receiver decodes the "encoded word" and the header changes meaning
+            for (const value of ['=?utf-8?Q?fake?=', 'see =?utf-8?Q?fake?= here', '=?UTF-8?B?ZmFrZQ==?=']) {
+                const encoded = mimeFuncs.encodeWords(value, 'Q', 52, true);
+                assert.notStrictEqual(encoded, value);
+                assert.ok(/^=\?UTF-8\?Q\?/.test(encoded), encoded);
+                assert.strictEqual(libmime.decodeWords(encoded), value);
+            }
+            // a lone "=?" without a closing "?=" is encoded as well, which is harmless
+            assert.strictEqual(libmime.decodeWords(mimeFuncs.encodeWords('a =? b', 'Q', 52)), 'a =? b');
+            // text without it is still left alone
+            assert.strictEqual(mimeFuncs.encodeWords('plain text', 'Q', 52, true), 'plain text');
+        });
+
         it('should keep the whitespace that separates an encoded word from the text before it', () => {
             // U+00A0 needs encoding and is whitespace at the same time, the word scan used to
             // pull the space before it into the encoded word and glue that word to 'ab'

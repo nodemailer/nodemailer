@@ -225,7 +225,13 @@ export function encodeWords(value: string, mimeWordEncoding?: string, maxLength?
     }
 
     if (firstSpecial < 0) {
-        return value;
+        // plain text goes out as is unless it could be read as an encoded word: receivers decode
+        // those, so "=?utf-8?Q?x?=" sent as plain text would come back as "x" (the rule
+        // isPlainParamValue applies to parameter values)
+        if (!value.includes('=?')) {
+            return value;
+        }
+        return encodeWord(value, mimeWordEncoding, maxLength);
     }
 
     if (encodeAll) {
