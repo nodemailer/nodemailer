@@ -1985,9 +1985,10 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
         it('should follow the textEncoding of the node', () => {
             assert.strictEqual(new MimeNode(false, { textEncoding: 'B' }).encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?B?asO1Z2V2YQ==?=');
             assert.strictEqual(new MimeNode().encodeHeaderValue('Subject', 'jõgeva'), '=?UTF-8?Q?j=C3=B5geva?=');
-            // a subject that could be read as an encoded word is encoded so it is not decoded on the other side
-            assert.strictEqual(libmime.decodeWords(new MimeNode().encodeHeaderValue('Subject', 'see =?utf-8?Q?fake?= here')), 'see =?utf-8?Q?fake?= here');
-            assert.notStrictEqual(new MimeNode().encodeHeaderValue('Subject', '=?utf-8?Q?fake?='), '=?utf-8?Q?fake?=');
+            // a subject holding an invalid encoded word is encoded, a valid (pre-encoded) one is not
+            assert.strictEqual(libmime.decodeWords(new MimeNode().encodeHeaderValue('Subject', 'see =?utf-8?X?fake?= here')), 'see =?utf-8?X?fake?= here');
+            assert.notStrictEqual(new MimeNode().encodeHeaderValue('Subject', 'see =?utf-8?X?fake?= here'), 'see =?utf-8?X?fake?= here');
+            assert.strictEqual(new MimeNode().encodeHeaderValue('Subject', '=?UTF-8?B?ZmFrZQ==?='), '=?UTF-8?B?ZmFrZQ==?=');
         });
 
         it('should remove line breaks from an unstructured value', () => {
