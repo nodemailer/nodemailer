@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [10.5.0](https://github.com/nodemailer/nodemailer/compare/v10.4.1...v10.5.0) (2026-11-10)
+
+
+### Features
+
+* **smtp:** support AbortSignal for individual sends ([#1911](https://github.com/nodemailer/nodemailer/issues/1911)) ([66387ed](https://github.com/nodemailer/nodemailer/commit/66387ed6f4bd26208b944b74b7329201ad77377b)), closes [#1910](https://github.com/nodemailer/nodemailer/issues/1910)
+
+
+### Bug Fixes
+
+* **dkim:** encode the d= domain the same way as the address headers ([#1908](https://github.com/nodemailer/nodemailer/issues/1908)) ([4ebf03f](https://github.com/nodemailer/nodemailer/commit/4ebf03fba33a96118c10afa340ce895a00549148))
+* **mime-funcs:** encode header text that would be decoded as an invalid encoded word ([#1912](https://github.com/nodemailer/nodemailer/issues/1912)) ([7a7b942](https://github.com/nodemailer/nodemailer/commit/7a7b9427b632d8785190747ae2c62e88e77bc837))
+
 ## [10.4.1](https://github.com/nodemailer/nodemailer/compare/v10.4.0...v10.4.1) (2026-11-10)
 
 
