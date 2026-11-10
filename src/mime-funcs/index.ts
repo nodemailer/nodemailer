@@ -197,8 +197,81 @@ export function encodeWord(data: string | Buffer, mimeWordEncoding?: string, max
     return '=?' + toCharset + '?' + mimeWordEncoding + '?' + encodedStr + (encodedStr.substr(-2) === '?=' ? '' : '?=');
 }
 
+// An encoded-word as RFC 2047 section 2 spells it: a charset token (with an optional RFC 2231
+// language), B or Q, and encoded text without '?' or whitespace. None of the parts can hold the
+// '?' that separates them, so the pattern never backtracks
+const VALID_ENCODED_WORD = /^=\?[^\s()<>@,;:"/[\]?.=]+\?[BbQq]\?[^?\s]+\?=$/;
+
+// What a lenient decoder reads as an encoded-word: libmime and Python decode
+// '=?utf-8?Q?a b?=' across the space as well. Applied sticky at a '=?', and every part stops
+// at the next '?', so it does not backtrack either
+const LENIENT_ENCODED_WORD = /[=]\?[^?]*\?[BbQq]\?[^?]*\?=/y;
+
 /**
- * Finds word sequences with non ascii text and converts these to mime words
+ * Marks the text a receiver would read as an encoded-word when it is not one valid encoded-word
+ * on its own. RFC 2047 section 7 requires that a word beginning with '=?' and ending with '?='
+ * is a valid encoded-word, and decoders also decode a look-alike that spans whitespace, so
+ * '=?utf-8?X?x?=' and 'see =?utf-8?Q?a b?= here' read differently on every receiver. A valid
+ * encoded-word is left alone, which is what lets a caller pass a value that is already encoded,
+ * as most other mail libraries do.
+ *
+ * The bounds of the word around each '=?' are found once per word and reused, walking back to
+ * the start of a long word from every '=?' it holds would be quadratic.
+ *
+ * @param value String to look in
+ * @param range The first and the last offset that needs encoding so far, -1 for none
+ * @return The range, widened to cover the words of every invalid look-alike
+ */
+function _markInvalidEncodedWords(value: string, range: [number, number]): [number, number] {
+    const len = value.length;
+    const isSpace = (pos: number): boolean => /\s/.test(value.charAt(pos));
+    // the word last looked at, its start and the offset just past it
+    let wordStart = 0;
+    let wordEnd = -1;
+    const wordAt = (pos: number): void => {
+        if (pos < wordEnd) {
+            return;
+        }
+        // the previous word ended at whitespace, so the walk back stops before reaching it
+        wordStart = pos;
+        while (wordStart > 0 && !isSpace(wordStart - 1)) {
+            wordStart--;
+        }
+        wordEnd = pos;
+        while (wordEnd < len && !isSpace(wordEnd)) {
+            wordEnd++;
+        }
+    };
+
+    let pos = value.indexOf('=?');
+    while (pos >= 0) {
+        wordAt(pos);
+        const start = wordStart;
+        LENIENT_ENCODED_WORD.lastIndex = pos;
+        const match = LENIENT_ENCODED_WORD.exec(value);
+        const end = match ? pos + match[0].length : wordEnd;
+        if (match && end > wordEnd) {
+            // the look-alike runs across whitespace, on to the word it ends in
+            wordAt(end - 1);
+        }
+        const word = value.substring(start, wordEnd);
+        // without a match, a word that begins with '=?' and ends with '?=' is still invalid
+        const looksLike = match ? true : start === pos && word.length >= 4 && word.endsWith('?=');
+        const valid = start === pos && wordEnd === end && word.length <= 75 && VALID_ENCODED_WORD.test(word);
+
+        if (looksLike && !valid) {
+            range[0] = range[0] < 0 ? start : Math.min(range[0], start);
+            range[1] = Math.max(range[1], wordEnd - 1);
+        }
+
+        pos = value.indexOf('=?', match ? end : pos + 2);
+    }
+    return range;
+}
+
+/**
+ * Finds word sequences with non ascii text, and words that look like an invalid encoded-word,
+ * and converts these to mime words. A valid encoded-word is passed through as it is.
  *
  * @param value String to be encoded
  * @param mimeWordEncoding='Q' Encoding for the mime word, either Q or B
@@ -224,12 +297,16 @@ export function encodeWords(value: string, mimeWordEncoding?: string, maxLength?
         }
     }
 
+    if (value.indexOf('=?') >= 0) {
+        [firstSpecial, lastSpecial] = _markInvalidEncodedWords(value, [firstSpecial, lastSpecial]);
+    }
+
     if (firstSpecial < 0) {
         return value;
     }
 
     if (encodeAll) {
-        // if it is requested to encode everything or the string contains something that resebles encoded word, then encode everything
+        // the value needs encoding and it is requested to encode everything
         return encodeWord(value, mimeWordEncoding, maxLength);
     }
 

@@ -125,6 +125,55 @@ describe('Mime-Funcs Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mimeFuncs.encodeWords(input3, 'Q', 52, true), output4);
         });
 
+        // RFC 2047 section 7: a word that begins with '=?' and ends with '?=' must be a valid
+        // encoded-word. One that is not would be read differently by every receiver, so it is
+        // encoded. A valid one is left alone, which is how a value that is already encoded
+        // passes through, as it does in most other mail libraries.
+        it('should encode a word that looks like an encoded word without being a valid one', () => {
+            for (const value of [
+                '=?utf-8?X?fake?=',
+                'see =?utf-8?Q?a b?= here',
+                '=?bad charset?Q?x?=',
+                '=??Q?x?=',
+                '=?utf-8?Q??=',
+                'a=?utf-8?Q?x?=',
+                '=?utf-8?Q?x?=b'
+            ]) {
+                const encoded = mimeFuncs.encodeWords(value, 'Q', 52, true);
+                assert.ok(/^=\?UTF-8\?Q\?/.test(encoded), value + ' -> ' + encoded);
+                assert.strictEqual(libmime.decodeWords(encoded), value);
+            }
+            // without encodeAll only the words around the invalid look-alike are encoded
+            const partial = mimeFuncs.encodeWords('see =?utf-8?X?fake?= here', 'Q', 52);
+            assert.ok(partial.startsWith('see =?UTF-8?Q?') && partial.endsWith('?= here'), partial);
+            assert.strictEqual(libmime.decodeWords(partial), 'see =?utf-8?X?fake?= here');
+        });
+
+        it('should pass a valid encoded word and plain text through as they are', () => {
+            for (const value of [
+                '=?utf-8?Q?fake?=',
+                'see =?utf-8?Q?fake?= here',
+                '=?UTF-8?B?ZmFrZQ==?=',
+                '=?utf-8*en?q?x?=',
+                'a =? b',
+                'a ?= b',
+                'x=?y?=',
+                'x =?=',
+                'plain text'
+            ]) {
+                assert.strictEqual(mimeFuncs.encodeWords(value, 'Q', 52, true), value);
+            }
+        });
+
+        it('should look for invalid encoded words in linear time', () => {
+            for (const value of ['=? '.repeat(200000), '=?'.repeat(400000), 'a'.repeat(400000) + '=?', '=?x?Q?' + 'a'.repeat(400000) + '?=']) {
+                const started = Date.now();
+                mimeFuncs.encodeWords(value, 'Q', 52, true);
+                const elapsed = Date.now() - started;
+                assert.ok(elapsed < 5000, `${value.length} bytes took ${elapsed}ms`);
+            }
+        });
+
         it('should keep the whitespace that separates an encoded word from the text before it', () => {
             // U+00A0 needs encoding and is whitespace at the same time, the word scan used to
             // pull the space before it into the encoded word and glue that word to 'ab'
