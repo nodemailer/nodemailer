@@ -90,6 +90,32 @@ class TokenList {
     }
 
     /**
+     * Offset of the first character of a token that is part of its value. A text run that is
+     * no plain slice of the field still spans the whitespace and control characters its value
+     * is trimmed of.
+     */
+    contentStart(index: number): number {
+        let start = this.slots[index * 3 + 1];
+        const end = this.slots[index * 3 + 2];
+        while (start < end && _isDroppedCode(this.str.charCodeAt(start))) {
+            start++;
+        }
+        return start;
+    }
+
+    /**
+     * Offset just past the last character of a token that is part of its value
+     */
+    contentEnd(index: number): number {
+        const start = this.slots[index * 3 + 1];
+        let end = this.slots[index * 3 + 2];
+        while (end > start && _isDroppedCode(this.str.charCodeAt(end - 1))) {
+            end--;
+        }
+        return end;
+    }
+
+    /**
      * The character of an operator token, an empty string for a text run
      */
     operatorAt(index: number): string {
@@ -269,6 +295,47 @@ function _isSpaceCode(code: number): boolean {
 }
 
 /**
+ * Checks for the whitespace RFC 5322 folding whitespace is made of: SP and HTAB, plus the
+ * line break a fold carries. The other characters _isSpaceCode accepts are atext under
+ * RFC 6532, and parsers disagree on them: mailauth keeps U+00A0 in a domain, so joining a
+ * domain across one names a domain that reader never sees
+ *
+ * @param code Character code
+ * @return true if the character is folding whitespace
+ */
+function _isFoldingSpaceCode(code: number): boolean {
+    return code === 0x20 || code === 0x09 || code === 0x0d || code === 0x0a;
+}
+
+/**
+ * Checks if every character in a stretch of the field is folding whitespace
+ *
+ * @param str The field
+ * @param from Offset of the first character
+ * @param to Offset just past the last one
+ * @return true if the stretch holds nothing but folding whitespace
+ */
+function _isFoldingGap(str: string, from: number, to: number): boolean {
+    for (let i = from; i < to; i++) {
+        if (!_isFoldingSpaceCode(str.charCodeAt(i))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Checks for a character the value of a text run is trimmed of, or leaves out: whitespace,
+ * C0 controls and DEL
+ *
+ * @param code Character code
+ * @return true if the character is not part of the value at the edge of a run
+ */
+function _isDroppedCode(code: number): boolean {
+    return code < 0x20 || code === 0x7f || _isSpaceCode(code);
+}
+
+/**
  * The characters JS `\w` matches without the unicode flag, the set the `\b` in
  * LOOSE_TEXT_ADDR is read against. charCodeAt off either end of the string gives NaN,
  * which compares false throughout, so out of range reads as the non-word the pattern
@@ -323,6 +390,9 @@ const LEADING_QUOTED_STRING = /^"(?:[^"\\]|\\[\s\S])*"/;
  * The scan is by index, a pattern such as /\s+@/ backtracks over a long whitespace run that
  * no '@' follows.
  *
+ * The whitespace around the dots of the domain that follows is dropped as well, see
+ * _joinDomainDotSpacing.
+ *
  * @param value Value holding the '@'
  * @param at Offset of the '@', or -1
  * @return The value with the whitespace beside that '@' removed
@@ -341,7 +411,94 @@ function _joinAtSpacing(value: string, at: number): string {
         end++;
     }
 
-    return start === at && end === at + 1 ? value : value.slice(0, start) + '@' + value.slice(end);
+    const joined = start === at && end === at + 1 ? value : value.slice(0, start) + '@' + value.slice(end);
+    return _joinDomainDotSpacing(joined, start);
+}
+
+// The ASCII atext characters: printable, and none of the RFC 5322 specials
+const ASCII_ATEXT = new Uint8Array(0x80);
+for (let code = 0x21; code < 0x7f; code++) {
+    ASCII_ATEXT[code] = '()<>[]:;@\\,."'.indexOf(String.fromCharCode(code)) < 0 ? 1 : 0;
+}
+
+/**
+ * Checks if a character can be part of an atom: anything but the specials, whitespace and
+ * the control characters (RFC 5322 3.2.3, with non-ASCII allowed as RFC 6532 does)
+ *
+ * @param code Character code
+ * @return true if the character is atext
+ */
+function _isAtextCode(code: number): boolean {
+    return code < 0x80 ? ASCII_ATEXT[code] === 1 : !_isSpaceCode(code);
+}
+
+/**
+ * Drops the whitespace around the dots of the domain behind the '@' at an offset.
+ *
+ * obs-domain is atoms with CFWS around the dots (RFC 5322 4.4), so 'user@victim.example
+ * .allowed.example' names user@victim.example.allowed.example. Read as two runs, the domain
+ * ended at the whitespace and the envelope went to victim.example, a different domain than
+ * the one an RFC 5322 parser, and an application validating the address with one, reads
+ * (GHSA-3q53-mvfw-q9v8). A comment around a dot reaches here as whitespace.
+ *
+ * Only SP, HTAB and a fold count as the whitespace, see _isFoldingSpaceCode.
+ *
+ * Only a dot with an atom on both sides joins, as for a conformant parser: whitespace that
+ * is not beside a dot ends the domain, and so does a dot that no atom follows, which keeps
+ * 'user@example.com .' from becoming a domain with a trailing dot. A domain literal is left
+ * alone. Everything from where the domain ends is kept as it is.
+ *
+ * @param value Value holding the '@'
+ * @param at Offset of the '@'
+ * @return The value with the whitespace around the dots of that domain removed
+ */
+function _joinDomainDotSpacing(value: string, at: number): string {
+    const len = value.length;
+    // '[' is no atext, so a domain literal ends the walk before it starts
+    let pos = at + 1;
+    let spaced = false;
+
+    for (;;) {
+        const labelStart = pos;
+        while (pos < len && _isAtextCode(value.charCodeAt(pos))) {
+            pos++;
+        }
+        if (pos === labelStart) {
+            break;
+        }
+
+        // the dot, with the whitespace on either side of it, and the label behind it
+        let next = pos;
+        while (next < len && _isFoldingSpaceCode(value.charCodeAt(next))) {
+            next++;
+        }
+        if (value.charCodeAt(next) !== 0x2e) {
+            break;
+        }
+        next++;
+        while (next < len && _isFoldingSpaceCode(value.charCodeAt(next))) {
+            next++;
+        }
+        if (next >= len || !_isAtextCode(value.charCodeAt(next))) {
+            break;
+        }
+        spaced = spaced || next !== pos + 1;
+        pos = next;
+    }
+
+    if (!spaced) {
+        return value;
+    }
+
+    // every whitespace character the walk covered sits beside a dot
+    let domain = '';
+    for (let k = at + 1; k < pos; k++) {
+        if (!_isFoldingSpaceCode(value.charCodeAt(k))) {
+            domain += value.charAt(k);
+        }
+    }
+
+    return value.slice(0, at + 1) + domain + value.slice(pos);
 }
 
 /**
@@ -665,6 +822,15 @@ function _collectAddressParts(tokens: TokenList, from: number, to: number): { da
     // whether the last text run holds nothing but quoted text so far, which is what a quoted
     // local part is until the '@' after it joins the run
     let lastTextPureQuoted = false;
+    // whether the last text run holds an unquoted '@', so that it runs on into a domain, and
+    // whether nothing but comments has come since it, see the join below
+    let lastTextHasAt = false;
+    let lastTextOpen = false;
+    // Where the last text run, or the last comment since it, ended in the field, and whether
+    // everything between it and the comments since was folding whitespace. The tokens are
+    // trimmed of any whitespace, so this is read off the field itself.
+    let gapFrom = 0;
+    let gapsFolding = true;
     // Last character of the run each state is currently accumulating. Reading it back off
     // the accumulator with slice(-1) makes the engine flatten the whole growing string on
     // every token, which is quadratic over an address built from many comment-joined atoms
@@ -683,18 +849,26 @@ function _collectAddressParts(tokens: TokenList, from: number, to: number): { da
                 case '<':
                     state = 'address';
                     insideQuotes = false;
+                    lastTextOpen = false;
                     break;
                 case '(':
                     state = 'comment';
                     insideQuotes = false;
+                    gapsFolding = gapsFolding && _isFoldingGap(tokens.str, gapFrom, tokens.contentStart(i));
                     break;
                 case '"':
                     insideQuotes = !insideQuotes;
                     state = 'text';
+                    lastTextOpen = false;
                     break;
                 default:
                     state = 'text';
                     insideQuotes = false;
+                    if (value !== ')') {
+                        lastTextOpen = false;
+                    } else {
+                        gapFrom = tokens.contentEnd(i);
+                    }
                     break;
             }
         } else {
@@ -711,8 +885,25 @@ function _collectAddressParts(tokens: TokenList, from: number, to: number): { da
             // of the '@', but it cannot join two atoms into one: gluing across it would read
             // 'user@example.com(x)evil.com' as the single domain 'example.comevil.com' and
             // deliver to a domain the sender never named.
+            // A comment beside a dot of a domain is CFWS inside obs-domain, with or without
+            // folding whitespace around it, so 'user@victim.example(x).allowed.example' names
+            // one domain (GHSA-3q53-mvfw-q9v8). Any other whitespace in between keeps them apart.
+            // A ')' always leaves the walk in unquoted text, so neither needs checking here.
+            // Neither join across a comment takes in a second '@' once the run holds one: the
+            // address would then split at the last '@', and 'user@company(x).com@attacker.net',
+            // which an RFC 5322 parser reads as user@company.com, would go to attacker.net.
             const parts = data[state];
-            const joins = prevNoBreak && parts.length && (prevOperator !== ')' || lastChars[state] === '@' || value.charAt(0) === '@');
+            const secondAt: boolean = lastTextHasAt && prevOperator === ')' && value.indexOf('@') >= 0;
+            const joinsDomain: boolean =
+                !secondAt &&
+                lastTextOpen &&
+                lastTextHasAt &&
+                prevOperator === ')' &&
+                (lastChars.text === '.' || value.charAt(0) === '.') &&
+                gapsFolding &&
+                _isFoldingGap(tokens.str, gapFrom, tokens.contentStart(i));
+            const joins: boolean =
+                joinsDomain || (!secondAt && prevNoBreak && parts.length > 0 && (prevOperator !== ')' || lastChars[state] === '@' || value.charAt(0) === '@'));
 
             if (joins) {
                 const last = data[state].length - 1;
@@ -736,6 +927,12 @@ function _collectAddressParts(tokens: TokenList, from: number, to: number): { da
                     data.quotedLocalAt.push(opensAfterEmptyQuotedString && value.charAt(0) === '@' ? 0 : -1);
                     lastTextPureQuoted = insideQuotes;
                 }
+            }
+            if (state === 'text') {
+                lastTextHasAt = (joins && lastTextHasAt) || (!insideQuotes && value.indexOf('@') >= 0);
+                lastTextOpen = true;
+                gapFrom = tokens.contentEnd(i);
+                gapsFolding = true;
             }
         }
     }

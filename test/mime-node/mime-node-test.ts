@@ -3224,6 +3224,16 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
 
             assert.deepStrictEqual(mb.getEnvelope().to, ['v@victim.com']);
         });
+
+        // GHSA-3q53-mvfw-q9v8: obs-domain allows CFWS around the dots, the domain did not end there
+        it('should deliver to the whole domain when whitespace or a comment sits beside a dot', () => {
+            for (const recipient of ['ceo@victim.example .allowed.example', 'CEO <ceo@victim.example(x).allowed.example>']) {
+                const mb = new MimeNode('text/plain');
+                mb.setHeader('To', recipient);
+
+                assert.deepStrictEqual(mb.getEnvelope().to, ['ceo@victim.example.allowed.example'], recipient);
+            }
+        });
     });
     describe('UTS-46 domain encoding', () => {
         // The bundled Punycode codec maps nothing, so an ignored or mapped code point

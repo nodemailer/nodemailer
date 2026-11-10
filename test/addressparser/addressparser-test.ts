@@ -1932,6 +1932,101 @@ describe('#addressparser', () => {
         }
     });
 
+    // obs-domain allows CFWS around the dots of a domain (RFC 5322 4.4). The domain ended at
+    // the whitespace or the comment instead and the rest of it became display text, so
+    // 'ceo@victim.example .allowed.example' went to victim.example where a validator using an
+    // RFC 5322 parser read a domain under allowed.example (GHSA-3q53-mvfw-q9v8)
+    describe('Whitespace and comments around a dot of the domain', () => {
+        it('should read whitespace and comments around a dot as nothing', () => {
+            for (const [input, expected] of [
+                ['ceo@victim.example .allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: '' }]],
+                ['ceo@victim.example. allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: '' }]],
+                ['a@b . c', [{ address: 'a@b.c', name: '' }]],
+                ['ceo@victim.example(x).allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: 'x' }]],
+                ['ceo@victim.example (x) .allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: 'x' }]],
+                ['ceo@victim.example.(x)allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: 'x' }]],
+                ['ceo@victim.example (x) . (y) allowed.example', [{ address: 'ceo@victim.example.allowed.example', name: 'x y' }]],
+                ['CEO <ceo@victim.example .allowed.example>', [{ address: 'ceo@victim.example.allowed.example', name: 'CEO' }]],
+                ['CEO <ceo@victim.example(x).allowed.example>', [{ address: 'ceo@victim.example.allowed.example', name: 'CEO' }]],
+                ['Name <ceo@victim.example(x) . (y) allowed.example>', [{ address: 'ceo@victim.example.allowed.example', name: 'Name' }]],
+                ['"a b"@victim.example (x) .allowed.example', [{ address: '"a b"@victim.example.allowed.example', name: 'x' }]],
+                ['G: ceo@victim.example .allowed.example;', [{ name: 'G', group: [{ address: 'ceo@victim.example.allowed.example', name: '' }] }]],
+                [
+                    'ceo@victim.example .allowed.example, x@y.z',
+                    [
+                        { address: 'ceo@victim.example.allowed.example', name: '' },
+                        { address: 'x@y.z', name: '' }
+                    ]
+                ]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        // A comment-joined run that took in a second '@' split at the last one, so the
+        // address went to the domain behind it while an RFC 5322 parser read the first
+        it('should not join a second "@" across a comment', () => {
+            for (const [input, expected] of [
+                ['user@company(x).com@attacker.net', [{ address: 'user@company', name: '.com@attacker.net' }]],
+                ['"user"@company(x).com@attacker.net', [{ address: 'user@company', name: '.com@attacker.net' }]],
+                ['user@company(x).com(y)@attacker.net', [{ address: 'user@company.com', name: '@attacker.net' }]],
+                ['user@company.com(y)@attacker.net', [{ address: 'user@company.com', name: '@attacker.net' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        // Only SP, HTAB and a fold are CFWS. U+00A0 and the like are atext under RFC 6532 and
+        // readers disagree on them (mailauth keeps U+00A0 in the domain), so they do not join
+        it('should not join a domain across whitespace that is not folding whitespace', () => {
+            for (const [input, expected] of [
+                ['ceo@victim\u00a0.example', [{ address: 'ceo@victim', name: '.example' }]],
+                ['ceo@victim\ufeff.example', [{ address: 'ceo@victim', name: '.example' }]],
+                ['CEO <ceo@victim.\u3000example>', [{ address: 'ceo@victim.', name: 'CEO example' }]],
+                ['ceo@victim(x)\u00a0.example', [{ address: 'ceo@victim', name: '.example' }]],
+                ['ceo@victim.(x)\u00a0example', [{ address: 'ceo@victim.', name: 'example' }]],
+                ['ceo@victim\u00a0(x).example', [{ address: 'ceo@victim', name: '.example' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, JSON.stringify(input));
+            }
+        });
+
+        it('should join a domain across a tab or a folded line', () => {
+            assert.deepStrictEqual(addressparser('ceo@victim.\t(x)\texample'), [{ address: 'ceo@victim.example', name: 'x' }]);
+            assert.deepStrictEqual(addressparser('ceo@victim\r\n .example'), [{ address: 'ceo@victim.example', name: '' }]);
+        });
+
+        it('should still end the domain at whitespace or a dot no atom follows', () => {
+            for (const [input, expected] of [
+                ['john@example.com John', [{ address: 'john@example.com', name: 'John' }]],
+                ['john@example.com .', [{ address: 'john@example.com', name: '.' }]],
+                ['a@b.c d@e.f', [{ address: 'a@b.c', name: 'd@e.f' }]],
+                ['user@good.com(x)evil.com', [{ address: 'user@good.com', name: 'evil.com' }]],
+                ['<a@b . >', [{ address: 'a@b', name: '.' }]],
+                ['<a@b . : c>', [{ address: 'a@b', name: '. : c' }]]
+            ] as [string, any][]) {
+                assert.deepStrictEqual(addressparser(input), expected, input);
+            }
+        });
+
+        for (const [label, build] of [
+            ['many dots with whitespace around them', (count: number) => 'a@b' + ' . c'.repeat(count / 4)],
+            ['many dots with comments around them', (count: number) => 'a@b' + '(x).c'.repeat(count / 5)],
+            ['many addresses with a spaced dot', (count: number) => 'a@b.c (x) .d, '.repeat(count / 14)]
+        ] as [string, (count: number) => string][]) {
+            it(`should read ${label} in linear time`, () => {
+                const count = 400000;
+                const input = build(count);
+
+                const started = Date.now();
+                addressparser(input);
+                const elapsed = Date.now() - started;
+
+                assert.ok(elapsed < 5000, `parsing a ${input.length} byte value took ${elapsed}ms`);
+            });
+        }
+    });
+
     // An angle-addr may still carry the source route of RFC 822 (obs-route, RFC 5322 4.4). It
     // names the relays to go through, not the mailbox, and it was folded into the local part
     describe('Obsolete route in an angle-addr', () => {
