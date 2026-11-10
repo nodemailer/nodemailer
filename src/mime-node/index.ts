@@ -300,9 +300,14 @@ function exceedsDomainLimits(domain: string): boolean {
  *
  * Anything the URL parser does not accept as a hostname, an address literal such as
  * '[127.0.0.1]' included, comes back empty and falls through to the bundled codec, which
- * leaves those as they were supplied.
+ * leaves those as they were supplied apart from lowercasing them.
  *
- * @param domain Domain to encode, already lowercased by the caller
+ * The mapper gets the domain as supplied, since UTS-46 does its own case mapping and
+ * toLowerCase() differs from it: it turns U+1E9E into U+00DF where Node 20 and 22 map it
+ * to 'ss', and a word-final U+03A3 into U+03C2 where UTS-46 gives U+03C3. Lowercasing
+ * first sent 'user@stra\u1E9Ee.de', which a validator reads as strasse.de, to xn--strae-oqa.de.
+ *
+ * @param domain Domain to encode
  * @param toUnicode Return the U-label form instead of the A-label form
  * @return Encoded domain
  */
@@ -318,6 +323,8 @@ function normalizeDomain(domain: string, toUnicode: boolean): string {
             return mapped;
         }
     }
+
+    domain = domain.toLowerCase();
 
     if (exceedsDomainLimits(domain)) {
         // too long to be a domain whichever way it is encoded, keep it as supplied
@@ -1913,7 +1920,7 @@ class MimeNode {
         const smtputf8 = /[\x80-\uFFFF]/.test(user);
 
         try {
-            encodedDomain = normalizeDomain(domain.toLowerCase(), smtputf8);
+            encodedDomain = normalizeDomain(domain, smtputf8);
         } catch (_err) {
             // keep domain as supplied
         }

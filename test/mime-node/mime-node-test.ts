@@ -3253,17 +3253,36 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
                 '日本.jp',
                 'xn--jgeva-dua.ee',
                 'EXAMPLE.COM',
-                'example.com'
+                'example.com',
+                'J\u00D5GEVA.EE',
+                'stra\u1E9Ee.de',
+                'busine\u1E9E.com',
+                '\u0391\u0398\u0397\u039D\u0391\u03A31.gr'
             ];
 
             for (const domain of domains) {
-                const reference = urlModule.domainToASCII(domain.toLowerCase());
+                const reference = urlModule.domainToASCII(domain);
                 const encoded = mb
                     ._normalizeAddress('user@' + domain)
                     .split('@')
                     .pop();
                 assert.strictEqual(encoded, reference, domain);
             }
+        });
+
+        // toLowerCase() is not the UTS-46 case mapping: it turns U+1E9E into U+00DF where the
+        // UTS-46 data of Node 20 and 22 gives 'ss', and applies the Final_Sigma rule (U+03A3 to
+        // U+03C2) where UTS-46 gives U+03C3. Lowercasing before mapping sent an address a
+        // validator read as strasse.de to strasse with U+00DF (xn--strae-oqa.de).
+        it('should not lowercase the domain before mapping it', () => {
+            const mb = new MimeNode('text/plain');
+
+            assert.strictEqual(mb._normalizeAddress('user@\u0391\u0398\u0397\u039D\u0391\u03A31.gr'), 'user@xn--1-ylbaxe5a6b.gr');
+            assert.strictEqual(mb._normalizeAddress('user@stra\u1E9Ee.de'), 'user@' + urlModule.domainToASCII('stra\u1E9Ee.de'));
+            assert.strictEqual(
+                mb._normalizeAddress('k\u00e4su@stra\u1E9Ee.de'),
+                'k\u00e4su@' + urlModule.domainToUnicode(urlModule.domainToASCII('stra\u1E9Ee.de'))
+            );
         });
 
         it('should map the domain for an SMTPUTF8 address too', () => {
