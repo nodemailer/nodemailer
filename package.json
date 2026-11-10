@@ -132,6 +132,7 @@
         "test:cjs": "NODE_OPTIONS=--no-experimental-require-module node test/package/cjs-smoke.cjs",
         "pretest:bun": "npm run build",
         "test:bun": "bun test --timeout 60000 $(find ./test \\( -name '*-test.ts' -o -name '*.test.ts' \\))",
+        "fuzz:addressparser": "node --import tsx scripts/fuzz-addressparser.js",
         "format": "prettier --write \"**/*.{js,cjs,ts,json,md}\"",
         "format:check": "prettier --check \"**/*.{js,cjs,ts,json,md}\"",
         "lint": "eslint . && npm run typecheck",
