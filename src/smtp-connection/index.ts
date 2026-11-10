@@ -831,6 +831,9 @@ class SMTPConnection extends EventEmitter {
             // socket object is set up but not yet connected
             this._socket = this.options.socket;
             return this._resolveAndConnect(opts, _resolved => {
+                if (this._destroyed || this._closing) {
+                    return;
+                }
                 try {
                     (this._socket as net.Socket).connect(this.port, this.host, () => {
                         // a `secure` connection over a caller-provided socket must still
@@ -1752,6 +1755,9 @@ class SMTPConnection extends EventEmitter {
      * @internal
      */
     _upgradeConnection(callback: (err: Error | null, secured?: boolean) => void): void {
+        if (this._destroyed || this._closing) {
+            return;
+        }
         // RFC 3207 section 6: the client MUST discard any knowledge obtained from
         // the server that was not received over the TLS-protected session. Drop any
         // buffered input received before the handshake so a man-in-the-middle cannot

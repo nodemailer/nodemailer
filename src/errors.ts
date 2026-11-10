@@ -29,6 +29,7 @@ export const ERROR_CODES = {
     EMESSAGE: 'Message delivery error',
     EOTP: 'Invalid one-time passcode data (otp option)',
     ESTREAM: 'Stream processing error',
+    EABORT: 'Message sending aborted',
 
     // Authentication errors
     EAUTH: 'Authentication failed',
@@ -68,6 +69,7 @@ export const EENVELOPE = 'EENVELOPE' satisfies ErrorCode;
 export const EMESSAGE = 'EMESSAGE' satisfies ErrorCode;
 export const EOTP = 'EOTP' satisfies ErrorCode;
 export const ESTREAM = 'ESTREAM' satisfies ErrorCode;
+export const EABORT = 'EABORT' satisfies ErrorCode;
 export const EAUTH = 'EAUTH' satisfies ErrorCode;
 export const ENOAUTH = 'ENOAUTH' satisfies ErrorCode;
 export const EOAUTH2 = 'EOAUTH2' satisfies ErrorCode;
@@ -80,6 +82,14 @@ export const EPROXY = 'EPROXY' satisfies ErrorCode;
 export const EFILEACCESS = 'EFILEACCESS' satisfies ErrorCode;
 export const EURLACCESS = 'EURLACCESS' satisfies ErrorCode;
 export const EFETCH = 'EFETCH' satisfies ErrorCode;
+
+/** Creates the error reported when a caller cancels an individual send. @internal */
+export const createAbortError = (signal: AbortSignal): NodemailerError => {
+    const err: NodemailerError = new Error('Message sending aborted', { cause: signal.reason });
+    err.name = 'AbortError';
+    err.code = EABORT;
+    return err;
+};
 
 /**
  * Tells whether the error ended the connection rather than rejected what was sent over it

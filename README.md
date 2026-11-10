@@ -14,6 +14,27 @@ See [nodemailer.com](https://nodemailer.com/) for documentation and terms.
 
 Nodemailer targets Node.js 20 and later. The ES module build also runs on [Bun](https://bun.sh/) (tested against the latest release) and on [Cloudflare Workers](https://developers.cloudflare.com/workers/) with the `nodejs_compat` compatibility flag. On Workers only the SMTP based transports apply, `sendmail` needs a child process, and the runtime does not allow turning certificate validation off, so `tls.rejectUnauthorized: false` fails there with an error.
 
+## Cancelling an individual SMTP send
+
+Pass an `AbortSignal` in the message options to cancel one `sendMail()` call:
+
+```js
+await transporter.sendMail({
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    text: 'Hello',
+    signal: AbortSignal.timeout(30_000)
+});
+```
+
+This is supported by SMTP and pooled SMTP transports. A pre-aborted signal prevents processing; aborting later stops subsequent plugin processing, removes a queued message, or closes the SMTP connection assigned to that message. Other deliveries in the pool can continue. Both promise and callback forms report an error named `AbortError`, with `code: 'EABORT'` and the signal's reason as `cause`. The signal listener is removed when the send finishes.
+
+Cancellation stops local processing; it does not prove that the SMTP server has not already accepted the message. Do not retry a cancelled send automatically on that assumption.
+
+Work already started by a plugin or a custom `getSocket` hook requires that code's cooperation to stop. Nodemailer ignores late plugin completion and destroys a socket handed back after cancellation. Plugins can read `mail.data.signal` to cancel their own work.
+
+Other bundled transports (stream, JSON, sendmail and SES) ignore the signal once the message is handed to them, so the message is sent normally. A signal that is already aborted, or aborts while plugins run, still cancels the send with `EABORT` on every transport, as that happens before the transport is called. A `signal` value that is not an `AbortSignal` fails the send with `ECONFIG`. Custom transports can opt in with `supportsAbortSignal: true`; their `send()` must register its abort listener synchronously, check for a pre-aborted signal, stop the work it owns, invoke its callback once, and remove the listener on completion.
+
 ## Having an issue?
 
 #### First review the docs

@@ -22,6 +22,16 @@ import type { SentMessageInfo } from './index.js';
  * tree is built from, the fields below are the ones the mailer reads on top of those
  */
 export interface SendMailOptions extends MailComposerOptions {
+    /**
+     * Cancel this send, including waiting for plugins or in an SMTP pool queue.
+     * Plugins must cooperate with the signal to stop their own work already in progress.
+     * Supported by SMTP, pooled SMTP and transports declaring supportsAbortSignal. Other
+     * transports ignore the signal once the message is handed to them; a signal that is
+     * already aborted, or aborts during plugin processing, still cancels the send.
+     * Fails with AbortError/EABORT on cancellation, ECONFIG if the value is not an AbortSignal.
+     * Aborting does not prove that the server has not already accepted the message.
+     */
+    signal?: AbortSignal | undefined;
     /** DKIM signing options for this message, used instead of the ones of the transporter */
     dkim?: DKIMOptions | undefined;
     /** Extra DKIM options for this message, merged over the options of the signer. The SES transport sets skipFields here, the option is not meant for callers */

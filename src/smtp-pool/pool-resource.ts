@@ -39,6 +39,8 @@ export default class PoolResource extends EventEmitter {
     _connection: boolean;
     /** @internal */
     _connected: boolean;
+    /** Once closed, pending socket/authentication/release callbacks must not revive this resource. @internal */
+    _closed: boolean;
     /** @internal */
     _failed: boolean;
     /** A message is being sent, its callback decides what an error means for it @internal */
@@ -105,6 +107,7 @@ export default class PoolResource extends EventEmitter {
 
         this._connection = false;
         this._connected = false;
+        this._closed = false;
 
         this.messages = 0;
         this.available = true;
@@ -135,6 +138,10 @@ export default class PoolResource extends EventEmitter {
         // the proxy handshake, if any, counts against connectionTimeout as well
         const connectStartedAt = Date.now();
         this.pool.getSocket(Object.assign({}, this.options, { connectStartedAt }), (err, socketOptions) => {
+            if (this._closed) {
+                socketOptions && socketOptions.connection?.destroy();
+                return;
+            }
             if (err) {
                 // nothing was connected, so no 'close' event is coming that would free the
                 // slot this resource holds in the pool, report the failure the way a failed
@@ -170,7 +177,7 @@ export default class PoolResource extends EventEmitter {
             this.connection._connectStartedAt = connectStartedAt;
 
             this.connection.on('error', (err: NodemailerError) => {
-                if (this._sending) {
+                if (this._closed || this._sending) {
                     // the send callback gets the same error and decides what it means for the message
                     return;
                 }
@@ -189,7 +196,7 @@ export default class PoolResource extends EventEmitter {
                     return;
                 }
                 this._fail(err);
-                if (returned) {
+                if (returned || this._closed) {
                     return;
                 }
                 returned = true;
@@ -202,7 +209,7 @@ export default class PoolResource extends EventEmitter {
             });
 
             this.connection.connect(err => {
-                if (returned) {
+                if (returned || this._closed) {
                     return;
                 }
 
@@ -215,7 +222,7 @@ export default class PoolResource extends EventEmitter {
 
                 if (this.auth && (this.connection.allowsAuth || options.forceAuth)) {
                     this.connection.login(this.auth, err => {
-                        if (returned) {
+                        if (returned || this._closed) {
                             return;
                         }
                         returned = true;
@@ -245,6 +252,9 @@ export default class PoolResource extends EventEmitter {
      * @param callback Callback function
      */
     send(mail: MailMessage, callback: PoolResourceSendCallback): void {
+        if (this._closed) {
+            return;
+        }
         if (!this._connected) {
             return this.connect(err => {
                 if (err) {
@@ -288,6 +298,9 @@ export default class PoolResource extends EventEmitter {
         const messageStream = mail.message.createReadStream();
 
         this.connection.send(envelope as SMTPEnvelope, messageStream, (err, info) => {
+            if (mail.data.signal?.aborted) {
+                return;
+            }
             this._sending = false;
             this.messages++;
 
@@ -347,6 +360,9 @@ export default class PoolResource extends EventEmitter {
      * @internal
      */
     _release(): void {
+        if (this._closed) {
+            return;
+        }
         if (this.messages >= this.options.maxMessages) {
             const err: NodemailerError = new Error('Resource exhausted');
             err.code = errors.EMAXLIMIT;
@@ -356,6 +372,9 @@ export default class PoolResource extends EventEmitter {
         }
 
         this.pool._checkRateLimit(() => {
+            if (this._closed) {
+                return;
+            }
             this.available = true;
             this._startIdleTimer();
             this.emit('available');
@@ -406,6 +425,11 @@ export default class PoolResource extends EventEmitter {
      * Closes the connection
      */
     close(): void {
+        if (this._closed) {
+            return;
+        }
+        this._closed = true;
+        this.available = false;
         this._connected = false;
         this._stopIdleTimer();
         if (this.auth && this.auth.oauth2) {
