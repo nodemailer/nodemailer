@@ -214,10 +214,10 @@ class SMTPPool extends EventEmitter {
             return false;
         }
 
-        // One listener for the original entry, retained across connection-close retries.
-        const signal = mail.data.signal;
+        // counted until the callback runs, whichever path runs it: delivered, failed, requeued
+        // until it gives up, aborted, or drained by close()
         let counted = true;
-        let onAbort: () => void;
+        let detachSignal: (() => void) | undefined;
         this._pending++;
         const entry: SMTPPoolQueueEntry = {
             mail,
@@ -228,13 +228,39 @@ class SMTPPool extends EventEmitter {
                 }
                 counted = false;
                 this._pending--;
-                signal?.removeEventListener('abort', onAbort);
+                detachSignal?.();
                 entry.resource = undefined;
                 callback(err, info);
             }
         };
-        onAbort = () => {
-            if (!counted) {
+        this._queue.push(entry);
+        const signal = mail.data.signal;
+        if (signal) {
+            // one listener for the original entry, retained across connection-close retries
+            detachSignal = this._watchAbortSignal(entry, signal, () => counted);
+            if (signal.aborted) {
+                return true;
+            }
+        }
+
+        if (this.idling && this._queue.length >= this.options.maxConnections) {
+            this.idling = false;
+        }
+
+        setImmediate(() => this._processMessages());
+
+        return true;
+    }
+
+    /**
+     * Fails a queued or assigned entry when its signal aborts: removes it from the queue, or
+     * closes the connection delivering it, so other deliveries in the pool can continue.
+     * Returns a function that removes the listener.
+     * @internal
+     */
+    _watchAbortSignal(entry: SMTPPoolQueueEntry, signal: AbortSignal, isPending: () => boolean): () => void {
+        const onAbort = (): void => {
+            if (!isPending()) {
                 return;
             }
             const index = this._queue.indexOf(entry);
@@ -248,28 +274,17 @@ class SMTPPool extends EventEmitter {
                 resource.close();
             }
             try {
-                entry.callback(errors.createAbortError(signal!));
+                entry.callback(errors.createAbortError(signal));
             } finally {
                 // Removing a queued entry can make the pool idle again.
                 setImmediate(() => this._processMessages());
             }
         };
-        this._queue.push(entry);
-        if (signal) {
-            signal.addEventListener('abort', onAbort, { once: true });
-            if (signal.aborted) {
-                setImmediate(onAbort);
-                return true;
-            }
+        signal.addEventListener('abort', onAbort, { once: true });
+        if (signal.aborted) {
+            setImmediate(onAbort);
         }
-
-        if (this.idling && this._queue.length >= this.options.maxConnections) {
-            this.idling = false;
-        }
-
-        setImmediate(() => this._processMessages());
-
-        return true;
+        return () => signal.removeEventListener('abort', onAbort);
     }
 
     /**

@@ -107,6 +107,8 @@ class JSONTransport {
 
                 delete data.envelope;
                 delete data.normalizedHeaders;
+                // the per-message AbortSignal is not message data
+                delete data.signal;
 
                 // the message field is the object itself with skipEncoding, the
                 // createTransport overload for that option types the result accordingly

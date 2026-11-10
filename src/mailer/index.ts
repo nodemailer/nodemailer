@@ -157,7 +157,10 @@ export interface MailMeta {
  * declared on Transport, Transporter and Mail
  */
 export interface Transport<T = SentMessageInfo, D extends TransportOptions = TransportOptions> {
-    /** Opt in only if send() cancels its own work and removes its signal listener when finished. */
+    /**
+     * Set only if send() cancels its own work on mail.data.signal and removes its signal listener
+     * when finished. Without it the signal is still honored up to dispatch, then ignored.
+     */
     supportsAbortSignal?: boolean | undefined;
     /** Transport name, used for logging */
     name: string;
@@ -211,6 +214,19 @@ export interface TransportOptions {
  * is the options type of the transport, it types the options field of the transporter
  */
 export type Transporter<T = SentMessageInfo, D extends TransportOptions = TransportOptions> = Mail<T, D>;
+
+/**
+ * Duck-typed so that signals from another realm or a polyfill are accepted as well
+ */
+function isAbortSignal(value: unknown): value is AbortSignal {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'aborted' in value &&
+        typeof (value as AbortSignal).addEventListener === 'function' &&
+        typeof (value as AbortSignal).removeEventListener === 'function'
+    );
+}
 
 /**
  * Creates an object for exposing the Mail API
@@ -399,7 +415,8 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
         }
 
         const mail = new MailMessage(this, data);
-        const signal = mail.data.signal;
+        const signalOption: unknown = mail.data.signal;
+        const signal = isAbortSignal(signalOption) ? signalOption : undefined;
         let settled = false;
         const removeAbortListener = () => signal?.removeEventListener('abort', onAbort);
         const finish: ResultCallback<T> = (err, info) => {
@@ -421,13 +438,16 @@ class Mail<out T = SentMessageInfo, out D extends TransportOptions = TransportOp
             fail(errors.createAbortError(signal!));
         }
 
+        if (signalOption !== undefined && signalOption !== null && !signal) {
+            const err: NodemailerError = new Error('The signal option must be an AbortSignal');
+            err.code = errors.ECONFIG;
+            setImmediate(() => fail(err));
+            return promise;
+        }
+
+        // Mail handles a pre-aborted signal and cancellation during plugin processing for every
+        // transport; a transport without supportsAbortSignal ignores the signal once it is called
         if (signal) {
-            if (!this.transporter.supportsAbortSignal) {
-                const err: NodemailerError = new Error('This transport does not support AbortSignal');
-                err.code = errors.ECONFIG;
-                setImmediate(() => fail(err));
-                return promise;
-            }
             signal.addEventListener('abort', onAbort, { once: true });
             if (signal.aborted) {
                 setImmediate(onAbort);

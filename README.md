@@ -33,7 +33,7 @@ Cancellation stops local processing; it does not prove that the SMTP server has 
 
 Work already started by a plugin or a custom `getSocket` hook requires that code's cooperation to stop. Nodemailer ignores late plugin completion and destroys a socket handed back after cancellation. Plugins can read `mail.data.signal` to cancel their own work.
 
-Other bundled transports reject an explicitly supplied signal with `ECONFIG` before invoking plugins or sending. Custom transports can opt in with `supportsAbortSignal: true`; their `send()` must register its abort listener synchronously, check for a pre-aborted signal, stop the work it owns, invoke its callback once, and remove the listener on completion.
+Other bundled transports (stream, JSON, sendmail and SES) ignore the signal once the message is handed to them, so the message is sent normally. A signal that is already aborted, or aborts while plugins run, still cancels the send with `EABORT` on every transport, as that happens before the transport is called. A `signal` value that is not an `AbortSignal` fails the send with `ECONFIG`. Custom transports can opt in with `supportsAbortSignal: true`; their `send()` must register its abort listener synchronously, check for a pre-aborted signal, stop the work it owns, invoke its callback once, and remove the listener on completion.
 
 ## Having an issue?
 
