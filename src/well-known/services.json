@@ -589,7 +589,8 @@
         "description": "SpacePost",
         "host": "smtp.spacepost.dev",
         "port": 25976,
-        "secure": false
+        "secure": false,
+        "requireTLS": true
     },
 
     "Sparkpost": {
