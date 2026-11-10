@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.4.1](https://github.com/nodemailer/nodemailer/compare/v10.4.0...v10.4.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **addressparser:** read whitespace and comments around a dot of the domain as CFWS ([c2b9c41](https://github.com/nodemailer/nodemailer/commit/c2b9c41bb81b2294ebadd294ad15ff035a17d0a5))
+* **mime-node:** hand a domain to the UTS-46 mapper without lowercasing it first ([093e4dd](https://github.com/nodemailer/nodemailer/commit/093e4dd60af8a21e7f06a49c7f889291728e966a))
+
 ## [10.4.0](https://github.com/nodemailer/nodemailer/compare/v10.3.1...v10.4.0) (2026-11-07)
 
 
