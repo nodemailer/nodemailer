@@ -78,6 +78,8 @@ export interface SMTPConnectionOptions {
     greetingTimeout?: number | undefined;
     /** Time of inactivity in ms until the connection is closed, defaults to 10 minutes */
     socketTimeout?: number | undefined;
+    /** Time in ms to wait for the peer to close after ending the socket, defaults to 5 seconds. Set to 0 to destroy it immediately */
+    socketCloseTimeout?: number | undefined;
     /** Largest single server response to accept in bytes, defaults to 1 MB */
     maxResponseSize?: number | undefined;
     /** Time to wait in ms for the DNS requests to be resolved, defaults to 30 seconds */
@@ -438,6 +440,7 @@ function maskAuthCommand(cmd: string): string {
  *  * **greetingTimeout** - Time to wait in ms until greeting message is received from the server (defaults to 30 seconds)
  *  * **connectionTimeout** - how many milliseconds to wait for the connection to establish (defaults to 2 minutes)
  *  * **socketTimeout** - Time of inactivity until the connection is closed (defaults to 10 minutes)
+ *  * **socketCloseTimeout** - Time in ms to wait for the peer to close after ending the socket (defaults to 5 seconds, 0 destroys immediately)
  *  * **maxResponseSize** - Largest single server response to accept in bytes (defaults to 1 MB)
  *  * **dnsTimeout** - Time to wait in ms for the DNS requests to be resolved (defaults to 30 seconds)
  *  * **lmtp** - if true, uses LMTP instead of SMTP protocol
@@ -1031,7 +1034,8 @@ class SMTPConnection extends EventEmitter {
         }
         this._closing = true;
 
-        const closeMethod = this.stage === 'init' ? 'destroy' : 'end';
+        const socketCloseTimeout = this.options.socketCloseTimeout ?? CLOSE_TIMEOUT;
+        const closeMethod = this.stage === 'init' || socketCloseTimeout === 0 ? 'destroy' : 'end';
 
         this.logger.debug(
             {
@@ -1087,7 +1091,7 @@ class SMTPConnection extends EventEmitter {
                 if (closeMethod === 'end') {
                     // end() only closes our side, a server that never closes its own would keep
                     // the socket, and the process with it, around for good
-                    const closeTimer = setTimeout(() => socket.destroy(), CLOSE_TIMEOUT);
+                    const closeTimer = setTimeout(() => socket.destroy(), socketCloseTimeout);
                     if (typeof closeTimer.unref === 'function') {
                         closeTimer.unref();
                     }
