@@ -1034,7 +1034,12 @@ class SMTPConnection extends EventEmitter {
         }
         this._closing = true;
 
-        const socketCloseTimeout = this.options.socketCloseTimeout ?? CLOSE_TIMEOUT;
+        // anything but a non-negative finite number keeps the default grace period
+        const configuredCloseTimeout = this.options.socketCloseTimeout;
+        const socketCloseTimeout =
+            typeof configuredCloseTimeout === 'number' && Number.isFinite(configuredCloseTimeout) && configuredCloseTimeout >= 0
+                ? configuredCloseTimeout
+                : CLOSE_TIMEOUT;
         const closeMethod = this.stage === 'init' || socketCloseTimeout === 0 ? 'destroy' : 'end';
 
         this.logger.debug(

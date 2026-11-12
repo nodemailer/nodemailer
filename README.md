@@ -37,18 +37,7 @@ Other bundled transports (stream, JSON, sendmail and SES) ignore the signal once
 
 ## SMTP socket close timeout
 
-SMTP and pooled SMTP accept `socketCloseTimeout` in the transport options as a nonnegative number of milliseconds. It defaults to **5000 ms**: once a connected socket is ended, Nodemailer waits up to five seconds for the peer to close its side before destroying the socket. Set it to **0** to destroy the socket immediately instead:
-
-```js
-const transporter = nodemailer.createTransport({
-    host: 'smtp.example.com',
-    port: 587,
-    pool: true,
-    socketCloseTimeout: 0
-});
-```
-
-This controls socket teardown whenever an SMTP connection closes, including an individual send's abort, a connection error or timeout, and `transporter.close({ force: true })` on a pool. It does not set an overall send deadline, change which pooled connections are closed, or cancel work still owned by a custom `getSocket` hook. Immediate teardown does not prove that the server did not accept a message; delivery uncertainty and retry decisions remain the application's responsibility.
+When an SMTP connection closes, Nodemailer ends the socket and destroys it if the server has not closed its side within `socketCloseTimeout` milliseconds (default 5000). Set it to `0` to destroy the socket right away. This applies to SMTP and pooled SMTP, including aborted sends and `transporter.close({ force: true })`. It does not tell you whether the server accepted a message that was in flight.
 
 ## Having an issue?
 

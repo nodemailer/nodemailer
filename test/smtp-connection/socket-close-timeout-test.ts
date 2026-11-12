@@ -61,6 +61,25 @@ describe('SMTP connection socketCloseTimeout', () => {
         assert.strictEqual(destroy.mock.callCount(), 1);
     });
 
+    for (const value of [-1, NaN, Infinity, '0' as unknown as number]) {
+        it(`keeps the five-second graceful close for an invalid value (${String(value)})`, t => {
+            t.mock.timers.enable({ apis: ['setTimeout'] });
+            const socket = new net.Socket();
+            const client = new SMTPConnection({ logger: false, socketCloseTimeout: value });
+            client._socket = socket;
+            client.stage = 'connected';
+            const end = t.mock.method(socket, 'end', () => socket);
+            const destroy = t.mock.method(socket, 'destroy');
+
+            client.close();
+            assert.strictEqual(end.mock.callCount(), 1);
+            t.mock.timers.tick(4999);
+            assert.strictEqual(destroy.mock.callCount(), 0);
+            t.mock.timers.tick(1);
+            assert.strictEqual(destroy.mock.callCount(), 1);
+        });
+    }
+
     it('does not keep a destroy timer after the peer closes', t => {
         t.mock.timers.enable({ apis: ['setTimeout'] });
         const socket = new net.Socket();
