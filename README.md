@@ -35,6 +35,10 @@ Work already started by a plugin or a custom `getSocket` hook requires that code
 
 Other bundled transports (stream, JSON, sendmail and SES) ignore the signal once the message is handed to them, so the message is sent normally. A signal that is already aborted, or aborts while plugins run, still cancels the send with `EABORT` on every transport, as that happens before the transport is called. A `signal` value that is not an `AbortSignal` fails the send with `ECONFIG`. Custom transports can opt in with `supportsAbortSignal: true`; their `send()` must register its abort listener synchronously, check for a pre-aborted signal, stop the work it owns, invoke its callback once, and remove the listener on completion.
 
+## SMTP socket close timeout
+
+When an SMTP connection closes, Nodemailer ends the socket and destroys it if the server has not closed its side within `socketCloseTimeout` milliseconds (default 5000). Set it to `0` to destroy the socket right away. This applies to SMTP and pooled SMTP, including aborted sends and `transporter.close({ force: true })`. It does not tell you whether the server accepted a message that was in flight.
+
 ## Having an issue?
 
 #### First review the docs
