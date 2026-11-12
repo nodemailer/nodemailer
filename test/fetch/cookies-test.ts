@@ -396,6 +396,26 @@ describe('Cookie Tests', () => {
             assert.ok(cookie.expires.getTime() >= before);
             assert.ok(cookie.expires.getTime() <= Date.now());
         });
+
+        it('should let max-age take precedence over a later expires attribute', () => {
+            let before = Date.now();
+            let cookie = biskviit.parse('theme=plain; Max-Age=60; Expires=Wed, 21 Oct 2015 07:28:00 GMT');
+            let after = Date.now();
+
+            assert.ok(cookie.expires instanceof Date);
+            assert.ok(cookie.expires.getTime() >= before + 60 * 1000);
+            assert.ok(cookie.expires.getTime() <= after + 60 * 1000);
+        });
+
+        it('should let max-age take precedence over an earlier expires attribute', () => {
+            let before = Date.now();
+            let cookie = biskviit.parse('theme=plain; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Max-Age=60');
+            let after = Date.now();
+
+            assert.ok(cookie.expires instanceof Date);
+            assert.ok(cookie.expires.getTime() >= before + 60 * 1000);
+            assert.ok(cookie.expires.getTime() <= after + 60 * 1000);
+        });
     });
 
     describe('Listing', () => {
