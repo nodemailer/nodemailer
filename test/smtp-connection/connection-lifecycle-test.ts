@@ -1,12 +1,14 @@
 import { describe, it, afterEach, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
+import tls from 'node:tls';
 import dns from 'node:dns';
 import SMTPConnection from '../../src/smtp-connection/index.js';
 import SMTPTransport from '../../src/smtp-transport/index.js';
 import * as shared from '../../src/shared/index.js';
 import { closeRawServer as closeServer, createClient, startRawServerAsync as rawServer, type RawServer } from './raw-smtp-server.js';
-import { captureLogger, freePort } from '../smtp-transport/smtp-fixtures.js';
+import { captureLogger, freePort, startServer } from '../smtp-transport/smtp-fixtures.js';
+import { closed } from '../helpers/wait.js';
 import type { NodemailerError } from '../../src/errors.js';
 
 const EHLO_WITH_STARTTLS = '250-test\r\n250-STARTTLS\r\n250-PIPELINING\r\n250-SIZE 1000\r\n250 AUTH PLAIN LOGIN\r\n';
@@ -107,6 +109,35 @@ describe('SMTPConnection close', { timeout: 20000 }, () => {
                 socket.destroy();
             }
             await new Promise(resolve => server.close(resolve));
+        }
+    });
+
+    it('closes the TLS socket of an upgraded connection, not the plain socket it wraps', async () => {
+        // the fixture disables STARTTLS by default, this test needs the upgrade
+        const ts = await startServer({ disabledCommands: ['AUTH'] });
+        try {
+            const client = new SMTPConnection({
+                port: ts.port,
+                host: '127.0.0.1',
+                tls: { rejectUnauthorized: false }
+            });
+            await new Promise<void>((resolve, reject) => {
+                client.once('error', reject);
+                client.connect(() => resolve());
+            });
+            assert.ok(client.secure, 'the connection was upgraded');
+
+            const tlsSocket = client._socket as tls.TLSSocket & { socket?: net.Socket | undefined; _parent?: net.Socket | undefined };
+            // Node 27 exposes the wrapped plain socket as `.socket`, give older versions the same shape
+            if (!tlsSocket.socket) {
+                tlsSocket.socket = tlsSocket._parent;
+            }
+
+            client.close();
+            assert.strictEqual(tlsSocket.listenerCount('data'), 0, 'the TLS socket no longer feeds the closed connection');
+            await closed(tlsSocket);
+        } finally {
+            await ts.close();
         }
     });
 });

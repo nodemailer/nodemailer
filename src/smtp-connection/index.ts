@@ -1041,7 +1041,9 @@ class SMTPConnection extends EventEmitter {
             closeMethod
         );
 
-        const socket = (this._socket && (this._socket as net.Socket & { socket?: net.Socket }).socket) || this._socket;
+        // after STARTTLS this is the TLS socket, tear that one down and not the plain socket it
+        // wraps (Node 27 exposes the wrapped socket as `.socket`)
+        const socket = this._socket;
 
         // Detach any in-flight DATA stream from the socket so the source stream
         // can be garbage-collected once the socket is gone.
