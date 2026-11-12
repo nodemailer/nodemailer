@@ -137,6 +137,7 @@ class Cookies {
     parse(cookieStr?: string): Cookie {
         const cookie: Cookie = {};
         let hasNameValue = false;
+        let hasMaxAge = false;
 
         (cookieStr || '')
             .toString()
@@ -168,7 +169,8 @@ class Cookies {
                     case 'expires': {
                         const expires = new Date(value);
                         // ignore date if can not parse it
-                        if (expires.toString() !== 'Invalid Date') {
+                        if (expires.toString() !== 'Invalid Date' && !hasMaxAge) {
+                            // Max-Age has precedence when both attributes are present (RFC 6265 5.3)
                             cookie.expires = expires;
                         }
                         break;
@@ -188,6 +190,7 @@ class Cookies {
 
                     case 'max-age':
                         cookie.expires = new Date(Date.now() + (Number(value) || 0) * 1000);
+                        hasMaxAge = true;
                         break;
 
                     case 'secure':
