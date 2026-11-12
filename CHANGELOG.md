@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [10.6.0](https://github.com/nodemailer/nodemailer/compare/v10.5.0...v10.6.0) (2026-11-12)
+
+
+### Features
+
+* **smtp:** add configurable socketCloseTimeout ([#1916](https://github.com/nodemailer/nodemailer/issues/1916)) ([7f04d0b](https://github.com/nodemailer/nodemailer/commit/7f04d0b78e887191c89775cf4a3063462b222aad)), closes [#1915](https://github.com/nodemailer/nodemailer/issues/1915)
+
+
+### Bug Fixes
+
+* let Set-Cookie Max-Age take precedence over Expires ([#1917](https://github.com/nodemailer/nodemailer/issues/1917)) ([d6d6d44](https://github.com/nodemailer/nodemailer/commit/d6d6d44f5fbdf61936032d8865a1312c89c1804e))
+* **smtp-connection:** close the TLS socket of an upgraded connection on Node 27 ([4135015](https://github.com/nodemailer/nodemailer/commit/4135015175398aaad5ac6e1866e91a758c432417))
+
 ## [10.5.0](https://github.com/nodemailer/nodemailer/compare/v10.4.1...v10.5.0) (2026-11-10)
 
 
