@@ -163,7 +163,7 @@
         "globals": "17.14.0",
         "libbase64": "1.4.1",
         "libmime": "5.6.4",
-        "libqp": "3.0.1",
+        "libqp": "3.0.2",
         "mailauth": "8.0.6",
         "prettier": "3.10.1",
         "proxy": "1.0.2",
