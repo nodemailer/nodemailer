@@ -151,10 +151,10 @@ describe('Cookie Tests', () => {
                         path: '/',
                         domain: 'example.com',
                         secure: true,
-                        httponly: false
+                        httponly: true
                     }
                 ),
-                false
+                true
             );
         });
     });
@@ -663,6 +663,33 @@ describe('Cookie Tests', () => {
             assert.strictEqual(biskviit.set('theme=', 'https://foo.com/'), false);
             assert.strictEqual(biskviit.get('https://foo.com/'), '');
             assert.strictEqual(biskviit.cookies.length, 0);
+        });
+
+        it('should delete a cookie when the deleting header leaves out HttpOnly', () => {
+            biskviit.set('sid=abc; Path=/; HttpOnly', 'https://foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'sid=abc');
+
+            // cookies are identified by name, domain and path (RFC 6265 section 5.3, step 11),
+            // the flags of the stored cookie do not have to be repeated to delete it
+            biskviit.set('sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT', 'https://foo.com/');
+            assert.strictEqual(biskviit.get('https://foo.com/'), '');
+            assert.strictEqual(biskviit.cookies.length, 0);
+        });
+
+        it('should replace a cookie when an update changes its Secure or HttpOnly flags', () => {
+            biskviit.set('sid=old; Path=/; Secure', 'https://foo.com/');
+            biskviit.set('sid=new; Path=/; HttpOnly', 'https://foo.com/');
+
+            assert.strictEqual(biskviit.cookies.length, 1);
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'sid=new');
+        });
+
+        it('should not let a non-secure url overwrite a Secure cookie', () => {
+            biskviit.set('sid=old; Path=/; Secure', 'https://foo.com/');
+
+            assert.strictEqual(biskviit.set('sid=new; Path=/', 'http://foo.com/'), false);
+            assert.strictEqual(biskviit.set('sid=; Path=/; Max-Age=0', 'http://foo.com/'), false);
+            assert.strictEqual(biskviit.get('https://foo.com/'), 'sid=old');
         });
     });
 });

@@ -88,6 +88,11 @@ class Cookies {
             cookie.expires = new Date(Date.now() + (Number(this.options.sessionTimeout || SESSION_TIMEOUT) || SESSION_TIMEOUT) * 1000);
         }
 
+        // a non-secure url can not overwrite or delete a Secure cookie (RFC 6265bis section 5.7)
+        if (!cookie.secure && urlparts.protocol !== 'https:' && this.cookies.some(stored => stored.secure && this.compare(stored, cookie))) {
+            return false;
+        }
+
         return this.add(cookie);
     }
 
@@ -277,14 +282,16 @@ class Cookies {
     }
 
     /**
-     * Checks if two cookie objects are the same
+     * Checks if two cookie objects are the same cookie. A cookie is identified by its
+     * name, domain and path (RFC 6265 section 5.3), the Secure and HttpOnly flags are
+     * attributes of the stored cookie that an update replaces
      *
      * @param a Cookie to check against
      * @param b Cookie to check against
      * @returns True, if the cookies are the same
      */
     compare(a: Cookie, b: Cookie): boolean {
-        return a.name === b.name && a.path === b.path && a.domain === b.domain && a.secure === b.secure && a.httponly === b.httponly;
+        return a.name === b.name && a.path === b.path && a.domain === b.domain;
     }
 
     /**
