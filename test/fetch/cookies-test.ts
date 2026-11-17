@@ -689,6 +689,7 @@ describe('Cookie Tests', () => {
 
             assert.strictEqual(biskviit.set('sid=new; Path=/', 'http://foo.com/'), false);
             assert.strictEqual(biskviit.set('sid=; Path=/; Max-Age=0', 'http://foo.com/'), false);
+            assert.strictEqual(biskviit.set('sid=evil; Path=/; Secure', 'http://foo.com/'), false);
             assert.strictEqual(biskviit.get('https://foo.com/'), 'sid=old');
         });
     });

@@ -88,8 +88,8 @@ class Cookies {
             cookie.expires = new Date(Date.now() + (Number(this.options.sessionTimeout || SESSION_TIMEOUT) || SESSION_TIMEOUT) * 1000);
         }
 
-        // a non-secure url can not overwrite or delete a Secure cookie (RFC 6265bis section 5.7)
-        if (!cookie.secure && urlparts.protocol !== 'https:' && this.cookies.some(stored => stored.secure && this.compare(stored, cookie))) {
+        // a non-secure url can not set a Secure cookie, nor overwrite or delete one (RFC 6265bis section 5.7)
+        if (urlparts.protocol !== 'https:' && (cookie.secure || this.cookies.some(stored => stored.secure && this.compare(stored, cookie)))) {
             return false;
         }
 
