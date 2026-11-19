@@ -469,6 +469,22 @@ describe('Mail', () => {
             assert.ok(signedFields(dkimHeader(raw)).includes('otp-token'), dkimHeader(raw));
         });
 
+        it('should sign both one-click unsubscribe headers', async () => {
+            const raw = await render(
+                { dkim: transportKey },
+                {
+                    ...message(),
+                    list: { unsubscribe: 'https://example.com/unsubscribe' },
+                    headers: { 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+                }
+            );
+            const fields = signedFields(dkimHeader(raw));
+
+            // RFC 8058 section 4: both fields have to be in h= of a valid signature
+            assert.ok(fields.includes('list-unsubscribe'), fields.join(':'));
+            assert.ok(fields.includes('list-unsubscribe-post'), fields.join(':'));
+        });
+
         it('should sign with the dkim options of the message when the transport has none', async () => {
             const raw = await render({}, { ...message(), dkim: transportKey });
 
