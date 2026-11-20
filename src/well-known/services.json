@@ -389,6 +389,13 @@
         "secure": true
     },
 
+    "Rasket": {
+        "description": "Rasket",
+        "host": "smtp.rasket.com",
+        "port": 465,
+        "secure": true
+    },
+
     "Resend": {
         "description": "Resend",
         "host": "smtp.resend.com",
