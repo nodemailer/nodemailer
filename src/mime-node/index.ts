@@ -817,7 +817,10 @@ class MimeNode {
             const options: { prepared?: boolean; foldLines?: boolean } = {};
             const formattedHeaders = FORMATTED_HEADERS;
 
-            if (value && typeof value === 'object' && !formattedHeaders.includes(key)) {
+            if (value && typeof value === 'object' && !Array.isArray(value) && !formattedHeaders.includes(key)) {
+                // an array is a list of values, not a prepared header object: it belongs to
+                // the header encoder below, which formats it per header (e.g. References)
+                //
                 // the keys come from a caller supplied header object and `options.prepared`
                 // below decides whether the value is emitted raw, so an own "__proto__" key
                 // here would turn an unfolded value into header injection
@@ -1649,6 +1652,13 @@ class MimeNode {
             case 'Message-ID':
             case 'In-Reply-To':
             case 'Content-ID':
+                if (key === 'In-Reply-To' && Array.isArray(value)) {
+                    // an array carries one msg-id per entry; format it like a References
+                    // list so each id gets its own brackets instead of the entries
+                    // becoming a single malformed "<a,b>" id
+                    value = value.join(' ');
+                    return this.encodeHeaderValue('References', value);
+                }
                 // a msg-id is structured, so an encoded word inside the angle brackets would
                 // be read as literal text. drop the characters that can not appear in a header
                 // at all, but leave HT alone, it separates the ids of a multi id value
