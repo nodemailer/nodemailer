@@ -65,13 +65,14 @@ export interface DKIMRelaxedHeaders {
 function sign(headers: MessageParserHeaderLine[], hashAlgo: string, bodyHash: string, options?: DKIMSignOptions): string | false {
     options = options || {};
 
-    // all listed fields from RFC4871 #5.5
+    // all listed fields from RFC4871 #5.5, plus List-Unsubscribe-Post: RFC 8058 only allows
+    // one-click unsubscribe when the signature covers it next to List-Unsubscribe
     const defaultFieldNames =
         'From:Sender:Reply-To:Subject:Date:Message-ID:To:' +
         'Cc:MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:' +
         'Content-Description:Resent-Date:Resent-From:Resent-Sender:' +
         'Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:' +
-        'List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:' +
+        'List-Id:List-Help:List-Unsubscribe:List-Unsubscribe-Post:List-Subscribe:List-Post:' +
         'List-Owner:List-Archive:OTP-Token';
 
     const fieldNames = options.headerFieldNames || defaultFieldNames;
