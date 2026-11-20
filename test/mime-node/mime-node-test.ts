@@ -2139,6 +2139,33 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._encodeHeaderValue('in-reply-to', '<a@x.test>\t<b@x.test>'), '<a@x.test>\t<b@x.test>');
         });
 
+        it('should format an in-reply-to array as separate ids', () => {
+            // an array holds one msg-id per entry, joining them into a single
+            // "<a,b>" id would be malformed
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', ['abc', 'def']), '<abc> <def>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', ['<a@x.test>', '<b@x.test>']), '<a@x.test> <b@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', ['a\x00b', 'c\x7fd']), '<ab> <cd>');
+        });
+
+        it('should build an in-reply-to array into a single header of separate ids', async () => {
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('In-Reply-To', ['<a@x.test>', 'b@x.test']);
+            const raw = await new Promise<string>((resolve, reject) => mb.build((err, msg) => (err ? reject(err) : resolve(msg.toString()))));
+            const lines = raw.split('\r\n').filter(line => /^in-reply-to:/i.test(line));
+            assert.deepStrictEqual(lines, ['In-Reply-To: <a@x.test> <b@x.test>']);
+        });
+
+        it('should build a custom header array into a single header line', async () => {
+            // an array value is a list of values, not a prepared header object,
+            // so it must reach the encoder instead of being silently dropped
+            const mb = new MimeNode('text/plain');
+            mb.setHeader('X-Custom-List', ['one', 'two']);
+            const raw = await new Promise<string>((resolve, reject) => mb.build((err, msg) => (err ? reject(err) : resolve(msg.toString()))));
+            const lines = raw.split('\r\n').filter(line => /^x-custom-list:/i.test(line));
+            assert.deepStrictEqual(lines, ['X-Custom-List: one,two']);
+        });
+
         it('should format message-id', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._encodeHeaderValue('message-id', 'abc'), '<abc>');
