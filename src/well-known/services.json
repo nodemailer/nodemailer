@@ -423,6 +423,13 @@
         "port": 587
     },
 
+    "Sendora": {
+        "description": "Sendora",
+        "host": "smtp.sendora.se",
+        "port": 465,
+        "secure": true
+    },
+
     "SendPulse": {
         "description": "SendPulse",
         "host": "smtp-pulse.com",
