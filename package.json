@@ -154,7 +154,7 @@
     },
     "homepage": "https://nodemailer.com/",
     "devDependencies": {
-        "@aws-sdk/client-sesv2": "3.1169.0",
+        "@aws-sdk/client-sesv2": "3.1173.0",
         "@types/node": "20.19.43",
         "bunyan": "1.8.15",
         "c8": "12.0.0",
@@ -164,14 +164,14 @@
         "libbase64": "1.4.1",
         "libmime": "5.6.5",
         "libqp": "3.0.2",
-        "mailauth": "8.0.6",
+        "mailauth": "8.1.0",
         "prettier": "3.10.1",
         "proxy": "1.0.2",
         "proxy-test-server": "1.0.0",
         "smtp-server": "3.21.6",
         "tsx": "4.23.15",
         "typescript": "6.0.3",
-        "typescript-eslint": "8.72.2"
+        "typescript-eslint": "8.73.0"
     },
     "engines": {
         "node": ">=20.0.0"
