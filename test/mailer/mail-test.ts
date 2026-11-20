@@ -485,6 +485,14 @@ describe('Mail', () => {
             assert.ok(fields.includes('list-unsubscribe-post'), fields.join(':'));
         });
 
+        it('should not sign list-unsubscribe-post when the message does not have it', async () => {
+            const raw = await render({ dkim: transportKey }, { ...message(), list: { unsubscribe: 'https://example.com/unsubscribe' } });
+            const fields = signedFields(dkimHeader(raw));
+
+            assert.ok(fields.includes('list-unsubscribe'), fields.join(':'));
+            assert.ok(!fields.includes('list-unsubscribe-post'), fields.join(':'));
+        });
+
         it('should sign with the dkim options of the message when the transport has none', async () => {
             const raw = await render({}, { ...message(), dkim: transportKey });
 
