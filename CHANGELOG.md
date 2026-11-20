@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [10.6.1](https://github.com/nodemailer/nodemailer/compare/v10.6.0...v10.6.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **dkim:** sign List-Unsubscribe-Post by default ([#1922](https://github.com/nodemailer/nodemailer/issues/1922)) ([f91077c](https://github.com/nodemailer/nodemailer/commit/f91077c5bbc175fbb853d3c1cf3131c30283d52b))
+* **fetch:** identify cookies by name, domain and path ([#1920](https://github.com/nodemailer/nodemailer/issues/1920)) ([91a298f](https://github.com/nodemailer/nodemailer/commit/91a298fc112017decdeb2b401238e901dd4b2256))
+
 ## [10.6.0](https://github.com/nodemailer/nodemailer/compare/v10.5.0...v10.6.0) (2026-11-15)
 
 
