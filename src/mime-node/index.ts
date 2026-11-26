@@ -1651,11 +1651,13 @@ class MimeNode {
             case 'Content-ID':
                 // a msg-id is structured, so an encoded word inside the angle brackets would
                 // be read as literal text. drop the characters that can not appear in a header
-                // at all, but leave HT alone, it separates the ids of a multi id value
+                // at all, but leave HT alone, it separates the ids of a multi id value. Whitespace
+                // around the value is dropped, it would end up inside the brackets added below
                 value = (value || '')
                     .toString()
                     .replace(/\r?\n|\r/g, ' ')
-                    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+                    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+                    .trim();
 
                 if (value.charAt(0) !== '<') {
                     value = '<' + value;

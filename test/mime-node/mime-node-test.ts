@@ -2144,6 +2144,16 @@ describe('MimeNode Tests', { timeout: 50 * 1000 }, () => {
             assert.strictEqual(mb._encodeHeaderValue('message-id', 'abc'), '<abc>');
         });
 
+        it('should not wrap surrounding whitespace into a message-id', () => {
+            // a value read from a file or copied from another header often ends with a line
+            // break, which used to end up inside the brackets as '<a@x.test> >'
+            let mb = new MimeNode();
+            assert.strictEqual(mb._encodeHeaderValue('in-reply-to', '<a@x.test>\n'), '<a@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('message-id', ' <a@x.test> '), '<a@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('message-id', 'a@x.test\r\n'), '<a@x.test>');
+            assert.strictEqual(mb._encodeHeaderValue('content-id', '\t<part@x.test>\t'), '<part@x.test>');
+        });
+
         it('should strip control chars from message-id', () => {
             let mb = new MimeNode();
             assert.strictEqual(mb._encodeHeaderValue('message-id', 'a\x01b'), '<ab>');
