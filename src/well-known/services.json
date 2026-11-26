@@ -68,6 +68,13 @@
         "requireTLS": true
     },
 
+    "Coss": {
+        "description": "coss.com",
+        "host": "smtp.coss.com",
+        "port": 465,
+        "secure": true
+    },
+
     "DebugMail": {
         "description": "DebugMail (email testing service)",
         "host": "debugmail.io",
@@ -385,6 +392,13 @@
         "aliases": ["QQ Enterprise"],
         "domains": ["exmail.qq.com"],
         "host": "smtp.exmail.qq.com",
+        "port": 465,
+        "secure": true
+    },
+
+    "Rasket": {
+        "description": "Rasket",
+        "host": "smtp.rasket.com",
         "port": 465,
         "secure": true
     },
